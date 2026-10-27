@@ -24,6 +24,20 @@
     return client;
   }
 
+  async function withTimeout(promise, timeoutMs, message) {
+    var timer;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise(function (_, reject) {
+          timer = window.setTimeout(function () { reject(new Error(message)); }, timeoutMs);
+        })
+      ]);
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
+
   function showError(message) {
     var target = document.getElementById('login-error');
     if (target) target.textContent = message;
@@ -75,7 +89,11 @@
   async function getSession() {
     var client = await waitForClient();
     if (!client) throw new Error('O cliente de autenticação não foi inicializado.');
-    var result = await client.auth.getSession();
+    var result = await withTimeout(
+      client.auth.getSession(),
+      10000,
+      'A verificação da sessão demorou demais. Entre novamente.'
+    );
     if (result.error) throw result.error;
     return result.data && result.data.session ? result.data.session : null;
   }
@@ -83,7 +101,11 @@
   async function isAccountActive(userId) {
     var client = await waitForClient();
     if (!client || !userId) return false;
-    var result = await client.rpc('get_rildonx_profiles');
+    var result = await withTimeout(
+      client.rpc('get_rildonx_profiles'),
+      10000,
+      'A verificação do acesso demorou demais. Entre novamente.'
+    );
     if (result.error) throw result.error;
     var profile = (result.data || []).find(function (item) {
       return String(item.id) === String(userId);
@@ -250,7 +272,7 @@
       session = await getSession();
     } catch (error) {
       console.error('Não foi possível verificar a sessão de autenticação:', error);
-      showServiceUnavailable();
+      window.location.replace('login.html?authUnavailable=true');
       return false;
     }
     if (!session) {
@@ -266,7 +288,7 @@
       }
     } catch (error) {
       console.error('Não foi possível verificar o status da conta autenticada:', error);
-      showServiceUnavailable();
+      window.location.replace('login.html?authUnavailable=true');
       return false;
     }
     if (sessionStorage.getItem('rildonx_force_password_change') === 'true') createPasswordPanel();
@@ -276,9 +298,17 @@
   async function init() {
     if (document.body.dataset.authPage === 'login') {
       var recoveryRequested = new URLSearchParams(window.location.search).get('resetPassword') === 'true';
+      var authUnavailable = new URLSearchParams(window.location.search).get('authUnavailable') === 'true';
       var callbackType = new URLSearchParams(window.location.hash.slice(1)).get('type');
       var authError = new URLSearchParams(window.location.search).get('error_description') ||
         new URLSearchParams(window.location.hash.slice(1)).get('error_description');
+      if (authUnavailable) {
+        showServiceUnavailable();
+        document.getElementById('login-form').addEventListener('submit', handleLogin);
+        document.getElementById('forgot-password').addEventListener('click', handleForgotPassword);
+        bindPasswordVisibility();
+        return;
+      }
       if (new URLSearchParams(window.location.search).get('disabled') === 'true') {
         showError('Esta conta está desabilitada. Entre em contato com o RH.');
       }
