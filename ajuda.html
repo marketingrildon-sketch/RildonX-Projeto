@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ajuda · RildonX</title>
+<meta name="description" content="Acesse as áreas do RildonX e encontre orientações de uso.">
+<link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
+  <script type="module" crossorigin src="./assets/supabase-client-DgreBNal.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/login-C_oS1P7I.css">
+</head>
+<body data-page="ajuda">
+<div class="app" id="app-root">
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+<aside class="sidebar">
+  <div class="logo"><img class="sidebar-project-logo" src="./assets/rildonx-logo-sidebar-expanded-Bm4x5kvF.svg?v=20261017b" alt="RildonX"></div>
+  <nav class="nav">
+    <a href="index.html" class="nav-item" data-page="inicio">Início</a><a href="mural.html" class="nav-item" data-page="feed">Mural</a><a href="mensagens.html" class="nav-item" data-page="messenger">Mensagens</a>
+    <div class="nav-gap"></div><a href="calendario.html" class="nav-item" data-page="calendario">Calendário</a><a href="tarefas.html" class="nav-item" data-page="tarefas">Tarefas</a><a href="projetos.html" class="nav-item" data-page="projetos">Projetos</a><a href="documentos.html" class="nav-item" data-page="documentos">Documentos</a>
+    <div class="nav-gap"></div><a href="meu-espaco.html" class="nav-item" data-page="meuespaco">Meu espaço</a><a href="ajuda.html" class="nav-item active" data-page="ajuda">Ajuda</a>
+  </nav>
+  <div class="sidebar-spacer"></div><div class="sidebar-bottom nav"><a href="#" class="nav-item logout-item">Sair</a><div class="sidebar-watermark"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNzM4Ljk2OCAyMDUuNDYzIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xe2ZvbnQtZmFtaWx5OiZhcG9zO1NxdWFyZTcyMSBCVCZhcG9zOztmb250LXNpemU6NTU7ZmlsbDojMDAwMDAwfQogICAgICAuY2xzLTJ7Zm9udC1mYW1pbHk6JmFwb3M7U3F1YXJlNzIxIENuIEJUJmFwb3M7O2ZvbnQtc2l6ZToxMjtsZXR0ZXItc3BhY2luZzoxLjJ9CiAgICAgIC5jbHMtM3tmb250LWZhbWlseTomYXBvcztTcXVhcmU3MjEgQ24gQlQmYXBvczs7Zm9udC1zaXplOjE1O2xldHRlci1zcGFjaW5nOjEuNX0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDx0aXRsZT5VbnRpdGxlZC0xPC90aXRsZT4KICA8ZyBpZD0iQXNzZXRfMSIgZGF0YS1uYW1lPSJBc3NldCAxIj4KICAgIDx0ZXh0IHRyYW5zZm9ybT0ibWF0cml4KDIuNTY4IDAgMCAyLjU2OCAwIDEzOS44NzYpIiB4PSIwIiB5PSIwIiB4bWw6c3BhY2U9InByZXNlcnZlIiBjbGFzcz0iY2xzLTEiPjx0c3BhbiB4PSIwIiB5PSIwIj5Db1Byb2Nlc3M8L3RzcGFuPjx0c3BhbiB4PSIwIiB5PSIyMiIgdGV4dExlbmd0aD0iMjgzLjA0IiBsZW5ndGhBZGp1c3Q9InNwYWNpbmdBbmRHbHlwaHMiIGNsYXNzPSJjbHMtMiI+R2VzdMOjbyBkZSBQcm9jZXNzb3MgQWRtaW5pc3RyYXRpdm9zPC90c3Bhbj48dHNwYW4geD0iMjgzLjA0IiB5PSIyMiIgY2xhc3M9ImNscy0zIj4gPC90c3Bhbj48L3RleHQ+CiAgPC9nPgo8L3N2Zz4K" alt="Rildon" aria-hidden="true"></div></div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu" aria-label="Abrir menu">☰</button>
+    <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" id="global-search" placeholder="Buscar no RildonX..."></div>
+    <div class="topbar-spacer"></div><div class="topbar-right">
+      <button class="icon-btn" title="Ajuda" aria-label="Ajuda">?</button>
+      <div class="notif-wrap"><button class="icon-btn" id="notif-btn" onclick="toggleNotifications(event)" title="Notificações" aria-label="Notificações"><span aria-hidden="true">♧</span><span class="badge" hidden></span></button><div class="notif-dropdown" id="notif-dropdown"></div></div>
+      <div class="user-chip"><div class="avatar">U</div><div class="user-meta"><div class="user-name">Usuário</div><div class="user-role">Conta</div></div></div>
+    </div>
+  </header>
+  <main class="content"><section class="page-view help-layout">
+    <div class="page-head"><div><h1>Ajuda</h1><p>Guia inicial para navegar pelo RildonX.</p></div></div>
+    <section class="help-card">
+      <h2>Manual da plataforma</h2>
+      <p>Este é o índice inicial do manual. Escolha uma área para abrir a página correspondente; instruções detalhadas serão incluídas nesta seção posteriormente.</p>
+      <nav class="help-grid" aria-label="Áreas da plataforma">
+        <a class="help-link" href="index.html"><b>Início</b><span>Resumo de atualizações, tarefas, conversas, documentos e eventos.</span></a>
+        <a class="help-link" href="mural.html"><b>Mural</b><span>Publicações, avisos, comunicados e interações da equipe.</span></a>
+        <a class="help-link" href="mensagens.html"><b>Mensagens</b><span>Conversas individuais e em grupo, com arquivos compartilhados.</span></a>
+        <a class="help-link" href="calendario.html"><b>Calendário</b><span>Eventos, reuniões, projetos e datas comemorativas.</span></a>
+        <a class="help-link" href="tarefas.html"><b>Tarefas</b><span>Organize atividades, responsáveis, prazos e prioridades.</span></a>
+        <a class="help-link" href="projetos.html"><b>Projetos</b><span>Acompanhe projetos, etapas e progresso da equipe.</span></a>
+        <a class="help-link" href="documentos.html"><b>Documentos</b><span>Consulte arquivos recentes e documentos compartilhados.</span></a>
+        <a class="help-link" href="meu-espaco.html"><b>Meu espaço</b><span>Acesse recursos e informações pessoais de trabalho.</span></a>
+        <a class="help-link" href="perfil.html"><b>Perfil</b><span>Atualize suas informações profissionais e de contato.</span></a>
+        <a class="help-link" href="configuracoes.html"><b>Configurações</b><span>Personalize o tema e gerencie segurança e privacidade.</span></a>
+      </nav>
+    </section>
+  </section></main>
+</div>
+</div>
+<div class="toast-wrap" id="toast-wrap"></div>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/auth.js?v=20261023e"></script>
+<script src="assets/js/data-store.js?v=20261020b"></script>
+<script src="assets/js/supabase-sync.js?v=20261023c"></script>
+<script src="assets/js/app.js?v=20261023k"></script>
+<script src="assets/js/support-center.js?v=20261022g"></script>
+</body>
+</html>

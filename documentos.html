@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentos · RildonX</title>
+<meta name="description" content="RildonX — ecossistema digital da Rildon.">
+<link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
+  <script type="module" crossorigin src="./assets/supabase-client-DgreBNal.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/login-C_oS1P7I.css">
+</head>
+<body data-page="documentos">
+<div class="app" id="app-root">
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+<aside class="sidebar">
+  <div class="logo"><img class="sidebar-project-logo" src="./assets/rildonx-logo-sidebar-expanded-Bm4x5kvF.svg?v=20261017b" alt="RildonX"></div>
+
+  <nav class="nav">
+    <a href="index.html" class="nav-item" data-page="inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Início
+    </a>
+    <a href="mural.html" class="nav-item" data-page="feed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
+      Mural
+    </a>
+    <a href="mensagens.html" class="nav-item" data-page="messenger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      Mensagens
+    </a>
+
+    <div class="nav-gap"></div>
+
+    <a href="calendario.html" class="nav-item" data-page="calendario">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Calendário
+    </a>
+    <a href="tarefas.html" class="nav-item" data-page="tarefas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+      Tarefas
+    </a>
+    <a href="projetos.html" class="nav-item" data-page="projetos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Projetos
+    </a>
+    <a href="documentos.html" class="nav-item" data-page="documentos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Documentos
+    </a>
+
+    <div class="nav-gap"></div>
+
+    <a href="meu-espaco.html" class="nav-item" data-page="meuespaco">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Meu espaço
+    </a>
+  </nav>
+
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-bottom nav">
+    <a href="#" class="nav-item logout-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sair
+    </a>
+    <div class="sidebar-watermark"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNzM4Ljk2OCAyMDUuNDYzIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xe2ZvbnQtZmFtaWx5OiZhcG9zO1NxdWFyZTcyMSBCVCZhcG9zOztmb250LXNpemU6NTU7ZmlsbDojMDAwMDAwfQogICAgICAuY2xzLTJ7Zm9udC1mYW1pbHk6JmFwb3M7U3F1YXJlNzIxIENuIEJUJmFwb3M7O2ZvbnQtc2l6ZToxMjtsZXR0ZXItc3BhY2luZzoxLjJ9CiAgICAgIC5jbHMtM3tmb250LWZhbWlseTomYXBvcztTcXVhcmU3MjEgQ24gQlQmYXBvczs7Zm9udC1zaXplOjE1O2xldHRlci1zcGFjaW5nOjEuNX0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDx0aXRsZT5VbnRpdGxlZC0xPC90aXRsZT4KICA8ZyBpZD0iQXNzZXRfMSIgZGF0YS1uYW1lPSJBc3NldCAxIj4KICAgIDx0ZXh0IHRyYW5zZm9ybT0ibWF0cml4KDIuNTY4IDAgMCAyLjU2OCAwIDEzOS44NzYpIiB4PSIwIiB5PSIwIiB4bWw6c3BhY2U9InByZXNlcnZlIiBjbGFzcz0iY2xzLTEiPjx0c3BhbiB4PSIwIiB5PSIwIj5Db1Byb2Nlc3M8L3RzcGFuPjx0c3BhbiB4PSIwIiB5PSIyMiIgdGV4dExlbmd0aD0iMjgzLjA0IiBsZW5ndGhBZGp1c3Q9InNwYWNpbmdBbmRHbHlwaHMiIGNsYXNzPSJjbHMtMiI+R2VzdMOjbyBkZSBQcm9jZXNzb3MgQWRtaW5pc3RyYXRpdm9zPC90c3Bhbj48dHNwYW4geD0iMjgzLjA0IiB5PSIyMiIgY2xhc3M9ImNscy0zIj4gPC90c3Bhbj48L3RleHQ+CiAgPC9nPgo8L3N2Zz4K" alt="Rildon" aria-hidden="true"></div>
+  </div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="global-search" placeholder="Buscar documentos...">
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <button class="icon-btn" title="Ajuda">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <div class="notif-wrap">
+        <button class="icon-btn" id="notif-btn" onclick="toggleNotifications(event)" title="Notificações">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="badge" hidden></span>
+        </button>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-dropdown-head">
+            <h3>Atividade recente</h3>
+            <span class="see-all">Ver todas</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity-row">
+              <div class="task-avatar" style="border-radius:9px;">JP</div>
+              <div class="activity-text"><b>Colaborador</b> atualizou o projeto Campanha atual <span class="activity-sub" style="display:block;">Projeto · Campanha atual</span></div>
+              <div class="activity-time">há 20 min</div>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon" style="background:var(--orange-bg);color:var(--orange);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+              <div class="activity-text"><b>Equipe</b> publicou um novo aviso <span class="activity-sub" style="display:block;">Aviso · Nova atualização</span></div>
+              <div class="activity-time">há 1h</div>
+            </div>
+            <div class="activity-row">
+              <div class="task-avatar" style="border-radius:9px;">V</div>
+              <div class="activity-text"><b>Usuário</b> foi adicionado à tarefa Revisar material da campanha <span class="activity-sub" style="display:block;">Tarefa · Campanha atual</span></div>
+              <div class="activity-time">há 2h</div>
+            </div>
+            <div class="activity-row">
+              <div class="task-avatar" style="border-radius:9px;">MF</div>
+              <div class="activity-text"><b>Colaboradora</b> comentou na tarefa Post para Instagram <span class="activity-sub" style="display:block;">Tarefa · Mídias Sociais</span></div>
+              <div class="activity-time">há 3h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="user-chip">
+        <div class="avatar">A</div>
+        <div class="user-meta">
+          <div class="user-name">Usuário</div>
+          <div class="user-role">Cargo do usuário</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </header>
+  <div class="content">
+<section class="page-view" id="page-documentos" style="display:block;">
+<div class="page-head">
+      <div>
+        <h1>Documentos</h1>
+        <p>Acesse, organize e compartilhe arquivos da equipe.</p>
+      </div>
+      <button class="btn" id="document-upload-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Novo upload
+      </button>
+      <input id="document-upload-input" type="file" hidden>
+    </div>
+
+    <div class="filters-row">
+      <div class="filter-pill search-mini" style="flex:1;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input placeholder="Buscar documentos...">
+      </div>
+      <div class="filter-pill">Tipo: Todos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="filter-pill">Pasta: Todas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="filter-pill">Responsável: Todos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="filter-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>Mais filtros</div>
+    </div>
+
+    <div class="layout-2col">
+      <div class="card" id="documents-live-root"></div>
+
+      <div class="side-widgets">
+        <div class="card">
+          <div class="card-head"><h3>Pastas</h3><button class="btn small" id="document-create-folder-btn" type="button">Nova pasta</button></div>
+          <div class="card-pad" style="padding-top:4px;">
+            <div class="mini-list" id="document-folder-list"></div>
+            <div class="folder-pagination" id="document-folder-pagination" aria-label="Paginação das pastas"></div>
+          </div>
+        </div>
+
+        <div class="card card-pad">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:2px;">Armazenamento</h3>
+          <p id="storage-usage-summary" style="font-size:12px;color:var(--text-muted);margin:2px 0 0;">Carregando armazenamento...</p>
+          <div class="storage-bar" role="progressbar" aria-label="Armazenamento da sua conta" aria-valuemin="0" aria-valuemax="100">
+            <div class="storage-bar-fill" id="storage-bar-fill" style="width:0%;" aria-valuenow="0"></div>
+          </div>
+          <div class="storage-type-breakdown" id="storage-type-breakdown"></div>
+        </div>
+
+      </div>
+    </div>
+</section>
+  </div>
+</div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal()">
+  <div class="modal-panel wide" id="modal-nova-tarefa" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>Nova tarefa</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nome da tarefa</label>
+        <input type="text" id="nt-nome" placeholder="Ex: Revisar material da campanha">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Prazo</label>
+          <input type="date" id="nt-prazo" value="2026-09-20">
+        </div>
+        <div class="field">
+          <label>Etapa</label>
+          <div class="choice-group" id="nt-etapa-group">
+            <button type="button" class="choice-btn selected" data-etapa="Pendente" onclick="selectChoice(this,'nt-etapa-group')">Pendente</button>
+            <button type="button" class="choice-btn" data-etapa="Em andamento" onclick="selectChoice(this,'nt-etapa-group')">Em andamento</button>
+            <button type="button" class="choice-btn" data-etapa="Concluída" onclick="selectChoice(this,'nt-etapa-group')">Concluída</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Prioridade</label>
+        <div class="choice-group" id="nt-prioridade-group">
+          <button type="button" class="choice-btn opt-alta" data-priority="Alta" onclick="selectChoice(this,'nt-prioridade-group')">Alta</button>
+          <button type="button" class="choice-btn opt-media selected" data-priority="Média" onclick="selectChoice(this,'nt-prioridade-group')">Média</button>
+          <button type="button" class="choice-btn opt-baixa" data-priority="Baixa" onclick="selectChoice(this,'nt-prioridade-group')">Baixa</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Checklist</label>
+        <div class="checklist" id="nt-checklist">
+          <div class="checklist-item">
+            <input type="text" placeholder="Item da checklist...">
+            <button type="button" class="rm-btn" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </div>
+        <button type="button" class="add-line-btn" onclick="addChecklistItem()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar item</button>
+      </div>
+      <div class="field">
+        <label>Adicionar pessoas</label>
+        <div class="people-picker" id="nt-people-group">
+          <div class="people-chip" data-name="Usuário" onclick="togglePeopleChip(this)"><div class="mini-avatar">A</div>Usuário</div>
+          <div class="people-chip" data-name="Camila" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--purple);">C</div>Camila</div>
+          <div class="people-chip" data-name="Colaborador" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--orange);">J</div>Colaborador</div>
+          <div class="people-chip" data-name="Mariana" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--green);">M</div>Mariana</div>
+          <div class="people-chip" data-name="Lucas" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--teal);">L</div>Lucas</div>
+          <div class="people-chip" data-name="Fernanda" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--red);">F</div>Fernanda</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="submitNovaTarefa()">Criar tarefa</button>
+    </div>
+  </div>
+
+  <div class="modal-panel" id="modal-setor-pessoal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Setor pessoal</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="option-list">
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Solicitar uma conversa')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+          <div><b>Solicitar uma conversa</b><span>Agende um bate-papo com o RH</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Documentos/declarações')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div><b>Documentos/declarações</b><span>Solicite documentos oficiais</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Ponto')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></div>
+          <div><b>Ponto</b><span>Ajustes e consulta de ponto</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Atestado/afastamento')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+          <div><b>Atestado/afastamento</b><span>Envie um atestado médico</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-panel" id="modal-suporte-ti" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Suporte de TI</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Categoria do chamado</label>
+        <div class="choice-group" id="ti-categoria-group">
+          <button type="button" class="choice-btn selected" data-cat="Impressora" onclick="selectChoice(this,'ti-categoria-group')">Impressora</button>
+          <button type="button" class="choice-btn" data-cat="Internet" onclick="selectChoice(this,'ti-categoria-group')">Internet</button>
+          <button type="button" class="choice-btn" data-cat="Ramal" onclick="selectChoice(this,'ti-categoria-group')">Ramal</button>
+          <button type="button" class="choice-btn" data-cat="Compra/solicitação" onclick="selectChoice(this,'ti-categoria-group')">Compra/solicitação</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Descreva o problema</label>
+        <textarea id="ti-texto" maxlength="150" placeholder="Descreva brevemente o que está acontecendo..." oninput="document.getElementById('ti-charcount').textContent = this.value.length + '/150'"></textarea>
+        <div class="charcount" id="ti-charcount">0/150</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="submitSuporteTI()">Enviar solicitação</button>
+    </div>
+  </div>
+
+  <div class="modal-panel wide" id="modal-reserva-sala" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Solicitar sala de reunião</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="reserva-form-view">
+      <div id="reserva-conflict-slot"></div>
+      <div class="field">
+        <label>Sala</label>
+        <div class="choice-group" id="rs-sala-group">
+          <button type="button" class="choice-btn selected" data-sala="Sala de Reunião" onclick="selectChoice(this,'rs-sala-group')">Sala de reunião</button>
+          <button type="button" class="choice-btn" data-sala="Auditório" onclick="selectChoice(this,'rs-sala-group')">Auditório</button>
+        </div>
+      </div>
+      <div class="field-row-3">
+        <div class="field"><label>Data</label><input type="date" id="rs-data" value="2026-09-14"></div>
+        <div class="field"><label>Início</label><input type="time" id="rs-inicio" value="14:00"></div>
+        <div class="field"><label>Fim</label><input type="time" id="rs-fim" value="15:00"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Quantidade de participantes</label><input type="number" id="rs-qtd" min="1" value="4"></div>
+        <div class="field"><label>Motivo / assunto</label><input type="text" id="rs-motivo" placeholder="Ex: Reunião com fornecedor Gauss"></div>
+      </div>
+      <div class="field">
+        <label>Participantes</label>
+        <div class="people-picker" id="rs-people-group">
+          <div class="people-chip" data-name="Usuário" onclick="togglePeopleChip(this)"><div class="mini-avatar">A</div>Usuário</div>
+          <div class="people-chip" data-name="Camila" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--purple);">C</div>Camila</div>
+          <div class="people-chip" data-name="Colaborador" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--orange);">J</div>Colaborador</div>
+          <div class="people-chip" data-name="Mariana" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--green);">M</div>Mariana</div>
+          <div class="people-chip" data-name="Lucas" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--teal);">L</div>Lucas</div>
+          <div class="people-chip" data-name="Fernanda" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--red);">F</div>Fernanda</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Recursos necessários</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-opt"><input type="checkbox" value="TV / tela">📺 TV / tela</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Notebook">💻 Notebook</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Videoconferência">🎥 Videoconferência</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Quadro">📝 Quadro</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Café / água">☕ Café / água</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Outro">🔌 Outro</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-body" id="reserva-confirm-view" style="display:none;"></div>
+    <div class="modal-foot" id="reserva-form-foot">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="submitReservaSala()">Solicitar reserva</button>
+    </div>
+  </div>
+
+  <div class="modal-panel" id="modal-politicas" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Políticas internas</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="policy-list">
+        <div class="policy-row"><div class="doc-icon pdf">PDF</div><div><b>Regulamento Interno</b><span>Atualizado em 10/01/2026 · 1.4 MB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon docx">DOC</div><div><b>Missão, Visão e Valores</b><span>Atualizado em 03/02/2025 · 320 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon pdf">PDF</div><div><b>Código de Conduta e Ética</b><span>Atualizado em 22/11/2025 · 980 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon xlsx">XLS</div><div><b>Política de Benefícios</b><span>Atualizado em 14/03/2026 · 210 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon pdf">PDF</div><div><b>Política de Segurança da Informação</b><span>Atualizado em 05/06/2026 · 640 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+      </div>
+    </div>
+    <div class="modal-panel" id="modal-nova-pasta" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Nova pasta</h3>
+        <button class="modal-close-btn" type="button" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <form id="document-create-folder-form">
+        <div class="modal-body">
+          <div class="field">
+            <label for="document-folder-name">Nome da pasta</label>
+            <input id="document-folder-name" name="name" type="text" maxlength="60" required placeholder="Ex.: Contratos">
+            <div class="hint">A pasta ficará disponível para toda a equipe.</div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn secondary" type="button" onclick="closeModal()">Cancelar</button>
+          <button class="btn" type="submit">Criar pasta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+<div class="document-share-backdrop" id="document-share-modal" hidden role="dialog" aria-modal="true" aria-labelledby="document-share-title">
+  <form class="document-share-panel" id="document-share-form">
+    <div class="document-share-head">
+      <div><h3 id="document-share-title">Compartilhar arquivo</h3><p id="document-share-caption"></p></div>
+      <button type="button" id="document-share-close" aria-label="Fechar">×</button>
+    </div>
+    <div class="document-share-users" id="document-share-users"></div>
+    <div class="document-share-actions">
+      <button class="btn" type="button" id="document-share-cancel">Cancelar</button>
+      <button class="btn primary" type="submit" id="document-share-submit">Salvar acesso</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  window.SUPABASE_URL = 'https://lgzokudzdezgufddoicy.supabase.co';
+  window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnem9rdWR6ZGV6Z3VmZGRvaWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2OTY1MzEsImV4cCI6MjEwNTI3MjUzMX0.yssgd9GXoVNcM5inbSVo45IPYkx3x3br_U86MLSoEUs';
+</script>
+<script src="assets/js/document-upload.js?v=20261020c"></script>
+<script src="assets/js/auth.js?v=20261023e"></script>
+<script src="assets/js/data-store.js?v=20261020b"></script>
+<script src="assets/js/supabase-sync.js?v=20261023c"></script>
+<script src="assets/js/document-sync.js?v=20261023m"></script>
+<script src="assets/js/app.js?v=20261023k"></script>
+<script src="assets/js/support-center.js?v=20261022g"></script>
+</body>
+</html>

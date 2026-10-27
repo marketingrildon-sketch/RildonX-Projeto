@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurações · RildonX</title>
+<meta name="description" content="Gerencie aparência, segurança e privacidade da sua conta RildonX.">
+<link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
+  <script type="module" crossorigin src="./assets/supabase-client-DgreBNal.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/login-C_oS1P7I.css">
+</head>
+<body data-page="configuracoes">
+<div class="app" id="app-root">
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+<aside class="sidebar">
+  <div class="logo"><img class="sidebar-project-logo" src="./assets/rildonx-logo-sidebar-expanded-Bm4x5kvF.svg?v=20261017b" alt="RildonX"></div>
+  <nav class="nav">
+    <a href="index.html" class="nav-item" data-page="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Início</a>
+    <a href="mural.html" class="nav-item" data-page="feed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>Mural</a>
+    <a href="mensagens.html" class="nav-item" data-page="messenger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>Mensagens</a>
+    <div class="nav-gap"></div>
+    <a href="calendario.html" class="nav-item" data-page="calendario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendário</a>
+    <a href="tarefas.html" class="nav-item" data-page="tarefas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>Tarefas</a>
+    <a href="projetos.html" class="nav-item" data-page="projetos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projetos</a>
+    <a href="documentos.html" class="nav-item" data-page="documentos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Documentos</a>
+    <div class="nav-gap"></div>
+    <a href="meu-espaco.html" class="nav-item" data-page="meuespaco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Meu espaço</a>
+    <a href="ajuda.html" class="nav-item" data-page="ajuda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Ajuda</a>
+  </nav>
+  <div class="sidebar-spacer"></div><div class="sidebar-bottom nav"><a href="#" class="nav-item logout-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sair</a><div class="sidebar-watermark"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNzM4Ljk2OCAyMDUuNDYzIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xe2ZvbnQtZmFtaWx5OiZhcG9zO1NxdWFyZTcyMSBCVCZhcG9zOztmb250LXNpemU6NTU7ZmlsbDojMDAwMDAwfQogICAgICAuY2xzLTJ7Zm9udC1mYW1pbHk6JmFwb3M7U3F1YXJlNzIxIENuIEJUJmFwb3M7O2ZvbnQtc2l6ZToxMjtsZXR0ZXItc3BhY2luZzoxLjJ9CiAgICAgIC5jbHMtM3tmb250LWZhbWlseTomYXBvcztTcXVhcmU3MjEgQ24gQlQmYXBvczs7Zm9udC1zaXplOjE1O2xldHRlci1zcGFjaW5nOjEuNX0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDx0aXRsZT5VbnRpdGxlZC0xPC90aXRsZT4KICA8ZyBpZD0iQXNzZXRfMSIgZGF0YS1uYW1lPSJBc3NldCAxIj4KICAgIDx0ZXh0IHRyYW5zZm9ybT0ibWF0cml4KDIuNTY4IDAgMCAyLjU2OCAwIDEzOS44NzYpIiB4PSIwIiB5PSIwIiB4bWw6c3BhY2U9InByZXNlcnZlIiBjbGFzcz0iY2xzLTEiPjx0c3BhbiB4PSIwIiB5PSIwIj5Db1Byb2Nlc3M8L3RzcGFuPjx0c3BhbiB4PSIwIiB5PSIyMiIgdGV4dExlbmd0aD0iMjgzLjA0IiBsZW5ndGhBZGp1c3Q9InNwYWNpbmdBbmRHbHlwaHMiIGNsYXNzPSJjbHMtMiI+R2VzdMOjbyBkZSBQcm9jZXNzb3MgQWRtaW5pc3RyYXRpdm9zPC90c3Bhbj48dHNwYW4geD0iMjgzLjA0IiB5PSIyMiIgY2xhc3M9ImNscy0zIj4gPC90c3Bhbj48L3RleHQ+CiAgPC9nPgo8L3N2Zz4K" alt="Rildon" aria-hidden="true"></div></div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu" aria-label="Abrir menu">☰</button>
+    <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" id="global-search" placeholder="Buscar no RildonX..."></div>
+    <div class="topbar-spacer"></div><div class="topbar-right">
+      <button class="icon-btn" title="Ajuda" aria-label="Ajuda">?</button>
+      <div class="notif-wrap"><button class="icon-btn" id="notif-btn" onclick="toggleNotifications(event)" title="Notificações" aria-label="Notificações"><span aria-hidden="true">♧</span><span class="badge" hidden></span></button><div class="notif-dropdown" id="notif-dropdown"></div></div>
+      <div class="user-chip"><div class="avatar">U</div><div class="user-meta"><div class="user-name">Usuário</div><div class="user-role">Conta</div></div></div>
+    </div>
+  </header>
+  <main class="content"><section class="page-view settings-layout">
+    <div class="page-head"><div><h1>Configurações</h1><p>Personalize sua experiência e gerencie a segurança da conta.</p></div></div>
+    <section class="settings-card">
+      <h2>Aparência</h2><p>Escolha como o RildonX será exibido neste dispositivo.</p>
+      <form id="appearance-settings-form">
+        <div class="settings-field"><label for="profile-theme">Modo de exibição</label><select id="profile-theme" name="theme"><option value="light">Tema claro</option><option value="dark">Tema escuro</option><option value="system">Seguir o sistema</option></select></div>
+        <div class="settings-field settings-background-field">
+          <label for="background-pattern">Padrão de fundo da plataforma</label>
+          <select id="background-pattern" name="background"><option value="none">Padrão do sistema</option><option value="dots">Pontos sutis</option><option value="grid">Grade suave</option><option value="aurora">Degradê suave</option><option value="image">Imagem enviada</option></select>
+          <small class="settings-help">O fundo aparece atrás dos cards, do cabeçalho e do menu lateral.</small>
+        </div>
+        <div class="settings-field settings-background-upload"><label for="background-image">Enviar imagem de fundo</label><input id="background-image" name="backgroundImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><small class="settings-help">PNG, JPG, WebP ou GIF · máximo de 1 MB.</small><div class="background-image-preview" id="background-image-preview" hidden><img alt="Prévia do fundo enviado"><button type="button" id="remove-background-image" class="btn secondary">Remover imagem</button></div></div>
+        <div class="settings-actions"><button class="btn" type="submit">Salvar aparência</button></div>
+      </form>
+    </section>
+    <section class="settings-card" style="margin-top:16px;"><h2>Segurança e privacidade</h2><p>Atualize sua senha quando necessário. Evite compartilhar suas credenciais e dados pessoais em espaços públicos.</p>
+      <form id="profile-password-form" class="settings-form-grid">
+        <div class="settings-field"><label for="profile-new-password">Nova senha</label><input id="profile-new-password" name="newPassword" type="password" minlength="6" autocomplete="new-password" required></div>
+        <div class="settings-field"><label for="profile-confirm-password">Confirme a nova senha</label><input id="profile-confirm-password" name="confirmPassword" type="password" minlength="6" autocomplete="new-password" required></div>
+        <div class="settings-actions" style="grid-column:1/-1;"><button class="btn" type="submit">Atualizar senha</button></div>
+      </form>
+    </section>
+    <section class="settings-card" style="margin-top:16px;"><h2>Sessão e conta</h2><p>Encerre sua sessão para entrar com outra conta.</p><button type="button" class="btn secondary" id="switch-account-btn">Trocar de conta</button></section>
+  </section></main>
+</div>
+</div>
+<div class="toast-wrap" id="toast-wrap"></div>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/auth.js?v=20261023e"></script>
+<script src="assets/js/data-store.js?v=20261020b"></script>
+<script src="assets/js/supabase-sync.js?v=20261023c"></script>
+<script src="assets/js/app.js?v=20261023k"></script>
+<script src="assets/js/support-center.js?v=20261022g"></script>
+</body>
+</html>

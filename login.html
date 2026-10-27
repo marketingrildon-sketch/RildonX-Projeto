@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar · RildonX</title>
+<link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
+  <script type="module" crossorigin src="./assets/supabase-client-DgreBNal.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/login-C_oS1P7I.css">
+</head>
+<body class="auth-page" data-auth-page="login">
+<main class="auth-shell">
+  <section class="auth-card" aria-labelledby="login-title">
+    <div class="auth-brand"><img src="./assets/rildonx-login-logo-CGzV1jJ8.svg?v=20261019a" alt="RildonX"></div>
+    <h1 id="login-title">Entrar no RildonX</h1>
+    <p class="auth-lead">Use o e-mail cadastrado no RildonX para acessar sua conta.</p>
+    <form id="login-form">
+      <label for="login-name">E-mail</label>
+      <input id="login-name" name="login" type="text" inputmode="email" autocapitalize="none" autocomplete="username" placeholder="Digite seu e-mail" required>
+      <label for="login-password">Senha</label>
+      <div class="auth-password-wrap">
+        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Digite sua senha" required>
+        <button type="button" class="auth-password-toggle" data-password-toggle aria-controls="login-password" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+      </div>
+      <button type="button" class="auth-link" id="forgot-password">Esqueci minha senha</button>
+      <button class="btn auth-submit" type="submit">Entrar</button>
+      <p class="auth-error" id="login-error" role="alert"></p>
+      <p class="auth-status" id="login-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+</main>
+<script src="assets/js/supabase-config.js?v=20261007a"></script>
+<script src="assets/js/auth.js?v=20261023e"></script>
+</body>
+</html>

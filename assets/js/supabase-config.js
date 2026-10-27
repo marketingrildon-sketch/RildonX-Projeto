@@ -1,0 +1,2 @@
+window.SUPABASE_URL = 'https://lgzokudzdezgufddoicy.supabase.co';
+window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnem9rdWR6ZGV6Z3VmZGRvaWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2OTY1MzEsImV4cCI6MjEwNTI3MjUzMX0.yssgd9GXoVNcM5inbSVo45IPYkx3x3br_U86MLSoEUs';

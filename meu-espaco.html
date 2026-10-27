@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu espaço · RildonX</title>
+<meta name="description" content="RildonX — ecossistema digital da Rildon.">
+<link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
+  <script type="module" crossorigin src="./assets/supabase-client-DgreBNal.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/login-C_oS1P7I.css">
+  <link rel="stylesheet" crossorigin href="./assets/dashboard-page-Cp2rExTu.css">
+</head>
+<body data-page="meuespaco">
+<div class="app" id="app-root">
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+<aside class="sidebar">
+  <div class="logo"><img class="sidebar-project-logo" src="./assets/rildonx-logo-sidebar-expanded-Bm4x5kvF.svg?v=20261017b" alt="RildonX"></div>
+
+  <nav class="nav">
+    <a href="index.html" class="nav-item" data-page="inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Início
+    </a>
+    <a href="mural.html" class="nav-item" data-page="feed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
+      Mural
+    </a>
+    <a href="mensagens.html" class="nav-item" data-page="messenger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      Mensagens
+    </a>
+
+    <div class="nav-gap"></div>
+
+    <a href="calendario.html" class="nav-item" data-page="calendario">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Calendário
+    </a>
+    <a href="tarefas.html" class="nav-item" data-page="tarefas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+      Tarefas
+    </a>
+    <a href="projetos.html" class="nav-item" data-page="projetos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Projetos
+    </a>
+    <a href="documentos.html" class="nav-item" data-page="documentos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Documentos
+    </a>
+
+    <div class="nav-gap"></div>
+
+    <a href="meu-espaco.html" class="nav-item" data-page="meuespaco">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Meu espaço
+    </a>
+  </nav>
+
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-bottom nav">
+    <a href="#" class="nav-item logout-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sair
+    </a>
+    <div class="sidebar-watermark"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNzM4Ljk2OCAyMDUuNDYzIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xe2ZvbnQtZmFtaWx5OiZhcG9zO1NxdWFyZTcyMSBCVCZhcG9zOztmb250LXNpemU6NTU7ZmlsbDojMDAwMDAwfQogICAgICAuY2xzLTJ7Zm9udC1mYW1pbHk6JmFwb3M7U3F1YXJlNzIxIENuIEJUJmFwb3M7O2ZvbnQtc2l6ZToxMjtsZXR0ZXItc3BhY2luZzoxLjJ9CiAgICAgIC5jbHMtM3tmb250LWZhbWlseTomYXBvcztTcXVhcmU3MjEgQ24gQlQmYXBvczs7Zm9udC1zaXplOjE1O2xldHRlci1zcGFjaW5nOjEuNX0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDx0aXRsZT5VbnRpdGxlZC0xPC90aXRsZT4KICA8ZyBpZD0iQXNzZXRfMSIgZGF0YS1uYW1lPSJBc3NldCAxIj4KICAgIDx0ZXh0IHRyYW5zZm9ybT0ibWF0cml4KDIuNTY4IDAgMCAyLjU2OCAwIDEzOS44NzYpIiB4PSIwIiB5PSIwIiB4bWw6c3BhY2U9InByZXNlcnZlIiBjbGFzcz0iY2xzLTEiPjx0c3BhbiB4PSIwIiB5PSIwIj5Db1Byb2Nlc3M8L3RzcGFuPjx0c3BhbiB4PSIwIiB5PSIyMiIgdGV4dExlbmd0aD0iMjgzLjA0IiBsZW5ndGhBZGp1c3Q9InNwYWNpbmdBbmRHbHlwaHMiIGNsYXNzPSJjbHMtMiI+R2VzdMOjbyBkZSBQcm9jZXNzb3MgQWRtaW5pc3RyYXRpdm9zPC90c3Bhbj48dHNwYW4geD0iMjgzLjA0IiB5PSIyMiIgY2xhc3M9ImNscy0zIj4gPC90c3Bhbj48L3RleHQ+CiAgPC9nPgo8L3N2Zz4K" alt="Rildon" aria-hidden="true"></div>
+  </div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="global-search" placeholder="Buscar no RildonX...">
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <button class="icon-btn" title="Ajuda">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <div class="notif-wrap">
+        <button class="icon-btn" id="notif-btn" onclick="toggleNotifications(event)" title="Notificações">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="badge" hidden></span>
+        </button>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-dropdown-head">
+            <h3>Atividade recente</h3>
+            <span class="see-all">Ver todas</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity-row">
+              <div class="task-avatar" style="border-radius:9px;">JP</div>
+              <div class="activity-text"><b>Colaborador</b> atualizou o projeto Campanha atual <span class="activity-sub" style="display:block;">Projeto · Campanha atual</span></div>
+              <div class="activity-time">há 20 min</div>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon" style="background:var(--orange-bg);color:var(--orange);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+              <div class="activity-text"><b>Equipe</b> publicou um novo aviso <span class="activity-sub" style="display:block;">Aviso · Nova atualização</span></div>
+              <div class="activity-time">há 1h</div>
+            </div>
+            <div class="activity-row">
+              <div class="task-avatar" style="border-radius:9px;">V</div>
+              <div class="activity-text"><b>Usuário</b> foi adicionado à tarefa Revisar material da campanha <span class="activity-sub" style="display:block;">Tarefa · Campanha atual</span></div>
+              <div class="activity-time">há 2h</div>
+            </div>
+            <div class="activity-row">
+              <div class="task-avatar" style="border-radius:9px;">MF</div>
+              <div class="activity-text"><b>Colaboradora</b> comentou na tarefa Post para Instagram <span class="activity-sub" style="display:block;">Tarefa · Mídias Sociais</span></div>
+              <div class="activity-time">há 3h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="user-chip">
+        <div class="avatar">A</div>
+        <div class="user-meta">
+          <div class="user-name">Usuário</div>
+          <div class="user-role">Cargo do usuário</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </header>
+  <div class="content">
+<section class="page-view" id="page-meuespaco" style="display:block;">
+<div class="page-head">
+      <div>
+        <h1>Meu Espaço Pessoal 👋</h1>
+        <p>Equipe · Seu centro de controle para tudo que importa.</p>
+      </div>
+      <div class="dashboard-page-actions">
+      <button class="btn task-new-task-button dashboard-personalize-button" id="open-card-library-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2" fill="#38bdf8"/><rect x="13" y="3" width="8" height="8" rx="2" fill="#a78bfa"/><rect x="3" y="13" width="8" height="8" rx="2" fill="#34d399"/><rect x="13" y="13" width="8" height="8" rx="2" fill="#fbbf24"/></svg>
+        Biblioteca de Painéis
+      </button>
+      </div>
+    </div>
+
+    <div id="dashboard-config-root" class="dashboard-config-modal"></div>
+    <div id="dashboard-library-root" class="dashboard-library-modal"></div>
+    <div id="dashboard-business-root" class="dashboard-business-modal"></div>
+    <div class="dashboard-grid" id="dashboard-grid"></div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="top"><div class="stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg></div><span class="stat-label">Publicações este mês</span></div>
+        <div class="stat-value">18</div>
+        <div class="stat-sub up">+20% vs mês anterior</div>
+      </div>
+      <div class="stat-card">
+        <div class="top"><div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><span class="stat-label">Engajamento (mês)</span></div>
+        <div class="stat-value">8,6%</div>
+        <div class="stat-sub up">+1,3% vs mês anterior</div>
+      </div>
+      <div class="stat-card">
+        <div class="top"><div class="stat-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><span class="stat-label">Novos seguidores</span></div>
+        <div class="stat-value">1.254</div>
+        <div class="stat-sub up">+18% vs mês anterior</div>
+      </div>
+      <div class="stat-card">
+        <div class="top"><div class="stat-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/></svg></div><span class="stat-label">Campanhas ativas</span></div>
+        <div class="stat-value">5</div>
+        <div class="stat-sub" style="color:var(--orange);">2 finalizam este mês</div>
+      </div>
+    </div>
+
+    <div class="layout-2col">
+      <div>
+        <div class="card">
+          <div class="mini-calendar-board">
+            <div class="mcb-head">
+              <h3 style="font-size:15px;">Calendário de Conteúdo</h3>
+              <div class="mcb-nav"><button>‹</button><span>Maio de 2026</span><button>›</button><button class="btn secondary" style="padding:6px 12px;font-size:12px;margin-left:8px;">Ver calendário completo</button></div>
+            </div>
+            <div class="week-grid">
+              <div class="cell hour"></div>
+              <div class="dow-cell">SEG<br>12</div><div class="dow-cell">TER<br>13</div><div class="dow-cell today">QUA<br>14</div><div class="dow-cell">QUI<br>15</div><div class="dow-cell">SEX<br>16</div><div class="dow-cell">SÁB<br>17</div><div class="dow-cell">DOM<br>18</div>
+
+              <div class="cell hour">09:00</div>
+              <div class="cell"><div class="event-chip c-feed">Post Feed<br>Dica de produto</div></div>
+              <div class="cell"><div class="event-chip c-story">Story<br>Nova atualização</div></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"><div class="event-chip c-story">Story<br>Institucional</div></div>
+
+              <div class="cell hour">11:00</div>
+              <div class="cell"><div class="event-chip c-reels">Reels<br>Bastidores</div></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"><div class="event-chip c-reels">Reels<br>Lançamento</div></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+
+              <div class="cell hour">14:00</div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"><div class="event-chip c-feed">Post Feed<br>Mito ou verdade</div></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+
+              <div class="cell hour">16:00</div>
+              <div class="cell"><div class="event-chip c-feed">Post Feed<br>Depoimento</div></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+              <div class="cell"></div>
+            </div>
+            <div class="legend-row">
+              <div class="item"><span class="dot" style="background:var(--blue-600);"></span>Feed</div>
+              <div class="item"><span class="dot" style="background:var(--purple);"></span>Reels</div>
+              <div class="item"><span class="dot" style="background:var(--orange);"></span>Stories</div>
+              <div class="item"><span class="dot" style="background:var(--green);"></span>Campanhas</div>
+              <div class="item"><span class="dot" style="background:var(--navy-700);"></span>Institucional</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="card-head"><h3>Projetos ativos</h3><span class="see-all">Ver todos</span></div>
+          <div class="card-pad" style="padding-top:6px;">
+            <div class="simple-list">
+              <div class="simple-row"><div class="left"><svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>Campanha atual Rildon</div><div style="display:flex;align-items:center;gap:10px;width:220px;"><div class="progress-track" style="flex:1;"><div class="progress-fill purple" style="width:75%"></div></div><span class="progress-pct">75%</span></div></div>
+              <div class="simple-row"><div class="left"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M3 11l18-5v12L3 14v-3z"/></svg>Nova atualização - Maio</div><div style="display:flex;align-items:center;gap:10px;width:220px;"><div class="progress-track" style="flex:1;"><div class="progress-fill" style="width:60%"></div></div><span class="progress-pct">60%</span></div></div>
+              <div class="simple-row"><div class="left"><svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/></svg>Lançamento Linha de Iluminação</div><div style="display:flex;align-items:center;gap:10px;width:220px;"><div class="progress-track" style="flex:1;"><div class="progress-fill orange" style="width:40%"></div></div><span class="progress-pct">40%</span></div></div>
+              <div class="simple-row"><div class="left"><svg viewBox="0 0 24 24" fill="none" stroke="var(--navy-700)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>AutoAju 2026</div><div style="display:flex;align-items:center;gap:10px;width:220px;"><div class="progress-track" style="flex:1;"><div class="progress-fill orange" style="width:20%"></div></div><span class="progress-pct">20%</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+          <div class="card-head"><h3>Desempenho de conteúdo (mês)</h3><span class="see-all">Ver relatório completo</span></div>
+          <div class="card-pad linechart-wrap">
+            <div class="metrics-row">
+              <div class="metric"><span>Alcance</span><b>128.7K</b><span class="delta">+22%</span></div>
+              <div class="metric"><span>Engajamento</span><b>8,6%</b><span class="delta">+1,3%</span></div>
+              <div class="metric"><span>Cliques</span><b>3.452</b><span class="delta">+18%</span></div>
+              <div class="metric"><span>Conversões</span><b>289</b><span class="delta">+12%</span></div>
+            </div>
+            <svg viewBox="0 0 600 160" style="width:100%;height:160px;">
+              <polyline fill="none" stroke="#3d6cf0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="0,110 40,90 80,100 120,70 160,85 200,60 240,75 280,50 320,68 360,45 400,58 440,38 480,55 520,32 560,48 600,30"/>
+              <polyline fill="rgba(61,108,240,0.08)" stroke="none" points="0,110 40,90 80,100 120,70 160,85 200,60 240,75 280,50 320,68 360,45 400,58 440,38 480,55 520,32 560,48 600,30 600,160 0,160"/>
+            </svg>
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-soft);padding:0 4px;">
+              <span>01/05</span><span>05/05</span><span>10/05</span><span>15/05</span><span>20/05</span><span>25/05</span><span>30/05</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-widgets">
+        <div class="card">
+          <div class="card-head"><h3>Datas comemorativas</h3><span class="see-all">Ver todas</span></div>
+          <div class="card-pad" style="padding-top:4px;">
+            <div class="mini-row"><div class="left"><span style="width:8px;height:8px;border-radius:50%;background:var(--blue-600);display:inline-block;"></span>Dia do Eletricista <span style="color:var(--text-soft);font-weight:400;">17/05/2026</span></div><span class="mini-badge">em 3 dias</span></div>
+            <div class="mini-row"><div class="left"><span style="width:8px;height:8px;border-radius:50%;background:#d6336c;display:inline-block;"></span>Dia das Mães <span style="color:var(--text-soft);font-weight:400;">10/05/2026</span></div><span class="mini-badge">em 8 dias</span></div>
+            <div class="mini-row"><div class="left"><span style="width:8px;height:8px;border-radius:50%;background:var(--gold-500);display:inline-block;"></span>Corpus Christi <span style="color:var(--text-soft);font-weight:400;">19/06/2026</span></div><span class="mini-badge">em 48 dias</span></div>
+            <div class="mini-row"><div class="left"><span style="width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block;"></span>Dia dos Namorados <span style="color:var(--text-soft);font-weight:400;">12/06/2026</span></div><span class="mini-badge">em 41 dias</span></div>
+          </div>
+        </div>
+
+        <div class="card card-pad">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">Ações rápidas</h3>
+          <div class="quick-actions">
+            <div class="qa-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Novo post</div>
+            <div class="qa-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Novo story</div>
+            <div class="qa-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/></svg>Nova campanha</div>
+            <div class="qa-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Novo projeto</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Atividade recente</h3><span class="see-all">Ver todas</span></div>
+          <div class="card-pad" style="padding-top:4px;">
+            <div class="activity-list">
+              <div class="activity-row"><div class="task-avatar" style="border-radius:9px;">MF</div><div class="activity-text"><b>Colaboradora</b> comentou na tarefa "Aprovar posts da semana"</div><div class="activity-time">há 1h</div></div>
+              <div class="activity-row"><div class="task-avatar" style="border-radius:9px;">JP</div><div class="activity-text"><b>Colaborador</b> anexou um arquivo na tarefa "Criar roteiro de vídeo - Nova atualização"</div><div class="activity-time">há 2h</div></div>
+              <div class="activity-row"><div class="activity-icon" style="background:var(--green-bg);color:var(--green);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="activity-text"><b>Usuário</b> concluiu a tarefa "Briefing - Campanha Mês das Mães"</div><div class="activity-time">há 3h</div></div>
+              <div class="activity-row"><div class="task-avatar" style="border-radius:9px;">C</div><div class="activity-text"><b>Carla</b> atualizou o projeto "Campanha atual"</div><div class="activity-time">há 5h</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Ideias &amp; Pautas</h3><span class="see-all">Ver todas</span></div>
+          <div class="card-pad" style="padding-top:2px;">
+            <div class="idea-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 2z"/></svg>Vídeo: Como escolher o alternador certo?</div>
+            <div class="idea-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 2z"/></svg>Carrossel: Cuidados com os faróis</div>
+            <div class="idea-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 2z"/></svg>Reels: Bastidores do estoque</div>
+            <a href="#" class="add-link"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar nova ideia</a>
+          </div>
+        </div>
+      </div>
+    </div>
+</section>
+  </div>
+</div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal()">
+  <div class="modal-panel wide" id="modal-nova-tarefa" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>Nova tarefa</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nome da tarefa</label>
+        <input type="text" id="nt-nome" placeholder="Ex: Revisar material da campanha">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Prazo</label>
+          <input type="date" id="nt-prazo" value="2026-09-20">
+        </div>
+        <div class="field">
+          <label>Etapa</label>
+          <div class="choice-group" id="nt-etapa-group">
+            <button type="button" class="choice-btn selected" data-etapa="Pendente" onclick="selectChoice(this,'nt-etapa-group')">Pendente</button>
+            <button type="button" class="choice-btn" data-etapa="Em andamento" onclick="selectChoice(this,'nt-etapa-group')">Em andamento</button>
+            <button type="button" class="choice-btn" data-etapa="Concluída" onclick="selectChoice(this,'nt-etapa-group')">Concluída</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Prioridade</label>
+        <div class="choice-group" id="nt-prioridade-group">
+          <button type="button" class="choice-btn opt-alta" data-priority="Alta" onclick="selectChoice(this,'nt-prioridade-group')">Alta</button>
+          <button type="button" class="choice-btn opt-media selected" data-priority="Média" onclick="selectChoice(this,'nt-prioridade-group')">Média</button>
+          <button type="button" class="choice-btn opt-baixa" data-priority="Baixa" onclick="selectChoice(this,'nt-prioridade-group')">Baixa</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Checklist</label>
+        <div class="checklist" id="nt-checklist">
+          <div class="checklist-item">
+            <input type="text" placeholder="Item da checklist...">
+            <button type="button" class="rm-btn" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </div>
+        <button type="button" class="add-line-btn" onclick="addChecklistItem()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar item</button>
+      </div>
+      <div class="field">
+        <label>Adicionar pessoas</label>
+        <div class="people-picker" id="nt-people-group">
+          <div class="people-chip" data-name="Usuário" onclick="togglePeopleChip(this)"><div class="mini-avatar">A</div>Usuário</div>
+          <div class="people-chip" data-name="Camila" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--purple);">C</div>Camila</div>
+          <div class="people-chip" data-name="Colaborador" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--orange);">J</div>Colaborador</div>
+          <div class="people-chip" data-name="Mariana" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--green);">M</div>Mariana</div>
+          <div class="people-chip" data-name="Lucas" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--teal);">L</div>Lucas</div>
+          <div class="people-chip" data-name="Fernanda" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--red);">F</div>Fernanda</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="submitNovaTarefa()">Criar tarefa</button>
+    </div>
+  </div>
+
+  <div class="modal-panel" id="modal-setor-pessoal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Setor pessoal</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="option-list">
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Solicitar uma conversa')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+          <div><b>Solicitar uma conversa</b><span>Agende um bate-papo com o RH</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Documentos/declarações')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div><b>Documentos/declarações</b><span>Solicite documentos oficiais</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Ponto')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></div>
+          <div><b>Ponto</b><span>Ajustes e consulta de ponto</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Atestado/afastamento')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+          <div><b>Atestado/afastamento</b><span>Envie um atestado médico</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-panel" id="modal-suporte-ti" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Suporte de TI</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Categoria do chamado</label>
+        <div class="choice-group" id="ti-categoria-group">
+          <button type="button" class="choice-btn selected" data-cat="Impressora" onclick="selectChoice(this,'ti-categoria-group')">Impressora</button>
+          <button type="button" class="choice-btn" data-cat="Internet" onclick="selectChoice(this,'ti-categoria-group')">Internet</button>
+          <button type="button" class="choice-btn" data-cat="Ramal" onclick="selectChoice(this,'ti-categoria-group')">Ramal</button>
+          <button type="button" class="choice-btn" data-cat="Compra/solicitação" onclick="selectChoice(this,'ti-categoria-group')">Compra/solicitação</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Descreva o problema</label>
+        <textarea id="ti-texto" maxlength="150" placeholder="Descreva brevemente o que está acontecendo..." oninput="document.getElementById('ti-charcount').textContent = this.value.length + '/150'"></textarea>
+        <div class="charcount" id="ti-charcount">0/150</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="submitSuporteTI()">Enviar solicitação</button>
+    </div>
+  </div>
+
+  <div class="modal-panel wide" id="modal-reserva-sala" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Solicitar sala de reunião</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="reserva-form-view">
+      <div id="reserva-conflict-slot"></div>
+      <div class="field">
+        <label>Sala</label>
+        <div class="choice-group" id="rs-sala-group">
+          <button type="button" class="choice-btn selected" data-sala="Sala de Reunião" onclick="selectChoice(this,'rs-sala-group')">Sala de reunião</button>
+          <button type="button" class="choice-btn" data-sala="Auditório" onclick="selectChoice(this,'rs-sala-group')">Auditório</button>
+        </div>
+      </div>
+      <div class="field-row-3">
+        <div class="field"><label>Data</label><input type="date" id="rs-data" value="2026-09-14"></div>
+        <div class="field"><label>Início</label><input type="time" id="rs-inicio" value="14:00"></div>
+        <div class="field"><label>Fim</label><input type="time" id="rs-fim" value="15:00"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Quantidade de participantes</label><input type="number" id="rs-qtd" min="1" value="4"></div>
+        <div class="field"><label>Motivo / assunto</label><input type="text" id="rs-motivo" placeholder="Ex: Reunião com fornecedor Gauss"></div>
+      </div>
+      <div class="field">
+        <label>Participantes</label>
+        <div class="people-picker" id="rs-people-group">
+          <div class="people-chip" data-name="Usuário" onclick="togglePeopleChip(this)"><div class="mini-avatar">A</div>Usuário</div>
+          <div class="people-chip" data-name="Camila" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--purple);">C</div>Camila</div>
+          <div class="people-chip" data-name="Colaborador" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--orange);">J</div>Colaborador</div>
+          <div class="people-chip" data-name="Mariana" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--green);">M</div>Mariana</div>
+          <div class="people-chip" data-name="Lucas" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--teal);">L</div>Lucas</div>
+          <div class="people-chip" data-name="Fernanda" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--red);">F</div>Fernanda</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Recursos necessários</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-opt"><input type="checkbox" value="TV / tela">📺 TV / tela</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Notebook">💻 Notebook</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Videoconferência">🎥 Videoconferência</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Quadro">📝 Quadro</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Café / água">☕ Café / água</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Outro">🔌 Outro</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-body" id="reserva-confirm-view" style="display:none;"></div>
+    <div class="modal-foot" id="reserva-form-foot">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="submitReservaSala()">Solicitar reserva</button>
+    </div>
+  </div>
+
+  <div class="modal-panel" id="modal-politicas" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Políticas internas</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="policy-list">
+        <div class="policy-row"><div class="doc-icon pdf">PDF</div><div><b>Regulamento Interno</b><span>Atualizado em 10/01/2026 · 1.4 MB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon docx">DOC</div><div><b>Missão, Visão e Valores</b><span>Atualizado em 03/02/2025 · 320 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon pdf">PDF</div><div><b>Código de Conduta e Ética</b><span>Atualizado em 22/11/2025 · 980 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon xlsx">XLS</div><div><b>Política de Benefícios</b><span>Atualizado em 14/03/2026 · 210 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon pdf">PDF</div><div><b>Política de Segurança da Informação</b><span>Atualizado em 05/06/2026 · 640 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script src="assets/js/supabase-config.js?v=20261007a"></script>
+<script src="assets/js/auth.js?v=20261023e"></script>
+<script src="assets/js/document-upload.js?v=20261020c"></script>
+<script src="assets/js/data-store.js?v=20261020b"></script>
+<script src="assets/js/supabase-sync.js?v=20261026e"></script>
+<script src="assets/js/business-calendar-sync.js?v=20261023a"></script>
+<script src="assets/js/app.js?v=20261027e"></script>
+<script src="assets/js/support-center.js?v=20261022h"></script>
+<script src="assets/js/infrastructure-center.js?v=20261022c"></script>
+<script src="assets/js/supplier-management.js?v=20261027d"></script>
+<script src="assets/js/purchase-parts-requests.js?v=20261026c"></script>
+<script src="assets/js/hr-recruitment.js?v=20261026d"></script>
+<script src="assets/js/hr-medical-exams.js?v=20261023c"></script>
+<script src="assets/js/quality-documents.js?v=20261026e"></script>
+<script src="assets/js/dashboard-core.js?v=20261027e"></script>
+</body>
+</html>

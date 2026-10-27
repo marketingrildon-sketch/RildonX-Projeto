@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pessoas · RildonX</title>
+<meta name="description" content="Encontre e conecte-se com as pessoas da equipe RildonX.">
+<link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
+  <script type="module" crossorigin src="./assets/supabase-client-DgreBNal.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/login-C_oS1P7I.css">
+</head>
+<body data-page="pessoas">
+<div class="app" id="app-root">
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+  <aside class="sidebar">
+    <div class="logo"><img class="sidebar-project-logo" src="./assets/rildonx-logo-sidebar-expanded-Bm4x5kvF.svg?v=20261017b" alt="RildonX"></div>
+    <nav class="nav">
+      <a href="index.html" class="nav-item" data-page="inicio">Início</a>
+      <a href="mural.html" class="nav-item" data-page="feed">Mural</a>
+      <a href="mensagens.html" class="nav-item" data-page="messenger">Mensagens</a>
+      <div class="nav-gap"></div>
+      <a href="calendario.html" class="nav-item" data-page="calendario">Calendário</a>
+      <a href="tarefas.html" class="nav-item" data-page="tarefas">Tarefas</a>
+      <a href="projetos.html" class="nav-item" data-page="projetos">Projetos</a>
+      <a href="documentos.html" class="nav-item" data-page="documentos">Documentos</a>
+      <div class="nav-gap"></div>
+      <a href="meu-espaco.html" class="nav-item" data-page="meuespaco">Meu espaço</a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-bottom nav">
+      <a href="#" class="nav-item logout-item">Sair</a>
+      <div class="sidebar-watermark"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNzM4Ljk2OCAyMDUuNDYzIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xe2ZvbnQtZmFtaWx5OiZhcG9zO1NxdWFyZTcyMSBCVCZhcG9zOztmb250LXNpemU6NTU7ZmlsbDojMDAwMDAwfQogICAgICAuY2xzLTJ7Zm9udC1mYW1pbHk6JmFwb3M7U3F1YXJlNzIxIENuIEJUJmFwb3M7O2ZvbnQtc2l6ZToxMjtsZXR0ZXItc3BhY2luZzoxLjJ9CiAgICAgIC5jbHMtM3tmb250LWZhbWlseTomYXBvcztTcXVhcmU3MjEgQ24gQlQmYXBvczs7Zm9udC1zaXplOjE1O2xldHRlci1zcGFjaW5nOjEuNX0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDx0aXRsZT5VbnRpdGxlZC0xPC90aXRsZT4KICA8ZyBpZD0iQXNzZXRfMSIgZGF0YS1uYW1lPSJBc3NldCAxIj4KICAgIDx0ZXh0IHRyYW5zZm9ybT0ibWF0cml4KDIuNTY4IDAgMCAyLjU2OCAwIDEzOS44NzYpIiB4PSIwIiB5PSIwIiB4bWw6c3BhY2U9InByZXNlcnZlIiBjbGFzcz0iY2xzLTEiPjx0c3BhbiB4PSIwIiB5PSIwIj5Db1Byb2Nlc3M8L3RzcGFuPjx0c3BhbiB4PSIwIiB5PSIyMiIgdGV4dExlbmd0aD0iMjgzLjA0IiBsZW5ndGhBZGp1c3Q9InNwYWNpbmdBbmRHbHlwaHMiIGNsYXNzPSJjbHMtMiI+R2VzdMOjbyBkZSBQcm9jZXNzb3MgQWRtaW5pc3RyYXRpdm9zPC90c3Bhbj48dHNwYW4geD0iMjgzLjA0IiB5PSIyMiIgY2xhc3M9ImNscy0zIj4gPC90c3Bhbj48L3RleHQ+CiAgPC9nPgo8L3N2Zz4K" alt="Rildon" aria-hidden="true"></div>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu" aria-label="Abrir menu">☰</button>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="global-search" placeholder="Buscar no RildonX...">
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-right">
+        <div class="notif-wrap">
+          <button class="icon-btn" id="notif-btn" onclick="toggleNotifications(event)" title="Notificações" aria-label="Notificações"><span aria-hidden="true">♧</span><span class="badge" hidden></span></button>
+          <div class="notif-dropdown" id="notif-dropdown"></div>
+        </div>
+        <div class="user-chip"><div class="avatar">U</div><div class="user-meta"><div class="user-name">Usuário</div><div class="user-role">Conta</div></div></div>
+      </div>
+    </header>
+    <main class="content">
+      <section class="page-view people-directory-page">
+        <div class="page-head">
+          <div><h1>Pessoas</h1><p>Conheça a equipe e inicie uma conversa com qualquer usuário.</p></div>
+          <div class="people-directory-actions"><a class="btn secondary" href="mensagens.html">Voltar para Mensagens</a></div>
+        </div>
+        <label class="people-directory-search">
+          <span class="sr-only">Buscar pessoas</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="people-directory-search" type="search" placeholder="Buscar por nome, área ou cargo">
+        </label>
+        <div id="people-directory-list" class="people-directory-list" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="person-profile-backdrop" id="person-profile-modal" hidden>
+  <section class="person-profile-panel" role="dialog" aria-modal="true" aria-labelledby="person-profile-title">
+    <div class="document-share-head">
+      <div><h3 id="person-profile-title">Perfil da pessoa</h3><p>Informações de contato e profissionais.</p></div>
+      <button type="button" data-close-person-profile aria-label="Fechar perfil">×</button>
+    </div>
+    <div id="person-profile-content"></div>
+    <div class="person-profile-actions">
+      <button type="button" class="btn secondary" data-close-person-profile>Fechar</button>
+      <button type="button" class="btn" id="person-profile-message">Enviar mensagem</button>
+    </div>
+  </section>
+</div>
+<div class="toast-wrap" id="toast-wrap"></div>
+<script src="assets/js/supabase-config.js"></script>
+<script src="assets/js/auth.js?v=20261023e"></script>
+<script src="assets/js/data-store.js?v=20261020b"></script>
+<script src="assets/js/supabase-sync.js?v=20261023c"></script>
+<script src="assets/js/document-upload.js?v=20261020c"></script>
+<script src="assets/js/business-calendar-sync.js?v=20261023a"></script>
+<script src="assets/js/dashboard-core.js?v=20261027e"></script>
+<script src="assets/js/app.js?v=20261027e"></script>
+<script src="assets/js/support-center.js?v=20261022g"></script>
+</body>
+</html>

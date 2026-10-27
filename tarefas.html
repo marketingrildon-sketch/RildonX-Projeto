@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefas · RildonX</title>
+<meta name="description" content="RildonX — ecossistema digital da Rildon.">
+<link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
+  <script type="module" crossorigin src="./assets/supabase-client-DgreBNal.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/login-C_oS1P7I.css">
+</head>
+<body data-page="tarefas">
+<div class="app" id="app-root">
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+<aside class="sidebar">
+  <div class="logo"><img class="sidebar-project-logo" src="./assets/rildonx-logo-sidebar-expanded-Bm4x5kvF.svg?v=20261017b" alt="RildonX"></div>
+
+  <nav class="nav">
+    <a href="index.html" class="nav-item" data-page="inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Início
+    </a>
+    <a href="mural.html" class="nav-item" data-page="feed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
+      Mural
+    </a>
+    <a href="mensagens.html" class="nav-item" data-page="messenger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      Mensagens
+    </a>
+
+    <div class="nav-gap"></div>
+
+    <a href="calendario.html" class="nav-item" data-page="calendario">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Calendário
+    </a>
+    <a href="tarefas.html" class="nav-item" data-page="tarefas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+      Tarefas
+    </a>
+    <a href="projetos.html" class="nav-item" data-page="projetos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Projetos
+    </a>
+    <a href="documentos.html" class="nav-item" data-page="documentos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Documentos
+    </a>
+
+    <div class="nav-gap"></div>
+
+    <a href="meu-espaco.html" class="nav-item" data-page="meuespaco">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Meu espaço
+    </a>
+  </nav>
+
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-bottom nav">
+    <a href="#" class="nav-item logout-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sair
+    </a>
+    <div class="sidebar-watermark"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNzM4Ljk2OCAyMDUuNDYzIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgLmNscy0xe2ZvbnQtZmFtaWx5OiZhcG9zO1NxdWFyZTcyMSBCVCZhcG9zOztmb250LXNpemU6NTU7ZmlsbDojMDAwMDAwfQogICAgICAuY2xzLTJ7Zm9udC1mYW1pbHk6JmFwb3M7U3F1YXJlNzIxIENuIEJUJmFwb3M7O2ZvbnQtc2l6ZToxMjtsZXR0ZXItc3BhY2luZzoxLjJ9CiAgICAgIC5jbHMtM3tmb250LWZhbWlseTomYXBvcztTcXVhcmU3MjEgQ24gQlQmYXBvczs7Zm9udC1zaXplOjE1O2xldHRlci1zcGFjaW5nOjEuNX0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgogIDx0aXRsZT5VbnRpdGxlZC0xPC90aXRsZT4KICA8ZyBpZD0iQXNzZXRfMSIgZGF0YS1uYW1lPSJBc3NldCAxIj4KICAgIDx0ZXh0IHRyYW5zZm9ybT0ibWF0cml4KDIuNTY4IDAgMCAyLjU2OCAwIDEzOS44NzYpIiB4PSIwIiB5PSIwIiB4bWw6c3BhY2U9InByZXNlcnZlIiBjbGFzcz0iY2xzLTEiPjx0c3BhbiB4PSIwIiB5PSIwIj5Db1Byb2Nlc3M8L3RzcGFuPjx0c3BhbiB4PSIwIiB5PSIyMiIgdGV4dExlbmd0aD0iMjgzLjA0IiBsZW5ndGhBZGp1c3Q9InNwYWNpbmdBbmRHbHlwaHMiIGNsYXNzPSJjbHMtMiI+R2VzdMOjbyBkZSBQcm9jZXNzb3MgQWRtaW5pc3RyYXRpdm9zPC90c3Bhbj48dHNwYW4geD0iMjgzLjA0IiB5PSIyMiIgY2xhc3M9ImNscy0zIj4gPC90c3Bhbj48L3RleHQ+CiAgPC9nPgo8L3N2Zz4K" alt="Rildon" aria-hidden="true"></div>
+  </div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" onclick="toggleSidebar()" title="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="global-search" placeholder="Buscar tarefas...">
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <button class="icon-btn" title="Ajuda">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <div class="notif-wrap">
+        <button class="icon-btn" id="notif-btn" onclick="toggleNotifications(event)" title="Notificações">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="badge" hidden></span>
+        </button>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-dropdown-head">
+            <h3>Atividade recente</h3>
+            <span class="see-all">Ver todas</span>
+          </div>
+          <div class="activity-list">
+            <div class="activity-row">
+              <div class="task-avatar" style="border-radius:9px;">JP</div>
+              <div class="activity-text"><b>Colaborador</b> atualizou o projeto Campanha atual <span class="activity-sub" style="display:block;">Projeto · Campanha atual</span></div>
+              <div class="activity-time">há 20 min</div>
+            </div>
+            <div class="activity-row">
+              <div class="activity-icon" style="background:var(--orange-bg);color:var(--orange);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+              <div class="activity-text"><b>Equipe</b> publicou um novo aviso <span class="activity-sub" style="display:block;">Aviso · Nova atualização</span></div>
+              <div class="activity-time">há 1h</div>
+            </div>
+            <div class="activity-row">
+              <div class="task-avatar" style="border-radius:9px;">V</div>
+              <div class="activity-text"><b>Usuário</b> foi adicionado à tarefa Revisar material da campanha <span class="activity-sub" style="display:block;">Tarefa · Campanha atual</span></div>
+              <div class="activity-time">há 2h</div>
+            </div>
+            <div class="activity-row">
+              <div class="task-avatar" style="border-radius:9px;">MF</div>
+              <div class="activity-text"><b>Colaboradora</b> comentou na tarefa Post para Instagram <span class="activity-sub" style="display:block;">Tarefa · Mídias Sociais</span></div>
+              <div class="activity-time">há 3h</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="user-chip">
+        <div class="avatar">A</div>
+        <div class="user-meta">
+          <div class="user-name">Usuário</div>
+          <div class="user-role">Cargo do usuário</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </header>
+  <div class="content">
+<section class="page-view" id="page-tarefas" style="display:block;">
+<div class="page-head">
+      <div>
+        <h1><div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg></div>Tarefas</h1>
+        <p>Organize, acompanhe e conclua suas atividades.</p>
+      </div>
+    </div>
+
+    <div class="layout-2col">
+      <div>
+        <div class="tabs">
+          <span class="tab active">Minhas tarefas <span class="count" id="tab-minhas-count">5</span></span>
+          <span class="tab">Projetos <span class="count">3</span></span>
+          <span class="tab">Concluídas <span class="count">12</span></span>
+        </div>
+
+        <div class="filters-row">
+          <div class="filter-pill search-mini" style="flex:1;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input placeholder="Buscar tarefas...">
+          </div>
+          <div class="filter-pill chip-active">Todas</div>
+          <div class="filter-pill">Pendentes (5)</div>
+          <div class="filter-pill">Em andamento (2)</div>
+          <div class="filter-pill">Concluídas (12)</div>
+          <div class="filter-pill">Ordenar: Prioridade <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </div>
+
+        <div class="task-section-title">Tarefas pendentes <span class="count-chip" id="count-chip-pendentes">5</span></div>
+
+        <div id="tarefas-pendentes-list">
+        <div class="task-row">
+          <div class="stripe" style="background:var(--red);"></div>
+          <span class="checkbox"></span>
+          <div class="task-body"><h4>Criar campanha de aniversário da Rildon</h4><p>Campanha atual do mês.</p><span class="tag tag-blue">Equipe</span><span class="tag tag-orange">Campanha</span></div>
+          <div class="task-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>14/08/2026</div>
+          <span class="priority alta">Alta</span>
+          <div class="task-avatar">A</div>
+        </div>
+        <div class="task-row">
+          <div class="stripe" style="background:var(--orange);"></div>
+          <span class="checkbox"></span>
+          <div class="task-body"><h4>Revisar material da campanha Gauss</h4><p>Ajustes finais no criativo e textos.</p><span class="tag tag-blue">Equipe</span><span class="tag tag-orange">Gauss</span></div>
+          <div class="task-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>12/08/2026</div>
+          <span class="priority media">Média</span>
+          <div class="task-avatar">C</div>
+        </div>
+        <div class="task-row">
+          <div class="stripe" style="background:var(--green);"></div>
+          <span class="checkbox"></span>
+          <div class="task-body"><h4>Aprovar publicação – Instagram</h4><p>Conteúdo sobre alternador.</p><span class="tag tag-green">Redes Sociais</span><span class="tag tag-blue">Conteúdo</span></div>
+          <div class="task-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>13/08/2026</div>
+          <span class="priority baixa">Baixa</span>
+          <div class="task-avatar">M</div>
+        </div>
+        <div class="task-row">
+          <div class="stripe" style="background:var(--orange);"></div>
+          <span class="checkbox"></span>
+          <div class="task-body"><h4>Organizar documentos do setor</h4><p>Atualizar pastas e permissões.</p><span class="tag tag-purple">Administrativo</span><span class="tag tag-blue">Documentos</span></div>
+          <div class="task-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>14/08/2026</div>
+          <span class="priority media">Média</span>
+          <div class="task-avatar">F</div>
+        </div>
+        <div class="task-row">
+          <div class="stripe" style="background:var(--green);"></div>
+          <span class="checkbox"></span>
+          <div class="task-body"><h4>Participar da reunião comercial</h4><p>Alinhar metas e ações.</p><span class="tag tag-green">Comercial</span><span class="tag tag-blue">Reunião</span></div>
+          <div class="task-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>12/08/2026</div>
+          <span class="priority baixa">Baixa</span>
+          <div class="task-avatar">J</div>
+        </div>
+        </div>
+
+        <div class="task-section-title">Tarefas em andamento <span class="count-chip blue" id="count-chip-andamento">2</span></div>
+        <div id="tarefas-andamento-list">
+        <div class="task-row">
+          <div class="stripe" style="background:var(--blue-600);"></div>
+          <span class="checkbox" style="background:var(--blue-600);border-color:var(--blue-600);"></span>
+          <div class="task-body"><h4>Produzir vídeo institucional (35 anos)</h4><p>Gravar e editar conteúdo.</p><span class="tag tag-blue">Equipe</span><span class="tag tag-orange">Vídeo</span></div>
+          <div class="task-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>16/08/2026</div>
+          <span class="tag" style="background:var(--blue-100);color:var(--blue-600);">Em andamento</span>
+          <div class="task-avatar">A</div>
+        </div>
+        <div class="task-row">
+          <div class="stripe" style="background:var(--blue-600);"></div>
+          <span class="checkbox" style="background:var(--blue-600);border-color:var(--blue-600);"></span>
+          <div class="task-body"><h4>Levantar necessidades do setor</h4><p>Reunião com a equipe técnica.</p><span class="tag tag-blue">Projetos</span><span class="tag tag-green">Planejamento</span></div>
+          <div class="task-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>15/08/2026</div>
+          <span class="tag" style="background:var(--blue-100);color:var(--blue-600);">Em andamento</span>
+          <div class="task-avatar">M</div>
+        </div>
+        </div>
+      </div>
+
+      <div class="side-widgets">
+        <div class="card card-pad">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <h3 style="font-size:15px;font-weight:700;">Minha produtividade</h3>
+            <span class="see-all">Ver relatório</span>
+          </div>
+          <div class="donut-wrap" style="flex-direction:column;text-align:center;padding-bottom:6px;">
+            <div class="donut" style="background:conic-gradient(var(--green) 0 80%, var(--border-soft) 80% 100%);margin:0 auto;">
+              <div class="donut-hole"><b>80%</b></div>
+            </div>
+            <div style="margin-top:10px;">
+              <b style="font-size:13px;">5 de 7 tarefas</b>
+              <p style="font-size:12px;color:var(--text-muted);margin:2px 0 0;">concluídas esta semana</p>
+              <p style="font-size:11.5px;color:var(--text-soft);margin:2px 0 0;">Meta: 70%</p>
+              <p style="font-size:11.5px;color:var(--green);font-weight:700;margin:2px 0 0;">↑ 12% vs. semana anterior</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mini-cal">
+          <div class="mini-cal-head"><button>‹</button><span>Agosto 2026</span><button>›</button></div>
+          <div class="cal-grid">
+            <div class="dow">D</div><div class="dow">S</div><div class="dow">T</div><div class="dow">Q</div><div class="dow">Q</div><div class="dow">S</div><div class="dow">S</div>
+            <div class="day muted">26</div><div class="day muted">27</div><div class="day muted">28</div><div class="day muted">29</div><div class="day muted">30</div><div class="day muted">31</div><div class="day">1</div>
+            <div class="day">2</div><div class="day">3</div><div class="day">4</div><div class="day">5</div><div class="day">6</div><div class="day">7</div><div class="day">8</div>
+            <div class="day">9</div><div class="day">10</div><div class="day">11</div><div class="day today">12</div><div class="day">13</div><div class="day has-event">14</div><div class="day">15</div>
+            <div class="day">16</div><div class="day">17</div><div class="day">18</div><div class="day">19</div><div class="day">20</div><div class="day">21</div><div class="day">22</div>
+            <div class="day">23</div><div class="day">24</div><div class="day">25</div><div class="day">26</div><div class="day">27</div><div class="day">28</div><div class="day">29</div>
+            <div class="day">30</div><div class="day">31</div><div class="day muted">1</div><div class="day muted">2</div><div class="day muted">3</div><div class="day muted">4</div><div class="day muted">5</div>
+          </div>
+          <div class="cal-event">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <div><b style="font-size:12.5px;">Reunião Equipe</b><div style="color:var(--text-muted);font-size:11.5px;">14:00 – Sala de Reuniões</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Projetos</h3><span class="see-all">Ver todos</span></div>
+          <div class="card-pad" style="padding-top:4px;">
+            <div class="mini-list">
+              <div class="mini-row"><div class="left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Campanha atual Rildon</div><div class="mini-badge">4 tarefas</div></div>
+              <div class="mini-row"><div class="left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Programa Mecânico Parceiro</div><div class="mini-badge">2 tarefas</div></div>
+              <div class="mini-row"><div class="left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Campanha Gauss</div><div class="mini-badge">6 tarefas</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</section>
+  </div>
+</div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal()">
+  <div class="modal-panel wide" id="modal-nova-tarefa" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>Nova tarefa</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nome da tarefa</label>
+        <input type="text" id="nt-nome" placeholder="Ex: Revisar material da campanha">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Início</label>
+          <input type="date" id="nt-inicio">
+        </div>
+        <div class="field">
+          <label>Prazo</label>
+          <input type="date" id="nt-prazo">
+        </div>
+      </div>
+      <div class="field">
+        <label>Descrição</label>
+        <textarea id="nt-descricao" rows="3" placeholder="Contexto e objetivo da tarefa"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Etapa</label>
+          <div class="choice-group" id="nt-etapa-group">
+            <button type="button" class="choice-btn selected" data-etapa="Pendente" onclick="selectChoice(this,'nt-etapa-group')">Pendente</button>
+            <button type="button" class="choice-btn" data-etapa="Em andamento" onclick="selectChoice(this,'nt-etapa-group')">Em andamento</button>
+            <button type="button" class="choice-btn" data-etapa="Concluída" onclick="selectChoice(this,'nt-etapa-group')">Concluída</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Projeto</label>
+          <select id="nt-projeto">
+            <option value="">Sem projeto</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Prioridade</label>
+        <div class="choice-group" id="nt-prioridade-group">
+          <button type="button" class="choice-btn opt-alta" data-priority="Alta" onclick="selectChoice(this,'nt-prioridade-group')">Alta</button>
+          <button type="button" class="choice-btn opt-media selected" data-priority="Média" onclick="selectChoice(this,'nt-prioridade-group')">Média</button>
+          <button type="button" class="choice-btn opt-baixa" data-priority="Baixa" onclick="selectChoice(this,'nt-prioridade-group')">Baixa</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Checklist</label>
+        <div class="checklist" id="nt-checklist">
+          <div class="checklist-item">
+            <input type="text" placeholder="Item da checklist...">
+            <button type="button" class="rm-btn" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+        </div>
+        <button type="button" class="add-line-btn" onclick="addChecklistItem()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar item</button>
+      </div>
+      <div class="field">
+        <label>Adicionar pessoas</label>
+        <select id="nt-colaboradores" multiple hidden aria-hidden="true" tabindex="-1"></select>
+        <div id="nt-colaboradores-picker"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="submitNovaTarefa()">Criar tarefa</button>
+    </div>
+  </div>
+
+  <div class="modal-panel" id="modal-setor-pessoal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Setor pessoal</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="option-list">
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Solicitar uma conversa')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+          <div><b>Solicitar uma conversa</b><span>Agende um bate-papo com o RH</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Documentos/declarações')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div><b>Documentos/declarações</b><span>Solicite documentos oficiais</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Ponto')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></div>
+          <div><b>Ponto</b><span>Ajustes e consulta de ponto</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+        <button type="button" class="option-btn" onclick="submitSetorPessoal('Atestado/afastamento')">
+          <div class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+          <div><b>Atestado/afastamento</b><span>Envie um atestado médico</span></div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-panel" id="modal-suporte-ti" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Suporte de TI</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Categoria do chamado</label>
+        <div class="choice-group" id="ti-categoria-group">
+          <button type="button" class="choice-btn selected" data-cat="Impressora" onclick="selectChoice(this,'ti-categoria-group')">Impressora</button>
+          <button type="button" class="choice-btn" data-cat="Internet" onclick="selectChoice(this,'ti-categoria-group')">Internet</button>
+          <button type="button" class="choice-btn" data-cat="Ramal" onclick="selectChoice(this,'ti-categoria-group')">Ramal</button>
+          <button type="button" class="choice-btn" data-cat="Compra/solicitação" onclick="selectChoice(this,'ti-categoria-group')">Compra/solicitação</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Descreva o problema</label>
+        <textarea id="ti-texto" maxlength="150" placeholder="Descreva brevemente o que está acontecendo..." oninput="document.getElementById('ti-charcount').textContent = this.value.length + '/150'"></textarea>
+        <div class="charcount" id="ti-charcount">0/150</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="submitSuporteTI()">Enviar solicitação</button>
+    </div>
+  </div>
+
+  <div class="modal-panel wide" id="modal-reserva-sala" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Solicitar sala de reunião</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="reserva-form-view">
+      <div id="reserva-conflict-slot"></div>
+      <div class="field">
+        <label>Sala</label>
+        <div class="choice-group" id="rs-sala-group">
+          <button type="button" class="choice-btn selected" data-sala="Sala de Reunião" onclick="selectChoice(this,'rs-sala-group')">Sala de reunião</button>
+          <button type="button" class="choice-btn" data-sala="Auditório" onclick="selectChoice(this,'rs-sala-group')">Auditório</button>
+        </div>
+      </div>
+      <div class="field-row-3">
+        <div class="field"><label>Data</label><input type="date" id="rs-data" value="2026-09-14"></div>
+        <div class="field"><label>Início</label><input type="time" id="rs-inicio" value="14:00"></div>
+        <div class="field"><label>Fim</label><input type="time" id="rs-fim" value="15:00"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Quantidade de participantes</label><input type="number" id="rs-qtd" min="1" value="4"></div>
+        <div class="field"><label>Motivo / assunto</label><input type="text" id="rs-motivo" placeholder="Ex: Reunião com fornecedor Gauss"></div>
+      </div>
+      <div class="field">
+        <label>Participantes</label>
+        <div class="people-picker" id="rs-people-group">
+          <div class="people-chip" data-name="Usuário" onclick="togglePeopleChip(this)"><div class="mini-avatar">A</div>Usuário</div>
+          <div class="people-chip" data-name="Camila" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--purple);">C</div>Camila</div>
+          <div class="people-chip" data-name="Colaborador" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--orange);">J</div>Colaborador</div>
+          <div class="people-chip" data-name="Mariana" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--green);">M</div>Mariana</div>
+          <div class="people-chip" data-name="Lucas" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--teal);">L</div>Lucas</div>
+          <div class="people-chip" data-name="Fernanda" onclick="togglePeopleChip(this)"><div class="mini-avatar" style="background:var(--red);">F</div>Fernanda</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Recursos necessários</label>
+        <div class="checkbox-grid">
+          <label class="checkbox-opt"><input type="checkbox" value="TV / tela">📺 TV / tela</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Notebook">💻 Notebook</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Videoconferência">🎥 Videoconferência</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Quadro">📝 Quadro</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Café / água">☕ Café / água</label>
+          <label class="checkbox-opt"><input type="checkbox" value="Outro">🔌 Outro</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-body" id="reserva-confirm-view" style="display:none;"></div>
+    <div class="modal-foot" id="reserva-form-foot">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="submitReservaSala()">Solicitar reserva</button>
+    </div>
+  </div>
+
+  <div class="modal-panel" id="modal-politicas" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Políticas internas</h3>
+      <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="policy-list">
+        <div class="policy-row"><div class="doc-icon pdf">PDF</div><div><b>Regulamento Interno</b><span>Atualizado em 10/01/2026 · 1.4 MB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon docx">DOC</div><div><b>Missão, Visão e Valores</b><span>Atualizado em 03/02/2025 · 320 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon pdf">PDF</div><div><b>Código de Conduta e Ética</b><span>Atualizado em 22/11/2025 · 980 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon xlsx">XLS</div><div><b>Política de Benefícios</b><span>Atualizado em 14/03/2026 · 210 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+        <div class="policy-row"><div class="doc-icon pdf">PDF</div><div><b>Política de Segurança da Informação</b><span>Atualizado em 05/06/2026 · 640 KB</span></div><button class="dl-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script src="assets/js/supabase-config.js?v=20261007a"></script>
+<script src="assets/js/auth.js?v=20261023e"></script>
+<script src="assets/js/data-store.js?v=20261020b"></script>
+<script src="assets/js/supabase-sync.js?v=20261023c"></script>
+<script src="assets/js/document-upload.js?v=20261020c"></script>
+<script src="assets/js/app.js?v=20261023k"></script>
+<script src="assets/js/support-center.js?v=20261022g"></script>
+<script src="assets/js/task-page.js?v=20261020n"></script>
+</body>
+</html>
