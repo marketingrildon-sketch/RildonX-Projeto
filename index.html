@@ -6,6 +6,25 @@
 <title>Início · RildonX</title>
 <meta name="description" content="RildonX — ecossistema digital da Rildon.">
 <link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
+<script>
+(function () {
+  try {
+    var hasSession = Object.keys(localStorage).some(function (key) {
+      if (!/^sb-.+-auth-token$/.test(key)) return false;
+      try {
+        var session = JSON.parse(localStorage.getItem(key));
+        return Boolean(session && session.access_token &&
+          (!session.expires_at || session.expires_at * 1000 > Date.now()));
+      } catch (error) {
+        return false;
+      }
+    });
+    if (!hasSession) window.location.replace('./login.html');
+  } catch (error) {
+    window.location.replace('./login.html');
+  }
+})();
+</script>
   <script type="module" crossorigin src="./assets/supabase-client-DgreBNal.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/login-C_oS1P7I.css">
   <link rel="stylesheet" crossorigin href="./assets/dashboard-page-Cp2rExTu.css">
