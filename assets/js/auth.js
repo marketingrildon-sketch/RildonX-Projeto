@@ -269,6 +269,7 @@
       showServiceUnavailable();
       return false;
     }
+    document.body.dataset.authReady = 'true';
     if (sessionStorage.getItem('rildonx_force_password_change') === 'true') createPasswordPanel();
     return true;
   }
