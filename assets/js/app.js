@@ -1060,6 +1060,11 @@ function getPeoplePurchasePanelIds() {
   });
 }
 
+function isStalePeoplePanelError(error) {
+  return /enabled panel list contains an invalid panel identifier|lista de pain[eé]is.*(?:mudou|desatualizad|op[cç][aã]o)|panel list changed/i
+    .test(error && error.message || '');
+}
+
 function profileInitialPanelPermissions(profile) {
   var catalog = (window.RildonXPanelCatalog || []).filter(function(panel) {
     return panel.sector !== 'Financeiro / Fiscal' && panel.sector !== 'Logística';
@@ -1188,12 +1193,12 @@ async function createPeopleUser(form) {
       ? responseError.error
       : error && error.message || '';
   }
-  if (result.error && /lista de painéis mudou|panel list changed/i.test(await responseErrorMessage(result.error))) {
+  if (result.error && /lista de pain[eé]is.*(?:mudou|desatualizad|op[cç][aã]o)|panel list changed/i.test(await responseErrorMessage(result.error))) {
     console.warn('O catálogo de painéis divergiu durante o cadastro; sincronizando e tentando novamente.');
     await syncPeoplePanelCatalog();
     result = await window.supabaseClient.functions.invoke('invite-rildonx-user', { body: body });
-    if (result.error && /lista de painéis mudou|panel list changed/i.test(await responseErrorMessage(result.error))) {
-      throw new Error('O catálogo de painéis do Supabase continua desatualizado. Reaplique as migrações supabase-employee-control.sql e supabase-purchase-management-panels.sql, depois tente novamente.');
+    if (result.error && /lista de pain[eé]is.*(?:mudou|desatualizad|op[cç][aã]o)|panel list changed/i.test(await responseErrorMessage(result.error))) {
+      throw new Error('O catálogo de painéis do Supabase continua desatualizado. Aplique docs/supabase-panel-catalog-sync.sql no Supabase e tente novamente.');
     }
   }
   if (result.error) {
@@ -1405,6 +1410,16 @@ async function saveAdminPersonProfile(form) {
       p_profile_id: profileId,
       p_profile: values
     });
+    if (result.error && isStalePeoplePanelError(result.error)) {
+      await syncPeoplePanelCatalog();
+      result = await window.supabaseClient.rpc('admin_update_rildonx_profile', {
+        p_profile_id: profileId,
+        p_profile: values
+      });
+      if (result.error && isStalePeoplePanelError(result.error)) {
+        throw new Error('O catálogo de painéis do Supabase continua desatualizado. Aplique docs/supabase-panel-catalog-sync.sql e tente novamente.');
+      }
+    }
     if (result.error) throw result.error;
   } catch (error) {
     if (uploadedAvatar && window.RildonXDocumentUpload && window.RildonXDocumentUpload.removeProfileImage) {
@@ -4480,6 +4495,16 @@ document.addEventListener('DOMContentLoaded', function () {
   if (peopleSearch) {
     peopleSearch.addEventListener('input', renderPeopleDirectory);
     renderPeopleDirectory();
+  }
+  if (document.body.dataset.page === 'pessoas' &&
+      window.RildonXSync && typeof window.RildonXSync.ready === 'function') {
+    window.RildonXSync.ready().then(function() {
+      if (!currentUserCanManagePeople()) return;
+      return syncPeoplePanelCatalog();
+    }).catch(function(error) {
+      console.error('Não foi possível sincronizar o catálogo de painéis ao abrir Controle de Funcionários:', error);
+      showToast('Não foi possível atualizar a lista de painéis. Recarregue a página ou tente novamente.');
+    });
   }
   if (window.supabaseClient && window.supabaseClient.auth) {
     window.supabaseClient.auth.getUser().then(function (result) {
