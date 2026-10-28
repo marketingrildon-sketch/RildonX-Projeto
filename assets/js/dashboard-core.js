@@ -1163,6 +1163,64 @@
     let records = (data.businessCardRecords || []).filter(function (record) {
       return record && record.moduleKey === module.id && !record.archived;
     });
+    if (module.id === 'sales-time-off') {
+      const nextSaturday = new Date();
+      nextSaturday.setHours(0, 0, 0, 0);
+      nextSaturday.setDate(nextSaturday.getDate() + (6 - nextSaturday.getDay() + 7) % 7);
+      const saturdayKey = [
+        nextSaturday.getFullYear(),
+        String(nextSaturday.getMonth() + 1).padStart(2, '0'),
+        String(nextSaturday.getDate()).padStart(2, '0')
+      ].join('-');
+      const saturdayLabel = nextSaturday.toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long'
+      });
+      const schedule = records.filter(function (record) {
+        return record.data && record.data.month === saturdayKey.slice(0, 7) &&
+          Array.isArray(record.data.assignments);
+      }).sort(function (first, second) {
+        return new Date(second.updatedAt || second.createdAt || 0) -
+          new Date(first.updatedAt || first.createdAt || 0);
+      })[0];
+      const assignments = schedule ? schedule.data.assignments : [];
+      const people = assignments.filter(function (assignment) {
+        return assignment && Array.isArray(assignment.dates) &&
+          assignment.dates.indexOf(saturdayKey) !== -1;
+      }).map(function (assignment) {
+        const profile = (data.profiles || []).find(function (item) {
+          return item && String(item.id) === String(assignment.userId);
+        });
+        return {
+          userId: String(assignment.userId || ''),
+          name: assignment.name || profile &&
+            (profile.displayName || profile.nickname || profile.name) || 'Colaborador'
+        };
+      }).filter(function (person, index, list) {
+        return list.findIndex(function (candidate) {
+          return person.userId ? candidate.userId === person.userId : candidate.name === person.name;
+        }) === index;
+      }).sort(function (first, second) {
+        return first.name.localeCompare(second.name, 'pt-BR');
+      });
+      return {
+        count: people.length,
+        summary: people.length + ' pessoa(s) de folga em ' + saturdayLabel,
+        items: people.map(function (person) {
+          return {
+            title: person.name,
+            meta: 'Folga no sábado, ' + saturdayLabel,
+            href: 'meu-espaco.html?businessCard=' + encodeURIComponent(module.id)
+          };
+        }),
+        metrics: [],
+        chart: [],
+        empty: data.businessCardRecordsLoadError || (schedule
+          ? 'Ninguém está de folga no próximo sábado (' + saturdayLabel + ').'
+          : 'Nenhuma escala confirmada para o próximo sábado (' + saturdayLabel + ').')
+      };
+    }
     if (card.filters.show === 'pendentes') records = records.filter(function (record) {
       return !/conclu|resolvido|fechado|publicado|ganho|pago|recebido|entregue|ativo/i.test(String(record.status || ''));
     });
@@ -1637,8 +1695,9 @@
     const module = catalog.moduleType
       ? BUSINESS_CARD_MODULES.find(function (item) { return item.id === card.type; })
       : null;
-    const layoutQuantity = card.size === 'ratio-double-landscape' ? 6 :
-      card.size === 'ratio-landscape' ? 2 : 3;
+    const layoutQuantity = card.type === 'sales-time-off' ? 20 :
+      card.size === 'ratio-double-landscape' ? 6 :
+        card.size === 'ratio-landscape' ? 2 : 3;
     const layoutCard = Object.assign({}, card, {
       filters: Object.assign({}, card.filters, {
         quantity: Math.min(card.filters.quantity, layoutQuantity)

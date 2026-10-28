@@ -73,6 +73,8 @@
 .dashboard-card-body[data-density="compact"]{padding-top:5px;padding-bottom:8px}
 .dashboard-card-body[data-density="spacious"]{padding-top:14px;padding-bottom:21px}
 .dashboard-data-list{display:flex;min-height:0;flex:1 1 auto;flex-direction:column;overflow:hidden}
+.dashboard-card--sales-time-off .dashboard-data-list{overflow-y:auto}
+.dashboard-card--sales-time-off .dashboard-data-row{flex:0 0 auto}
 .dashboard-data-row{display:flex;align-items:center;justify-content:space-between;gap:11px;min-width:0;padding:12px 2px;border-bottom:1px solid var(--border-soft);border-radius:8px;color:var(--text);text-decoration:none;transition:background .15s ease}
 .dashboard-card-body[data-density="compact"] .dashboard-data-row{padding:7px 2px}
 .dashboard-card-body[data-density="spacious"] .dashboard-data-row{padding:15px 2px}
