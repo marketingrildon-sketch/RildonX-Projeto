@@ -328,6 +328,34 @@
       }).join('') + '</tbody></table></div>';
   }
 
+  function renderMonthlyRoster(dates, assignments, hasSchedule) {
+    var assignmentsByDate = new Map();
+    dates.forEach(function (date) { assignmentsByDate.set(date, []); });
+    assignments.forEach(function (assignment) {
+      if (!assignment || !Array.isArray(assignment.dates)) return;
+      assignment.dates.forEach(function (date) {
+        var people = assignmentsByDate.get(date);
+        if (people) people.push(assignment.name || 'Colaborador');
+      });
+    });
+    var scheduleStatus = hasSchedule
+      ? 'Lista da escala confirmada para este mês.'
+      : 'A lista estará disponível quando a escala do mês for confirmada.';
+    return '<section class="sales-time-off-section sales-time-off-monthly-roster" aria-labelledby="sales-time-off-roster-title">' +
+      '<div class="sales-time-off-section-heading"><div><h3 id="sales-time-off-roster-title">Folgas por sábado</h3>' +
+      '<p>' + scheduleStatus + '</p></div><span>' + dates.length + ' sábado(s)</span></div>' +
+      '<div class="sales-time-off-saturday-grid">' + dates.map(function (date) {
+        var people = (assignmentsByDate.get(date) || []).slice().sort(function (first, second) {
+          return first.localeCompare(second, 'pt-BR');
+        });
+        return '<article class="sales-time-off-saturday-card"><div class="sales-time-off-saturday-heading">' +
+          '<h4>' + escapeHtml(dateLabel(date)) + '</h4><span>' + people.length + ' pessoa(s)</span></div>' +
+          (people.length
+            ? '<ul>' + people.map(function (name) { return '<li>' + escapeHtml(name) + '</li>'; }).join('') + '</ul>'
+            : '<p class="sales-time-off-saturday-empty">Ninguém escalado</p>') + '</article>';
+      }).join('') + '</div></section>';
+  }
+
   function renderExceptions(exceptions) {
     if (!exceptions.length) return '<p class="sales-time-off-muted">Nenhuma exceção autorizada neste mês.</p>';
     return '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table"><thead><tr>' +
@@ -479,7 +507,7 @@
     controller.target.innerHTML = '<div class="dashboard-business-panel dashboard-business-panel--sales-time-off" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
       '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="green">↻</div>' +
       '<div><span class="dashboard-library-eyebrow">Comercial · Escala compartilhada</span><h2 id="dashboard-business-title">Escala de Folga</h2>' +
-      '<p>Cada usuário deverá possuir duas folgas aos sábados por mês. O gestor define as datas e os limites de cada sábado; o sistema sugere um rodízio equilibrado considerando o histórico.</p></div>' +
+      '<p>Cada usuário deverá possuir duas folgas aos sábados por mês. O gestor define as datas e o sistema sugere um rodízio equilibrado considerando o histórico.</p></div>' +
       '<div class="dashboard-business-header-actions">' +
       (controller.fromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
       '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
@@ -487,6 +515,7 @@
       escapeHtml(controller.month) + '"></label><label><span>Consultar mês confirmado</span><select data-schedule-history-month><option value="">Selecionar mês</option>' +
       historyOptions + '</select></label><div><b>' + employees.length + '</b><small>usuário(s) ativo(s) cadastrado(s)</small></div>' +
       '<div><b>' + (assignments || []).length + '</b><small>folga(s) planejada(s)</small></div></div>' +
+      renderMonthlyRoster(dates, assignments, assignments.length > 0) +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Distribuição automática</h3>' +
       '<p>Não há limite fixo de pessoas por sábado. Ao gerar a prévia, o sistema distribui as folgas entre as datas disponíveis de forma equilibrada.</p></div></div></section>' +
       '<section class="sales-time-off-section">' + rosterMarkup + previewMarkup + '</section>' +
@@ -507,7 +536,7 @@
         '>Exportar CSV</button><span>' + historyCount + ' registro(s) histórico(s)</span></div></div>' +
       renderAssignments(assignments || [], new Set()) + '</section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Exceções autorizadas</h3>' +
-      '<p>As exceções são registradas separadamente e consomem o limite de capacidade do sábado.</p></div></div>' +
+      '<p>As exceções autorizadas são registradas separadamente da distribuição mensal planejada.</p></div></div>' +
       exceptionForm + renderExceptions(exceptions) + '</section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Histórico de reajustes</h3>' +
       '<p>Registro das escalas confirmadas e exceções autorizadas.</p></div></div>' + renderHistory(record) + '</section></div>';
