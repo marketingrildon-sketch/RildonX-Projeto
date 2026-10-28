@@ -2354,7 +2354,6 @@
     let hrTrainingView = 'dashboard';
     let hrTrainingFilters = { month: '', course: '', employee: '' };
     let marketingContentView = 'kanban';
-    let marketingContentFilters = { channel: '', campaign: '', owner: '', format: '', theme: '', status: '', from: '', to: '' };
     let marketingCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     let marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
     let marketingComparisonMonths = { primary: '', secondary: '' };
@@ -3416,7 +3415,7 @@
         }).join('') : '<p class="hr-training-empty">Nenhuma turma cadastrada.</p>') + '</div>';
     }
 
-    const MARKETING_CONTENT_STAGES = ['Banco de ideias', 'Em produção', 'Aguardando aprovação', 'Aprovado', 'Agendado', 'Publicado', 'Arquivo'];
+    const MARKETING_CONTENT_STAGES = ['Banco de ideias', 'Em produção', 'Aguardando aprovação', 'Aprovado', 'Agendado', 'Publicado'];
 
     function marketingDateLabel(value, options) {
       const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -3436,18 +3435,7 @@
       return filteredBusinessRecords(
         BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }),
         search
-      ).filter(function (record) {
-        const data = record.data || {};
-        const date = String(data.publishAt || '');
-        return (!marketingContentFilters.channel || data.channel === marketingContentFilters.channel) &&
-          (!marketingContentFilters.campaign || data.campaign === marketingContentFilters.campaign) &&
-          (!marketingContentFilters.owner || data.owner === marketingContentFilters.owner) &&
-          (!marketingContentFilters.format || data.format === marketingContentFilters.format) &&
-          (!marketingContentFilters.theme || data.theme === marketingContentFilters.theme) &&
-          (!marketingContentFilters.status || record.status === marketingContentFilters.status) &&
-          (!marketingContentFilters.from || date && date >= marketingContentFilters.from) &&
-          (!marketingContentFilters.to || date && date <= marketingContentFilters.to);
-      });
+      );
     }
 
     function marketingContentCardMarkup(record) {
@@ -3522,7 +3510,7 @@
           '</small></div><span>' + escapeHtml(record.status || '') + '</span><span>' +
           escapeHtml(data.publishAt ? marketingDateLabel(data.publishAt, { day: '2-digit', month: 'short', year: 'numeric' }) : 'Sem data') +
           '</span><button type="button" data-business-edit="' + escapeHtml(record.id) + '">Abrir</button></article>';
-      }).join('') : '<div class="dashboard-business-empty"><b>Nenhum conteúdo encontrado</b><small>Ajuste os filtros ou crie uma nova ideia.</small></div>') + '</div>';
+      }).join('') : '<div class="dashboard-business-empty"><b>Nenhum conteúdo cadastrado</b><small>Crie um novo conteúdo para começar.</small></div>') + '</div>';
     }
 
     function marketingInsightRecords() {
@@ -4296,41 +4284,15 @@
             : '') + '</select></label>'
         : '<label class="dashboard-business-filter"><span>Exibição</span><select data-business-filter aria-label="Filtrar registros"><option value="">Todos</option><option value="__favorites"' +
           (businessFilterValue === '__favorites' ? ' selected' : '') + '>Favoritos</option></select></label>';
-      const marketingRecords = (dashboardState.businessCardRecords || []).filter(function (record) {
-        return record && record.moduleKey === 'marketing-content-calendar' && !record.archived;
-      });
-      function marketingFilterOptions(key, label) {
-        const options = Array.from(new Set(marketingRecords.map(function (record) {
-          return String(record.data && record.data[key] || '').trim();
-        }).filter(Boolean))).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
-        return '<label class="dashboard-business-filter"><span>' + label + '</span><select data-marketing-filter="' + key + '">' +
-          '<option value="">Todos</option>' + options.map(function (option) {
-            return '<option value="' + escapeHtml(option) + '"' +
-              (marketingContentFilters[key] === option ? ' selected' : '') + '>' + escapeHtml(option) + '</option>';
-          }).join('') + '</select></label>';
-      }
-      const marketingStatusOptions = '<label class="dashboard-business-filter"><span>Status</span><select data-marketing-filter="status"><option value="">Todas</option>' +
-        MARKETING_CONTENT_STAGES.map(function (status) {
-          return '<option value="' + escapeHtml(status) + '"' +
-            (marketingContentFilters.status === status ? ' selected' : '') + '>' + escapeHtml(status) + '</option>';
-        }).join('') + '</select></label>';
-      const marketingToolbar = '<div class="dashboard-business-toolbar marketing-content-toolbar"><label><span>' + iconMarkup('activity') +
-        '</span><input type="search" data-business-search value="' + escapeHtml(businessSearch) + '" placeholder="Buscar conteúdos, campanhas ou referências"></label>' +
-        marketingFilterOptions('channel', 'Canal') + marketingFilterOptions('campaign', 'Campanha') +
-        marketingFilterOptions('owner', 'Responsável') + marketingFilterOptions('format', 'Formato') +
-        marketingFilterOptions('theme', 'Tema') + marketingStatusOptions +
-        '<label class="dashboard-business-filter"><span>De</span><input type="date" data-marketing-date="from" value="' + escapeHtml(marketingContentFilters.from) + '"></label>' +
-        '<label class="dashboard-business-filter"><span>Até</span><input type="date" data-marketing-date="to" value="' + escapeHtml(marketingContentFilters.to) + '"></label>' +
-        '<div class="marketing-content-view-switch" role="group" aria-label="Visualização">' +
+      const marketingToolbar = '<div class="dashboard-business-toolbar marketing-content-toolbar">' +
+        '<button type="button" class="btn" data-business-create' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') +
+        '>+ Novo conteúdo</button><div class="marketing-content-view-switch" role="group" aria-label="Visualização">' +
         ['kanban', 'calendar', 'list'].map(function (view) {
           const label = { kanban: 'Kanban', calendar: 'Calendário', list: 'Lista' }[view];
           return '<button type="button" data-marketing-view="' + view + '" class="' +
-            (marketingContentView === view ? 'is-active' : '') + '">' + label + '</button>';
-        }).join('') + '</div>' +
-        '<label class="dashboard-business-archived"><input type="checkbox" data-business-archived' + (includeArchived ? ' checked' : '') + '> Mostrar arquivados</label>' +
-        '<button type="button" class="btn secondary" data-business-export>Exportar CSV</button>' +
-        '<button type="button" class="btn" data-business-create' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') +
-        '>+ Novo conteúdo</button></div>';
+            (marketingContentView === view ? 'is-active' : '') + '" aria-pressed="' +
+            (marketingContentView === view ? 'true' : 'false') + '">' + label + '</button>';
+        }).join('') + '</div></div>';
       businessRoot.innerHTML = '<div class="dashboard-business-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
         '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="' + escapeHtml(module.tone) + '">' + iconMarkup(module.icon) + '</div>' +
         '<div><span class="dashboard-library-eyebrow">' + escapeHtml(module.sector) + ' · Módulo compartilhado</span><h2 id="dashboard-business-title">' + escapeHtml(module.title) +
@@ -4416,7 +4378,6 @@
       hrTrainingView = 'dashboard';
       hrTrainingFilters = { month: '', course: '', employee: '' };
       marketingContentView = 'kanban';
-      marketingContentFilters = { channel: '', campaign: '', owner: '', format: '', theme: '', status: '', from: '', to: '' };
       marketingCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
       marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
       marketingComparisonMonths = { primary: '', secondary: '' };
@@ -5610,18 +5571,6 @@
         }
       });
       businessRoot.addEventListener('change', function (event) {
-        const contentFilter = event.target.closest('[data-marketing-filter]');
-        if (contentFilter) {
-          marketingContentFilters[contentFilter.dataset.marketingFilter] = contentFilter.value;
-          renderBusinessRecordList(BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }), businessSearch);
-          return;
-        }
-        const contentDate = event.target.closest('[data-marketing-date]');
-        if (contentDate) {
-          marketingContentFilters[contentDate.dataset.marketingDate] = contentDate.value;
-          renderBusinessRecordList(BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }), businessSearch);
-          return;
-        }
         const insightsFilter = event.target.closest('[data-marketing-insight-filter]');
         if (insightsFilter) {
           marketingInsightsFilters[insightsFilter.dataset.marketingInsightFilter] = insightsFilter.value;
