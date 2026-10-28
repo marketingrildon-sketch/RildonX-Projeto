@@ -63,6 +63,7 @@
   function activeScheduleEmployees(state) {
     return (state.profiles || []).filter(function (profile) {
       if (!profile || profile.id == null || profile.active === false) return false;
+      return true;
     }).map(function (profile) {
       return {
         id: String(profile.id),
