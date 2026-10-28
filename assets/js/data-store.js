@@ -57,59 +57,6 @@
     return fixed + ' ' + units[unitIndex];
   }
 
-  function buildDemoDocuments() {
-    return [
-      {
-        id: 'doc-001',
-        name: 'Briefing_Campanha_Dia_dos_Pais.pdf',
-        fileType: 'pdf',
-        size: 2410000,
-        sizeLabel: '2.4 MB',
-        senderName: 'Usuário',
-        senderInitials: 'A',
-        sentAt: '2026-09-18T14:37:00.000Z',
-        folder: 'Equipe',
-        messageId: 'msg-001',
-        url: '#',
-        mimeType: 'application/pdf',
-        relatedTaskId: null,
-        relatedProjectId: 'project-001'
-      },
-      {
-        id: 'doc-002',
-        name: 'Cronograma_Equipe_Maio.xlsx',
-        fileType: 'xlsx',
-        size: 48000,
-        sizeLabel: '48 KB',
-        senderName: 'Camila',
-        senderInitials: 'C',
-        sentAt: '2026-09-18T14:10:00.000Z',
-        folder: 'Equipe',
-        messageId: 'msg-002',
-        url: '#',
-        mimeType: 'application/vnd.ms-excel',
-        relatedTaskId: null,
-        relatedProjectId: null
-      },
-      {
-        id: 'doc-003',
-        name: 'Apresentação_Campanha_Atual.pptx',
-        fileType: 'pptx',
-        size: 5700000,
-        sizeLabel: '5.7 MB',
-        senderName: 'Mariana',
-        senderInitials: 'M',
-        sentAt: '2026-09-17T11:20:00.000Z',
-        folder: 'Comercial',
-        messageId: 'msg-003',
-        url: '#',
-        mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        relatedTaskId: null,
-        relatedProjectId: 'project-001'
-      }
-    ];
-  }
-
   const DEFAULT_STATE = {
     user: {
       id: 'user-001',
@@ -117,57 +64,14 @@
       role: 'Cargo do usuário',
       sector: 'marketing'
     },
-    tasks: [
-      {
-        id: 'task-001',
-        title: 'Revisar material da campanha',
-        status: 'pendente',
-        priority: 'media',
-        dueDate: '2026-08-12',
-        assignees: ['Usuário'],
-        projectId: 'project-001',
-        sector: 'marketing',
-        tags: ['Campanha', 'Conteúdo'],
-        isDemo: true,
-        createdAt: '2026-08-08T09:00:00.000Z',
-        updatedAt: '2026-08-08T09:00:00.000Z'
-      },
-      {
-        id: 'task-002',
-        title: 'Aprovar publicação do Instagram',
-        status: 'pendente',
-        priority: 'baixa',
-        dueDate: '2026-08-13',
-        assignees: ['Mariana'],
-        projectId: 'project-001',
-        sector: 'marketing',
-        tags: ['Redes Sociais'],
-        isDemo: true,
-        createdAt: '2026-08-09T11:00:00.000Z',
-        updatedAt: '2026-08-09T11:00:00.000Z'
-      }
-    ],
-    projects: [
-      {
-        id: 'project-001',
-        name: 'Campanha atual Rildon',
-        status: 'em-andamento',
-        progress: 75,
-        sector: 'marketing',
-        members: ['Usuário', 'Mariana'],
-        isDemo: true,
-        updatedAt: '2026-08-09T11:00:00.000Z'
-      }
-    ],
+    tasks: [],
+    projects: [],
     profiles: [],
     taskComments: [],
-    conversations: [
-      { id: 'local-test', name: 'Teste local', kind: 'local', description: 'Conversa local para testes.', createdAt: nowIso(), updatedAt: nowIso() }
-    ],
-    documents: buildDemoDocuments(),
+    conversations: [],
+    documents: [],
     businessCardRecords: [],
     messages: [],
-    conversationHistoryPreserved20261016: true,
     posts: [],
     events: [],
     dashboard: {
@@ -202,34 +106,18 @@
       if (!Array.isArray(state.posts)) state.posts = [];
       if (!Array.isArray(state.businessCardRecords)) state.businessCardRecords = [];
       if (!Array.isArray(state.taskComments)) state.taskComments = [];
-      var changedDemoFlags = false;
-      (state.tasks || []).forEach(function (task) {
-        if (task && (task.id === 'task-001' || task.id === 'task-002') && task.isDemo !== true) {
-          task.isDemo = true;
-          changedDemoFlags = true;
-        }
+      var hasLocalTestData = (state.conversations || []).some(function (conversation) {
+        return conversation && conversation.id === 'local-test';
+      }) || (state.messages || []).some(function (message) {
+        return message && message.conversationId === 'local-test';
       });
-      (state.projects || []).forEach(function (project) {
-        if (project && project.id === 'project-001' && project.isDemo !== true) {
-          project.isDemo = true;
-          changedDemoFlags = true;
-        }
-      });
-      if (changedDemoFlags) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      if (state.conversationHistoryPreserved20261016 !== true) {
-        if (!Array.isArray(state.conversations)) state.conversations = [];
-        if (!state.conversations.some(function(conversation) { return conversation.id === 'local-test'; })) {
-          state.conversations.unshift({
-            id: 'local-test',
-            name: 'Teste local',
-            kind: 'local',
-            description: 'Conversa local para testes.',
-            createdAt: nowIso(),
-            updatedAt: nowIso()
-          });
-        }
-        if (!Array.isArray(state.messages)) state.messages = [];
-        state.conversationHistoryPreserved20261016 = true;
+      if (hasLocalTestData) {
+        state.conversations = (state.conversations || []).filter(function (conversation) {
+          return !conversation || conversation.id !== 'local-test';
+        });
+        state.messages = (state.messages || []).filter(function (message) {
+          return !message || message.conversationId !== 'local-test';
+        });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
       return state;
@@ -422,7 +310,7 @@
   function addMessage(message) {
     const normalizedMessage = Object.assign({
       id: createId('msg'),
-      conversationId: 'local-test',
+      conversationId: '',
       senderId: store.state.user.id,
       senderName: store.state.user.name,
       text: '',

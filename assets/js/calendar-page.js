@@ -11,18 +11,16 @@
     syncing: false
   };
 
-  var categoryOptions = [
-    { id: 'reuniao', label: 'Reunião', color: 'var(--blue-600)' },
-    { id: 'projeto', label: 'Projeto', color: 'var(--purple)' },
-    { id: 'acao_comercial', label: 'Ação comercial', color: 'var(--green)' },
-    { id: 'feriado', label: 'Feriado/data comemorativa', color: 'var(--orange)' },
-    { id: 'conteudo', label: 'Conteúdo', color: 'var(--blue-600)' },
-    { id: 'aniversario', label: 'Aniversário', color: 'var(--orange)' },
-    { id: 'treinamento', label: 'Treinamento', color: 'var(--purple)' },
-    { id: 'exame', label: 'Compromisso de RH', color: 'var(--purple)' },
-    { id: 'auditoria', label: 'Auditoria', color: 'var(--pink)' },
-    { id: 'documento', label: 'Revisão de documento', color: 'var(--green)' }
+  var defaultCategories = [
+    { id: 'feriado', label: 'Feriado/Data comemorativa', color: '#f59e0b' },
+    { id: 'aniversario', label: 'Aniversário', color: '#ec4899' },
+    { id: 'tarefa', label: 'Tarefas', color: '#16a34a' },
+    { id: 'projeto', label: 'Projetos', color: '#7c3aed' },
+    { id: 'reuniao', label: 'Reunião', color: '#2563eb' },
+    { id: 'acao_comercial', label: 'Ação comercial', color: '#0891b2' }
   ];
+  var categoryOptions = defaultCategories.slice();
+  var calendarPreferencesKey = '';
   var monthFormatter = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' });
   var fullDateFormatter = new Intl.DateTimeFormat('pt-BR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
@@ -101,7 +99,10 @@
   }
 
   function getCategoryClass(event) {
-    return 'c-' + String(event.category || 'reuniao').replace(/[^a-z0-9_-]/gi, '-');
+    var category = String(event.category || 'reuniao');
+    return 'c-' + (categoryOptions.some(function (item) { return item.id === category; })
+      ? category.replace(/[^a-z0-9_-]/gi, '-')
+      : 'custom');
   }
 
   function getCategoryLabel(category) {
@@ -109,11 +110,17 @@
     return option ? option.label : 'Evento';
   }
 
+  function getCategoryColor(category) {
+    var option = categoryOptions.find(function (item) { return item.id === category; });
+    return option ? option.color : '#64748b';
+  }
+
   function renderEventChip(event) {
     return '<button type="button" class="cal-chip ' + getCategoryClass(event) +
+      '" style="--calendar-category-color:' + escapeHtml(getCategoryColor(event.category)) +
       '" data-calendar-event="' + escapeHtml(event.id) + '" aria-label="' +
       escapeHtml(event.title || 'Evento') + ', ' + escapeHtml(eventTime(event)) + '">' +
-      '<span class="calendar-event-mark" aria-hidden="true"></span><span class="cal-chip-text"><b>' +
+      '<span class="calendar-event-mark" style="--calendar-category-color:' + escapeHtml(getCategoryColor(event.category)) + '" aria-hidden="true"></span><span class="cal-chip-text"><b>' +
       escapeHtml(event.title || 'Evento') + '</b><span>' +
       escapeHtml(eventTime(event) || 'Dia inteiro') + '</span></span></button>';
   }
@@ -185,13 +192,15 @@
     if (!events.length) return '<p class="calendar-empty">Nenhum evento neste período.</p>';
     return '<div class="calendar-event-list">' + events.map(function (event) {
       var date = eventStartDate(event);
-      return '<article class="calendar-event-card ' + getCategoryClass(event) + '">' +
-        '<span class="calendar-event-mark" aria-hidden="true"></span><div class="calendar-event-card-content">' +
+      return '<article class="calendar-event-card ' + getCategoryClass(event) +
+        '" style="--calendar-category-color:' + escapeHtml(getCategoryColor(event.category)) + '">' +
+        '<span class="calendar-event-mark" style="--calendar-category-color:' + escapeHtml(getCategoryColor(event.category)) + '" aria-hidden="true"></span><div class="calendar-event-card-content">' +
         '<small>' + escapeHtml(capitalize(fullDateFormatter.format(date))) + ' · ' +
         escapeHtml(eventTime(event) || 'Dia inteiro') + '</small><h4>' +
         escapeHtml(event.title || 'Evento') + '</h4><p>' +
         escapeHtml(event.description || 'Sem descrição.') + '</p>' +
-        '<div class="calendar-event-meta"><span>' + escapeHtml(getCategoryLabel(event.category)) + '</span>' +
+        '<div class="calendar-event-meta"><span><i class="calendar-category-dot" style="background:' +
+        escapeHtml(getCategoryColor(event.category)) + '"></i>' + escapeHtml(getCategoryLabel(event.category)) + '</span>' +
         (event.visibility === 'private' ? '<span>Pessoal</span>' : '') +
         (event.location ? '<span>' + escapeHtml(event.location) + '</span>' : '') +
         '</div></div><div class="calendar-event-card-actions"><button type="button" data-calendar-event="' +
@@ -267,11 +276,89 @@
     if (!root) return;
     root.innerHTML = categoryOptions.map(function (category) {
       var checked = !state.hiddenCategories.has(category.id);
-      return '<label class="cal-toggle-row"><input type="checkbox" style="accent-color:' + category.color +
+      return '<label class="cal-toggle-row"><input type="checkbox" style="accent-color:' + escapeHtml(category.color) +
         ';" data-calendar-category="' +
         category.id + '"' + (checked ? ' checked' : '') + '><span class="dot" style="background:' +
-        category.color + ';"></span><span class="name">' + escapeHtml(category.label) + '</span></label>';
+        escapeHtml(category.color) + ';"></span><span class="name">' + escapeHtml(category.label) + '</span></label>';
     }).join('');
+    var categorySelect = document.getElementById('calendar-event-category');
+    if (categorySelect) {
+      var selected = categorySelect.value;
+      categorySelect.innerHTML = categoryOptions.map(function (category) {
+        return '<option value="' + escapeHtml(category.id) + '">' + escapeHtml(category.label) + '</option>';
+      }).join('');
+      categorySelect.value = categoryOptions.some(function (category) { return category.id === selected; })
+        ? selected
+        : 'reuniao';
+    }
+  }
+
+  function saveCalendarPreferences() {
+    if (!calendarPreferencesKey) return;
+    try {
+      localStorage.setItem(calendarPreferencesKey, JSON.stringify({
+        customCategories: categoryOptions.filter(function (category) {
+          return !defaultCategories.some(function (item) { return item.id === category.id; });
+        }),
+        hiddenCategories: Array.from(state.hiddenCategories)
+      }));
+    } catch (error) {
+      console.error('Não foi possível salvar as preferências dos calendários:', error);
+      showMessage('Não foi possível salvar as preferências dos calendários neste navegador.');
+    }
+  }
+
+  async function loadCalendarPreferences() {
+    if (!window.supabaseClient || !window.supabaseClient.auth) return;
+    var result = await window.supabaseClient.auth.getUser();
+    if (result.error) throw result.error;
+    var user = result.data && result.data.user;
+    if (!user) return;
+    calendarPreferencesKey = 'rildonx_calendar_preferences:' + user.id;
+    var raw = localStorage.getItem(calendarPreferencesKey);
+    if (raw) {
+      var saved = JSON.parse(raw);
+      var customs = Array.isArray(saved.customCategories) ? saved.customCategories : [];
+      categoryOptions = defaultCategories.concat(customs.filter(function (item) {
+        return item && typeof item.id === 'string' && typeof item.label === 'string' &&
+          /^#[0-9a-f]{6}$/i.test(item.color || '') &&
+          !defaultCategories.some(function (category) { return category.id === item.id; });
+      }));
+      state.hiddenCategories = new Set(Array.isArray(saved.hiddenCategories) ? saved.hiddenCategories : []);
+    }
+  }
+
+  function openAddCalendarDialog() {
+    var dialog = document.getElementById('calendar-category-dialog');
+    if (!dialog) return;
+    dialog.showModal();
+    var input = dialog.querySelector('[name="name"]');
+    if (input) input.focus();
+  }
+
+  function addCalendar(event) {
+    event.preventDefault();
+    var form = event.currentTarget;
+    var label = String(form.elements.name.value || '').trim();
+    var color = String(form.elements.color.value || '');
+    if (!label || !/^#[0-9a-f]{6}$/i.test(color)) {
+      showMessage('Informe um nome e uma cor válida para o calendário.');
+      return;
+    }
+    if (categoryOptions.some(function (item) { return item.label.toLocaleLowerCase('pt-BR') === label.toLocaleLowerCase('pt-BR'); })) {
+      showMessage('Já existe um calendário com esse nome.');
+      return;
+    }
+    var id = 'custom-' + label.toLocaleLowerCase('pt-BR')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36);
+    categoryOptions.push({ id: id, label: label, color: color });
+    saveCalendarPreferences();
+    form.reset();
+    form.elements.color.value = '#2563eb';
+    document.getElementById('calendar-category-dialog').close();
+    render();
+    showMessage('Calendário "' + label + '" adicionado.');
   }
 
   function render() {
@@ -652,8 +739,12 @@
       setDialogMode('edit');
       document.getElementById('calendar-event-title').focus();
     });
-    document.getElementById('calendar-add-event-btn').addEventListener('click', function () {
-      setDialogMode('edit');
+    document.getElementById('calendar-add-category-btn').addEventListener('click', openAddCalendarDialog);
+    document.getElementById('calendar-category-form').addEventListener('submit', addCalendar);
+    document.getElementById('calendar-category-dialog').addEventListener('click', function (event) {
+      if (event.target === event.currentTarget || event.target.closest('[data-calendar-category-close]')) {
+        event.currentTarget.close();
+      }
     });
     document.getElementById('calendar-export-btn').addEventListener('click', createCalendarExport);
     document.getElementById('calendar-sync-btn').addEventListener('click', function (event) {
@@ -679,6 +770,7 @@
       if (!checkbox) return;
       if (checkbox.checked) state.hiddenCategories.delete(checkbox.dataset.calendarCategory);
       else state.hiddenCategories.add(checkbox.dataset.calendarCategory);
+      saveCalendarPreferences();
       render();
     });
 
@@ -714,6 +806,10 @@
     state.selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
     state.miniMonth = new Date(parts[0], parts[1] - 1, 1);
     render();
+    loadCalendarPreferences().then(render).catch(function (error) {
+      console.error('Não foi possível carregar as preferências dos calendários:', error);
+      showMessage(error.message || 'Não foi possível carregar as preferências dos calendários.');
+    });
   }
 
   async function saveEvent(event) {

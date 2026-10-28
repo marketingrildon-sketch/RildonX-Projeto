@@ -7,7 +7,8 @@
 <meta name="description" content="RildonX — ecossistema digital da Rildon.">
 <link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
   <script type="module" crossorigin src="./assets/supabase-client-DgreBNal.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/login-C_oS1P7I.css">
+  <link rel="stylesheet" crossorigin href="./assets/login-DutmptvP.css">
+  <link rel="stylesheet" href="./assets/css/styles.css?v=20261028a">
 </head>
 <body data-page="calendario">
 <div class="app" id="app-root">
@@ -194,7 +195,7 @@
         <div class="card card-pad">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
             <h3 style="font-size:15px;font-weight:700;">Meus calendários</h3>
-            <button class="cal-add-btn" id="calendar-add-event-btn" type="button" title="Adicionar evento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <button class="btn small cal-add-calendar-btn" id="calendar-add-category-btn" type="button">Adicionar calendário</button>
           </div>
           <div class="mini-list" id="calendar-category-list"></div>
         </div>
@@ -436,12 +437,31 @@
   <div class="calendar-event-details" id="calendar-event-details" hidden></div>
 </dialog>
 
+<dialog class="calendar-event-dialog" id="calendar-category-dialog" aria-labelledby="calendar-category-dialog-title">
+  <div class="calendar-event-dialog-head">
+    <h2 id="calendar-category-dialog-title">Adicionar calendário</h2>
+    <button type="button" class="modal-close-btn" data-calendar-category-close aria-label="Fechar">×</button>
+  </div>
+  <form id="calendar-category-form">
+    <div class="modal-body">
+      <div class="field"><label for="calendar-category-name">Nome do calendário</label><input id="calendar-category-name" name="name" maxlength="60" required placeholder="Ex.: Treinamentos"></div>
+      <div class="field"><label for="calendar-category-color">Cor</label><input id="calendar-category-color" name="color" type="color" value="#2563eb" required></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn secondary" data-calendar-category-close>Cancelar</button>
+      <button type="submit" class="btn calendar-primary-action">Adicionar calendário</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="assets/js/supabase-config.js?v=20261007a"></script>
 <script src="assets/js/auth.js?v=20261027c"></script>
-<script src="assets/js/data-store.js?v=20261020b"></script>
-<script src="assets/js/supabase-sync.js?v=20261023c"></script>
-<script src="assets/js/app.js?v=20261023k"></script>
-<script src="assets/js/support-center.js?v=20261022g"></script>
-<script src="assets/js/calendar-page.js?v=20261023e"></script>
+<script src="assets/js/data-store.js?v=20261028a"></script>
+<script src="assets/js/supabase-sync.js?v=20261028a"></script>
+<script src="assets/js/business-calendar-sync.js?v=20261028a"></script>
+<script src="assets/js/app.js?v=20261028a"></script>
+<script src="assets/js/department-requests.js?v=20261028a"></script>
+<script src="assets/js/support-center.js?v=20261028a"></script>
+<script src="assets/js/calendar-page.js?v=20261028a"></script>
 </body>
 </html>

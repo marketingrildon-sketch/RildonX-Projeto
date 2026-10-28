@@ -8,6 +8,8 @@
   let authenticatedUserId = null;
   let authenticatedUserName = '';
   let authenticatedUserLogin = '';
+  const cloudDashboardPreferencesLoads = new Map();
+  let cloudDashboardPreferencesSaveQueue = Promise.resolve();
 
   const CARD_CATALOG = {
     tarefas: {
@@ -1684,8 +1686,10 @@
 
   function getStoredDashboard() {
     try {
-      const raw = localStorage.getItem(activeStorageKey) || localStorage.getItem(STORAGE_KEY) ||
-        localStorage.getItem(LEGACY_STORAGE_KEY);
+      const raw = localStorage.getItem(activeStorageKey) ||
+        (activeStorageKey.endsWith(':local')
+          ? localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY)
+          : null);
       return raw ? JSON.parse(raw) : null;
     } catch (error) {
       console.error('Não foi possível carregar as preferências do dashboard:', error);
@@ -1696,6 +1700,7 @@
   function persistDashboard(data) {
     try {
       localStorage.setItem(activeStorageKey, JSON.stringify(data));
+      persistCloudDashboardPreferences();
     } catch (error) {
       console.error('Não foi possível salvar as preferências do dashboard:', error);
       if (typeof window.showToast === 'function') window.showToast('Não foi possível salvar a personalização neste navegador.');
@@ -1942,11 +1947,74 @@
   function persistHomeCards(cards) {
     try {
       localStorage.setItem(activeHomeCardsStorageKey, JSON.stringify(cards.slice(0, HOME_CARDS_LIMIT)));
+      persistCloudDashboardPreferences();
     } catch (error) {
       console.error('Não foi possível salvar os painéis da página Início:', error);
       if (typeof window.showToast === 'function') window.showToast('Não foi possível salvar os painéis da página Início.');
       throw error;
     }
+  }
+
+  function persistCloudDashboardPreferences() {
+    const userId = authenticatedUserId;
+    const client = window.supabaseClient;
+    if (!userId || !client || typeof client.from !== 'function') return;
+    let dashboardConfig;
+    let homeCards;
+    try {
+      dashboardConfig = JSON.parse(localStorage.getItem(activeStorageKey) || JSON.stringify(DEFAULT_DASHBOARD));
+      homeCards = JSON.parse(localStorage.getItem(activeHomeCardsStorageKey) || '[]');
+    } catch (error) {
+      console.error('Não foi possível preparar as preferências do Meu Espaço para sincronização:', error);
+      return;
+    }
+    if (!dashboardConfig || !Array.isArray(homeCards)) return;
+    cloudDashboardPreferencesSaveQueue = cloudDashboardPreferencesSaveQueue
+      .then(function () {
+        return client.from('user_dashboard_preferences').upsert({
+          user_id: userId,
+          dashboard_config: dashboardConfig,
+          home_cards: homeCards,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+      })
+      .then(function (result) {
+        if (result.error) throw result.error;
+      })
+      .catch(function (error) {
+        console.error('Não foi possível sincronizar as preferências do Meu Espaço:', error);
+      });
+  }
+
+  function loadCloudDashboardPreferences(userId) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(userId || '')) ||
+        !window.supabaseClient || typeof window.supabaseClient.from !== 'function') {
+      return Promise.resolve();
+    }
+    if (cloudDashboardPreferencesLoads.has(userId)) return cloudDashboardPreferencesLoads.get(userId);
+    const load = window.supabaseClient.from('user_dashboard_preferences')
+      .select('dashboard_config,home_cards')
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(function (result) {
+        if (result.error) throw result.error;
+        if (String(authenticatedUserId || '') !== String(userId)) return;
+        const row = result.data;
+        if (row && row.dashboard_config && typeof row.dashboard_config === 'object' &&
+            Array.isArray(row.home_cards)) {
+          localStorage.setItem(activeStorageKey, JSON.stringify(row.dashboard_config));
+          localStorage.setItem(activeHomeCardsStorageKey, JSON.stringify(row.home_cards));
+        } else {
+          persistCloudDashboardPreferences();
+        }
+        window.dispatchEvent(new Event('rildonx-dashboard-preferences-loaded'));
+      })
+      .catch(function (error) {
+        cloudDashboardPreferencesLoads.delete(userId);
+        console.error('Não foi possível carregar as preferências sincronizadas do Meu Espaço:', error);
+      });
+    cloudDashboardPreferencesLoads.set(userId, load);
+    return load;
   }
 
   function renderHomeDashboard(rootEl, cardTypes, data) {
@@ -2408,6 +2476,7 @@
       authenticatedUserId = initialUser.id;
       authenticatedUserName = initialUser.name || '';
       activateUserPreferences(initialUser.id);
+      loadCloudDashboardPreferences(initialUser.id);
     }
 
     function loadBusinessFavorites() {
@@ -2682,6 +2751,7 @@
         renderBusinessModule(activeBusinessModule);
       }
     }
+    window.addEventListener('rildonx-dashboard-preferences-loaded', render);
 
     function openLibrary() {
       const config = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
@@ -5792,6 +5862,7 @@
           authenticatedUserId = user.id;
           if (user.name && !authenticatedUserName) authenticatedUserName = user.name;
           activateUserPreferences(user.id);
+          loadCloudDashboardPreferences(user.id);
         } else {
           authenticatedUserId = '';
         }
@@ -5832,6 +5903,7 @@
         authenticatedUserLogin = user.email ? user.email.split('@')[0] : metadata.nickname || metadata.username || '';
         authenticatedUserName = metadata.display_name || metadata.full_name || metadata.name || user.email || '';
         activateUserPreferences(user.id);
+        loadCloudDashboardPreferences(user.id);
         render();
       }).catch(function (error) {
         console.error('Não foi possível carregar as preferências personalizadas:', error);
@@ -5846,6 +5918,7 @@
         if (syncedState.user && syncedState.user.id) {
           authenticatedUserId = syncedState.user.id;
           activateUserPreferences(syncedState.user.id);
+          loadCloudDashboardPreferences(syncedState.user.id);
         }
         dashboardState = Object.assign({}, syncedState, {
           businessCardRecords: syncedState.businessCardRecords || [],

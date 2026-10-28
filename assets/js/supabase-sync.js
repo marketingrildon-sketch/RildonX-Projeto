@@ -26,7 +26,7 @@
       senderInitials: row.sender_initials || row.senderInitials || 'U',
       ownerId: row.owner_id || row.ownerId || null,
       viewerIds: Array.isArray(row.viewer_ids) ? row.viewer_ids : [],
-      sentAt: row.sent_at || row.sentAt || new Date().toISOString(),
+      sentAt: row.sent_at || row.sentAt || null,
       folder: row.folder || 'Equipe',
       messageId: row.message_id || row.messageId || null,
       url: row.url || '#',
@@ -39,11 +39,11 @@
   function mapMessageRow(row) {
     return {
       id: row.id,
-      conversationId: row.conversation_id || row.conversationId || 'local-test',
+      conversationId: row.conversation_id || row.conversationId || '',
       senderId: row.sender_id || row.senderId || null,
       senderName: row.sender_name || row.senderName || 'Usuário',
       text: row.text || '',
-      sentAt: row.sent_at || row.sentAt || new Date().toISOString(),
+      sentAt: row.sent_at || row.sentAt || null,
       attachments: Array.isArray(row.attachments) ? row.attachments : safeJsonParse(row.attachments || '[]')
     };
   }
@@ -68,8 +68,8 @@
       isDemo: false,
       sector: row.sector || 'marketing',
       tags: Array.isArray(row.tags) ? row.tags : safeJsonParse(row.tags || '[]'),
-      createdAt: row.created_at || row.createdAt || new Date().toISOString(),
-      updatedAt: row.updated_at || row.updatedAt || new Date().toISOString()
+      createdAt: row.created_at || row.createdAt || null,
+      updatedAt: row.updated_at || row.updatedAt || row.created_at || null
     };
   }
 
@@ -98,7 +98,7 @@
       allUsers: Boolean(row.all_users),
       createdAt: row.created_at || null,
       createdBy: row.created_by || row.createdBy || null,
-      updatedAt: row.updated_at || row.updatedAt || new Date().toISOString()
+      updatedAt: row.updated_at || row.updatedAt || row.created_at || null
     };
   }
 
@@ -585,20 +585,12 @@
       documentFolders: (documentFoldersResult.data || []).map(function (folder) {
         return { id: folder.id, name: folder.name };
       }),
-      messages: (messagesResult.data || []).map(mapMessageRow).concat(
-        (currentState.messages || []).filter(function (message) {
-          return message && message.localOnly === true && message.conversationId === 'local-test';
-        })
-      ),
+      messages: (messagesResult.data || []).map(mapMessageRow),
       tasks: (tasksResult.data || []).map(mapTaskRow),
       taskComments: taskComments,
       projects: (projectsResult.data || []).map(mapProjectRow),
       profiles: profileRows,
-      conversations: (conversationsResult.data || []).map(mapConversationRow).concat(
-        (currentState.conversations || []).filter(function (conversation) {
-          return conversation && conversation.id === 'local-test';
-        })
-      ),
+      conversations: (conversationsResult.data || []).map(mapConversationRow),
       visibleConversationIds: isAdmin
         ? (conversationsResult.data || []).map(function (row) { return row.id; })
         : Array.from(new Set((membershipResult.data || [])

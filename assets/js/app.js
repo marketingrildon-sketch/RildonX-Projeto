@@ -1715,7 +1715,31 @@ function renderHomeRecentDocuments() {
 
 function setCurrentAuthenticatedUser(user) {
   if (!user) return;
+  var previousNotificationUserId = muralCurrentUserId;
+  var nextNotificationUserId = String(user.id || '');
+  if (previousNotificationUserId !== nextNotificationUserId) {
+    notificationStateReady = false;
+    notificationInitializationPromise = null;
+  }
   muralCurrentUserId = user.id || '';
+  if (!previousNotificationUserId && nextNotificationUserId) {
+    try {
+      var guestReadKey = notificationReadStorageKey + 'guest';
+      var userReadKey = notificationReadStorageKey + nextNotificationUserId;
+      var guestReadIds = localStorage.getItem(guestReadKey);
+      if (guestReadIds && !localStorage.getItem(userReadKey)) {
+        localStorage.setItem(userReadKey, guestReadIds);
+      }
+      var guestInitializedKey = guestReadKey + ':initialized';
+      var userInitializedKey = userReadKey + ':initialized';
+      if (localStorage.getItem(guestInitializedKey) === 'true' &&
+          localStorage.getItem(userInitializedKey) !== 'true') {
+        localStorage.setItem(userInitializedKey, 'true');
+      }
+    } catch (error) {
+      console.error('Não foi possível migrar as notificações visualizadas para a conta:', error);
+    }
+  }
   var appMetadata = user.app_metadata || {};
   var adminRole = String(appMetadata.role || '').trim().toLowerCase();
   var loginName = String(user.email || '').split('@')[0].trim().toLowerCase();
@@ -4560,6 +4584,10 @@ function selectChoice(btn, groupId) {
 }
 function togglePeopleChip(chip) {
   chip.classList.toggle('selected');
+  chip.setAttribute('aria-pressed', String(chip.classList.contains('selected')));
+  var count = document.querySelectorAll('#rs-people-group .people-chip.selected').length;
+  var quantity = document.getElementById('rs-qtd');
+  if (quantity) quantity.value = count;
 }
 function addChecklistItem() {
   var wrap = document.getElementById('nt-checklist');
@@ -4754,9 +4782,26 @@ function bumpCount(id, delta) {
 }
 
 /* ===================== SETOR PESSOAL ===================== */
-function submitSetorPessoal(opcao) {
-  closeModal();
-  showToast('✅ Solicitação "' + opcao + '" enviada ao RH / Departamento Pessoal.<br>Usuário Silva · ' + nowStamp());
+async function submitSetorPessoal(opcao) {
+  var button = document.activeElement;
+  if (button) button.disabled = true;
+  try {
+    if (!window.RildonXDepartmentRequests) throw new Error('O serviço de solicitações ao RH não está disponível.');
+    await window.RildonXDepartmentRequests.submit({
+      requestType: 'hr',
+      targetSector: 'rh',
+      title: opcao,
+      description: 'Solicitação enviada pelo card Setor pessoal.',
+      details: { 'Tipo de solicitação': opcao }
+    });
+    closeModal();
+    showToast('Solicitação "' + opcao + '" enviada ao RH.');
+  } catch (error) {
+    console.error('Não foi possível enviar a solicitação ao RH:', error);
+    showToast(error.message || 'Não foi possível enviar a solicitação ao RH.');
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 /* ===================== SUPORTE TI ===================== */
@@ -4774,85 +4819,123 @@ function submitSuporteTI() {
 }
 
 /* ===================== RESERVA DE SALA ===================== */
-var salasOcupadas = [
-  {sala:'Sala de Reunião', data:'2026-09-14', inicio:'14:00', fim:'15:00'},
-  {sala:'Sala de Reunião', data:'2026-09-14', inicio:'16:30', fim:'17:30'},
-  {sala:'Auditório', data:'2026-09-14', inicio:'08:30', fim:'11:30'}
-];
+function renderReservaParticipants() {
+  var root = document.getElementById('rs-people-group');
+  if (!root || !window.RildonXStore) return;
+  var state = window.RildonXStore.getState();
+  var profiles = (state.profiles || []).filter(function (profile) { return profile && profile.active !== false; });
+  var currentId = String(muralCurrentUserId || state.user && state.user.id || '');
+  if (!profiles.some(function (profile) { return String(profile.id) === currentId; }) && state.user && state.user.id) {
+    profiles.unshift({
+      id: state.user.id,
+      displayName: state.user.name || 'Você',
+      avatarUrl: state.user.avatarUrl || ''
+    });
+  }
+  root.innerHTML = profiles.map(function (profile) {
+    var name = profile.displayName || profile.nickname || 'Colaborador';
+    var initials = getPostInitials(name);
+    var isCurrentUser = String(profile.id) === currentId;
+    return '<button type="button" class="people-chip' + (isCurrentUser ? ' selected' : '') +
+      '" data-user-id="' + escapeHtml(profile.id) + '" data-name="' + escapeHtml(name) +
+      '" aria-pressed="' + String(isCurrentUser) + '"' + (isCurrentUser ? ' disabled title="Solicitante"' : '') +
+      '><span class="mini-avatar">' + (profile.avatarUrl
+        ? '<img src="' + escapeHtml(profile.avatarUrl) + '" alt="">'
+        : escapeHtml(initials)) + '</span>' + escapeHtml(name) + (isCurrentUser ? ' · Você' : '') + '</button>';
+  }).join('') || '<span class="home-widget-empty">Nenhum usuário ativo disponível.</span>';
+}
+
 function resetReservaSalaForm() {
+  var today = new Date();
+  var todayKey = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' +
+    String(today.getDate()).padStart(2, '0');
   document.getElementById('reserva-form-view').style.display = 'block';
   document.getElementById('reserva-confirm-view').style.display = 'none';
   document.getElementById('reserva-form-foot').style.display = 'flex';
   document.getElementById('reserva-conflict-slot').innerHTML = '';
   document.querySelectorAll('#rs-sala-group .choice-btn').forEach(function(c,i){ c.classList.toggle('selected', i===0); });
-  document.getElementById('rs-data').value = '2026-09-14';
+  document.getElementById('rs-data').value = todayKey;
   document.getElementById('rs-inicio').value = '14:00';
   document.getElementById('rs-fim').value = '15:00';
-  document.getElementById('rs-qtd').value = 4;
+  document.getElementById('rs-qtd').value = 1;
+  document.getElementById('rs-qtd').readOnly = true;
+  var participantCountLabel = document.querySelector('#rs-qtd').closest('.field').querySelector('label');
+  if (participantCountLabel) participantCountLabel.textContent = 'Participantes selecionados';
   document.getElementById('rs-motivo').value = '';
-  document.querySelectorAll('#rs-people-group .people-chip').forEach(function(c){ c.classList.remove('selected'); });
   document.querySelectorAll('#modal-reserva-sala .checkbox-opt input').forEach(function(c){ c.checked = false; });
+  renderReservaParticipants();
 }
 function timeOverlap(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
 }
-function submitReservaSala() {
+async function submitReservaSala() {
   var salaBtn = document.querySelector('#rs-sala-group .choice-btn.selected');
   var sala = salaBtn ? salaBtn.dataset.sala : 'Sala de Reunião';
   var data = document.getElementById('rs-data').value;
   var inicio = document.getElementById('rs-inicio').value;
   var fim = document.getElementById('rs-fim').value;
-  var qtd = document.getElementById('rs-qtd').value || '1';
   var motivo = document.getElementById('rs-motivo').value.trim() || 'Reunião';
-  var people = Array.from(document.querySelectorAll('#rs-people-group .people-chip.selected')).map(function(c){return c.dataset.name;});
+  var selectedUsers = Array.from(document.querySelectorAll('#rs-people-group .people-chip.selected'));
+  var people = selectedUsers.map(function (chip) { return chip.dataset.name; });
   var recursos = Array.from(document.querySelectorAll('#modal-reserva-sala .checkbox-opt input:checked')).map(function(c){return c.value;});
+  var submitButton = document.querySelector('#reserva-form-foot .btn:not(.secondary)');
 
   var conflictSlot = document.getElementById('reserva-conflict-slot');
   conflictSlot.innerHTML = '';
 
-  if (!inicio || !fim || fim <= inicio) {
+  if (!data || !inicio || !fim || fim <= inicio) {
     conflictSlot.innerHTML = '<div class="booking-conflict"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Verifique o horário: o fim deve ser depois do início.</div>';
     return;
   }
 
-  var conflict = salasOcupadas.some(function(o) {
-    return o.sala === sala && o.data === data && timeOverlap(inicio, fim, o.inicio, o.fim);
+  var conflict = (window.RildonXStore && window.RildonXStore.getState().events || []).some(function (event) {
+    if (event.deletedAt || String(event.location || '').toLocaleLowerCase('pt-BR') !== sala.toLocaleLowerCase('pt-BR')) return false;
+    var startsAt = new Date(event.startsAt || 0);
+    var endsAt = new Date(event.endsAt || 0);
+    if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) return false;
+    var eventDate = startsAt.getFullYear() + '-' + String(startsAt.getMonth() + 1).padStart(2, '0') + '-' +
+      String(startsAt.getDate()).padStart(2, '0');
+    var requestedStart = new Date(data + 'T' + inicio);
+    var requestedEnd = new Date(data + 'T' + fim);
+    return eventDate === data && timeOverlap(requestedStart, requestedEnd, startsAt, endsAt);
   });
   if (conflict) {
     conflictSlot.innerHTML = '<div class="booking-conflict"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Este horário já está ocupado para ' + sala + '. Escolha outro horário.</div>';
     return;
   }
 
-  // register as busy for this session
-  salasOcupadas.push({sala:sala, data:data, inicio:inicio, fim:fim});
-
-  var dataFmt = data ? data.split('-').slice(1).reverse().join('/') : '—';
-  var participantesTxt = people.length ? people.join(', ') : 'Somente você';
-  var motivoSafe = escapeHtml(motivo);
-  var salaSafe = escapeHtml(sala);
-  var dataSafe = escapeHtml(dataFmt);
-  var inicioSafe = escapeHtml(inicio);
-  var fimSafe = escapeHtml(fim);
-  var qtdSafe = escapeHtml(String(qtd));
-  var participantesSafe = escapeHtml(participantesTxt);
-  var recursosSafe = escapeHtml(recursos.join(', '));
-
-  var confirmHtml = '<div class="confirm-card">' +
-    '<div class="status-badge">🟢 Confirmada</div>' +
-    '<h4>🏢 ' + motivoSafe + '</h4>' +
-    '<div class="confirm-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + dataSafe + ' · ' + inicioSafe + '–' + fimSafe + '</div>' +
-    '<div class="confirm-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + salaSafe + '</div>' +
-    '<div class="confirm-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' + qtdSafe + ' participantes' + (recursos.length ? (' · ' + recursosSafe) : '') + '</div>' +
-    '<div class="confirm-participants"><b>Participantes</b>' + participantesSafe + '</div>' +
-    '</div>';
-
-  document.getElementById('reserva-confirm-view').innerHTML = confirmHtml;
-  document.getElementById('reserva-form-view').style.display = 'none';
-  document.getElementById('reserva-confirm-view').style.display = 'block';
-  document.getElementById('reserva-form-foot').innerHTML =
-    '<button class="btn secondary" onclick="cancelarReserva()">Cancelar reserva</button>' +
-    '<button class="btn" onclick="verDetalhesReserva()">Ver detalhes</button>';
-  showToast('📅 Sala reservada: ' + sala + ' em ' + dataFmt + ' das ' + inicio + ' às ' + fim + '.');
+  if (!window.RildonXDepartmentRequests) {
+    showToast('O serviço de solicitações à Qualidade não está disponível.');
+    return;
+  }
+  if (submitButton) submitButton.disabled = true;
+  try {
+    await window.RildonXDepartmentRequests.submit({
+      requestType: 'meeting_room',
+      targetSector: 'quality',
+      title: motivo,
+      description: 'Solicitação de reserva de sala para aprovação da Qualidade.',
+      details: {
+        Sala: sala,
+        Data: new Date(data + 'T12:00:00').toLocaleDateString('pt-BR'),
+        Horário: inicio + '–' + fim,
+        Participantes: people.join(', ') || 'Solicitante',
+        Recursos: recursos.join(', ') || 'Nenhum'
+      }
+    });
+    document.getElementById('reserva-confirm-view').innerHTML =
+      '<div class="confirm-card"><div class="status-badge">Aguardando aprovação</div><h4>' +
+      escapeHtml(motivo) + '</h4><p>O pedido foi enviado ao setor de Qualidade. A reserva só será confirmada após aprovação.</p></div>';
+    document.getElementById('reserva-form-view').style.display = 'none';
+    document.getElementById('reserva-confirm-view').style.display = 'block';
+    document.getElementById('reserva-form-foot').innerHTML =
+      '<button class="btn" onclick="closeModal()">Concluir</button>';
+    showToast('Solicitação enviada à Qualidade para aprovação.');
+  } catch (error) {
+    console.error('Não foi possível enviar a solicitação de reunião:', error);
+    showToast(error.message || 'Não foi possível enviar a solicitação.');
+    if (submitButton) submitButton.disabled = false;
+  }
 }
 function verDetalhesReserva() {
   showToast('Detalhes da reserva enviados para o seu e-mail.');

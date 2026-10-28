@@ -84,11 +84,13 @@
       throw new Error('Não foi possível identificar o registro a sincronizar com o calendário.');
     }
     var user = await getUser(client);
-    var id = eventId(user.id, settings.source, settings.recordId, settings.slot);
+    var isTeamEvent = settings.visibility === 'team';
+    var id = eventId(isTeamEvent ? 'team' : user.id, settings.source, settings.recordId, settings.slot);
     var dates = eventDates(settings.date);
     if (dates === null) {
-      var removed = await client.from('events').update({ deleted_at: new Date().toISOString() })
-        .eq('id', id).eq('owner_id', user.id).select('*').maybeSingle();
+      var removeQuery = client.from('events').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+      if (!isTeamEvent) removeQuery = removeQuery.eq('owner_id', user.id);
+      var removed = await removeQuery.select('*').maybeSingle();
       if (removed.error) throw removed.error;
       if (removed.data) updateStore(removed.data);
       return null;
@@ -101,14 +103,14 @@
       ends_at: dates.endsAt,
       category: String(settings.category || 'reuniao').slice(0, 40),
       location: String(settings.location || '').slice(0, 500),
-      visibility: 'private',
-      owner_id: user.id,
+      visibility: isTeamEvent ? 'team' : 'private',
+      owner_id: isTeamEvent ? null : user.id,
       all_day: dates.allDay,
       all_day_start_date: dates.startDate,
       all_day_end_date: dates.endDate,
       deleted_at: null,
       created_by: user.id,
-      project_id: null
+      project_id: settings.projectId || null
     };
     var result = await client.from('events').upsert(payload, { onConflict: 'id' }).select('*').single();
     if (result.error) throw result.error;
@@ -135,5 +137,126 @@
     return results;
   }
 
-  window.RildonXBusinessCalendarSync = { sync: sync, syncMany: syncMany, remove: remove };
+  function syncProject(project) {
+    var record = project || {};
+    if (!record.id) return Promise.reject(new Error('Não foi possível identificar o projeto para sincronização.'));
+    var title = String(record.name || 'Projeto');
+    return syncMany({
+      source: 'project',
+      recordId: record.id,
+      visibility: 'team',
+      category: 'projeto',
+      projectId: record.id,
+      description: String(record.description || '')
+    }, [
+      { slot: 'start', date: record.startDate, title: 'Início do projeto: ' + title },
+      { slot: 'end', date: record.endDate, title: 'Conclusão prevista: ' + title }
+    ]);
+  }
+
+  function syncTask(task) {
+    var record = task || {};
+    if (!record.id) return Promise.reject(new Error('Não foi possível identificar a tarefa para sincronização.'));
+    var title = String(record.title || 'Tarefa');
+    return syncMany({
+      source: 'task',
+      recordId: record.id,
+      visibility: 'team',
+      category: 'tarefa',
+      projectId: record.projectId || null,
+      description: String(record.description || '')
+    }, [
+      { slot: 'start', date: record.startDate, title: 'Início da tarefa: ' + title },
+      { slot: 'due', date: record.dueDate, title: 'Prazo da tarefa: ' + title }
+    ]);
+  }
+
+  function syncDeletedRecord(source, recordId, slots, category, projectId) {
+    if (!recordId) return Promise.resolve([]);
+    return syncMany({
+      source: source,
+      recordId: recordId,
+      visibility: 'team',
+      category: category,
+      projectId: projectId || null
+    }, slots.map(function (slot) { return { slot: slot, date: null }; }));
+  }
+
+  function watchDatedRecords() {
+    var store = window.RildonXStore;
+    if (!store || typeof store.subscribe !== 'function') return;
+    var previousTasks = new Map((store.getState().tasks || []).map(function (task) {
+      return [String(task.id), JSON.stringify([task.startDate || null, task.dueDate || null, task.title, task.projectId])];
+    }));
+    var previousProjects = new Map((store.getState().projects || []).map(function (project) {
+      return [String(project.id), JSON.stringify([project.startDate || null, project.endDate || null, project.name])];
+    }));
+    var pending = new Map();
+    var flushTimer = null;
+
+    function enqueue(key, operation) {
+      pending.set(key, operation);
+      if (flushTimer !== null) return;
+      flushTimer = window.setTimeout(function () {
+        flushTimer = null;
+        var operations = Array.from(pending.values());
+        pending.clear();
+        operations.reduce(function (chain, run) {
+          return chain.then(function () { return run(); });
+        }, Promise.resolve()).catch(function (error) {
+          console.error('Não foi possível sincronizar as datas de tarefas e projetos com o calendário:', error);
+          if (typeof window.showToast === 'function') {
+            window.showToast('As datas foram salvas, mas não foi possível sincronizá-las com o calendário.');
+          }
+        });
+      }, 250);
+    }
+
+    store.subscribe(function (nextState) {
+      var tasks = nextState.tasks || [];
+      var projects = nextState.projects || [];
+      var currentTaskIds = new Set();
+      tasks.forEach(function (task) {
+        var id = String(task.id);
+        currentTaskIds.add(id);
+        var fingerprint = JSON.stringify([task.startDate || null, task.dueDate || null, task.title, task.projectId]);
+        if (previousTasks.get(id) === fingerprint) return;
+        previousTasks.set(id, fingerprint);
+        enqueue('task:' + id, function () { return syncTask(task); });
+      });
+      previousTasks.forEach(function (_fingerprint, id) {
+        if (currentTaskIds.has(id)) return;
+        previousTasks.delete(id);
+        enqueue('task:' + id, function () {
+          return syncDeletedRecord('task', id, ['start', 'due'], 'tarefa');
+        });
+      });
+
+      var currentProjectIds = new Set();
+      projects.forEach(function (project) {
+        var id = String(project.id);
+        currentProjectIds.add(id);
+        var fingerprint = JSON.stringify([project.startDate || null, project.endDate || null, project.name]);
+        if (previousProjects.get(id) === fingerprint) return;
+        previousProjects.set(id, fingerprint);
+        enqueue('project:' + id, function () { return syncProject(project); });
+      });
+      previousProjects.forEach(function (_fingerprint, id) {
+        if (currentProjectIds.has(id)) return;
+        previousProjects.delete(id);
+        enqueue('project:' + id, function () {
+          return syncDeletedRecord('project', id, ['start', 'end'], 'projeto', id);
+        });
+      });
+    });
+  }
+
+  watchDatedRecords();
+  window.RildonXBusinessCalendarSync = {
+    sync: sync,
+    syncMany: syncMany,
+    syncProject: syncProject,
+    syncTask: syncTask,
+    remove: remove
+  };
 })();

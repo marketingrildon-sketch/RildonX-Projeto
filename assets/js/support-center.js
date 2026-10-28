@@ -337,7 +337,9 @@
     realtimeChannel = window.supabaseClient.channel('rildonx-support-tickets-' + user.id)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'support_tickets' }, function (payload) {
         var newRow = payload && payload.new;
-        if (payload && payload.eventType === 'INSERT' && newRow && !knownTicketIds[newRow.id] && canManage) {
+        var isNewManagerRequest = payload && payload.eventType === 'INSERT' &&
+          newRow && !knownTicketIds[newRow.id] && canManage;
+        if (isNewManagerRequest) {
           if (notificationPermission && 'Notification' in window) {
             new Notification('Novo chamado de TI', {
               body: ticketNumber(newRow) + ' · ' + (newRow.requester_name || 'Usuário') + ' · ' + (newRow.priority || 'Normal')
@@ -345,7 +347,12 @@
           }
           if (typeof window.showToast === 'function') window.showToast('Novo chamado recebido: ' + ticketNumber(newRow));
         }
-        refresh().catch(function (error) {
+        refresh().then(function () {
+          if (isNewManagerRequest) {
+            return isOpen ? openTicket(newRow.id) : open({ ticketId: newRow.id });
+          }
+          return undefined;
+        }).catch(function (error) {
           console.error('Não foi possível atualizar os chamados em tempo real:', error);
           if (isOpen) showError(error.message || 'Não foi possível sincronizar os chamados.');
         });
@@ -646,11 +653,29 @@
     if (event.key === 'Escape' && isOpen) close();
   }
 
+  async function initializeRealtimeInbox() {
+    try {
+      if (window.RildonXSync && typeof window.RildonXSync.ready === 'function') {
+        await window.RildonXSync.ready();
+      }
+      await ensureIdentity();
+      await loadTickets();
+      subscribeRealtime();
+    } catch (error) {
+      console.error('Não foi possível iniciar os alertas de chamados de TI:', error);
+    }
+  }
+
   document.addEventListener('click', handleClick);
   document.addEventListener('input', handleInput);
   document.addEventListener('change', handleInput);
   document.addEventListener('submit', handleSubmit);
   document.addEventListener('keydown', handleKeydown);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeRealtimeInbox, { once: true });
+  } else {
+    initializeRealtimeInbox();
+  }
 
   window.RildonXSupport = {
     open: open,
