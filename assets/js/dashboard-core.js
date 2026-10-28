@@ -282,6 +282,12 @@
       fields: []
     },
     {
+      id: 'sales-time-off', sector: 'Comercial', sectorKey: 'comercial', title: 'Escala de Folga', icon: 'calendar', tone: 'green',
+      description: 'Planeje duas folgas aos sábados por pessoa a cada mês, com limites por data, rodízio equilibrado, prévia de reajustes e histórico de exceções.',
+      features: ['Duas folgas mensais por pessoa', 'Limites de capacidade por sábado', 'Prévia com redistribuição mínima', 'Histórico e exceções autorizadas'],
+      fields: []
+    },
+    {
       id: 'purchase-parts-requests', sector: 'Compras', sectorKey: 'compras', title: 'Sinalização de Produtos', icon: 'cart', tone: 'orange',
       description: 'Consulte e responda as sinalizações recebidas do Comercial.', features: ['Fila de sinalizações recebidas', 'Resposta e previsão de chegada', 'Gerenciar fornecedores', 'Notificações de novos produtos'],
       fields: []
@@ -725,6 +731,10 @@
       return isBusinessCardManager(data) ||
         (Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1);
     }
+    if (module.id === 'sales-time-off') {
+      return isBusinessCardManager(data) || normalizedSector(profile.sector) === 'comercial' ||
+        (Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1);
+    }
     if (isBusinessCardManager(data)) return true;
     return Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1;
   }
@@ -755,6 +765,10 @@
     }
     if (module.id === 'sales-product-signals') {
       return isManager || (Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1);
+    }
+    if (module.id === 'sales-time-off') {
+      return isManager || normalizedSector(profile.sector) === 'comercial' ||
+        (Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1);
     }
     if (isManager) return true;
     return Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1;
@@ -3919,6 +3933,22 @@
         businessRoot.innerHTML = '<div class="dashboard-business-panel" role="dialog" aria-modal="true"><div class="dashboard-business-header"><div><span class="dashboard-library-eyebrow">Acesso protegido</span><h2>Card restrito</h2></div><div class="dashboard-business-header-actions">' +
           (businessOpenedFromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
           '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div><p class="dashboard-business-restricted">Seu perfil não possui acesso ao setor ' + escapeHtml(module.sector) + '.</p></div>';
+        return;
+      }
+      if (moduleId === 'sales-time-off') {
+        const timeOffRoot = document.createElement('div');
+        timeOffRoot.className = 'dashboard-business-time-off-root';
+        businessRoot.replaceChildren(timeOffRoot);
+        if (window.RildonXSalesTimeOff && typeof window.RildonXSalesTimeOff.mount === 'function') {
+          window.RildonXSalesTimeOff.mount(businessRoot, dashboardState, isBusinessCardManager(dashboardState), {
+            target: timeOffRoot,
+            userId: authenticatedUserId,
+            fromLibrary: businessOpenedFromLibrary
+          });
+        } else {
+          timeOffRoot.innerHTML = '<div class="dashboard-business-panel"><div class="dashboard-business-warning">' +
+            'O módulo Escala de Folga não foi carregado. Atualize a página e tente novamente.</div></div>';
+        }
         return;
       }
       const purchaseManagementTabs = {

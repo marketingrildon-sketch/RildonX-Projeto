@@ -1,3 +1,5 @@
+import '../css/sales-time-off.css';
+
 const MAX_PDF_PAGES = 12;
 const OCR_ASSET_PATH = new URL('assets/marketing-ocr/', document.baseURI).href;
 
