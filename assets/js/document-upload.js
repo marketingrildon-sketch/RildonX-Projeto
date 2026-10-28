@@ -262,9 +262,10 @@
     };
   }
 
-  async function getViewUrl(documentItem) {
+  async function getViewUrl(documentItem, options) {
     if (!documentItem || !documentItem.url || documentItem.url === '#') return '';
 
+    var downloadName = options && options.downloadName ? String(options.downloadName) : '';
     var supabaseUrl;
     var fileUrl;
     try {
@@ -288,7 +289,7 @@
       return documentItem.url;
     }
 
-    var cacheKey = bucket + '/' + path;
+    var cacheKey = bucket + '/' + path + (downloadName ? '|download:' + downloadName : '');
     if (!signedUrlCache[cacheKey] || signedUrlCache[cacheKey].expiresAt <= Date.now()) {
       var client = window.supabaseClient;
       if (!client || !client.storage || typeof client.storage.from !== 'function') return '';
@@ -297,10 +298,12 @@
         expiresAt: Date.now() + (50 * 60 * 1000),
         promise: (async function () {
           await getAuthenticatedUser(client, false);
-          var result = await client.storage.from(bucket).createSignedUrl(path, 3600);
+          var result = await client.storage.from(bucket).createSignedUrl(path, 3600,
+            downloadName ? { download: downloadName } : undefined);
           if (result.error && isExpiredTokenError(result.error)) {
             await getAuthenticatedUser(client, true);
-            result = await client.storage.from(bucket).createSignedUrl(path, 3600);
+            result = await client.storage.from(bucket).createSignedUrl(path, 3600,
+              downloadName ? { download: downloadName } : undefined);
           }
           if (result.error) throw result.error;
           if (!result.data || !result.data.signedUrl) throw new Error('O Storage não retornou um endereço para a imagem.');

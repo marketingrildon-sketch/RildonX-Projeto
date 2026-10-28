@@ -99,8 +99,13 @@
     comemoracoes: {
       label: 'Datas comemorativas',
       icon: 'calendar',
-      defaults: { show: 'aniversarios', sort: 'data', quantity: 5 },
-      filters: { aniversarios: 'Aniversários da equipe' },
+      defaults: { show: 'todas', sort: 'data', quantity: 5 },
+      filters: {
+        todas: 'Feriados, aniversários e ações comerciais',
+        feriado: 'Feriados e datas comemorativas',
+        aniversario: 'Aniversários',
+        acao_comercial: 'Ações comerciais'
+      },
       sorts: { data: 'Próxima data' }
     }
 
@@ -109,36 +114,68 @@
   const BUSINESS_CARD_MODULES = [
     {
       id: 'marketing-content-calendar', sector: 'Marketing', sectorKey: 'marketing', title: 'Calendário de Conteúdo', icon: 'calendar', tone: 'blue',
+      defaultStatus: 'Banco de ideias',
       description: 'Planejamento e acompanhamento de publicações e campanhas.', features: ['Visualizar calendário', 'Status das publicações', 'Anexos e briefing', 'Filtros por canal'],
       fields: [
-        { key: 'title', label: 'Publicação ou campanha', type: 'text', required: true },
-        { key: 'channel', label: 'Canal', type: 'select', options: ['Instagram', 'Facebook', 'LinkedIn', 'Site', 'Outro'] },
-        { key: 'publishAt', label: 'Data de publicação', type: 'date' },
-        { key: 'status', label: 'Status', type: 'select', options: ['Ideia', 'Em produção', 'Aguardando aprovação', 'Agendado', 'Publicado'] },
-        { key: 'attachmentUrl', label: 'Link de anexo', type: 'url' },
-        { key: 'notes', label: 'Briefing', type: 'textarea' }
+        { key: 'title', label: 'Título do conteúdo', type: 'text', required: true },
+        { key: 'status', label: 'Etapa', type: 'select', required: true, options: ['Banco de ideias', 'Em produção', 'Aguardando aprovação', 'Aprovado', 'Agendado', 'Publicado', 'Arquivo'] },
+        { key: 'objective', label: 'Objetivo', type: 'text' },
+        { key: 'theme', label: 'Tema ou categoria', type: 'text' },
+        { key: 'campaign', label: 'Campanha relacionada', type: 'text' },
+        { key: 'channel', label: 'Canal', type: 'select', options: ['Instagram', 'Facebook', 'LinkedIn', 'TikTok', 'Blog', 'Site', 'Outro'] },
+        { key: 'format', label: 'Formato', type: 'select', options: ['Imagem', 'Carrossel', 'Vídeo', 'Reels', 'Stories', 'Artigo', 'Outro'] },
+        { key: 'publishAt', label: 'Data prevista de publicação', type: 'date' },
+        { key: 'publishTime', label: 'Horário previsto', type: 'text' },
+        { key: 'priority', label: 'Prioridade', type: 'select', options: ['Baixa', 'Normal', 'Alta', 'Urgente'] },
+        { key: 'owner', label: 'Responsável pela criação', type: 'text' },
+        { key: 'participants', label: 'Participantes', type: 'text' },
+        { key: 'caption', label: 'Legenda ou texto da publicação', type: 'textarea' },
+        { key: 'hashtags', label: 'Hashtags', type: 'text' },
+        { key: 'callToAction', label: 'Chamada para ação', type: 'text' },
+        { key: 'referenceUrl', label: 'Referência ou link', type: 'url' },
+        { key: 'publishedAt', label: 'Data efetiva de publicação', type: 'date' },
+        { key: 'publishedUrl', label: 'Link da publicação original', type: 'url' },
+        { key: 'notes', label: 'Briefing e observações', type: 'textarea' }
       ]
     },
     {
       id: 'marketing-insights', sector: 'Marketing', sectorKey: 'marketing', title: 'Indicadores de Marketing', icon: 'chart', tone: 'blue',
-      description: 'Monitore alcance, engajamento, seguidores e conversões.', features: ['Seguidores e alcance', 'Engajamento', 'Cliques e conversões', 'Comparativo de períodos'],
+      description: 'Importe relatórios para acompanhar visibilidade, engajamento e oportunidades comerciais em um só lugar.',
+      features: ['Relatórios recentes', 'Redes sociais e campanhas', 'Tráfego e conversões', 'Comparativo mensal e PDF'],
       fields: [
-        { key: 'title', label: 'Indicador', type: 'text', required: true },
-        { key: 'value', label: 'Valor', type: 'number', required: true },
-        { key: 'unit', label: 'Unidade', type: 'select', options: ['un', '%', 'R$', 'pessoas', 'cliques'] },
-        { key: 'period', label: 'Período', type: 'text' },
-        { key: 'source', label: 'Fonte', type: 'text' }
+        { key: 'title', label: 'Nome do relatório', type: 'text', required: true }
       ]
     },
     {
-      id: 'marketing-materials', sector: 'Marketing', sectorKey: 'marketing', title: 'Banco de Materiais', icon: 'doc', tone: 'blue',
-      description: 'Organize imagens, vídeos, artes e materiais da marca.', features: ['Busca por palavra-chave', 'Categorias e tags', 'Favoritos', 'Compartilhamento'],
+      id: 'marketing-materials', sector: 'Marketing', sectorKey: 'marketing', title: 'Branding e Id. Visual', icon: 'doc', tone: 'blue',
+      description: 'Central de arquivos, identidade visual e materiais aprovados do Marketing.',
+      features: ['Banco de materiais', 'Identidade visual', 'Favoritos', 'Arquivos compartilhados com Documentos'],
       fields: [
         { key: 'title', label: 'Nome do material', type: 'text', required: true },
-        { key: 'category', label: 'Categoria', type: 'select', options: ['Logo', 'Imagem', 'Vídeo', 'Apresentação', 'Documento', 'Outro'] },
-        { key: 'url', label: 'Link do arquivo', type: 'url', required: true },
+        { key: 'category', label: 'Categoria', type: 'select', options: ['Logo', 'Identidade visual', 'Imagem', 'Vídeo', 'Apresentação', 'Documento', 'Outro'] },
         { key: 'tags', label: 'Tags', type: 'text' },
         { key: 'notes', label: 'Observações', type: 'textarea' }
+      ]
+    },
+    {
+      id: 'marketing-internal-demands', sector: 'Marketing', sectorKey: 'marketing', title: 'Demandas internas', icon: 'task', tone: 'blue',
+      description: 'Centralize pedidos de artes, campanhas, materiais e comunicações recebidos de outros setores.',
+      features: ['Solicitações recebidas', 'Demandas pendentes', 'Aprovações necessárias', 'Demandas por setor', 'Tempo de atendimento', 'Briefings incompletos'],
+      defaultStatus: 'Recebida',
+      fields: [
+        { key: 'title', label: 'Título da demanda', type: 'text', required: true },
+        { key: 'requester', label: 'Solicitante', type: 'text', required: true },
+        { key: 'requesterSector', label: 'Setor solicitante', type: 'text', required: true },
+        { key: 'description', label: 'Descrição do pedido', type: 'textarea', required: true },
+        { key: 'priority', label: 'Prioridade', type: 'select', options: ['Baixa', 'Normal', 'Alta', 'Urgente'], defaultValue: 'Normal' },
+        { key: 'owner', label: 'Responsável pelo atendimento', type: 'text' },
+        { key: 'dueDate', label: 'Prazo', type: 'date' },
+        { key: 'status', label: 'Status', type: 'select', options: ['Recebida', 'Em triagem', 'Em produção', 'Aguardando aprovação', 'Aguardando solicitante', 'Concluída', 'Cancelada'] },
+        { key: 'approvalStatus', label: 'Aprovação', type: 'select', options: ['Não necessária', 'Pendente', 'Aprovada', 'Reprovada'], defaultValue: 'Não necessária' },
+        { key: 'briefingObjective', label: 'Briefing · Objetivo', type: 'textarea' },
+        { key: 'briefingAudience', label: 'Briefing · Público-alvo', type: 'text' },
+        { key: 'briefingDeliverables', label: 'Briefing · Peças e formatos', type: 'text' },
+        { key: 'briefingReferences', label: 'Briefing · Referências e observações', type: 'textarea' }
       ]
     },
     {
@@ -1212,8 +1249,15 @@
         ];
       }
       if (module.id === 'marketing-insights') {
-        chart = records.slice(0, 4).map(function (record) {
-          return { label: record.title, value: Number(record.data && record.data.value) || 0 };
+        const totals = {};
+        records.forEach(function (record) {
+          const metrics = record.data && Array.isArray(record.data.metrics) ? record.data.metrics : [];
+          metrics.forEach(function (metric) {
+            totals[metric.label] = (totals[metric.label] || 0) + (Number(metric.value) || 0);
+          });
+        });
+        chart = Object.keys(totals).slice(0, 4).map(function (label) {
+          return { label: label, value: totals[label] };
         });
       } else if (module.id === 'sales-pipeline') {
         const amountByStage = {};
@@ -1439,22 +1483,46 @@
     }
 
     if (card.type === 'comemoracoes') {
-      const birthdays = (data.profiles || []).filter(function (profile) {
+      const selectedCategory = card.filters.show || 'todas';
+      const calendarItems = (data.events || []).filter(function (event) {
+        return event && !event.deletedAt &&
+          ['feriado', 'aniversario', 'acao_comercial'].indexOf(event.category) !== -1 &&
+          (event.visibility !== 'private' || String(event.ownerId || event.createdBy || '') === String(currentUser.id || '')) &&
+          (selectedCategory === 'todas' || event.category === selectedCategory);
+      }).map(function (event) {
+        const eventDate = dateValue(event.allDayStartDate || event.startsAt);
+        if (!eventDate || eventDate < today) return null;
+        return {
+          name: event.title || 'Data comemorativa',
+          date: eventDate,
+          category: event.category
+        };
+      }).filter(Boolean);
+      const birthdays = selectedCategory !== 'feriado' && selectedCategory !== 'acao_comercial'
+        ? (data.profiles || []).filter(function (profile) {
         return profile && profile.active !== false && profile.birthday;
       }).map(function (profile) {
         const birthDate = dateValue(profile.birthday);
         if (!birthDate) return null;
         const next = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
         if (next < today) next.setFullYear(next.getFullYear() + 1);
-        return { name: profile.displayName || profile.nickname || 'Colaborador', date: next };
-      }).filter(Boolean).sort(function (a, b) { return a.date - b.date; });
+        const name = profile.displayName || profile.nickname || 'Colaborador';
+        const alreadySynced = calendarItems.some(function (item) {
+          return item.category === 'aniversario' && item.date.getMonth() === next.getMonth() &&
+            item.date.getDate() === next.getDate() && item.name.toLocaleLowerCase('pt-BR').indexOf(name.toLocaleLowerCase('pt-BR')) !== -1;
+        });
+        return alreadySynced ? null : { name: 'Aniversário · ' + name, date: next, category: 'aniversario' };
+      }).filter(Boolean) : [];
+      const dates = calendarItems.concat(birthdays).sort(function (a, b) { return a.date - b.date; });
       return {
-        count: birthdays.length,
-        summary: birthdays.length + ' aniversário(s) cadastrado(s)',
-        items: birthdays.slice(0, quantity).map(function (item) {
-          return { title: item.name, meta: dateLabel(item.date, { weekday: 'short', day: '2-digit', month: 'long' }), href: 'meu-espaco.html' };
+        count: dates.length,
+        summary: dates.length + ' data(s) no calendário',
+        items: dates.slice(0, quantity).map(function (item) {
+          const categoryLabel = item.category === 'feriado' ? 'Feriado/data comemorativa'
+            : item.category === 'acao_comercial' ? 'Ação comercial' : 'Aniversário';
+          return { title: item.name, meta: categoryLabel + ' · ' + dateLabel(item.date, { weekday: 'short', day: '2-digit', month: 'long' }), href: 'calendario.html' };
         }),
-        empty: 'Não há aniversários cadastrados nos perfis.'
+        empty: 'Não há feriados, aniversários ou ações comerciais próximos no Calendário.'
       };
     }
 
@@ -2070,6 +2138,12 @@
     let qualityIndicatorFilter = '';
     let hrTrainingView = 'dashboard';
     let hrTrainingFilters = { month: '', course: '', employee: '' };
+    let marketingContentView = 'kanban';
+    let marketingContentFilters = { channel: '', campaign: '', owner: '', format: '', theme: '', status: '', from: '', to: '' };
+    let marketingCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
+    let marketingComparisonMonths = { primary: '', secondary: '' };
+    let marketingMaterialsView = 'materials';
     let businessFavoritesStorageKey = 'rildonx_business_favorites:local';
     let businessFavorites = {};
     let supportTicketsChannel = null;
@@ -2528,6 +2602,66 @@
       }
     }
 
+    function internalDemandRecords() {
+      return (dashboardState.businessCardRecords || []).filter(function (record) {
+        return record && record.moduleKey === 'marketing-internal-demands' && !record.archived;
+      });
+    }
+
+    function internalDemandDashboardMarkup() {
+      const records = internalDemandRecords();
+      const activeStatuses = records.filter(function (record) {
+        return !/^(concluida|cancelada|finalizada)$/i.test(normalizeSearchText(record.status || ''));
+      });
+      const approvals = records.filter(function (record) {
+        return normalizeSearchText(record.data && record.data.approvalStatus || '') === 'pendente';
+      });
+      const incompleteBriefings = records.filter(function (record) {
+        const data = record.data || {};
+        return !String(data.briefingObjective || '').trim() ||
+          !String(data.briefingAudience || '').trim() ||
+          !String(data.briefingDeliverables || '').trim();
+      });
+      const completedRecords = records.filter(function (record) {
+        return /^(concluida|finalizada)$/i.test(normalizeSearchText(record.status || '')) &&
+          parseCalendarDate(record.data && record.data.completedAt);
+      });
+      const completionDays = completedRecords.map(function (record) {
+        const completedAt = parseCalendarDate(record.data.completedAt);
+        const createdAt = new Date(record.createdAt);
+        if (!completedAt || !Number.isFinite(createdAt.getTime())) return null;
+        const createdDate = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+        return Math.max(0, (completedAt.getTime() - createdDate.getTime()) / 86400000);
+      }).filter(function (days) { return days != null; });
+      const averageDays = completionDays.length
+        ? (completionDays.reduce(function (total, days) { return total + days; }, 0) / completionDays.length).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' dias'
+        : '—';
+      const sectors = {};
+      records.forEach(function (record) {
+        const sector = String(record.data && record.data.requesterSector || '').trim() || 'Não informado';
+        sectors[sector] = (sectors[sector] || 0) + 1;
+      });
+      const sectorRows = Object.keys(sectors).sort(function (first, second) {
+        return sectors[second] - sectors[first] || first.localeCompare(second, 'pt-BR');
+      }).slice(0, 4).map(function (sector) {
+        return '<span><b>' + escapeHtml(sector) + '</b><small>' + sectors[sector] + (sectors[sector] === 1 ? ' demanda' : ' demandas') + '</small></span>';
+      }).join('');
+      const metrics = [
+        { label: 'Solicitações Recebidas', value: records.length, detail: 'Demandas registradas', tone: 'blue' },
+        { label: 'Demandas Pendentes', value: activeStatuses.length, detail: 'Aguardando conclusão', tone: 'orange' },
+        { label: 'Aprovações Necessárias', value: approvals.length, detail: 'Aguardando aprovação', tone: 'purple' },
+        { label: 'Demandas por Setor', value: '', detail: sectorRows || '<span><b>Sem demandas</b><small>Os setores aparecem após os primeiros pedidos.</small></span>', tone: 'green', isSector: true },
+        { label: 'Tempo de Atendimento', value: averageDays, detail: completedRecords.length + (completedRecords.length === 1 ? ' demanda concluída' : ' demandas concluídas'), tone: 'cyan' },
+        { label: 'Briefings Incompletos', value: incompleteBriefings.length, detail: 'Precisam de objetivo, público e peças', tone: 'red' }
+      ];
+      return '<section class="internal-demand-dashboard" aria-label="Indicadores de demandas internas">' +
+        metrics.map(function (metric) {
+          return '<article class="internal-demand-kpi" data-tone="' + metric.tone + '"><span>' + escapeHtml(metric.label) + '</span>' +
+            (metric.isSector ? '<div class="internal-demand-sector-list">' + metric.detail + '</div>' :
+              '<b>' + escapeHtml(metric.value) + '</b><small>' + escapeHtml(metric.detail) + '</small>') + '</article>';
+        }).join('') + '</section>';
+    }
+
     function businessRecordMeta(record, module) {
       const data = record.data || {};
       const fieldMeta = module.fields.filter(function (field) {
@@ -2535,6 +2669,16 @@
       }).slice(0, 3).map(function (field) {
         return field.label + ': ' + String(data[field.key]);
       }).join(' · ');
+      if (module.id === 'marketing-internal-demands') {
+        return [
+          data.requesterSector,
+          data.requester ? 'Solicitante: ' + data.requester : '',
+          data.priority ? 'Prioridade: ' + data.priority : '',
+          data.owner ? 'Responsável: ' + data.owner : '',
+          data.dueDate ? 'Prazo: ' + data.dueDate : '',
+          data.approvalStatus === 'Pendente' ? 'Aprovação pendente' : ''
+        ].filter(Boolean).join(' · ');
+      }
       if (module.id === 'quality-audits') {
         return [data.date, data.sector, data.nonconformities != null && data.nonconformities !== '' ? data.nonconformities + ' NC(s)' : '',
           data.isoClause ? 'Cláusula ' + data.isoClause : '',
@@ -3055,9 +3199,615 @@
         }).join('') : '<p class="hr-training-empty">Nenhuma turma cadastrada.</p>') + '</div>';
     }
 
+    const MARKETING_CONTENT_STAGES = ['Banco de ideias', 'Em produção', 'Aguardando aprovação', 'Aprovado', 'Agendado', 'Publicado', 'Arquivo'];
+
+    function marketingDateLabel(value, options) {
+      const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!match) return dateLabel(value, options);
+      const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12);
+      return date.toLocaleDateString('pt-BR', options || { day: '2-digit', month: 'short' });
+    }
+
+    function marketingMonthLabel(value) {
+      const match = String(value || '').match(/^(\d{4})-(\d{2})$/);
+      if (!match) return 'Mês não informado';
+      return new Date(Number(match[1]), Number(match[2]) - 1, 1, 12)
+        .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    }
+
+    function filteredMarketingContentRecords(search) {
+      return filteredBusinessRecords(
+        BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }),
+        search
+      ).filter(function (record) {
+        const data = record.data || {};
+        const date = String(data.publishAt || '');
+        return (!marketingContentFilters.channel || data.channel === marketingContentFilters.channel) &&
+          (!marketingContentFilters.campaign || data.campaign === marketingContentFilters.campaign) &&
+          (!marketingContentFilters.owner || data.owner === marketingContentFilters.owner) &&
+          (!marketingContentFilters.format || data.format === marketingContentFilters.format) &&
+          (!marketingContentFilters.theme || data.theme === marketingContentFilters.theme) &&
+          (!marketingContentFilters.status || record.status === marketingContentFilters.status) &&
+          (!marketingContentFilters.from || date && date >= marketingContentFilters.from) &&
+          (!marketingContentFilters.to || date && date <= marketingContentFilters.to);
+      });
+    }
+
+    function marketingContentCardMarkup(record) {
+      const data = record.data || {};
+      const latestHistory = Array.isArray(data.statusHistory) ? data.statusHistory.slice(-3).reverse() : [];
+      const publishedUrl = safeExternalUrl(data.publishedUrl);
+      const attachmentIds = Array.isArray(data.attachmentIds) ? data.attachmentIds : [];
+      const now = new Date();
+      const todayKey = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+      const isLate = data.publishAt && data.publishAt < todayKey && record.status !== 'Publicado' && record.status !== 'Arquivo';
+      const hasConflict = Boolean(data.publishAt && data.channel &&
+        (dashboardState.businessCardRecords || []).some(function (other) {
+          return other && other.moduleKey === 'marketing-content-calendar' &&
+            String(other.id) !== String(record.id) && !other.archived &&
+            other.status !== 'Arquivo' && other.data && other.data.publishAt === data.publishAt &&
+            other.data.channel === data.channel;
+        }));
+      const warning = isLate ? '<span class="marketing-content-alert is-late">Atrasado</span>' :
+        hasConflict ? '<span class="marketing-content-alert">Conflito de canal/data</span>' : '';
+      return '<article class="marketing-content-card" draggable="true" data-marketing-record="' + escapeHtml(record.id) + '">' +
+        '<div class="marketing-content-card-top"><span class="marketing-content-priority" data-priority="' + escapeHtml(data.priority || 'Normal') + '">' +
+        escapeHtml(data.priority || 'Normal') + '</span><button type="button" data-business-edit="' + escapeHtml(record.id) + '" aria-label="Editar ' +
+        escapeHtml(record.title) + '">Editar</button></div><h4>' + escapeHtml(record.title) + '</h4>' +
+        '<p>' + escapeHtml([data.channel, data.format, data.campaign, data.theme].filter(Boolean).join(' · ') || 'Ideia sem canal ou campanha definidos') + '</p>' +
+        '<div class="marketing-content-meta">' +
+        warning +
+        (data.publishAt ? '<span>' + escapeHtml(marketingDateLabel(data.publishAt, { day: '2-digit', month: 'short', year: 'numeric' })) +
+          (data.publishTime ? ' · ' + escapeHtml(data.publishTime) : '') + '</span>' : '<span>Sem data de publicação</span>') +
+        (data.publishedAt ? '<span>Publicado em ' + escapeHtml(marketingDateLabel(data.publishedAt, { day: '2-digit', month: 'short', year: 'numeric' })) + '</span>' : '') +
+        (data.owner ? '<span>Responsável: ' + escapeHtml(data.owner) + '</span>' : '') +
+        (attachmentIds.length ? '<span class="marketing-content-attachments">' + attachmentIds.map(function (id) {
+          const file = (dashboardState.documents || []).find(function (item) { return String(item.id) === String(id); });
+          return file ? '<button type="button" data-business-attachment="' + escapeHtml(id) + '">' + escapeHtml(file.name) + '</button>' : '';
+        }).join('') + '</span>' : '') +
+        (publishedUrl ? '<a href="' + escapeHtml(publishedUrl) + '" target="_blank" rel="noopener noreferrer">Publicação</a>' : '') +
+        '</div>' + (latestHistory.length ? '<details class="marketing-content-history"><summary>Histórico</summary><ul>' +
+        latestHistory.map(function (item) {
+          return '<li>' + escapeHtml(item.from ? item.from + ' → ' : '') + escapeHtml(item.to || '') + ' · ' +
+            escapeHtml(dateLabel(item.at, { day: '2-digit', month: 'short', year: 'numeric' })) + '</li>';
+        }).join('') + '</ul></details>' : '') + '</article>';
+    }
+
+    function marketingContentCalendarMarkup(records) {
+      const firstDay = new Date(marketingCalendarMonth.getFullYear(), marketingCalendarMonth.getMonth(), 1);
+      const gridStart = new Date(firstDay);
+      gridStart.setDate(1 - firstDay.getDay());
+      const monthLabel = marketingCalendarMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const days = Array.from({ length: 42 }, function (_, index) {
+        const date = new Date(gridStart);
+        date.setDate(gridStart.getDate() + index);
+        const dateKey = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+        const entries = records.filter(function (record) {
+          return record.data && record.data.publishAt === dateKey;
+        });
+        return '<div class="marketing-content-calendar-day' + (date.getMonth() === marketingCalendarMonth.getMonth() ? '' : ' is-outside') + '">' +
+          '<b>' + date.getDate() + '</b>' + entries.map(function (record) {
+            return '<button type="button" data-business-edit="' + escapeHtml(record.id) + '" title="' + escapeHtml(record.title) + '">' +
+              escapeHtml(record.title) + '</button>';
+          }).join('') + '</div>';
+      }).join('');
+      return '<div class="marketing-content-calendar-head"><button type="button" data-marketing-month="-1" aria-label="Mês anterior">‹</button><h3>' +
+        escapeHtml(monthLabel) + '</h3><button type="button" data-marketing-month="1" aria-label="Próximo mês">›</button></div>' +
+        '<div class="marketing-content-calendar-grid">' + dayLabels.map(function (day) { return '<b>' + day + '</b>'; }).join('') + days + '</div>';
+    }
+
+    function marketingContentListMarkup(records) {
+      return '<div class="marketing-content-list">' + (records.length ? records.map(function (record) {
+        const data = record.data || {};
+        return '<article class="marketing-content-list-row"><div><b>' + escapeHtml(record.title) + '</b><small>' +
+          escapeHtml([data.channel, data.format, data.campaign].filter(Boolean).join(' · ') || 'Sem canal ou campanha') +
+          '</small></div><span>' + escapeHtml(record.status || '') + '</span><span>' +
+          escapeHtml(data.publishAt ? marketingDateLabel(data.publishAt, { day: '2-digit', month: 'short', year: 'numeric' }) : 'Sem data') +
+          '</span><button type="button" data-business-edit="' + escapeHtml(record.id) + '">Abrir</button></article>';
+      }).join('') : '<div class="dashboard-business-empty"><b>Nenhum conteúdo encontrado</b><small>Ajuste os filtros ou crie uma nova ideia.</small></div>') + '</div>';
+    }
+
+    function marketingInsightRecords() {
+      return (dashboardState.businessCardRecords || []).filter(function (record) {
+        return record && record.moduleKey === 'marketing-insights' && !record.archived;
+      });
+    }
+
+    function marketingInsightRows() {
+      return marketingInsightRecords().reduce(function (rows, report) {
+        const metrics = report.data && Array.isArray(report.data.metrics) ? report.data.metrics : [];
+        return rows.concat(metrics.map(function (metric) {
+          return Object.assign({}, metric, {
+            reportId: report.id,
+            reportTitle: report.title,
+            documentId: report.data.documentId || ''
+          });
+        }));
+      }, []);
+    }
+
+    function filteredMarketingInsightRows() {
+      const query = String(businessSearch || '').trim().toLocaleLowerCase('pt-BR');
+      return marketingInsightRows().filter(function (row) {
+        return (!marketingInsightsFilters.channel || row.channel === marketingInsightsFilters.channel) &&
+          (!marketingInsightsFilters.campaign || row.campaign === marketingInsightsFilters.campaign) &&
+          (!marketingInsightsFilters.metric || row.metric === marketingInsightsFilters.metric) &&
+          (!marketingInsightsFilters.from || row.month >= marketingInsightsFilters.from) &&
+          (!marketingInsightsFilters.to || row.month <= marketingInsightsFilters.to) &&
+          (!query || [row.reportTitle, row.label, row.channel, row.campaign, row.month].join(' ')
+            .toLocaleLowerCase('pt-BR').includes(query));
+      });
+    }
+
+    function marketingInsightOptions(rows, key, selected) {
+      const options = Array.from(new Set(rows.map(function (row) { return String(row[key] || '').trim(); }).filter(Boolean)))
+        .sort(function (first, second) { return first.localeCompare(second, 'pt-BR'); });
+      return '<option value="">Todos</option>' + options.map(function (option) {
+        return '<option value="' + escapeHtml(option) + '"' + (option === selected ? ' selected' : '') + '>' +
+          escapeHtml(option) + '</option>';
+      }).join('');
+    }
+
+    function marketingInsightsMarkup() {
+      const allRows = marketingInsightRows();
+      const rows = filteredMarketingInsightRows();
+      const categories = ['Visibilidade', 'Engajamento', 'Oportunidades'];
+      const totals = {};
+      rows.forEach(function (row) {
+        const category = row.category || 'Oportunidades';
+        totals[category] = totals[category] || {};
+        totals[category][row.label] = (totals[category][row.label] || 0) + (Number(row.value) || 0);
+      });
+      const months = Array.from(new Set(allRows.map(function (row) { return row.month; }).filter(Boolean)))
+        .sort().reverse();
+      const comparisonMetric = marketingInsightsFilters.metric ||
+        (allRows.find(function (row) { return row.metric === 'reach'; }) || allRows[0] || {}).metric || '';
+      const firstMonth = marketingComparisonMonths.primary || months[0] || '';
+      const secondMonth = marketingComparisonMonths.secondary || months[1] || '';
+      const monthTotal = function (month) {
+        return allRows.filter(function (row) {
+          return row.month === month && row.metric === comparisonMetric &&
+            (!marketingInsightsFilters.channel || row.channel === marketingInsightsFilters.channel) &&
+            (!marketingInsightsFilters.campaign || row.campaign === marketingInsightsFilters.campaign);
+        }).reduce(function (sum, row) { return sum + (Number(row.value) || 0); }, 0);
+      };
+      const firstTotal = monthTotal(firstMonth);
+      const secondTotal = monthTotal(secondMonth);
+      const change = secondTotal ? ((firstTotal - secondTotal) * 100 / secondTotal) : null;
+      const reportList = marketingInsightRecords().slice().sort(function (first, second) {
+        return String(second.data && second.data.importedAt || second.createdAt || '')
+          .localeCompare(String(first.data && first.data.importedAt || first.createdAt || ''));
+      }).slice(0, 8);
+      const currentUserId = authenticatedUserId || getCurrentProfile(dashboardState).id;
+      const toolbar = '<div class="dashboard-business-toolbar marketing-insights-toolbar">' +
+        '<label><span>' + iconMarkup('activity') + '</span><input type="search" data-business-search value="' + escapeHtml(businessSearch) +
+        '" placeholder="Buscar relatórios, campanhas ou métricas"></label>' +
+        '<label class="dashboard-business-filter"><span>Canal</span><select data-marketing-insight-filter="channel">' +
+        marketingInsightOptions(allRows, 'channel', marketingInsightsFilters.channel) + '</select></label>' +
+        '<label class="dashboard-business-filter"><span>Campanha</span><select data-marketing-insight-filter="campaign">' +
+        marketingInsightOptions(allRows, 'campaign', marketingInsightsFilters.campaign) + '</select></label>' +
+        '<label class="dashboard-business-filter"><span>Métrica</span><select data-marketing-insight-filter="metric"><option value="">Todas</option>' +
+        Array.from(new Map(allRows.map(function (row) { return [row.metric, row.label]; })).entries()).map(function (entry) {
+          return '<option value="' + escapeHtml(entry[0]) + '"' + (marketingInsightsFilters.metric === entry[0] ? ' selected' : '') + '>' +
+            escapeHtml(entry[1]) + '</option>';
+        }).join('') + '</select></label>' +
+        '<label class="dashboard-business-filter"><span>De</span><input type="month" data-marketing-insight-filter="from" value="' +
+        escapeHtml(marketingInsightsFilters.from) + '"></label>' +
+        '<label class="dashboard-business-filter"><span>Até</span><input type="month" data-marketing-insight-filter="to" value="' +
+        escapeHtml(marketingInsightsFilters.to) + '"></label>' +
+        '<button type="button" class="btn secondary" data-marketing-pdf>Exportar relatório PDF</button></div>';
+      const categoryPanels = categories.map(function (category) {
+        const items = Object.keys(totals[category] || {}).map(function (label) {
+          return { label: label, value: totals[category][label] };
+        }).sort(function (first, second) { return second.value - first.value; });
+        const maximum = Math.max.apply(null, items.map(function (item) { return item.value; }).concat([1]));
+        return '<section class="marketing-insight-category"><h3>' + escapeHtml(category) + '</h3>' +
+          (items.length ? items.map(function (item) {
+            return '<div class="marketing-insight-bar"><div><b>' + escapeHtml(item.label) + '</b><strong>' +
+              escapeHtml(Number(item.value).toLocaleString('pt-BR')) + '</strong></div><span><i style="width:' +
+              Math.max(2, Math.round(item.value * 100 / maximum)) + '%"></i></span></div>';
+          }).join('') : '<p class="marketing-insights-empty">Sem dados para os filtros atuais.</p>') + '</section>';
+      }).join('');
+      const breakdownMetric = rows.find(function (row) { return row.metric === comparisonMetric; }) ||
+        rows[0] || null;
+      function breakdownMarkup(field, heading) {
+        const grouped = {};
+        if (breakdownMetric) {
+          rows.filter(function (row) { return row.metric === breakdownMetric.metric; }).forEach(function (row) {
+            const label = String(row[field] || '').trim() || 'Sem informação';
+            grouped[label] = (grouped[label] || 0) + (Number(row.value) || 0);
+          });
+        }
+        const items = Object.keys(grouped).map(function (label) { return { label: label, value: grouped[label] }; })
+          .sort(function (first, second) { return second.value - first.value; });
+        const maximum = Math.max.apply(null, items.map(function (item) { return item.value; }).concat([1]));
+        return '<section class="marketing-insight-breakdown"><h3>' + heading + '</h3><small>' +
+          escapeHtml(breakdownMetric ? 'Métrica: ' + breakdownMetric.label : 'Selecione uma métrica com estes dados.') + '</small>' +
+          (items.length ? items.slice(0, 10).map(function (item) {
+            return '<div class="marketing-insight-bar"><div><b>' + escapeHtml(item.label) + '</b><strong>' +
+              escapeHtml(Number(item.value).toLocaleString('pt-BR')) + '</strong></div><span><i style="width:' +
+              Math.max(2, Math.round(item.value * 100 / maximum)) + '%"></i></span></div>';
+          }).join('') : '<p class="marketing-insights-empty">Sem dados para os filtros atuais.</p>') + '</section>';
+      }
+      const breakdowns = '<div class="marketing-insight-breakdowns">' +
+        breakdownMarkup('channel', 'Desempenho das redes sociais') +
+        breakdownMarkup('campaign', 'Desempenho das campanhas') + '</div>';
+      function comparisonOptions(selected) {
+        return '<option value="">Selecione o mês</option>' + months.map(function (month) {
+          const label = marketingMonthLabel(month);
+          return '<option value="' + escapeHtml(month) + '"' + (month === selected ? ' selected' : '') + '>' +
+            escapeHtml(label) + '</option>';
+        }).join('');
+      }
+      const comparison = '<section class="marketing-insight-comparison"><div><h3>Comparativo entre meses</h3>' +
+        '<label>Métrica<select data-marketing-compare-metric>' +
+        Array.from(new Map(allRows.map(function (row) { return [row.metric, row.label]; })).entries()).map(function (entry) {
+          return '<option value="' + escapeHtml(entry[0]) + '"' + (comparisonMetric === entry[0] ? ' selected' : '') + '>' +
+            escapeHtml(entry[1]) + '</option>';
+        }).join('') + '</select></label>' +
+        '<label>Mês atual<select data-marketing-compare="primary">' + comparisonOptions(firstMonth) + '</select></label>' +
+        '<label>Mês anterior<select data-marketing-compare="secondary">' + comparisonOptions(secondMonth) + '</select></label></div>' +
+        '<article><span>' + escapeHtml(firstMonth ? marketingMonthLabel(firstMonth) : 'Mês atual') +
+        '</span><b>' + escapeHtml(firstTotal.toLocaleString('pt-BR')) + '</b></article>' +
+        '<article><span>' + escapeHtml(secondMonth ? marketingMonthLabel(secondMonth) : 'Mês anterior') +
+        '</span><b>' + escapeHtml(secondTotal.toLocaleString('pt-BR')) + '</b></article>' +
+        '<article><span>Variação</span><b>' + (change === null ? '—' : (change > 0 ? '+' : '') + change.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%') + '</b></article></section>';
+      const recent = '<section class="marketing-insight-reports"><h3>Relatórios recentes</h3>' +
+        (reportList.length ? reportList.map(function (report) {
+          const data = report.data || {};
+          const canArchive = String(report.createdBy || '') === String(currentUserId || '') || isBusinessCardManager(dashboardState);
+          return '<article><div><b>' + escapeHtml(report.title) + '</b><small>' +
+            escapeHtml((data.metrics || []).length + ' métricas · ' + (data.source || 'Relatório importado') + ' · ' +
+              dateLabel(data.importedAt || report.createdAt, { day: '2-digit', month: 'short', year: 'numeric' })) +
+            '</small></div>' + (data.documentId ? '<button type="button" data-marketing-open-document="' +
+              escapeHtml(data.documentId) + '">Abrir arquivo</button><button type="button" data-marketing-download-document="' +
+              escapeHtml(data.documentId) + '">Baixar</button>' : '') +
+            (canArchive ? '<button type="button" data-business-archive="' + escapeHtml(report.id) + '">Arquivar</button>' : '') + '</article>';
+        }).join('') : '<p class="marketing-insights-empty">Envie um relatório para começar a acompanhar os resultados.</p>') + '</section>';
+      return toolbar + '<form class="marketing-report-upload" data-marketing-report-upload>' +
+        '<label><span>Arquivo de relatório</span><input type="file" name="reportFile" accept=".csv,.xls,.xlsx,.pdf,image/png,image/jpeg,image/webp,image/bmp,image/tiff" required></label>' +
+        '<label><span>Mês do relatório, quando não estiver no arquivo</span><input type="month" name="reportMonth" value="' +
+        new Date().toISOString().slice(0, 7) + '" required></label><button type="submit" class="btn"' +
+        (dashboardState.businessCardRecordsLoadError || !window.RildonXMarketingReportImport
+          ? ' disabled title="Aguarde o carregamento dos dados e do leitor de relatórios"' : '') + '>Importar relatório</button>' +
+        '<small>CSV, Excel, PDF ou imagem. Os dados são interpretados localmente no navegador e os arquivos ficam em Documentos.</small></form>' +
+        '<div class="marketing-insight-categories">' + categoryPanels + '</div>' + breakdowns + comparison + recent +
+        '<section class="marketing-insight-data"><h3>Dados usados no relatório</h3>' +
+        (rows.length ? '<div class="marketing-insight-table-wrap"><table><thead><tr><th>Mês</th><th>Métrica</th><th>Valor</th><th>Canal</th><th>Campanha</th><th>Arquivo</th></tr></thead><tbody>' +
+          rows.map(function (row) {
+            return '<tr><td>' + escapeHtml(row.month) + '</td><td>' + escapeHtml(row.label) + '</td><td>' +
+              escapeHtml(Number(row.value).toLocaleString('pt-BR')) + '</td><td>' + escapeHtml(row.channel || '—') + '</td><td>' +
+              escapeHtml(row.campaign || '—') + '</td><td>' + escapeHtml(row.reportTitle) + '</td></tr>';
+          }).join('') + '</tbody></table></div>' : '<p class="marketing-insights-empty">Nenhum dado corresponde aos filtros atuais.</p>') +
+        '</section>';
+    }
+
+    function marketingMaterialRecords() {
+      return (dashboardState.businessCardRecords || []).filter(function (record) {
+        return record && record.moduleKey === 'marketing-materials' && !record.archived;
+      });
+    }
+
+    function marketingMaterialsMarkup() {
+      const query = String(businessSearch || '').trim().toLocaleLowerCase('pt-BR');
+      const metadata = marketingMaterialRecords();
+      const linkedDocumentIds = new Set(metadata.map(function (record) { return String(record.data && record.data.documentId || ''); }));
+      const files = documentList(dashboardState).filter(function (file) {
+        const folder = String(file.folder || '').toLocaleLowerCase('pt-BR');
+        return folder === 'marketing - branding' || linkedDocumentIds.has(String(file.id));
+      });
+      const items = files.map(function (file) {
+        return { file: file, record: metadata.find(function (record) {
+          return String(record.data && record.data.documentId || '') === String(file.id);
+        }) || null };
+      }).filter(function (item) {
+        const data = item.record && item.record.data || {};
+        return !query || [item.file.name, item.file.folder, data.category, data.section, data.tags, data.notes]
+          .join(' ').toLocaleLowerCase('pt-BR').includes(query);
+      }).filter(function (item) {
+        const record = item.record;
+        if (marketingMaterialsView === 'favorites') return Boolean(record && record.data && record.data.isFavorite);
+        if (marketingMaterialsView === 'identity') return record && record.data
+          ? record.data.section === 'Identidade visual' || record.data.category === 'Identidade visual' || record.data.category === 'Logo'
+          : /logo|marca|identidade/i.test(item.file.name);
+        return true;
+      }).sort(function (first, second) {
+        return String(second.file.sentAt || '').localeCompare(String(first.file.sentAt || ''));
+      });
+      const tabs = [
+        ['materials', 'Banco de materiais'],
+        ['identity', 'Identidade visual'],
+        ['favorites', 'Arquivos favoritos']
+      ];
+      return '<div class="dashboard-business-toolbar marketing-materials-toolbar"><label><span>' + iconMarkup('activity') +
+        '</span><input type="search" data-business-search value="' + escapeHtml(businessSearch) + '" placeholder="Buscar materiais, formatos ou nomes"></label>' +
+        '<div class="marketing-content-view-switch" role="group" aria-label="Categoria dos materiais">' +
+        tabs.map(function (tab) {
+          return '<button type="button" data-marketing-material-view="' + tab[0] + '"' +
+            (marketingMaterialsView === tab[0] ? ' class="is-active"' : '') + '>' + tab[1] + '</button>';
+        }).join('') + '</div></div>' +
+        '<form class="marketing-material-upload" data-marketing-material-upload>' +
+        '<label><span>Adicionar arquivo à Central</span><input type="file" name="materialFile" required></label>' +
+        '<label><span>Categoria</span><select name="category"><option>Logo</option><option>Identidade visual</option><option>Imagem</option><option>Vídeo</option><option>Apresentação</option><option>Documento</option><option>Outro</option></select></label>' +
+        '<label><span>Seção</span><select name="section"><option>Banco de materiais</option><option>Identidade visual</option></select></label>' +
+        '<label><span>Tags</span><input type="text" name="tags" placeholder="campanha, produto, marca"></label>' +
+        '<label><span>Observações</span><input type="text" name="notes" placeholder="Uso recomendado, versão aprovada"></label>' +
+        '<button type="submit" class="btn"' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aguarde a conexão dos dados compartilhados"' : '') +
+        '>Enviar material</button><small>O arquivo é salvo uma única vez na infraestrutura de Documentos e referenciado nesta Central.</small></form>' +
+        '<div class="marketing-material-grid">' + (items.length ? items.map(function (item) {
+          const record = item.record;
+          const data = record && record.data || {};
+          return '<article class="marketing-material-card"><div class="marketing-material-icon">' + iconMarkup('doc') + '</div>' +
+            '<div><h3>' + escapeHtml(item.file.name) + '</h3><p>' + escapeHtml([data.category, data.section, data.tags].filter(Boolean).join(' · ') || item.file.folder) +
+            '</p><small>' + escapeHtml(item.file.sizeLabel || '') + ' · ' +
+            escapeHtml(dateLabel(item.file.sentAt, { day: '2-digit', month: 'short', year: 'numeric' })) + '</small></div>' +
+            (record ? '<button type="button" class="marketing-material-favorite" data-marketing-material-favorite="' +
+              escapeHtml(record.id) + '" aria-pressed="' + Boolean(data.isFavorite) + '">' + (data.isFavorite ? '★ Favorito' : '☆ Favoritar') + '</button>' : '') +
+            '<button type="button" data-marketing-open-document="' + escapeHtml(item.file.id) + '">Abrir</button>' +
+            '<button type="button" data-marketing-download-document="' + escapeHtml(item.file.id) + '">Baixar</button></article>';
+        }).join('') : '<div class="dashboard-business-empty"><b>Nenhum arquivo nesta seção</b><small>Envie um material acima ou ajuste a busca.</small></div>') + '</div>';
+    }
+
+    function renderMarketingSpecialModule(module) {
+      const content = module.id === 'marketing-insights' ? marketingInsightsMarkup() : marketingMaterialsMarkup();
+      const accessWarning = dashboardState.businessCardRecordsLoadError
+        ? '<div class="dashboard-business-warning">' + escapeHtml(dashboardState.businessCardRecordsLoadError) + '</div>'
+        : '';
+      businessRoot.innerHTML = '<div class="dashboard-business-panel dashboard-business-panel--marketing" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
+        '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="' + escapeHtml(module.tone) + '">' +
+        iconMarkup(module.icon) + '</div><div><span class="dashboard-library-eyebrow">Marketing · Arquivos e dados compartilhados</span>' +
+        '<h2 id="dashboard-business-title">' + escapeHtml(module.title) + '</h2><p>' + escapeHtml(module.description) +
+        '</p></div><div class="dashboard-business-header-actions">' +
+        (businessOpenedFromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
+        '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
+        accessWarning + content + '</div>';
+    }
+
+    function refreshMarketingSpecialModule(moduleId, preserveSearchFocus) {
+      const currentSearch = businessRoot.querySelector('[data-business-search]');
+      const selectionStart = currentSearch && typeof currentSearch.selectionStart === 'number' ? currentSearch.selectionStart : null;
+      renderBusinessModule(moduleId);
+      if (preserveSearchFocus) {
+        const nextSearch = businessRoot.querySelector('[data-business-search]');
+        if (nextSearch) {
+          nextSearch.focus();
+          if (selectionStart !== null) nextSearch.setSelectionRange(selectionStart, selectionStart);
+        }
+      }
+    }
+
+    async function saveMarketingReportUpload(form) {
+      if (dashboardState.businessCardRecordsLoadError) throw new Error(dashboardState.businessCardRecordsLoadError);
+      const formData = new FormData(form);
+      const file = formData.get('reportFile');
+      if (!(file instanceof File) || !file.size) throw new Error('Selecione um arquivo de relatório.');
+      if (!window.RildonXMarketingReportImport) {
+        throw new Error('O leitor de relatórios não foi carregado. Atualize a página e tente novamente.');
+      }
+      const parsed = await window.RildonXMarketingReportImport.read(file);
+      const metrics = window.RildonXMarketingReportImport.normalize(parsed, formData.get('reportMonth'));
+      const profile = getCurrentProfile(dashboardState);
+      if (!window.RildonXDocumentUpload || !window.RildonXStore) {
+        throw new Error('O armazenamento de arquivos não está disponível. Recarregue Meu Espaço.');
+      }
+      const uploaded = await window.RildonXDocumentUpload.upload(file, {
+        folder: 'Marketing - Indicadores',
+        senderName: profile.displayName || profile.nickname || profile.name || authenticatedUserName || 'Usuário',
+        viewerIds: businessAttachmentViewers(BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-insights'; }), dashboardState)
+      });
+      if (!uploaded || !uploaded.id) throw new Error('O serviço não confirmou o arquivo enviado.');
+      const extension = String(file.name).split('.').pop().toUpperCase();
+      let saved;
+      try {
+        saved = window.RildonXStore.addBusinessCardRecord({
+          moduleKey: 'marketing-insights',
+          sector: 'marketing',
+          title: file.name,
+          status: 'Importado',
+          createdBy: authenticatedUserId || profile.id,
+          data: {
+            metrics: metrics,
+            documentId: uploaded.id,
+            fileName: file.name,
+            fileType: extension,
+            source: 'Relatório ' + extension,
+            importedAt: new Date().toISOString()
+          }
+        });
+        if (!saved) throw new Error('O relatório não pôde ser salvo.');
+      } catch (error) {
+        try {
+          await window.RildonXDocumentUpload.removeDocument(uploaded);
+        } catch (cleanupError) {
+          console.error('Não foi possível remover o arquivo enviado sem relatório associado:', cleanupError);
+        }
+        throw error;
+      }
+      if (!saved) throw new Error('O arquivo foi enviado, mas o relatório não pôde ser salvo.');
+      window.RildonXStore.addDocument(uploaded);
+      businessSearch = '';
+      marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
+      marketingComparisonMonths = { primary: '', secondary: '' };
+      renderBusinessModule('marketing-insights');
+      if (typeof window.showToast === 'function') window.showToast('Relatório importado. ' + metrics.length + ' valor(es) reconhecido(s).');
+    }
+
+    async function saveMarketingMaterialUpload(form) {
+      if (dashboardState.businessCardRecordsLoadError) throw new Error(dashboardState.businessCardRecordsLoadError);
+      const formData = new FormData(form);
+      const file = formData.get('materialFile');
+      if (!(file instanceof File) || !file.size) throw new Error('Selecione um arquivo para adicionar à Central.');
+      if (!window.RildonXDocumentUpload || !window.RildonXStore) {
+        throw new Error('O armazenamento de arquivos não está disponível. Recarregue Meu Espaço.');
+      }
+      const profile = getCurrentProfile(dashboardState);
+      const module = BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-materials'; });
+      const uploaded = await window.RildonXDocumentUpload.upload(file, {
+        folder: 'Marketing - Branding',
+        senderName: profile.displayName || profile.nickname || profile.name || authenticatedUserName || 'Usuário',
+        viewerIds: businessAttachmentViewers(module, dashboardState)
+      });
+      if (!uploaded || !uploaded.id) throw new Error('O serviço não confirmou o arquivo enviado.');
+      let saved;
+      try {
+        saved = window.RildonXStore.addBusinessCardRecord({
+          moduleKey: 'marketing-materials',
+          sector: 'marketing',
+          title: file.name,
+          status: 'Disponível',
+          createdBy: authenticatedUserId || profile.id,
+          data: {
+            documentId: uploaded.id,
+            category: String(formData.get('category') || 'Outro'),
+            section: String(formData.get('section') || 'Banco de materiais'),
+            tags: String(formData.get('tags') || '').trim(),
+            notes: String(formData.get('notes') || '').trim(),
+            isFavorite: false
+          }
+        });
+        if (!saved) throw new Error('O material não pôde ser cadastrado.');
+      } catch (error) {
+        try {
+          await window.RildonXDocumentUpload.removeDocument(uploaded);
+        } catch (cleanupError) {
+          console.error('Não foi possível remover o arquivo enviado sem material associado:', cleanupError);
+        }
+        throw error;
+      }
+      if (!saved) throw new Error('O arquivo foi enviado, mas o material não pôde ser cadastrado.');
+      window.RildonXStore.addDocument(uploaded);
+      businessSearch = '';
+      renderBusinessModule('marketing-materials');
+      if (typeof window.showToast === 'function') window.showToast('Material adicionado à Central de Branding.');
+    }
+
+    function openMarketingDocument(documentId, download) {
+      const file = (dashboardState.documents || []).find(function (item) { return String(item.id) === String(documentId); });
+      if (!file || !window.RildonXDocumentUpload || typeof window.RildonXDocumentUpload.getViewUrl !== 'function') {
+        if (typeof window.showToast === 'function') window.showToast('Este arquivo não está disponível na lista de Documentos.');
+        return;
+      }
+      const openedWindow = window.open('about:blank', '_blank');
+      if (!openedWindow) {
+        if (typeof window.showToast === 'function') window.showToast('Permita pop-ups para abrir o arquivo.');
+        return;
+      }
+      openedWindow.opener = null;
+      window.RildonXDocumentUpload.getViewUrl(file, download ? { downloadName: file.name } : undefined).then(function (url) {
+        if (!url) throw new Error('Não foi possível gerar um link seguro para este arquivo.');
+        openedWindow.location.href = url;
+      }).catch(function (error) {
+        console.error('Não foi possível abrir o arquivo de Marketing:', error);
+        openedWindow.close();
+        if (typeof window.showToast === 'function') window.showToast(error.message || 'Não foi possível abrir o arquivo.');
+      });
+    }
+
+    function marketingContentHealthMarkup(records) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayKey = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0'), String(today.getDate()).padStart(2, '0')].join('-');
+      const nextWeek = new Date(today);
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      const nextWeekKey = [nextWeek.getFullYear(), String(nextWeek.getMonth() + 1).padStart(2, '0'), String(nextWeek.getDate()).padStart(2, '0')].join('-');
+      const active = records.filter(function (record) { return record.status !== 'Arquivo'; });
+      const late = active.filter(function (record) {
+        return record.data && record.data.publishAt && record.data.publishAt < todayKey && record.status !== 'Publicado';
+      }).length;
+      const scheduledNextWeek = active.filter(function (record) {
+        const date = String(record.data && record.data.publishAt || '');
+        return date >= todayKey && date < nextWeekKey &&
+          ['Agendado', 'Aprovado'].indexOf(record.status) !== -1;
+      }).length;
+      const plannedDays = new Set(active.filter(function (record) {
+        return record.data && record.data.publishAt && record.data.publishAt >= todayKey;
+      }).map(function (record) { return record.data.publishAt; }));
+      const conflicts = new Set();
+      active.forEach(function (record) {
+        const data = record.data || {};
+        if (!data.publishAt || !data.channel) return;
+        if (active.some(function (other) {
+          return String(other.id) !== String(record.id) && other.data &&
+            other.data.publishAt === data.publishAt && other.data.channel === data.channel;
+        })) conflicts.add(data.publishAt + '|' + data.channel);
+      });
+      const gapNotice = scheduledNextWeek ? 'Há ' + scheduledNextWeek + ' publicação(ões) planejada(s) nos próximos 7 dias.' :
+        'Sem conteúdo aprovado/agendado nos próximos 7 dias.';
+      return '<div class="marketing-content-health"><span><b>' + late + '</b>Atrasado(s)</span>' +
+        '<span><b>' + conflicts.size + '</b>Conflito(s) de canal/data</span>' +
+        '<span><b>' + plannedDays.size + '</b>Data(s) futura(s) planejada(s)</span><span class="marketing-content-gap">' +
+        escapeHtml(gapNotice) + '</span></div>';
+    }
+
+    function renderMarketingContentBoard(list, search) {
+      const records = filteredMarketingContentRecords(search);
+      const health = marketingContentHealthMarkup(records);
+      if (marketingContentView === 'calendar') {
+        list.innerHTML = health + marketingContentCalendarMarkup(records);
+        return;
+      }
+      if (marketingContentView === 'list') {
+        list.innerHTML = health + marketingContentListMarkup(records);
+        return;
+      }
+      list.innerHTML = health + '<div class="marketing-content-board">' + MARKETING_CONTENT_STAGES.map(function (stage) {
+        const stagedRecords = records.filter(function (record) { return (record.status || 'Banco de ideias') === stage; });
+        return '<section class="marketing-content-column" data-marketing-drop="' + escapeHtml(stage) + '"><header><h3>' +
+          escapeHtml(stage) + '</h3><span>' + stagedRecords.length + '</span></header><div class="marketing-content-column-cards">' +
+          (stagedRecords.length ? stagedRecords.map(marketingContentCardMarkup).join('') :
+            '<p class="marketing-content-column-empty">Arraste um conteúdo para esta etapa.</p>') + '</div></section>';
+      }).join('') + '</div>';
+    }
+
+    function moveMarketingContent(recordId, nextStatus) {
+      const record = (dashboardState.businessCardRecords || []).find(function (item) {
+        return item && item.id === recordId && item.moduleKey === 'marketing-content-calendar' && !item.archived;
+      });
+      if (!record || MARKETING_CONTENT_STAGES.indexOf(nextStatus) === -1 || record.status === nextStatus) return;
+      if (nextStatus === 'Agendado' && !(record.data && record.data.publishAt)) {
+        if (typeof window.showToast === 'function') window.showToast('Defina uma data prevista antes de agendar este conteúdo.');
+        return;
+      }
+      const profile = getCurrentProfile(dashboardState);
+      const history = Array.isArray(record.data && record.data.statusHistory)
+        ? record.data.statusHistory.slice()
+        : [];
+      history.push({
+        from: record.status || 'Banco de ideias',
+        to: nextStatus,
+        at: new Date().toISOString(),
+        by: profile.displayName || profile.nickname || profile.name || authenticatedUserName || 'Usuário'
+      });
+      const updated = window.RildonXStore.updateBusinessCardRecord(record.id, {
+        status: nextStatus,
+        data: Object.assign({}, record.data || {}, { statusHistory: history })
+      });
+      if (!updated) {
+        if (typeof window.showToast === 'function') window.showToast('Não foi possível registrar a mudança de etapa.');
+        return;
+      }
+      syncBusinessCalendarEvents(
+        BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }),
+        updated,
+        updated.data || {}
+      ).catch(function (error) {
+        console.error('O conteúdo foi movido, mas a sincronização com o calendário falhou:', error);
+        if (typeof window.showToast === 'function') window.showToast('Etapa atualizada, mas o calendário não foi sincronizado: ' + (error.message || 'verifique suas permissões.'));
+      });
+      renderBusinessRecordList(
+        BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }),
+        businessSearch
+      );
+    }
+
     function renderBusinessRecordList(module, search) {
         const list = businessRoot.querySelector('.dashboard-business-record-list');
         if (!list) return;
+        if (module.id === 'marketing-content-calendar') {
+          renderMarketingContentBoard(list, search);
+          return;
+        }
         if (module.id === 'hr-training') {
           list.innerHTML = hrTrainingViewMarkup(search);
           return;
@@ -3102,7 +3852,12 @@
       const fields = formFields.map(function (field) {
         let value = field.key === 'title' ? record && record.title || '' :
           field.key === 'status' ? record && record.status || module.defaultStatus || (module.id === 'purchase-quotes' ? 'Solicitado' : '') :
-            recordData[field.key];
+            recordData[field.key] != null ? recordData[field.key] : field.defaultValue;
+        if (!record && module.id === 'marketing-internal-demands') {
+          const currentProfile = getCurrentProfile(dashboardState);
+          if (field.key === 'requester') value = currentProfile.displayName || currentProfile.nickname || currentProfile.name || authenticatedUserName || '';
+          if (field.key === 'requesterSector') value = currentProfile.sector || '';
+        }
         if (module.id === 'hr-training' && field.key === 'participants') {
           value = trainingRecordParticipants(record).map(trainingParticipantId).filter(Boolean);
         }
@@ -3308,13 +4063,50 @@
             : '') + '</select></label>'
         : '<label class="dashboard-business-filter"><span>Exibição</span><select data-business-filter aria-label="Filtrar registros"><option value="">Todos</option><option value="__favorites"' +
           (businessFilterValue === '__favorites' ? ' selected' : '') + '>Favoritos</option></select></label>';
+      const marketingRecords = (dashboardState.businessCardRecords || []).filter(function (record) {
+        return record && record.moduleKey === 'marketing-content-calendar' && !record.archived;
+      });
+      function marketingFilterOptions(key, label) {
+        const options = Array.from(new Set(marketingRecords.map(function (record) {
+          return String(record.data && record.data[key] || '').trim();
+        }).filter(Boolean))).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+        return '<label class="dashboard-business-filter"><span>' + label + '</span><select data-marketing-filter="' + key + '">' +
+          '<option value="">Todos</option>' + options.map(function (option) {
+            return '<option value="' + escapeHtml(option) + '"' +
+              (marketingContentFilters[key] === option ? ' selected' : '') + '>' + escapeHtml(option) + '</option>';
+          }).join('') + '</select></label>';
+      }
+      const marketingStatusOptions = '<label class="dashboard-business-filter"><span>Status</span><select data-marketing-filter="status"><option value="">Todas</option>' +
+        MARKETING_CONTENT_STAGES.map(function (status) {
+          return '<option value="' + escapeHtml(status) + '"' +
+            (marketingContentFilters.status === status ? ' selected' : '') + '>' + escapeHtml(status) + '</option>';
+        }).join('') + '</select></label>';
+      const marketingToolbar = '<div class="dashboard-business-toolbar marketing-content-toolbar"><label><span>' + iconMarkup('activity') +
+        '</span><input type="search" data-business-search value="' + escapeHtml(businessSearch) + '" placeholder="Buscar conteúdos, campanhas ou referências"></label>' +
+        marketingFilterOptions('channel', 'Canal') + marketingFilterOptions('campaign', 'Campanha') +
+        marketingFilterOptions('owner', 'Responsável') + marketingFilterOptions('format', 'Formato') +
+        marketingFilterOptions('theme', 'Tema') + marketingStatusOptions +
+        '<label class="dashboard-business-filter"><span>De</span><input type="date" data-marketing-date="from" value="' + escapeHtml(marketingContentFilters.from) + '"></label>' +
+        '<label class="dashboard-business-filter"><span>Até</span><input type="date" data-marketing-date="to" value="' + escapeHtml(marketingContentFilters.to) + '"></label>' +
+        '<div class="marketing-content-view-switch" role="group" aria-label="Visualização">' +
+        ['kanban', 'calendar', 'list'].map(function (view) {
+          const label = { kanban: 'Kanban', calendar: 'Calendário', list: 'Lista' }[view];
+          return '<button type="button" data-marketing-view="' + view + '" class="' +
+            (marketingContentView === view ? 'is-active' : '') + '">' + label + '</button>';
+        }).join('') + '</div>' +
+        '<label class="dashboard-business-archived"><input type="checkbox" data-business-archived' + (includeArchived ? ' checked' : '') + '> Mostrar arquivados</label>' +
+        '<button type="button" class="btn secondary" data-business-export>Exportar CSV</button>' +
+        '<button type="button" class="btn" data-business-create' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') +
+        '>+ Novo conteúdo</button></div>';
       businessRoot.innerHTML = '<div class="dashboard-business-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
         '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="' + escapeHtml(module.tone) + '">' + iconMarkup(module.icon) + '</div>' +
         '<div><span class="dashboard-library-eyebrow">' + escapeHtml(module.sector) + ' · Módulo compartilhado</span><h2 id="dashboard-business-title">' + escapeHtml(module.title) +
         '</h2><p>' + escapeHtml(module.description) + '</p></div><div class="dashboard-business-header-actions">' +
         (businessOpenedFromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
         '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
-        accessError + (moduleId === 'hr-employee-control' ? '' : renderBusinessMetrics(summary)) +
+        accessError + (moduleId === 'marketing-internal-demands'
+          ? internalDemandDashboardMarkup()
+          : moduleId === 'hr-employee-control' ? '' : renderBusinessMetrics(summary)) +
         (moduleId === 'hr-employee-control'
           ? '<div class="dashboard-business-toolbar employee-control-toolbar"><input type="search" data-employee-search placeholder="Buscar por nome, setor ou cargo" aria-label="Buscar funcionários">' +
             '<button type="button" class="btn" data-people-create-user>Cadastrar Usuário</button></div>' +
@@ -3332,11 +4124,14 @@
               '>+ Investimento</button><button type="button" class="btn" data-hr-training-create="training"' +
               (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') +
               '>+ Nova turma</button></div>' + hrTrainingNavigationMarkup() + '<div class="dashboard-business-record-list"></div>'
+          : module.id === 'marketing-content-calendar'
+            ? marketingToolbar + '<div class="dashboard-business-record-list"></div>'
           : '<div class="dashboard-business-toolbar"><label><span>' + iconMarkup('activity') + '</span><input type="search" data-business-search value="' + escapeHtml(businessSearch) + '" placeholder="Buscar registros"></label>' +
             filterOptions +
             '<label class="dashboard-business-archived"><input type="checkbox" data-business-archived' + (includeArchived ? ' checked' : '') + '> Mostrar arquivados</label>' +
             '<button type="button" class="btn secondary" data-business-export>Exportar CSV</button>' +
-            '<button type="button" class="btn" data-business-create' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') + '>+ Novo registro</button></div>' +
+            '<button type="button" class="btn" data-business-create' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') + '>' +
+            (module.id === 'marketing-internal-demands' ? '+ Nova demanda' : '+ Novo registro') + '</button></div>' +
             (module.id === 'quality-risks' ? qualityRiskMatrixMarkup() : '') +
             (module.id === 'quality-5s' ? quality5sSummaryMarkup() : '') +
             (module.id === 'quality-indicators' ? qualityIndicatorChartMarkup() : '') +
@@ -3368,6 +4163,10 @@
           if (typeof window.showToast === 'function') window.showToast('Este painel é restrito ao setor ' + module.sector + '.');
           return;
         }
+        if (moduleId === 'marketing-insights' || moduleId === 'marketing-materials') {
+          renderMarketingSpecialModule(module);
+          return;
+        }
         window.RildonXInfrastructure.open({ assetId: recordId || '', fromLibrary: businessOpenedFromLibrary }).catch(function (error) {
           console.error('Não foi possível abrir o painel de Infraestrutura:', error);
           if (typeof window.showToast === 'function') window.showToast(error.message || 'Não foi possível abrir o painel de Infraestrutura.');
@@ -3383,6 +4182,12 @@
       qualityIndicatorFilter = '';
       hrTrainingView = 'dashboard';
       hrTrainingFilters = { month: '', course: '', employee: '' };
+      marketingContentView = 'kanban';
+      marketingContentFilters = { channel: '', campaign: '', owner: '', format: '', theme: '', status: '', from: '', to: '' };
+      marketingCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
+      marketingComparisonMonths = { primary: '', secondary: '' };
+      marketingMaterialsView = 'materials';
       businessRoot.classList.add('open');
       if (recordId && !module.source) {
         if (!canAccessBusinessCard(module, dashboardState)) {
@@ -3452,7 +4257,10 @@
           slot: 'publication',
           title: 'Conteúdo: ' + record.title,
           description: values.notes || 'Publicação planejada no Calendário de Conteúdo.',
-          date: values.publishAt,
+          date: record.status === 'Arquivo' || !values.publishAt ? '' :
+            values.publishTime && /^\d{2}:\d{2}$/.test(values.publishTime)
+              ? values.publishAt + 'T' + values.publishTime + ':00'
+              : values.publishAt,
           category: 'conteudo',
           location: values.channel || ''
         });
@@ -3690,6 +4498,24 @@
         ? recordType === 'investment' ? 'Registrado' :
           existing && !isTrainingCompletionRecord(existing) ? existing.status || 'Pendente' : 'Realizado'
         : values.status || existing && existing.status || 'Pendente';
+      if (module.id === 'marketing-content-calendar') {
+        if (values.publishTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(values.publishTime)) {
+          throw new Error('Informe um horário válido no formato HH:MM.');
+        }
+        if (status === 'Agendado' && !values.publishAt) {
+          throw new Error('Defina uma data prevista antes de mover o conteúdo para Agendado.');
+        }
+      }
+      if (module.id === 'marketing-internal-demands') {
+        const isCompleted = /^(concluida|finalizada)$/i.test(normalizeSearchText(status));
+        if (isCompleted) {
+          const today = new Date();
+          values.completedAt = existing && existing.data && existing.data.completedAt ||
+            [today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0'), String(today.getDate()).padStart(2, '0')].join('-');
+        } else {
+          values.completedAt = '';
+        }
+      }
       const attachmentFile = formData.get('attachmentFile');
       if (module.id === 'hr-training') {
         values.recordType = recordType;
@@ -3806,6 +4632,19 @@
         status: status,
         data: Object.assign({}, existing && existing.data || {}, values)
       };
+      if (module.id === 'marketing-content-calendar' &&
+          (!existing || existing.status !== status)) {
+        const statusHistory = existing && existing.data && Array.isArray(existing.data.statusHistory)
+          ? existing.data.statusHistory.slice()
+          : [];
+        statusHistory.push({
+          from: existing && existing.status || '',
+          to: status,
+          at: new Date().toISOString(),
+          by: currentProfile.displayName || currentProfile.nickname || currentProfile.name || authenticatedUserName || 'Usuário'
+        });
+        payload.data.statusHistory = statusHistory;
+      }
       let saved;
       if (existing) {
         saved = window.RildonXStore.updateBusinessCardRecord(existing.id, payload);
@@ -4183,6 +5022,9 @@
     }
 
     if (businessRoot) {
+      window.addEventListener('rildonx-marketing-import-ready', function () {
+        if (activeBusinessModule === 'marketing-insights') renderBusinessModule('marketing-insights');
+      });
       businessRoot.addEventListener('click', function (event) {
         if (event.target.closest('[data-business-close]') ||
             event.target.closest('[data-business-library-back]')) {
@@ -4191,6 +5033,54 @@
         }
         if (event.target.closest('[data-business-back]')) {
           renderBusinessModule(activeBusinessModule);
+          return;
+        }
+        const contentViewButton = event.target.closest('[data-marketing-view]');
+        if (contentViewButton) {
+          marketingContentView = contentViewButton.dataset.marketingView;
+          renderBusinessRecordList(BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }), businessSearch);
+          return;
+        }
+        const calendarMonthButton = event.target.closest('[data-marketing-month]');
+        if (calendarMonthButton) {
+          marketingCalendarMonth.setMonth(marketingCalendarMonth.getMonth() + Number(calendarMonthButton.dataset.marketingMonth));
+          renderBusinessRecordList(BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }), businessSearch);
+          return;
+        }
+        const materialViewButton = event.target.closest('[data-marketing-material-view]');
+        if (materialViewButton) {
+          marketingMaterialsView = materialViewButton.dataset.marketingMaterialView;
+          renderBusinessModule('marketing-materials');
+          return;
+        }
+        const documentButton = event.target.closest('[data-marketing-open-document]');
+        if (documentButton) {
+          openMarketingDocument(documentButton.dataset.marketingOpenDocument);
+          return;
+        }
+        const documentDownloadButton = event.target.closest('[data-marketing-download-document]');
+        if (documentDownloadButton) {
+          openMarketingDocument(documentDownloadButton.dataset.marketingDownloadDocument, true);
+          return;
+        }
+        const materialFavoriteButton = event.target.closest('[data-marketing-material-favorite]');
+        if (materialFavoriteButton) {
+          const record = marketingMaterialRecords().find(function (item) {
+            return String(item.id) === materialFavoriteButton.dataset.marketingMaterialFavorite;
+          });
+          if (!record) return;
+          const updated = window.RildonXStore.updateBusinessCardRecord(record.id, {
+            data: Object.assign({}, record.data || {}, { isFavorite: !(record.data && record.data.isFavorite) })
+          });
+          if (!updated) {
+            if (typeof window.showToast === 'function') window.showToast('Não foi possível atualizar o favorito.');
+            return;
+          }
+          renderBusinessModule('marketing-materials');
+          return;
+        }
+        if (event.target.closest('[data-marketing-pdf]')) {
+          window.print();
           return;
         }
         const hrViewButton = event.target.closest('[data-hr-training-view]');
@@ -4339,7 +5229,9 @@
                 if (typeof window.showToast === 'function') window.showToast('Registro arquivado, mas uma integração não foi sincronizada: ' + (error.message || 'verifique suas permissões.'));
               });
             }
-            if (updated && activeBusinessModule === 'hr-training') renderBusinessModule(activeBusinessModule);
+            if (updated && ['hr-training', 'marketing-insights', 'marketing-materials'].indexOf(activeBusinessModule) !== -1) {
+              renderBusinessModule(activeBusinessModule);
+            }
           }
           return;
         }
@@ -4358,7 +5250,9 @@
                 if (typeof window.showToast === 'function') window.showToast('Registro restaurado, mas uma integração não foi sincronizada: ' + (error.message || 'verifique suas permissões.'));
               });
             }
-            if (updated && activeBusinessModule === 'hr-training') renderBusinessModule(activeBusinessModule);
+            if (updated && ['hr-training', 'marketing-insights', 'marketing-materials'].indexOf(activeBusinessModule) !== -1) {
+              renderBusinessModule(activeBusinessModule);
+            }
           }
           return;
         }
@@ -4427,6 +5321,41 @@
           }
         }
       });
+      businessRoot.addEventListener('dragstart', function (event) {
+        const contentCard = event.target.closest('[data-marketing-record]');
+        if (!contentCard || activeBusinessModule !== 'marketing-content-calendar' || marketingContentView !== 'kanban') return;
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', contentCard.dataset.marketingRecord);
+        }
+        contentCard.classList.add('is-dragging');
+      });
+      businessRoot.addEventListener('dragover', function (event) {
+        const dropColumn = event.target.closest('[data-marketing-drop]');
+        if (!dropColumn || activeBusinessModule !== 'marketing-content-calendar') return;
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        dropColumn.classList.add('is-drop-target');
+      });
+      businessRoot.addEventListener('dragleave', function (event) {
+        const dropColumn = event.target.closest('[data-marketing-drop]');
+        if (dropColumn && !dropColumn.contains(event.relatedTarget)) dropColumn.classList.remove('is-drop-target');
+      });
+      businessRoot.addEventListener('drop', function (event) {
+        const dropColumn = event.target.closest('[data-marketing-drop]');
+        if (!dropColumn || activeBusinessModule !== 'marketing-content-calendar') return;
+        event.preventDefault();
+        dropColumn.classList.remove('is-drop-target');
+        const recordId = event.dataTransfer && event.dataTransfer.getData('text/plain');
+        if (recordId) moveMarketingContent(recordId, dropColumn.dataset.marketingDrop);
+      });
+      businessRoot.addEventListener('dragend', function (event) {
+        const contentCard = event.target.closest('[data-marketing-record]');
+        if (contentCard) contentCard.classList.remove('is-dragging');
+        businessRoot.querySelectorAll('.marketing-content-column.is-drop-target').forEach(function (column) {
+          column.classList.remove('is-drop-target');
+        });
+      });
       businessRoot.addEventListener('input', function (event) {
         const employeeSearch = event.target.closest('[data-employee-search]');
         if (employeeSearch) {
@@ -4440,10 +5369,43 @@
         if (search) {
           businessSearch = search.value;
           const module = BUSINESS_CARD_MODULES.find(function (item) { return item.id === activeBusinessModule; });
-          if (module) renderBusinessRecordList(module, businessSearch);
+          if (module && (module.id === 'marketing-insights' || module.id === 'marketing-materials')) {
+            refreshMarketingSpecialModule(module.id, true);
+          } else if (module) {
+            renderBusinessRecordList(module, businessSearch);
+          }
         }
       });
       businessRoot.addEventListener('change', function (event) {
+        const contentFilter = event.target.closest('[data-marketing-filter]');
+        if (contentFilter) {
+          marketingContentFilters[contentFilter.dataset.marketingFilter] = contentFilter.value;
+          renderBusinessRecordList(BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }), businessSearch);
+          return;
+        }
+        const contentDate = event.target.closest('[data-marketing-date]');
+        if (contentDate) {
+          marketingContentFilters[contentDate.dataset.marketingDate] = contentDate.value;
+          renderBusinessRecordList(BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; }), businessSearch);
+          return;
+        }
+        const insightsFilter = event.target.closest('[data-marketing-insight-filter]');
+        if (insightsFilter) {
+          marketingInsightsFilters[insightsFilter.dataset.marketingInsightFilter] = insightsFilter.value;
+          renderBusinessModule('marketing-insights');
+          return;
+        }
+        const comparisonMonth = event.target.closest('[data-marketing-compare]');
+        if (comparisonMonth) {
+          marketingComparisonMonths[comparisonMonth.dataset.marketingCompare] = comparisonMonth.value;
+          renderBusinessModule('marketing-insights');
+          return;
+        }
+        if (event.target.matches('[data-marketing-compare-metric]')) {
+          marketingInsightsFilters.metric = event.target.value;
+          renderBusinessModule('marketing-insights');
+          return;
+        }
         const hrFilter = event.target.closest('[data-hr-filter]');
         if (hrFilter) {
           hrTrainingFilters[hrFilter.dataset.hrFilter] = hrFilter.value;
@@ -4482,6 +5444,30 @@
         }
       });
       businessRoot.addEventListener('submit', function (event) {
+        const reportForm = event.target.closest('[data-marketing-report-upload]');
+        if (reportForm) {
+          event.preventDefault();
+          const submitButton = reportForm.querySelector('[type="submit"]');
+          if (submitButton) submitButton.disabled = true;
+          saveMarketingReportUpload(reportForm).catch(function (error) {
+            console.error('Falha ao importar o relatório de Marketing:', error);
+            if (submitButton) submitButton.disabled = false;
+            if (typeof window.showToast === 'function') window.showToast(error.message || 'Não foi possível importar o relatório.');
+          });
+          return;
+        }
+        const materialForm = event.target.closest('[data-marketing-material-upload]');
+        if (materialForm) {
+          event.preventDefault();
+          const submitButton = materialForm.querySelector('[type="submit"]');
+          if (submitButton) submitButton.disabled = true;
+          saveMarketingMaterialUpload(materialForm).catch(function (error) {
+            console.error('Falha ao salvar o material de Branding:', error);
+            if (submitButton) submitButton.disabled = false;
+            if (typeof window.showToast === 'function') window.showToast(error.message || 'Não foi possível salvar o material.');
+          });
+          return;
+        }
         const participantForm = event.target.closest('[data-hr-participant-form]');
         if (participantForm) {
           event.preventDefault();
