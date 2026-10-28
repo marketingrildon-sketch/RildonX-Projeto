@@ -67,7 +67,8 @@
     }).map(function (profile) {
       return {
         id: String(profile.id),
-        name: profile.displayName || profile.nickname || profile.name || 'Colaborador'
+        name: profile.displayName || profile.nickname || profile.name || 'Colaborador',
+        avatarUrl: profile.avatarUrl || ''
       };
     }).sort(function (first, second) {
       return first.name.localeCompare(second.name, 'pt-BR');
@@ -81,7 +82,83 @@
   }
 
   function recordForMonth(state, month) {
-    return recordsFor(state).find(function (record) { return record.data.month === month; }) || null;
+    return recordsFor(state).find(function (record) {
+      return record.data.recordType !== 'recurring-preferences' && record.data.month === month;
+    }) || null;
+  }
+
+  function recurringPreferenceRecord(state) {
+    return recordsFor(state).find(function (record) {
+      return record.data.recordType === 'recurring-preferences';
+    }) || null;
+  }
+
+  function recurringPreferences(state) {
+    var record = recurringPreferenceRecord(state);
+    return record && record.data.preferences && typeof record.data.preferences === 'object'
+      ? record.data.preferences : {};
+  }
+
+  function applyExceptions(assignments, exceptions) {
+    var byUser = new Map(assignments.map(function (assignment) {
+      return [String(assignment.userId), {
+        userId: String(assignment.userId),
+        name: assignment.name,
+        avatarUrl: assignment.avatarUrl || '',
+        dates: assignment.dates.slice()
+      }];
+    }));
+    (exceptions || []).forEach(function (exception) {
+      var source = byUser.get(String(exception.employeeId));
+      var date = String(exception.date || '');
+      if (!source || !date) return;
+      if (exception.type === 'Troca de folga entre funcionários') {
+        var recipient = byUser.get(String(exception.otherEmployeeId));
+        if (!recipient) return;
+        source.dates = source.dates.filter(function (assignedDate) { return assignedDate !== date; });
+        if (recipient.dates.indexOf(date) === -1) recipient.dates.push(date);
+        return;
+      }
+      if (source.dates.indexOf(date) === -1) source.dates.push(date);
+    });
+    byUser.forEach(function (assignment) { assignment.dates.sort(); });
+    return Array.from(byUser.values());
+  }
+
+  function generateAssignments(state, month, preferences, exceptions) {
+    var dates = getSaturdays(month);
+    var employees = activeScheduleEmployees(state);
+    var hasSavedPreferences = Object.keys(preferences).length > 0;
+    var generated = employees.map(function (employee) {
+      var ordinals = Array.isArray(preferences[employee.id])
+        ? preferences[employee.id].map(Number) : hasSavedPreferences ? [1, 4] : [];
+      var assignedDates = [];
+      ordinals.slice(0, 2).forEach(function (ordinal) {
+        var preferredIndex = Math.max(0, Math.min(dates.length - 1, ordinal - 1));
+        var candidates = dates.map(function (date, index) {
+          return { date: date, index: index, distance: Math.abs(index - preferredIndex) };
+        }).sort(function (first, second) {
+          return first.distance - second.distance || second.index - first.index;
+        });
+        var choice = candidates.find(function (candidate) {
+          return assignedDates.indexOf(candidate.date) === -1;
+        });
+        if (choice) assignedDates.push(choice.date);
+      });
+      return {
+        userId: employee.id,
+        name: employee.name,
+        avatarUrl: employee.avatarUrl,
+        dates: assignedDates.sort()
+      };
+    }).filter(function (assignment) { return assignment.dates.length; });
+    return applyExceptions(generated, exceptions);
+  }
+
+  function automaticAssignments(state, month, record) {
+    var stored = record && Array.isArray(record.data.assignments) ? record.data.assignments : [];
+    if (stored.length && !record.data.generatedFromPreferencesAt && !recurringPreferenceRecord(state)) return stored;
+    return generateAssignments(state, month, recurringPreferences(state), getExceptions(record));
   }
 
   function getExceptions(record) {
@@ -304,54 +381,66 @@
     });
   }
 
-  function selectOptions(dates, selected, placeholder) {
-    return '<option value="">' + escapeHtml(placeholder) + '</option>' + dates.map(function (date) {
-      return '<option value="' + date + '"' + (date === selected ? ' selected' : '') + '>' +
-        escapeHtml(dateLabel(date)) + '</option>';
-    }).join('');
+  function ordinalOptions(selected, slot) {
+    var labels = ['1º sábado de cada mês', '2º sábado de cada mês', '3º sábado de cada mês',
+      '4º sábado de cada mês', '5º sábado de cada mês'];
+    return '<option value="">Escolher ' + (slot === 0 ? '1ª' : '2ª') + ' preferência</option>' +
+      labels.map(function (label, index) {
+        var value = index + 1;
+        return '<option value="' + value + '"' + (Number(selected) === value ? ' selected' : '') +
+          '>' + label + '</option>';
+      }).join('');
   }
 
-  function renderAssignments(assignments, changeIds) {
-    if (!assignments.length) {
-      return '<div class="sales-time-off-empty"><b>Nenhuma escala confirmada para este mês.</b>' +
-        '<span>O gestor pode escolher as datas e gerar uma prévia.</span></div>';
-    }
-    return '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table"><thead><tr>' +
-      '<th>Colaborador</th><th>1ª folga</th><th>2ª folga</th><th>Situação</th></tr></thead><tbody>' +
-      assignments.map(function (assignment) {
-        var changed = changeIds && changeIds.has(String(assignment.userId));
-        return '<tr><td>' + escapeHtml(assignment.name) + '</td>' +
-          '<td>' + escapeHtml(dateLabel(assignment.dates[0])) + '</td><td>' +
-          escapeHtml(dateLabel(assignment.dates[1])) + '</td><td>' +
-          (changed ? '<span class="sales-time-off-badge is-changed">Redistribuída</span>' :
-            '<span class="sales-time-off-badge">Mantida</span>') + '</td></tr>';
-      }).join('') + '</tbody></table></div>';
+  function preferencesForEmployee(state, employee, record) {
+    var saved = recurringPreferences(state)[employee.id];
+    if (Array.isArray(saved) && saved.length === 2) return saved;
+    var assignments = record && Array.isArray(record.data.assignments) ? record.data.assignments : [];
+    var existing = assignments.find(function (assignment) {
+      return String(assignment.userId) === employee.id;
+    });
+    var ordinals = existing && Array.isArray(existing.dates)
+      ? existing.dates.map(function (date) { return saturdayOrdinal(date, controller.month); })
+        .filter(function (ordinal) { return ordinal > 0; })
+      : [];
+    return ordinals.length === 2 ? ordinals : [1, 4];
   }
 
-  function renderMonthlyRoster(dates, assignments, hasSchedule) {
+  function renderMonthlyRoster(dates, assignments, employees, hasSchedule) {
     var assignmentsByDate = new Map();
     dates.forEach(function (date) { assignmentsByDate.set(date, []); });
     assignments.forEach(function (assignment) {
       if (!assignment || !Array.isArray(assignment.dates)) return;
       assignment.dates.forEach(function (date) {
         var people = assignmentsByDate.get(date);
-        if (people) people.push(assignment.name || 'Colaborador');
+        if (people) people.push(assignment);
       });
     });
     var scheduleStatus = hasSchedule
-      ? 'Lista da escala confirmada para este mês.'
-      : 'A lista estará disponível quando a escala do mês for confirmada.';
+      ? 'Consulte as pessoas escaladas para cada sábado.'
+      : 'Salve as preferências recorrentes para gerar a escala deste mês.';
     return '<section class="sales-time-off-section sales-time-off-monthly-roster" aria-labelledby="sales-time-off-roster-title">' +
       '<div class="sales-time-off-section-heading"><div><h3 id="sales-time-off-roster-title">Folgas por sábado</h3>' +
       '<p>' + scheduleStatus + '</p></div><span>' + dates.length + ' sábado(s)</span></div>' +
       '<div class="sales-time-off-saturday-grid">' + dates.map(function (date) {
         var people = (assignmentsByDate.get(date) || []).slice().sort(function (first, second) {
-          return first.localeCompare(second, 'pt-BR');
+          return String(first.name || '').localeCompare(String(second.name || ''), 'pt-BR');
         });
         return '<article class="sales-time-off-saturday-card"><div class="sales-time-off-saturday-heading">' +
           '<h4>' + escapeHtml(dateLabel(date)) + '</h4><span>' + people.length + ' pessoa(s)</span></div>' +
           (people.length
-            ? '<ul>' + people.map(function (name) { return '<li>' + escapeHtml(name) + '</li>'; }).join('') + '</ul>'
+            ? '<ul>' + people.map(function (person) {
+              var initials = String(person.name || 'Colaborador').trim().split(/\s+/).slice(0, 2)
+                .map(function (part) { return part.charAt(0); }).join('').toLocaleUpperCase('pt-BR');
+              var employee = employees.find(function (item) { return item.id === String(person.userId); });
+              var avatarUrl = employee && employee.avatarUrl || person.avatarUrl;
+              var avatar = avatarUrl
+                ? '<img src="' + escapeHtml(avatarUrl) + '" alt="" loading="lazy">'
+                : '<span aria-hidden="true">' + escapeHtml(initials) + '</span>';
+              return '<li><span class="sales-time-off-person-avatar">' + avatar + '</span><span class="sales-time-off-person-detail">' +
+                '<b>' + escapeHtml(person.name || 'Colaborador') + '</b><small>Próxima folga: ' +
+                escapeHtml(dateLabel(date)) + '</small></span></li>';
+            }).join('') + '</ul>'
             : '<p class="sales-time-off-saturday-empty">Ninguém escalado</p>') + '</article>';
       }).join('') + '</div></section>';
   }
@@ -361,7 +450,9 @@
     return '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table"><thead><tr>' +
       '<th>Colaborador</th><th>Data</th><th>Tipo</th><th>Justificativa</th><th>Autorizado por</th></tr></thead><tbody>' +
       exceptions.slice().sort(function (a, b) { return a.date.localeCompare(b.date); }).map(function (item) {
-        return '<tr><td>' + escapeHtml(item.employeeName) + '</td><td>' + escapeHtml(dateLabel(item.date)) +
+        return '<tr><td>' + escapeHtml(item.employeeName) +
+          (item.otherEmployeeName ? ' ↔ ' + escapeHtml(item.otherEmployeeName) : '') +
+          '</td><td>' + escapeHtml(dateLabel(item.date)) +
           '</td><td>' + escapeHtml(item.type) + '</td><td>' + escapeHtml(item.reason) +
           '</td><td>' + escapeHtml(item.authorizedBy) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
@@ -369,12 +460,17 @@
 
   function renderHistory(record) {
     var history = record && Array.isArray(record.data.history) ? record.data.history.slice().reverse() : [];
-    if (!history.length) return '<p class="sales-time-off-muted">As confirmações e reajustes aparecerão aqui.</p>';
+    if (!history.length) return '<p class="sales-time-off-muted">As preferências e exceções autorizadas aparecerão aqui.</p>';
     return '<ol class="sales-time-off-history">' + history.map(function (entry) {
       var action = entry.action === 'exception_authorized' ? 'Exceção autorizada'
-        : entry.action === 'published' ? 'Escala publicada' : 'Escala confirmada';
+        : entry.action === 'preferences_saved' ? 'Preferências recorrentes salvas'
+          : entry.action === 'published' ? 'Escala publicada' : 'Escala confirmada';
       var detail = entry.action === 'exception_authorized'
-        ? entry.exception.employeeName + ' · ' + dateLabel(entry.exception.date) + ' · ' + entry.exception.type
+        ? entry.exception.employeeName + (entry.exception.otherEmployeeName
+          ? ' ↔ ' + entry.exception.otherEmployeeName : '') + ' · ' +
+          dateLabel(entry.exception.date) + ' · ' + entry.exception.type
+        : entry.action === 'preferences_saved'
+          ? 'Preferências atualizadas para ' + (entry.employeeCount || 0) + ' pessoa(s)'
         : entry.action === 'published'
           ? 'Escala disponibilizada para consulta · ' + (entry.assignmentCount || 0) + ' pessoa(s)'
         : (entry.changeCount || 0) + ' folga(s) reajustada(s), ' + (entry.assignments || []).length + ' pessoa(s) na escala';
@@ -395,88 +491,47 @@
     }).join('') + '</ol>';
   }
 
-  function renderConflict(message) {
-    return '<div class="sales-time-off-conflict" role="alert"><b>Não há distribuição válida</b><p>' +
-      escapeHtml(message) + '</p>' +
-      '<p>A escala atual não foi alterada. Confira as datas e gere uma nova prévia.</p></div>';
-  }
-
   function render() {
     if (!controller || !mountedRoot) return;
     var state = window.RildonXStore ? window.RildonXStore.getState() : {};
     var employees = activeScheduleEmployees(state);
     var dates = getSaturdays(controller.month);
     var record = currentSchedule(state);
-    var savedAssignments = getAssignments(record);
     var exceptions = getExceptions(record);
-    var storedAssignments = record && Array.isArray(record.data.assignments) ? record.data.assignments : [];
-    var preferences = controller.draft && controller.draft.month === controller.month
-      ? controller.draft.preferences
-      : new Map(storedAssignments.map(function (assignment) {
-        return [String(assignment.userId), (assignment.dates || []).slice()];
+    var assignments = automaticAssignments(state, controller.month, record);
+    var recurringRecord = recurringPreferenceRecord(state);
+    var preferences = controller.draft && controller.draft.preferences ||
+      new Map(employees.map(function (employee) {
+        return [employee.id, preferencesForEmployee(state, employee, record)];
       }));
-    var assignments = storedAssignments;
-    var changeIds = controller.preview && controller.preview.month === controller.month
-      ? new Set(controller.preview.result.changes.map(function (change) { return change.userId; }))
-      : new Set();
-    var historyCount = record && Array.isArray(record.data.history) ? record.data.history.length : 0;
+    var historyRecord = record && record.data.history && record.data.history.length ? record : recurringRecord;
+    var historyCount = historyRecord && Array.isArray(historyRecord.data.history) ? historyRecord.data.history.length : 0;
+    var plannedTimeOffCount = assignments.reduce(function (count, assignment) {
+      return count + (Array.isArray(assignment.dates) ? assignment.dates.length : 0);
+    }, 0);
     var managerCanEdit = controller.isManager && !controller.loadError;
-    var hasConfirmedAssignments = assignments.length > 0;
-    var assignedEmployeeIds = new Set(assignments.map(function (assignment) {
-      return String(assignment.userId);
-    }));
-    var hasCurrentRoster = employees.every(function (employee) {
-      return assignedEmployeeIds.has(employee.id);
-    });
-    var isPublished = record && record.status === 'Publicada' && hasCurrentRoster;
-    var publicationOutdated = record && record.status === 'Publicada' && !hasCurrentRoster;
 
     var employeeRows = employees.map(function (employee) {
-      var assigned = preferences.get(employee.id) || savedAssignments.get(employee.id) || [];
+      var assigned = preferences.get(employee.id) || [1, 4];
       var first = assigned[0] || '';
       var second = assigned[1] || '';
       return '<tr><th scope="row">' + escapeHtml(employee.name) + '</th><td><select data-schedule-preference="' +
         escapeHtml(employee.id) + '" data-slot="0" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
-        selectOptions(dates, first, 'Escolher 1ª folga') + '</select></td><td><select data-schedule-preference="' +
+        ordinalOptions(first, 0) + '</select></td><td><select data-schedule-preference="' +
         escapeHtml(employee.id) + '" data-slot="1" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
-        selectOptions(dates, second, 'Escolher 2ª folga') + '</select></td></tr>';
+        ordinalOptions(second, 1) + '</select></td></tr>';
     }).join('');
-
-    var previewMarkup = '';
-    if (controller.preview && controller.preview.month === controller.month) {
-      var result = controller.preview.result;
-      previewMarkup = '<section class="sales-time-off-preview" aria-live="polite"><div class="sales-time-off-section-heading">' +
-        '<div><h3>Prévia da redistribuição</h3><p>Confira a proposta antes de confirmar a escala.</p></div>' +
-        '<span>' + result.changeCount + ' alteração(ões)</span></div>' +
-        (result.preferenceViolations ? '<p class="sales-time-off-preview-warning">' + result.preferenceViolations +
-          ' preferência(s) não puderam ser atendidas pela distribuição mais equilibrada; confira as datas propostas antes de confirmar.</p>' : '') +
-        '<div class="sales-time-off-distribution">' + dates.map(function (date) {
-          return '<div><b>' + escapeHtml(dateLabel(date)) + '</b><span>' +
-            (result.loads[date] || 0) + ' folga(s) planejada(s)</span>' +
-            ((result.exceptionsByDate[date] || 0) ? '<small>' + result.exceptionsByDate[date] +
-              ' exceção(ões) registrada(s)</small>' : '') + '</div>';
-        }).join('') + '</div>' +
-        renderAssignments(result.assignments, new Set(result.changes.map(function (change) { return change.userId; }))) +
-        (result.changes.length ? '<ul class="sales-time-off-change-list">' + result.changes.map(function (change) {
-          return '<li><b>' + escapeHtml(change.name) + '</b><span>' +
-            escapeHtml(change.from.map(dateLabel).join(' e ')) + ' → ' +
-            escapeHtml(change.to.map(dateLabel).join(' e ')) + '</span></li>';
-        }).join('') + '</ul>' : '<p class="sales-time-off-muted">A proposta não altera as datas confirmadas.</p>') +
-        '<div class="sales-time-off-form-actions"><button type="button" class="btn secondary" data-schedule-cancel-preview>Descartar prévia</button>' +
-        '<button type="button" class="btn" data-schedule-confirm' +
-        (!managerCanEdit ? ' disabled' : '') + '>Confirmar e salvar escala</button></div></section>';
-    } else if (controller.conflict && controller.conflict.month === controller.month) {
-      previewMarkup = renderConflict(controller.conflict.reason);
-    }
 
     var rosterMarkup = employees.length
       ? '<form data-schedule-plan><div class="sales-time-off-section-heading"><div><h3>Preferências de folga</h3>' +
-        '<p>Escolha duas datas distintas para cada pessoa. Se houver conflito, o sistema propõe a menor redistribuição possível.</p></div></div>' +
-        '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table"><thead><tr><th>Colaborador</th><th>1ª folga desejada</th><th>2ª folga desejada</th></tr></thead>' +
+        '<p>Escolha duas posições de sábado que se repetem para cada pessoa em todos os meses.</p></div></div>' +
+        '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table"><thead><tr><th>Colaborador</th><th>1ª preferência</th><th>2ª preferência</th></tr></thead>' +
         '<tbody>' + employeeRows + '</tbody></table></div>' +
-        '<div class="sales-time-off-form-actions"><button type="submit" class="btn" data-schedule-prepare' +
+        '<div class="sales-time-off-form-actions"><button type="submit" class="btn" data-schedule-save' +
         (!managerCanEdit || controller.loadError ? ' disabled title="O armazenamento compartilhado não está disponível"' : '') +
-        '>Gerar prévia</button></div></form>'
+        '>Salvar</button><button type="button" class="btn secondary" data-schedule-export' +
+        (!assignments.length ? ' disabled title="Salve as preferências para gerar a escala"' : '') +
+        '>Exportar escala</button></div></form>'
       : '<div class="sales-time-off-empty"><b>Nenhum usuário ativo foi encontrado.</b>' +
         '<span>Verifique se os perfis estão carregados e ativos.</span></div>';
 
@@ -484,179 +539,145 @@
       return '<option value="' + escapeHtml(employee.id) + '">' + escapeHtml(employee.name) + '</option>';
     }).join('');
     var exceptionForm = managerCanEdit && employees.length
-      ? '<form class="sales-time-off-exception-form" data-schedule-exception><label><span>Colaborador</span><select name="employeeId" required>' +
+      ? '<form class="sales-time-off-exception-form" data-schedule-exception><label><span data-exception-employee-label>Colaborador</span><select name="employeeId" required>' +
         '<option value="">Selecionar pessoa</option>' + exceptionOptions + '</select></label><label><span>Sábado</span><select name="date" required>' +
         '<option value="">Selecionar data</option>' +
         dates.map(function (date) { return '<option value="' + date + '">' + escapeHtml(dateLabel(date)) + '</option>'; }).join('') +
-        '</select></label><label><span>Tipo</span><select name="type"><option>Folga adicional</option><option>Ausência excepcional</option><option>Outra exceção</option></select></label>' +
+        '</select></label><label><span>Tipo</span><select name="type" data-exception-type><option>Folga adicional</option><option>Ausência excepcional</option>' +
+        '<option>Troca de folga entre funcionários</option><option>Outra exceção</option></select></label>' +
+        '<label class="sales-time-off-exception-swap" data-exception-swap-fields hidden><span>Quem passa a folgar</span><select name="otherEmployeeId">' +
+        '<option value="">Selecionar pessoa</option>' + exceptionOptions + '</select></label>' +
         '<label class="sales-time-off-exception-reason"><span>Justificativa</span><input name="reason" type="text" maxlength="240" required></label>' +
-        '<button type="submit" class="btn secondary">Autorizar exceção</button></form>'
+        '<button type="submit" class="btn sales-time-off-authorize-button">Autorizar exceção</button></form>'
       : '';
     var loadWarning = controller.loadError
       ? '<div class="sales-time-off-conflict" role="alert"><b>Armazenamento compartilhado indisponível</b><p>' +
         escapeHtml(controller.loadError) + '</p><p>Não é possível gravar alterações até que o acesso ao armazenamento seja restabelecido.</p></div>'
       : '';
-    var monthRecords = recordsFor(state).filter(function (item) {
-      return String(item.data.month || '').match(/^\d{4}-\d{2}$/);
-    }).sort(function (first, second) { return second.data.month.localeCompare(first.data.month); });
-    var historyOptions = monthRecords.map(function (item) {
-      return '<option value="' + escapeHtml(item.data.month) + '"' +
-        (item.data.month === controller.month ? ' selected' : '') + '>' + escapeHtml(item.data.month) + '</option>';
-    }).join('');
-
     controller.target.innerHTML = '<div class="dashboard-business-panel dashboard-business-panel--sales-time-off" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
       '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="green">↻</div>' +
       '<div><span class="dashboard-library-eyebrow">Comercial · Escala compartilhada</span><h2 id="dashboard-business-title">Escala de Folga</h2>' +
-      '<p>Cada usuário deverá possuir duas folgas aos sábados por mês. O gestor define as datas e o sistema sugere um rodízio equilibrado considerando o histórico.</p></div>' +
+      '<p>Cada pessoa tem duas preferências recorrentes de sábado. As listas mensais são geradas automaticamente e podem ser ajustadas por exceções autorizadas.</p></div>' +
       '<div class="dashboard-business-header-actions">' +
       (controller.fromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
       '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
       loadWarning + '<div class="sales-time-off-toolbar"><label><span>Mês da escala</span><input type="month" data-schedule-month value="' +
-      escapeHtml(controller.month) + '"></label><label><span>Consultar mês confirmado</span><select data-schedule-history-month><option value="">Selecionar mês</option>' +
-      historyOptions + '</select></label><div><b>' + employees.length + '</b><small>usuário(s) ativo(s) cadastrado(s)</small></div>' +
-      '<div><b>' + (assignments || []).length + '</b><small>folga(s) planejada(s)</small></div></div>' +
-      renderMonthlyRoster(dates, assignments, assignments.length > 0) +
-      '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Distribuição automática</h3>' +
-      '<p>Não há limite fixo de pessoas por sábado. Ao gerar a prévia, o sistema distribui as folgas entre as datas disponíveis de forma equilibrada.</p></div></div></section>' +
-      '<section class="sales-time-off-section">' + rosterMarkup + previewMarkup + '</section>' +
-      '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Escala confirmada</h3>' +
-      '<p>' + (record ? 'Última confirmação: ' + escapeHtml(record.data.updatedBy || 'Gestor') +
-        (record.updatedAt ? ' · ' + escapeHtml(new Date(record.updatedAt).toLocaleString('pt-BR')) : '') :
-        'As datas passam a valer somente depois da confirmação do gestor.') + '</p></div>' +
-      '<div class="sales-time-off-actions">' +
-      (isPublished ? '<span class="sales-time-off-published">Publicada' +
-        (record.data.publishedAt ? ' · ' + escapeHtml(new Date(record.data.publishedAt).toLocaleString('pt-BR')) : '') +
-        '</span>' : (publicationOutdated
-          ? '<span class="sales-time-off-publication-outdated">Equipe alterada desde a publicação</span>' : '') +
-        (managerCanEdit && hasConfirmedAssignments
-          ? '<button type="button" class="btn secondary" data-schedule-publish>' +
-            (publicationOutdated ? 'Atualizar publicação' : 'Publicar escala') + '</button>' : '')) +
-      '<button type="button" class="btn secondary" data-schedule-export' +
-        (!hasConfirmedAssignments ? ' disabled title="Confirme uma escala antes de exportar"' : '') +
-        '>Exportar CSV</button><span>' + historyCount + ' registro(s) histórico(s)</span></div></div>' +
-      renderAssignments(assignments || [], new Set()) + '</section>' +
+      escapeHtml(controller.month) + '"></label><div><b>' + employees.length + '</b><small>usuário(s) ativo(s) cadastrado(s)</small></div>' +
+      '<div><b>' + plannedTimeOffCount + '</b><small>folga(s) planejada(s)</small></div></div>' +
+      renderMonthlyRoster(dates, assignments, employees, assignments.length > 0) +
+      '<section class="sales-time-off-section">' + rosterMarkup + '</section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Exceções autorizadas</h3>' +
-      '<p>As exceções autorizadas são registradas separadamente da distribuição mensal planejada.</p></div></div>' +
+      '<p>Exceções e trocas atualizam automaticamente a lista do sábado selecionado.</p></div></div>' +
       exceptionForm + renderExceptions(exceptions) + '</section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Histórico de reajustes</h3>' +
-      '<p>Registro das escalas confirmadas e exceções autorizadas.</p></div></div>' + renderHistory(record) + '</section></div>';
+      '<p>' + historyCount + ' registro(s) de preferências e exceções.</p></div></div>' +
+      renderHistory(historyRecord) + '</section></div>';
   }
 
-  function readPlanForm(form) {
+  function readPreferenceForm(form) {
     var state = window.RildonXStore.getState();
     var employees = activeScheduleEmployees(state);
-    var dates = getSaturdays(controller.month);
-    var record = currentSchedule(state);
-    var preferences = new Map();
+    var preferences = {};
     employees.forEach(function (employee) {
-      var picks = Array.prototype.slice.call(form.querySelectorAll('[data-schedule-preference="' + employee.id + '"]'))
+      var selects = Array.prototype.filter.call(form.querySelectorAll('[data-schedule-preference]'), function (select) {
+        return select.dataset.schedulePreference === employee.id;
+      });
+      var picks = selects
         .sort(function (first, second) { return Number(first.dataset.slot) - Number(second.dataset.slot); })
-        .map(function (select) { return select.value; });
-      if (picks.length !== 2 || !picks[0] || !picks[1]) {
-        throw new Error('Escolha as duas folgas de ' + employee.name + '.');
+        .map(function (select) { return Number(select.value); });
+      if (picks.length !== 2 || picks.some(function (ordinal) {
+        return !Number.isInteger(ordinal) || ordinal < 1 || ordinal > 5;
+      })) {
+        throw new Error('Escolha as duas preferências de sábado de ' + employee.name + '.');
       }
       if (picks[0] === picks[1]) {
-        throw new Error('As duas folgas de ' + employee.name + ' precisam ser em sábados diferentes.');
+        throw new Error('As duas preferências de ' + employee.name + ' precisam ser diferentes.');
       }
-      preferences.set(employee.id, picks);
+      preferences[employee.id] = picks;
     });
     return {
       state: state,
       employees: employees,
-      dates: dates,
-      record: record,
       preferences: preferences
     };
   }
 
-  function preparePreview(form) {
-    if (!controller.isManager) throw new Error('Somente um gestor pode preparar e confirmar a escala.');
+  function savePreferences(form) {
+    if (!controller.isManager) throw new Error('Somente um gestor pode salvar as preferências da escala.');
     if (controller.loadError) throw new Error(controller.loadError);
-    var details = readPlanForm(form);
-    var result = previewSnapshot(details.state, details.record, details.employees, details.dates,
-      details.preferences);
-    controller.draft = {
-      month: controller.month,
-      preferences: details.preferences
-    };
-    if (!result.feasible) {
-      controller.preview = null;
-      controller.conflict = {
-        month: controller.month,
-        reason: result.reason
-      };
-      render();
-      return;
-    }
-    controller.conflict = null;
-    controller.preview = {
-      month: controller.month,
-      result: result,
-      baseUpdatedAt: details.record && details.record.updatedAt || '',
-      rosterIds: details.employees.map(function (employee) { return employee.id; }).sort()
-    };
-    render();
-  }
-
-  function confirmPreview() {
-    if (!controller.isManager || !controller.preview || controller.preview.month !== controller.month) {
-      throw new Error('Gere uma prévia válida antes de confirmar.');
-    }
-    if (controller.loadError) throw new Error(controller.loadError);
+    var details = readPreferenceForm(form);
+    if (!details.employees.length) throw new Error('Não há usuários ativos para salvar preferências.');
     var state = window.RildonXStore.getState();
     var record = currentSchedule(state);
-    var employees = activeScheduleEmployees(state);
-    var currentUpdatedAt = record && record.updatedAt || '';
-    var rosterIds = employees.map(function (employee) { return employee.id; }).sort();
-    if (currentUpdatedAt !== controller.preview.baseUpdatedAt ||
-        JSON.stringify(rosterIds) !== JSON.stringify(controller.preview.rosterIds)) {
-      controller.preview = null;
-      controller.conflict = null;
-      render();
-      throw new Error('A equipe ou a escala foi alterada durante a prévia. Gere uma nova proposta antes de confirmar.');
-    }
-    var result = controller.preview.result;
+    var preferencesRecord = recurringPreferenceRecord(state);
     var now = new Date().toISOString();
     var profile = getCurrentProfile(state);
     var actor = profile.displayName || profile.nickname || profile.name || state.user && state.user.name || 'Gestor';
-    var previousData = Object.assign({}, record && record.data || {});
-    delete previousData.capacityByDate;
-    var history = Array.isArray(previousData.history) ? previousData.history.slice() : [];
-    history.push({
-      action: 'confirmed',
+    var previousPreferenceData = Object.assign({}, preferencesRecord && preferencesRecord.data || {});
+    var preferenceHistory = Array.isArray(previousPreferenceData.history)
+      ? previousPreferenceData.history.slice() : [];
+    preferenceHistory.push({
+      action: 'preferences_saved',
       confirmedAt: now,
       confirmedBy: actor,
-      changeCount: result.changeCount,
-      changes: result.changes,
-      assignments: result.assignments
+      employeeCount: details.employees.length
+    });
+    var preferencePayload = {
+      title: 'Preferências recorrentes - Escala de Folga',
+      status: 'Ativa',
+      data: Object.assign({}, previousPreferenceData, {
+        recordType: 'recurring-preferences',
+        preferences: details.preferences,
+        history: preferenceHistory,
+        updatedBy: actor,
+        savedAt: now
+      })
+    };
+    var savedPreferences = preferencesRecord
+      ? window.RildonXStore.updateBusinessCardRecord(preferencesRecord.id, preferencePayload)
+      : window.RildonXStore.addBusinessCardRecord(Object.assign({
+        moduleKey: MODULE_KEY,
+        sector: 'comercial',
+        createdBy: controller.userId || profile.id
+      }, preferencePayload));
+    if (!savedPreferences) throw new Error('O armazenamento não salvou as preferências recorrentes.');
+
+    state = window.RildonXStore.getState();
+    record = currentSchedule(state);
+    var assignments = generateAssignments(state, controller.month, details.preferences, getExceptions(record));
+    var previousData = Object.assign({}, record && record.data || {});
+    delete previousData.capacityByDate;
+    var scheduleHistory = Array.isArray(previousData.history) ? previousData.history.slice() : [];
+    scheduleHistory.push({
+      action: 'preferences_saved',
+      confirmedAt: now,
+      confirmedBy: actor,
+      employeeCount: details.employees.length
     });
     var payload = {
       title: 'Escala de Folga - ' + controller.month,
-      status: 'Confirmada',
+      status: 'Automática',
       data: Object.assign({}, previousData, {
         month: controller.month,
-        assignments: result.assignments,
-        history: history,
+        assignments: assignments,
+        history: scheduleHistory,
         exceptions: getExceptions(record),
-        publishedAt: null,
-        publishedBy: '',
         updatedBy: actor,
-        confirmedAt: now
+        generatedAt: now,
+        generatedFromPreferencesAt: now
       })
     };
-    var saved = record
+    var savedSchedule = record
       ? window.RildonXStore.updateBusinessCardRecord(record.id, payload)
       : window.RildonXStore.addBusinessCardRecord(Object.assign({
         moduleKey: MODULE_KEY,
         sector: 'comercial',
         createdBy: controller.userId || profile.id
       }, payload));
-    if (!saved) throw new Error('O armazenamento não confirmou a escala. Nenhuma confirmação foi exibida.');
-    controller.preview = null;
-    controller.conflict = null;
+    if (!savedSchedule) throw new Error('As preferências foram salvas, mas a lista mensal não foi gravada.');
     controller.draft = null;
     render();
-    toast('Escala de ' + controller.month + ' confirmada e salva.');
+    toast('Preferências salvas. A escala de ' + controller.month + ' foi gerada automaticamente.');
   }
 
   function authorizeException(form) {
@@ -666,14 +687,64 @@
     var state = window.RildonXStore.getState();
     var employees = activeScheduleEmployees(state);
     var employee = employees.find(function (item) { return item.id === String(formData.get('employeeId') || ''); });
+    var otherEmployee = employees.find(function (item) {
+      return item.id === String(formData.get('otherEmployeeId') || '');
+    });
     var dates = getSaturdays(controller.month);
     var date = String(formData.get('date') || '');
     var type = String(formData.get('type') || '').trim();
     var reason = String(formData.get('reason') || '').trim();
-    if (!employee || dates.indexOf(date) === -1 || !type || !reason) {
+    var isSwap = type === 'Troca de folga entre funcionários';
+    if (!employee || dates.indexOf(date) === -1 || !type || !reason ||
+        isSwap && (!otherEmployee || otherEmployee.id === employee.id)) {
       throw new Error('Informe colaborador, sábado, tipo e justificativa válidos.');
     }
     var record = currentSchedule(state);
+    var assignments = automaticAssignments(state, controller.month, record).map(function (assignment) {
+      return {
+        userId: String(assignment.userId),
+        name: assignment.name,
+        avatarUrl: assignment.avatarUrl || '',
+        dates: assignment.dates.slice()
+      };
+    });
+    if (!assignments.length) {
+      throw new Error('Salve as preferências recorrentes antes de autorizar exceções.');
+    }
+    var sourceAssignment = assignments.find(function (assignment) {
+      return assignment.userId === employee.id;
+    });
+    if (!sourceAssignment) {
+      sourceAssignment = { userId: employee.id, name: employee.name, avatarUrl: employee.avatarUrl, dates: [] };
+      assignments.push(sourceAssignment);
+    }
+    if (isSwap) {
+      var recipientAssignment = assignments.find(function (assignment) {
+        return assignment.userId === otherEmployee.id;
+      });
+      if (!recipientAssignment) {
+        recipientAssignment = {
+          userId: otherEmployee.id,
+          name: otherEmployee.name,
+          avatarUrl: otherEmployee.avatarUrl,
+          dates: []
+        };
+        assignments.push(recipientAssignment);
+      }
+      if (sourceAssignment.dates.indexOf(date) === -1) {
+        throw new Error(employee.name + ' não está de folga em ' + dateLabel(date) + '.');
+      }
+      if (recipientAssignment.dates.indexOf(date) !== -1) {
+        throw new Error(otherEmployee.name + ' já está de folga em ' + dateLabel(date) + '.');
+      }
+      sourceAssignment.dates = sourceAssignment.dates.filter(function (assignedDate) {
+        return assignedDate !== date;
+      });
+      recipientAssignment.dates.push(date);
+    } else if (sourceAssignment.dates.indexOf(date) === -1) {
+      sourceAssignment.dates.push(date);
+    }
+    assignments.forEach(function (assignment) { assignment.dates.sort(); });
     var profile = getCurrentProfile(state);
     var actor = profile.displayName || profile.nickname || profile.name || state.user && state.user.name || 'Gestor';
     var now = new Date().toISOString();
@@ -681,6 +752,8 @@
       id: 'exception-' + now.replace(/[^0-9]/g, '') + '-' + employee.id,
       employeeId: employee.id,
       employeeName: employee.name,
+      otherEmployeeId: isSwap ? otherEmployee.id : '',
+      otherEmployeeName: isSwap ? otherEmployee.name : '',
       date: date,
       type: type,
       reason: reason,
@@ -694,18 +767,17 @@
       action: 'exception_authorized',
       authorizedAt: now,
       authorizedBy: actor,
-      exception: exception
+      exception: exception,
+      assignments: assignments
     });
     var payload = {
       title: 'Escala de Folga - ' + controller.month,
-      status: previousData.assignments && previousData.assignments.length ? 'Confirmada' : 'Em planejamento',
+      status: 'Automática',
       data: Object.assign({}, previousData, {
         month: controller.month,
-        assignments: Array.isArray(previousData.assignments) ? previousData.assignments : [],
+        assignments: assignments,
         exceptions: getExceptions(record).concat(exception),
         history: history,
-        publishedAt: null,
-        publishedBy: '',
         updatedBy: actor
       })
     };
@@ -717,8 +789,6 @@
         createdBy: controller.userId || profile.id
       }, payload));
     if (!saved) throw new Error('O armazenamento não confirmou a exceção.');
-    controller.preview = null;
-    controller.conflict = null;
     render();
     toast('Exceção autorizada e registrada no histórico.');
   }
@@ -730,17 +800,16 @@
   function exportSchedule() {
     var state = window.RildonXStore.getState();
     var record = currentSchedule(state);
-    var assignments = record && Array.isArray(record.data.assignments) ? record.data.assignments : [];
+    var assignments = automaticAssignments(state, controller.month, record);
     if (!assignments.length) throw new Error('Confirme uma escala antes de exportar.');
     var rows = [[
-      'Competência', 'Tipo de registro', 'Colaborador', '1ª folga', '2ª folga',
+      'Competência', 'Tipo de registro', 'Colaborador', 'Folgas planejadas',
       'Data da exceção', 'Tipo da exceção', 'Justificativa', 'Autorizado por', 'Situação'
     ]];
     assignments.forEach(function (assignment) {
       rows.push([
         controller.month, 'Folga planejada', assignment.name,
-        dateLabel(assignment.dates && assignment.dates[0]),
-        dateLabel(assignment.dates && assignment.dates[1]),
+        (assignment.dates || []).map(dateLabel).join(' e '),
         '', '', '', '', record.status || 'Confirmada'
       ]);
     });
@@ -764,60 +833,18 @@
     window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
-  function publishSchedule() {
-    if (!controller.isManager) throw new Error('Somente um gestor pode publicar a escala.');
-    if (controller.loadError) throw new Error(controller.loadError);
-    var state = window.RildonXStore.getState();
-    var record = currentSchedule(state);
-    var assignments = record && Array.isArray(record.data.assignments) ? record.data.assignments : [];
-    if (!record || !assignments.length) throw new Error('Confirme a escala antes de publicá-la.');
-    var assignedIds = new Set(assignments.map(function (assignment) { return String(assignment.userId); }));
-    var missingEmployees = activeScheduleEmployees(state).filter(function (employee) {
-      return !assignedIds.has(employee.id);
-    });
-    if (missingEmployees.length) {
-      throw new Error('A escala confirmada não inclui todos os usuários ativos atuais. Gere uma nova prévia antes de publicar.');
-    }
-    if (record.status === 'Publicada') {
-      toast('A escala deste mês já está publicada.');
-      return;
-    }
-    var profile = getCurrentProfile(state);
-    var actor = profile.displayName || profile.nickname || profile.name || state.user && state.user.name || 'Gestor';
-    var now = new Date().toISOString();
-    var history = Array.isArray(record.data.history) ? record.data.history.slice() : [];
-    history.push({
-      action: 'published',
-      publishedAt: now,
-      publishedBy: actor,
-      assignmentCount: assignments.length
-    });
-    var saved = window.RildonXStore.updateBusinessCardRecord(record.id, {
-      title: 'Escala de Folga - ' + controller.month,
-      status: 'Publicada',
-      data: Object.assign({}, record.data, {
-        history: history,
-        publishedAt: now,
-        publishedBy: actor
-      })
-    });
-    if (!saved) throw new Error('O armazenamento não confirmou a publicação da escala.');
-    render();
-    toast('Escala de ' + controller.month + ' publicada para consulta.');
-  }
-
   function handleSubmit(event) {
     var planForm = event.target.closest('[data-schedule-plan]');
     if (planForm) {
       event.preventDefault();
-      var prepareButton = planForm.querySelector('[data-schedule-prepare]');
-      if (prepareButton) prepareButton.disabled = true;
+      var saveButton = planForm.querySelector('[data-schedule-save]');
+      if (saveButton) saveButton.disabled = true;
       try {
-        preparePreview(planForm);
+        savePreferences(planForm);
       } catch (error) {
-        escapeError(error, 'Não foi possível preparar a prévia da escala.');
+        escapeError(error, 'Não foi possível salvar as preferências da escala.');
       } finally {
-        if (prepareButton && prepareButton.isConnected) prepareButton.disabled = false;
+        if (saveButton && saveButton.isConnected) saveButton.disabled = false;
       }
       return;
     }
@@ -845,32 +872,9 @@
       }
       return;
     }
-    if (event.target.closest('[data-schedule-publish]')) {
-      try {
-        publishSchedule();
-      } catch (error) {
-        escapeError(error, 'Não foi possível publicar a escala.');
-      }
-      return;
-    }
-    if (event.target.closest('[data-schedule-confirm]')) {
-      try {
-        confirmPreview();
-      } catch (error) {
-        escapeError(error, 'Não foi possível confirmar a escala.');
-      }
-      return;
-    }
-    if (event.target.closest('[data-schedule-cancel-preview]')) {
-      controller.preview = null;
-      controller.conflict = null;
-      render();
-    }
   }
 
-  function invalidatePreview() {
-    controller.preview = null;
-    controller.conflict = null;
+  function capturePreferenceDraft() {
     if (!controller.target) return;
     var form = controller.target.querySelector('[data-schedule-plan]');
     if (form) {
@@ -885,10 +889,6 @@
         preferences: preferenceSlots
       };
     }
-    var preview = controller.target.querySelector('.sales-time-off-preview');
-    var conflict = controller.target.querySelector('.sales-time-off-conflict');
-    if (preview) preview.remove();
-    if (conflict && conflict.closest('.sales-time-off-section')) conflict.remove();
   }
 
   function handleChange(event) {
@@ -899,23 +899,26 @@
         return;
       }
       controller.month = monthInput.value;
-      controller.preview = null;
-      controller.conflict = null;
       controller.draft = null;
       render();
       return;
     }
-    var historyMonth = event.target.closest('[data-schedule-history-month]');
-    if (historyMonth && historyMonth.value) {
-      controller.month = historyMonth.value;
-      controller.preview = null;
-      controller.conflict = null;
-      controller.draft = null;
-      render();
+    var preference = event.target.closest('[data-schedule-preference]');
+    if (preference) {
+      capturePreferenceDraft();
       return;
     }
-    if (event.target.closest('[data-schedule-preference]')) {
-      invalidatePreview();
+    var exceptionType = event.target.closest('[data-exception-type]');
+    if (exceptionType) {
+      var form = exceptionType.closest('[data-schedule-exception]');
+      var isSwap = exceptionType.value === 'Troca de folga entre funcionários';
+      var swapFields = form && form.querySelector('[data-exception-swap-fields]');
+      var employeeLabel = form && form.querySelector('[data-exception-employee-label]');
+      if (swapFields) {
+        swapFields.hidden = !isSwap;
+        swapFields.querySelector('select').required = isSwap;
+      }
+      if (employeeLabel) employeeLabel.textContent = isSwap ? 'Quem deixa de folgar' : 'Colaborador';
     }
   }
 
@@ -932,8 +935,6 @@
         target: options && options.target || root,
         fromLibrary: Boolean(options && options.fromLibrary),
         loadError: '',
-        preview: null,
-        conflict: null,
         draft: null
       };
       root.addEventListener('submit', handleSubmit);
@@ -942,17 +943,6 @@
       window.RildonXStore.subscribe(function (nextState) {
         if (!mountedRoot || !mountedRoot.classList.contains('open') ||
             !mountedRoot.querySelector('.dashboard-business-panel--sales-time-off')) return;
-        if (controller.preview && controller.preview.month === controller.month) {
-          var record = recordForMonth(nextState, controller.month);
-          var updatedAt = record && record.updatedAt || '';
-          var rosterIds = activeScheduleEmployees(nextState).map(function (employee) {
-            return employee.id;
-          }).sort();
-          if (updatedAt !== controller.preview.baseUpdatedAt ||
-              JSON.stringify(rosterIds) !== JSON.stringify(controller.preview.rosterIds)) {
-            controller.preview = null;
-          }
-        }
         render();
       });
     }

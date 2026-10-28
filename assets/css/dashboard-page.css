@@ -24,6 +24,7 @@
 .home-dashboard-grid .dashboard-card-body{padding:9px 12px 12px}
 .home-dashboard-grid .dashboard-data-row{gap:7px;padding:7px 1px}
 .home-dashboard-grid .dashboard-data-icon{width:26px;height:26px;flex-basis:26px}
+.home-dashboard-grid .dashboard-data-avatar{width:26px;height:26px;flex-basis:26px}
 .home-dashboard-grid .dashboard-data-row b{font-size:10.5px}
 .home-dashboard-grid .dashboard-data-row small{font-size:9px}
 .dashboard-card[data-tone="general"]{--dashboard-tone-top:var(--sidebar-top);--dashboard-tone-bottom:var(--sidebar-bottom)}
@@ -70,6 +71,7 @@
 .dashboard-card-body-action:focus-visible{outline:2px solid var(--dashboard-tone-top,var(--sidebar-top));outline-offset:2px}
 .dashboard-card-count{display:inline-grid;place-items:center;min-width:25px;height:25px;padding:0 7px;border-radius:20px;background:var(--blue-50);color:var(--blue-600);font-size:11px;font-weight:800}
 .dashboard-card-body{display:flex;min-height:0;flex:1;flex-direction:column;overflow:hidden;padding:12px 16px 17px;gap:0}
+.dashboard-card-list-heading{flex:0 0 auto;margin:0 0 5px;color:var(--text);font-size:11px;font-weight:800}
 .dashboard-card-body[data-density="compact"]{padding-top:5px;padding-bottom:8px}
 .dashboard-card-body[data-density="spacious"]{padding-top:14px;padding-bottom:21px}
 .dashboard-data-list{display:flex;min-height:0;flex:1 1 auto;flex-direction:column;overflow:hidden}
@@ -81,6 +83,9 @@
 .dashboard-data-row:last-child{border-bottom:0}
 .dashboard-data-row:hover{background:var(--blue-50)}
 .dashboard-data-icon{display:grid;place-items:center;width:32px;height:32px;flex:0 0 32px;border-radius:10px;background:var(--blue-50);color:var(--blue-600)}
+.dashboard-data-avatar{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;overflow:hidden;border-radius:50%;background:var(--blue-50);color:var(--blue-600)}
+.dashboard-data-avatar img{width:100%;height:100%;object-fit:cover}
+.dashboard-data-avatar>span{font-size:10px;font-weight:800}
 .dashboard-data-row>.dashboard-data-icon{display:grid;flex:0 0 32px;flex-direction:row;gap:0}
 .dashboard-data-icon[data-kind="task"]{background:var(--blue-50);color:var(--blue-600)}
 .dashboard-data-icon[data-kind="activity"]{background:var(--orange-bg);color:var(--orange)}

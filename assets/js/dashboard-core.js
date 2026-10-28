@@ -283,8 +283,8 @@
     },
     {
       id: 'sales-time-off', sector: 'Comercial', sectorKey: 'comercial', title: 'Escala de Folga', icon: 'calendar', tone: 'green',
-      description: 'Planeje duas folgas aos sábados por pessoa a cada mês, com limites por data, rodízio equilibrado, prévia de reajustes e histórico de exceções.',
-      features: ['Duas folgas mensais por pessoa', 'Limites de capacidade por sábado', 'Prévia com redistribuição mínima', 'Histórico e exceções autorizadas'],
+      description: 'Defina duas preferências recorrentes de sábado por pessoa e acompanhe listas mensais geradas automaticamente.',
+      features: ['Duas preferências mensais recorrentes', 'Lista de folgas por sábado', 'Trocas e exceções autorizadas', 'Histórico de ajustes'],
       fields: []
     },
     {
@@ -1177,6 +1177,18 @@
         day: '2-digit',
         month: 'long'
       });
+      const monthStart = new Date(nextSaturday.getFullYear(), nextSaturday.getMonth(), 1);
+      const saturdays = [];
+      while (monthStart.getMonth() === nextSaturday.getMonth()) {
+        if (monthStart.getDay() === 6) {
+          saturdays.push([
+            monthStart.getFullYear(),
+            String(monthStart.getMonth() + 1).padStart(2, '0'),
+            String(monthStart.getDate()).padStart(2, '0')
+          ].join('-'));
+        }
+        monthStart.setDate(monthStart.getDate() + 1);
+      }
       const schedule = records.filter(function (record) {
         return record.data && record.data.month === saturdayKey.slice(0, 7) &&
           Array.isArray(record.data.assignments);
@@ -1184,8 +1196,59 @@
         return new Date(second.updatedAt || second.createdAt || 0) -
           new Date(first.updatedAt || first.createdAt || 0);
       })[0];
-      const assignments = schedule ? schedule.data.assignments : [];
-      const people = assignments.filter(function (assignment) {
+      const preferenceRecord = records.find(function (record) {
+        return record.data && record.data.recordType === 'recurring-preferences';
+      });
+      const hasStoredAssignments = Boolean(schedule && schedule.data.assignments.length &&
+        !schedule.data.generatedFromPreferencesAt && !preferenceRecord);
+      const assignments = hasStoredAssignments
+        ? schedule.data.assignments
+        : (preferenceRecord ? data.profiles || [] : []).filter(function (profile) {
+          return profile && profile.id && profile.active !== false;
+        }).map(function (profile) {
+          const preferences = preferenceRecord && preferenceRecord.data.preferences || {};
+          const ordinals = Array.isArray(preferences[String(profile.id)])
+            ? preferences[String(profile.id)].map(Number) : [1, 4];
+          const dates = [];
+          ordinals.slice(0, 2).forEach(function (ordinal) {
+            const preferredIndex = Math.max(0, Math.min(saturdays.length - 1, ordinal - 1));
+            const candidates = saturdays.map(function (date, index) {
+              return { date: date, index: index, distance: Math.abs(index - preferredIndex) };
+            }).sort(function (first, second) {
+              return first.distance - second.distance || second.index - first.index;
+            });
+            const selected = candidates.find(function (candidate) {
+              return dates.indexOf(candidate.date) === -1;
+            });
+            if (selected) dates.push(selected.date);
+          });
+          return {
+            userId: String(profile.id),
+            name: profile.displayName || profile.nickname || profile.name || 'Colaborador',
+            avatarUrl: profile.avatarUrl || '',
+            dates: dates
+          };
+        }).filter(function (assignment) { return assignment.dates.length; });
+      const assignmentsWithExceptions = assignments.map(function (assignment) {
+        return Object.assign({}, assignment, { dates: (assignment.dates || []).slice() });
+      });
+      (hasStoredAssignments ? [] : schedule && schedule.data.exceptions || []).forEach(function (exception) {
+        const source = assignmentsWithExceptions.find(function (assignment) {
+          return String(assignment.userId) === String(exception.employeeId);
+        });
+        if (!source || !exception.date) return;
+        if (exception.type === 'Troca de folga entre funcionários') {
+          const recipient = assignmentsWithExceptions.find(function (assignment) {
+            return String(assignment.userId) === String(exception.otherEmployeeId);
+          });
+          if (!recipient) return;
+          source.dates = source.dates.filter(function (date) { return date !== exception.date; });
+          if (recipient.dates.indexOf(exception.date) === -1) recipient.dates.push(exception.date);
+        } else if (source.dates.indexOf(exception.date) === -1) {
+          source.dates.push(exception.date);
+        }
+      });
+      const people = assignmentsWithExceptions.filter(function (assignment) {
         return assignment && Array.isArray(assignment.dates) &&
           assignment.dates.indexOf(saturdayKey) !== -1;
       }).map(function (assignment) {
@@ -1195,7 +1258,8 @@
         return {
           userId: String(assignment.userId || ''),
           name: assignment.name || profile &&
-            (profile.displayName || profile.nickname || profile.name) || 'Colaborador'
+            (profile.displayName || profile.nickname || profile.name) || 'Colaborador',
+          avatarUrl: profile && profile.avatarUrl || assignment.avatarUrl || ''
         };
       }).filter(function (person, index, list) {
         return list.findIndex(function (candidate) {
@@ -1206,11 +1270,15 @@
       });
       return {
         count: people.length,
+        heading: 'Próximas folgas',
         summary: people.length + ' pessoa(s) de folga em ' + saturdayLabel,
         items: people.map(function (person) {
           return {
             title: person.name,
-            meta: 'Folga no sábado, ' + saturdayLabel,
+            meta: 'Próxima folga: ' + saturdayLabel,
+            avatarUrl: person.avatarUrl,
+            avatarFallback: person.name.trim().split(/\s+/).slice(0, 2)
+              .map(function (part) { return part.charAt(0); }).join('').toLocaleUpperCase('pt-BR'),
             href: 'meu-espaco.html?businessCard=' + encodeURIComponent(module.id)
           };
         }),
@@ -1218,7 +1286,7 @@
         chart: [],
         empty: data.businessCardRecordsLoadError || (schedule
           ? 'Ninguém está de folga no próximo sábado (' + saturdayLabel + ').'
-          : 'Nenhuma escala confirmada para o próximo sábado (' + saturdayLabel + ').')
+          : 'Salve as preferências recorrentes para gerar a lista do próximo sábado.')
       };
     }
     if (card.filters.show === 'pendentes') records = records.filter(function (record) {
@@ -1716,9 +1784,14 @@
           const ticketAction = module && module.id === 'it-support-tickets' && item.ticketId
             ? ' data-support-ticket-open="' + escapeHtml(item.ticketId) + '"'
             : '';
+          const itemIcon = item.avatarUrl || module && module.id === 'sales-time-off'
+            ? '<span class="dashboard-data-avatar">' + (item.avatarUrl
+              ? '<img src="' + escapeHtml(item.avatarUrl) + '" alt="" loading="lazy">'
+              : '<span aria-hidden="true">' + escapeHtml(item.avatarFallback || '') + '</span>') + '</span>'
+            : '<span class="dashboard-data-icon" data-kind="' + escapeHtml(catalog.icon) + '">' + iconMarkup(catalog.icon) + '</span>';
           return '<a class="dashboard-data-row" draggable="false"' + recordAction + ticketAction +
             (ticketAction ? ' href="#"' : ' href="' + escapeHtml(item.href || catalog.href || '#') + '"') + '>' +
-            '<span class="dashboard-data-icon" data-kind="' + escapeHtml(catalog.icon) + '">' + iconMarkup(catalog.icon) + '</span><span><b>' +
+            itemIcon + '<span><b>' +
             escapeHtml(item.title) + '</b><small>' + escapeHtml(item.meta || '') + '</small></span><i aria-hidden="true">›</i></a>';
         }).join('') + '</div>'
         : '<div class="dashboard-data-empty"><span>' + iconMarkup(catalog.icon) + '</span><b>Sem itens para mostrar</b><small>' +
@@ -1762,6 +1835,7 @@
       '    </div>',
       '  </div>',
       '  <div class="dashboard-card-body" data-density="' + escapeHtml(data.dashboardDensity || 'comfortable') + '">' +
+      (items.heading ? '<h5 class="dashboard-card-list-heading">' + escapeHtml(items.heading) + '</h5>' : '') +
       (items.indicators ? '' : module ? renderBusinessMetrics(items) : '') + listMarkup + bodyAction + '</div>',
       '</article>'
     ].join('');
