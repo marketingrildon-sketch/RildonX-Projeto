@@ -17,11 +17,6 @@
     });
   }
 
-  function normalizeSector(value) {
-    return String(value || '').trim().toLocaleLowerCase('pt-BR')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  }
-
   function monthString(date) {
     return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
   }
@@ -65,11 +60,9 @@
     return dates.indexOf(date) + 1;
   }
 
-  function activeCommercialEmployees(state) {
+  function activeScheduleEmployees(state) {
     return (state.profiles || []).filter(function (profile) {
       if (!profile || profile.id == null || profile.active === false) return false;
-      var sector = normalizeSector(profile.sector);
-      return sector.indexOf('comercial') === 0 || sector.indexOf('vendas') === 0;
     }).map(function (profile) {
       return {
         id: String(profile.id),
@@ -372,9 +365,12 @@
     var history = record && Array.isArray(record.data.history) ? record.data.history.slice().reverse() : [];
     if (!history.length) return '<p class="sales-time-off-muted">As confirmações e reajustes aparecerão aqui.</p>';
     return '<ol class="sales-time-off-history">' + history.map(function (entry) {
-      var action = entry.action === 'exception_authorized' ? 'Exceção autorizada' : 'Escala confirmada';
+      var action = entry.action === 'exception_authorized' ? 'Exceção autorizada'
+        : entry.action === 'published' ? 'Escala publicada' : 'Escala confirmada';
       var detail = entry.action === 'exception_authorized'
         ? entry.exception.employeeName + ' · ' + dateLabel(entry.exception.date) + ' · ' + entry.exception.type
+        : entry.action === 'published'
+          ? 'Escala disponibilizada para consulta · ' + (entry.assignmentCount || 0) + ' pessoa(s)'
         : (entry.changeCount || 0) + ' folga(s) reajustada(s), ' + (entry.assignments || []).length + ' pessoa(s) na escala';
       var changes = entry.action === 'confirmed' && Array.isArray(entry.changes) ? entry.changes : [];
       var changesMarkup = changes.length
@@ -384,10 +380,11 @@
             ' → ' + escapeHtml((change.to || []).map(dateLabel).join(' e ')) + '</li>';
         }).join('') + '</ul>'
         : '';
+      var actor = entry.publishedBy || entry.confirmedBy || entry.authorizedBy || 'Gestor';
+      var happenedAt = entry.confirmedAt || entry.authorizedAt || entry.publishedAt;
       return '<li><b>' + escapeHtml(action) + '</b><span>' + escapeHtml(detail) +
-        '</span><small>' + escapeHtml(entry.confirmedBy || entry.authorizedBy || 'Gestor') + ' · ' +
-        escapeHtml(entry.confirmedAt || entry.authorizedAt
-          ? new Date(entry.confirmedAt || entry.authorizedAt).toLocaleString('pt-BR') : '') +
+        '</span><small>' + escapeHtml(actor) + ' · ' +
+        escapeHtml(happenedAt ? new Date(happenedAt).toLocaleString('pt-BR') : '') +
         '</small>' + changesMarkup + '</li>';
     }).join('') + '</ol>';
   }
@@ -434,7 +431,7 @@
   function render() {
     if (!controller || !mountedRoot) return;
     var state = window.RildonXStore ? window.RildonXStore.getState() : {};
-    var employees = activeCommercialEmployees(state);
+    var employees = activeScheduleEmployees(state);
     var dates = getSaturdays(controller.month);
     var record = currentSchedule(state);
     var savedAssignments = getAssignments(record);
@@ -457,7 +454,15 @@
       : new Set();
     var historyCount = record && Array.isArray(record.data.history) ? record.data.history.length : 0;
     var managerCanEdit = controller.isManager && !controller.loadError;
-    var names = new Map(employees.map(function (employee) { return [employee.id, employee.name]; }));
+    var hasConfirmedAssignments = assignments.length > 0;
+    var assignedEmployeeIds = new Set(assignments.map(function (assignment) {
+      return String(assignment.userId);
+    }));
+    var hasCurrentRoster = employees.every(function (employee) {
+      return assignedEmployeeIds.has(employee.id);
+    });
+    var isPublished = record && record.status === 'Publicada' && hasCurrentRoster;
+    var publicationOutdated = record && record.status === 'Publicada' && !hasCurrentRoster;
 
     var capacityCards = dates.map(function (date) {
       var rawCapacity = capacities[date];
@@ -511,8 +516,8 @@
         '<div class="sales-time-off-form-actions"><button type="submit" class="btn" data-schedule-prepare' +
         (!managerCanEdit || controller.loadError ? ' disabled title="O armazenamento compartilhado não está disponível"' : '') +
         '>Gerar prévia</button></div></form>'
-      : '<div class="sales-time-off-empty"><b>Nenhum funcionário ativo do Comercial foi encontrado.</b>' +
-        '<span>Verifique o setor e a situação dos perfis cadastrados.</span></div>';
+      : '<div class="sales-time-off-empty"><b>Nenhum usuário ativo foi encontrado.</b>' +
+        '<span>Verifique se os perfis estão carregados e ativos.</span></div>';
 
     var exceptionOptions = employees.map(function (employee) {
       return '<option value="' + escapeHtml(employee.id) + '">' + escapeHtml(employee.name) + '</option>';
@@ -547,7 +552,7 @@
       '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
       loadWarning + '<div class="sales-time-off-toolbar"><label><span>Mês da escala</span><input type="month" data-schedule-month value="' +
       escapeHtml(controller.month) + '"></label><label><span>Consultar mês confirmado</span><select data-schedule-history-month><option value="">Selecionar mês</option>' +
-      historyOptions + '</select></label><div><b>' + employees.length + '</b><small>pessoa(s) ativa(s) no Comercial</small></div>' +
+      historyOptions + '</select></label><div><b>' + employees.length + '</b><small>usuário(s) ativo(s) cadastrado(s)</small></div>' +
       '<div><b>' + (assignments || []).length + '</b><small>folga(s) planejada(s)</small></div></div>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Limite por sábado</h3>' +
       '<p>Defina o máximo de pessoas de folga em cada data. Exceções autorizadas também ocupam capacidade.</p></div></div>' +
@@ -557,7 +562,17 @@
       '<p>' + (record ? 'Última confirmação: ' + escapeHtml(record.data.updatedBy || 'Gestor') +
         (record.updatedAt ? ' · ' + escapeHtml(new Date(record.updatedAt).toLocaleString('pt-BR')) : '') :
         'As datas passam a valer somente depois da confirmação do gestor.') + '</p></div>' +
-      '<span>' + historyCount + ' registro(s) histórico(s)</span></div>' +
+      '<div class="sales-time-off-actions">' +
+      (isPublished ? '<span class="sales-time-off-published">Publicada' +
+        (record.data.publishedAt ? ' · ' + escapeHtml(new Date(record.data.publishedAt).toLocaleString('pt-BR')) : '') +
+        '</span>' : (publicationOutdated
+          ? '<span class="sales-time-off-publication-outdated">Equipe alterada desde a publicação</span>' : '') +
+        (managerCanEdit && hasConfirmedAssignments
+          ? '<button type="button" class="btn secondary" data-schedule-publish>' +
+            (publicationOutdated ? 'Atualizar publicação' : 'Publicar escala') + '</button>' : '')) +
+      '<button type="button" class="btn secondary" data-schedule-export' +
+        (!hasConfirmedAssignments ? ' disabled title="Confirme uma escala antes de exportar"' : '') +
+        '>Exportar CSV</button><span>' + historyCount + ' registro(s) histórico(s)</span></div></div>' +
       renderAssignments(assignments || [], new Set()) + '</section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Exceções autorizadas</h3>' +
       '<p>As exceções são registradas separadamente e consomem o limite de capacidade do sábado.</p></div></div>' +
@@ -568,7 +583,7 @@
 
   function readPlanForm(form) {
     var state = window.RildonXStore.getState();
-    var employees = activeCommercialEmployees(state);
+    var employees = activeScheduleEmployees(state);
     var dates = getSaturdays(controller.month);
     var record = currentSchedule(state);
     var capacityByDate = {};
@@ -643,7 +658,7 @@
     if (controller.loadError) throw new Error(controller.loadError);
     var state = window.RildonXStore.getState();
     var record = currentSchedule(state);
-    var employees = activeCommercialEmployees(state);
+    var employees = activeScheduleEmployees(state);
     var currentUpdatedAt = record && record.updatedAt || '';
     var rosterIds = employees.map(function (employee) { return employee.id; }).sort();
     if (currentUpdatedAt !== controller.preview.baseUpdatedAt ||
@@ -677,6 +692,8 @@
         assignments: result.assignments,
         history: history,
         exceptions: getExceptions(record),
+        publishedAt: null,
+        publishedBy: '',
         updatedBy: actor,
         confirmedAt: now
       })
@@ -701,7 +718,7 @@
     if (controller.loadError) throw new Error(controller.loadError);
     var formData = new FormData(form);
     var state = window.RildonXStore.getState();
-    var employees = activeCommercialEmployees(state);
+    var employees = activeScheduleEmployees(state);
     var employee = employees.find(function (item) { return item.id === String(formData.get('employeeId') || ''); });
     var dates = getSaturdays(controller.month);
     var date = String(formData.get('date') || '');
@@ -750,6 +767,8 @@
         assignments: Array.isArray(previousData.assignments) ? previousData.assignments : [],
         exceptions: getExceptions(record).concat(exception),
         history: history,
+        publishedAt: null,
+        publishedBy: '',
         updatedBy: actor
       })
     };
@@ -765,6 +784,89 @@
     controller.conflict = null;
     render();
     toast('Exceção autorizada e registrada no histórico.');
+  }
+
+  function csvCell(value) {
+    return '"' + String(value == null ? '' : value).replace(/"/g, '""') + '"';
+  }
+
+  function exportSchedule() {
+    var state = window.RildonXStore.getState();
+    var record = currentSchedule(state);
+    var assignments = record && Array.isArray(record.data.assignments) ? record.data.assignments : [];
+    if (!assignments.length) throw new Error('Confirme uma escala antes de exportar.');
+    var rows = [[
+      'Competência', 'Tipo de registro', 'Colaborador', '1ª folga', '2ª folga',
+      'Data da exceção', 'Tipo da exceção', 'Justificativa', 'Autorizado por', 'Situação'
+    ]];
+    assignments.forEach(function (assignment) {
+      rows.push([
+        controller.month, 'Folga planejada', assignment.name,
+        dateLabel(assignment.dates && assignment.dates[0]),
+        dateLabel(assignment.dates && assignment.dates[1]),
+        '', '', '', '', record.status || 'Confirmada'
+      ]);
+    });
+    getExceptions(record).forEach(function (exception) {
+      rows.push([
+        controller.month, 'Exceção autorizada', exception.employeeName, '', '',
+        dateLabel(exception.date), exception.type, exception.reason, exception.authorizedBy,
+        record.status || 'Confirmada'
+      ]);
+    });
+    var csv = '\ufeff' + rows.map(function (row) {
+      return row.map(csvCell).join(';');
+    }).join('\r\n') + '\r\n';
+    var url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'escala-de-folga-' + controller.month + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function publishSchedule() {
+    if (!controller.isManager) throw new Error('Somente um gestor pode publicar a escala.');
+    if (controller.loadError) throw new Error(controller.loadError);
+    var state = window.RildonXStore.getState();
+    var record = currentSchedule(state);
+    var assignments = record && Array.isArray(record.data.assignments) ? record.data.assignments : [];
+    if (!record || !assignments.length) throw new Error('Confirme a escala antes de publicá-la.');
+    var assignedIds = new Set(assignments.map(function (assignment) { return String(assignment.userId); }));
+    var missingEmployees = activeScheduleEmployees(state).filter(function (employee) {
+      return !assignedIds.has(employee.id);
+    });
+    if (missingEmployees.length) {
+      throw new Error('A escala confirmada não inclui todos os usuários ativos atuais. Gere uma nova prévia antes de publicar.');
+    }
+    if (record.status === 'Publicada') {
+      toast('A escala deste mês já está publicada.');
+      return;
+    }
+    var profile = getCurrentProfile(state);
+    var actor = profile.displayName || profile.nickname || profile.name || state.user && state.user.name || 'Gestor';
+    var now = new Date().toISOString();
+    var history = Array.isArray(record.data.history) ? record.data.history.slice() : [];
+    history.push({
+      action: 'published',
+      publishedAt: now,
+      publishedBy: actor,
+      assignmentCount: assignments.length
+    });
+    var saved = window.RildonXStore.updateBusinessCardRecord(record.id, {
+      title: 'Escala de Folga - ' + controller.month,
+      status: 'Publicada',
+      data: Object.assign({}, record.data, {
+        history: history,
+        publishedAt: now,
+        publishedBy: actor
+      })
+    });
+    if (!saved) throw new Error('O armazenamento não confirmou a publicação da escala.');
+    render();
+    toast('Escala de ' + controller.month + ' publicada para consulta.');
   }
 
   function handleSubmit(event) {
@@ -798,6 +900,22 @@
   }
 
   function handleClick(event) {
+    if (event.target.closest('[data-schedule-export]')) {
+      try {
+        exportSchedule();
+      } catch (error) {
+        escapeError(error, 'Não foi possível exportar a escala.');
+      }
+      return;
+    }
+    if (event.target.closest('[data-schedule-publish]')) {
+      try {
+        publishSchedule();
+      } catch (error) {
+        escapeError(error, 'Não foi possível publicar a escala.');
+      }
+      return;
+    }
     if (event.target.closest('[data-schedule-confirm]')) {
       try {
         confirmPreview();
@@ -908,7 +1026,7 @@
         if (controller.preview && controller.preview.month === controller.month) {
           var record = recordForMonth(nextState, controller.month);
           var updatedAt = record && record.updatedAt || '';
-          var rosterIds = activeCommercialEmployees(nextState).map(function (employee) {
+          var rosterIds = activeScheduleEmployees(nextState).map(function (employee) {
             return employee.id;
           }).sort();
           if (updatedAt !== controller.preview.baseUpdatedAt ||
