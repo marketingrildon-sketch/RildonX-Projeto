@@ -84,16 +84,6 @@
     return recordsFor(state).find(function (record) { return record.data.month === month; }) || null;
   }
 
-  function defaultCapacities(employeeCount, dates) {
-    if (!dates.length) return {};
-    var balancedCapacity = Math.ceil((employeeCount * 2) / dates.length);
-    var capacities = {};
-    dates.forEach(function (date) {
-      capacities[date] = Math.min(employeeCount, balancedCapacity);
-    });
-    return capacities;
-  }
-
   function getExceptions(record) {
     return record && Array.isArray(record.data.exceptions) ? record.data.exceptions : [];
   }
@@ -136,26 +126,14 @@
   function solveDistribution(input) {
     var employees = input.employees;
     var dates = input.dates;
-    var capacityByDate = input.capacityByDate;
     var preferences = input.preferences;
     var previousAssignments = input.previousAssignments;
     var historyCounts = input.historyCounts;
     var exceptionsByDate = input.exceptionsByDate;
     var requiredSlots = employees.length * 2;
-    var availableTotal = dates.reduce(function (sum, date) {
-      return sum + Math.max(0, capacityByDate[date] - exceptionsByDate[date]);
-    }, 0);
 
     if (dates.length < 2) {
       return { feasible: false, reason: 'São necessários pelo menos dois sábados no mês para cada pessoa ter duas datas distintas.' };
-    }
-    if (availableTotal < requiredSlots) {
-      return {
-        feasible: false,
-        reason: 'A capacidade disponível é de ' + availableTotal + ' folga(s), mas são necessárias ' +
-          requiredSlots + ' (duas por pessoa).',
-        shortage: requiredSlots - availableTotal
-      };
     }
 
     var source = 0;
@@ -198,8 +176,7 @@
     });
 
     dates.forEach(function (date, dateIndex) {
-      var availableCapacity = Math.max(0, capacityByDate[date] - exceptionsByDate[date]);
-      for (var slot = 0; slot < availableCapacity; slot += 1) {
+      for (var slot = 0; slot < employees.length; slot += 1) {
         addEdge(dateOffset + dateIndex, sink, 1, slot * (historyMonthCount + 1));
       }
     });
@@ -229,7 +206,7 @@
         });
       }
       if (previousNode[sink] === -1) {
-        return { feasible: false, reason: 'Não foi possível encontrar uma distribuição que respeite os limites dos sábados.' };
+        return { feasible: false, reason: 'Não foi possível calcular a distribuição das folgas.' };
       }
       var current = sink;
       while (current !== source) {
@@ -274,7 +251,7 @@
       }).length;
     }, 0);
     var loads = {};
-    dates.forEach(function (date) { loads[date] = exceptionsByDate[date]; });
+    dates.forEach(function (date) { loads[date] = 0; });
     assignments.forEach(function (assignedDates) {
       assignedDates.forEach(function (date) { loads[date] += 1; });
     });
@@ -289,7 +266,8 @@
         return count + change.from.filter(function (date) { return change.to.indexOf(date) === -1; }).length;
       }, 0),
       preferenceViolations: preferenceViolations,
-      loads: loads
+      loads: loads,
+      exceptionsByDate: exceptionsByDate
     };
   }
 
@@ -313,13 +291,12 @@
     return recordForMonth(state, controller.month);
   }
 
-  function previewSnapshot(state, record, employees, dates, capacities, preferences) {
+  function previewSnapshot(state, record, employees, dates, preferences) {
     return solveDistribution({
       state: state,
       month: controller.month,
       employees: employees,
       dates: dates,
-      capacityByDate: capacities,
       preferences: preferences,
       previousAssignments: getAssignments(record),
       historyCounts: buildHistoryCounts(state, controller.month),
@@ -390,43 +367,10 @@
     }).join('') + '</ol>';
   }
 
-  function renderConflict(message, shortage, dates, capacities, exceptions, employeeCount) {
-    var suggestion = '';
-    if (shortage > 0) {
-      var remaining = shortage;
-      var suggestedCapacity = Object.assign({}, capacities);
-      var alternatives = dates.map(function (date) {
-        return {
-          date: date,
-          available: Math.max(0, capacities[date] - exceptions[date])
-        };
-      });
-      while (remaining > 0 && alternatives.length) {
-        alternatives.sort(function (first, second) {
-          return first.available - second.available || first.date.localeCompare(second.date);
-        });
-        var candidate = alternatives.find(function (item) {
-          return suggestedCapacity[item.date] < employeeCount;
-        });
-        if (!candidate) break;
-        suggestedCapacity[candidate.date] += 1;
-        candidate.available += 1;
-        remaining -= 1;
-      }
-      var additions = dates.map(function (date) {
-        var added = suggestedCapacity[date] - capacities[date];
-        return added > 0 ? dateLabel(date) + ' (+' + added + ')' : '';
-      }).filter(Boolean);
-      suggestion = '<p>Alternativa: aumente em pelo menos ' + shortage +
-        ' vaga(s) nos limites dos sábados' +
-        (additions.length ? ': ' + escapeHtml(additions.join(', ')) : '') +
-        '. As exceções autorizadas já ocupam parte da capacidade.' +
-        (remaining > 0 ? ' A capacidade máxima da equipe não cobre a demanda; revise exceções ou a quantidade de pessoas incluídas.' : '') +
-        '</p>';
-    }
+  function renderConflict(message) {
     return '<div class="sales-time-off-conflict" role="alert"><b>Não há distribuição válida</b><p>' +
-      escapeHtml(message) + '</p>' + suggestion +
-      '<p>A escala atual não foi alterada. Ajuste os limites ou as preferências e gere uma nova prévia.</p></div>';
+      escapeHtml(message) + '</p>' +
+      '<p>A escala atual não foi alterada. Confira as datas e gere uma nova prévia.</p></div>';
   }
 
   function render() {
@@ -436,14 +380,8 @@
     var dates = getSaturdays(controller.month);
     var record = currentSchedule(state);
     var savedAssignments = getAssignments(record);
-    var savedCapacity = record && record.data.capacityByDate || {};
-    var defaultCapacity = defaultCapacities(employees.length, dates);
     var exceptions = getExceptions(record);
-    var exceptionsByDate = exceptionCounts(record, dates);
     var storedAssignments = record && Array.isArray(record.data.assignments) ? record.data.assignments : [];
-    var capacities = controller.draft && controller.draft.month === controller.month
-      ? controller.draft.capacityByDate
-      : Object.assign({}, defaultCapacity, savedCapacity);
     var preferences = controller.draft && controller.draft.month === controller.month
       ? controller.draft.preferences
       : new Map(storedAssignments.map(function (assignment) {
@@ -465,17 +403,6 @@
     var isPublished = record && record.status === 'Publicada' && hasCurrentRoster;
     var publicationOutdated = record && record.status === 'Publicada' && !hasCurrentRoster;
 
-    var capacityCards = dates.map(function (date) {
-      var rawCapacity = capacities[date];
-      var savedCapacityValue = rawCapacity === '' ? '' : Number(rawCapacity);
-      if (rawCapacity !== '' && !Number.isInteger(savedCapacityValue)) savedCapacityValue = defaultCapacity[date] || 0;
-      return '<label class="sales-time-off-capacity"><span>' + escapeHtml(dateLabel(date)) +
-        '</span><small>' + exceptionsByDate[date] + ' exceção(ões)</small><input type="number" min="' +
-        exceptionsByDate[date] + '" max="' + employees.length + '" value="' + savedCapacityValue +
-        '" data-schedule-capacity="' + date + '"' + (!managerCanEdit ? ' disabled' : '') +
-        ' aria-label="Limite de folgas para ' + escapeHtml(dateLabel(date)) + '"></label>';
-    }).join('');
-
     var employeeRows = employees.map(function (employee) {
       var assigned = preferences.get(employee.id) || savedAssignments.get(employee.id) || [];
       var first = assigned[0] || '';
@@ -494,7 +421,13 @@
         '<div><h3>Prévia da redistribuição</h3><p>Confira a proposta antes de confirmar a escala.</p></div>' +
         '<span>' + result.changeCount + ' alteração(ões)</span></div>' +
         (result.preferenceViolations ? '<p class="sales-time-off-preview-warning">' + result.preferenceViolations +
-          ' preferência(s) não puderam ser atendidas por causa dos limites definidos; veja as datas propostas antes de confirmar.</p>' : '') +
+          ' preferência(s) não puderam ser atendidas pela distribuição mais equilibrada; confira as datas propostas antes de confirmar.</p>' : '') +
+        '<div class="sales-time-off-distribution">' + dates.map(function (date) {
+          return '<div><b>' + escapeHtml(dateLabel(date)) + '</b><span>' +
+            (result.loads[date] || 0) + ' folga(s) planejada(s)</span>' +
+            ((result.exceptionsByDate[date] || 0) ? '<small>' + result.exceptionsByDate[date] +
+              ' exceção(ões) registrada(s)</small>' : '') + '</div>';
+        }).join('') + '</div>' +
         renderAssignments(result.assignments, new Set(result.changes.map(function (change) { return change.userId; }))) +
         (result.changes.length ? '<ul class="sales-time-off-change-list">' + result.changes.map(function (change) {
           return '<li><b>' + escapeHtml(change.name) + '</b><span>' +
@@ -505,8 +438,7 @@
         '<button type="button" class="btn" data-schedule-confirm' +
         (!managerCanEdit ? ' disabled' : '') + '>Confirmar e salvar escala</button></div></section>';
     } else if (controller.conflict && controller.conflict.month === controller.month) {
-      previewMarkup = renderConflict(controller.conflict.reason, controller.conflict.shortage, dates,
-        controller.conflict.capacities, controller.conflict.exceptionsByDate, employees.length);
+      previewMarkup = renderConflict(controller.conflict.reason);
     }
 
     var rosterMarkup = employees.length
@@ -555,9 +487,8 @@
       escapeHtml(controller.month) + '"></label><label><span>Consultar mês confirmado</span><select data-schedule-history-month><option value="">Selecionar mês</option>' +
       historyOptions + '</select></label><div><b>' + employees.length + '</b><small>usuário(s) ativo(s) cadastrado(s)</small></div>' +
       '<div><b>' + (assignments || []).length + '</b><small>folga(s) planejada(s)</small></div></div>' +
-      '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Limite por sábado</h3>' +
-      '<p>Defina o máximo de pessoas de folga em cada data. Exceções autorizadas também ocupam capacidade.</p></div></div>' +
-      '<div class="sales-time-off-capacities">' + capacityCards + '</div></section>' +
+      '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Distribuição automática</h3>' +
+      '<p>Não há limite fixo de pessoas por sábado. Ao gerar a prévia, o sistema distribui as folgas entre as datas disponíveis de forma equilibrada.</p></div></div></section>' +
       '<section class="sales-time-off-section">' + rosterMarkup + previewMarkup + '</section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Escala confirmada</h3>' +
       '<p>' + (record ? 'Última confirmação: ' + escapeHtml(record.data.updatedBy || 'Gestor') +
@@ -587,15 +518,6 @@
     var employees = activeScheduleEmployees(state);
     var dates = getSaturdays(controller.month);
     var record = currentSchedule(state);
-    var capacityByDate = {};
-    dates.forEach(function (date) {
-      var input = form.querySelector('[data-schedule-capacity="' + date + '"]');
-      var value = input ? Number(input.value) : NaN;
-      if (!input || input.value.trim() === '' || !Number.isInteger(value) || value < 0 || value > employees.length) {
-        throw new Error('Informe um limite inteiro entre zero e o total de funcionários para ' + dateLabel(date) + '.');
-      }
-      capacityByDate[date] = value;
-    });
     var preferences = new Map();
     employees.forEach(function (employee) {
       var picks = Array.prototype.slice.call(form.querySelectorAll('[data-schedule-preference="' + employee.id + '"]'))
@@ -614,7 +536,6 @@
       employees: employees,
       dates: dates,
       record: record,
-      capacityByDate: capacityByDate,
       preferences: preferences
     };
   }
@@ -624,20 +545,16 @@
     if (controller.loadError) throw new Error(controller.loadError);
     var details = readPlanForm(form);
     var result = previewSnapshot(details.state, details.record, details.employees, details.dates,
-      details.capacityByDate, details.preferences);
+      details.preferences);
     controller.draft = {
       month: controller.month,
-      capacityByDate: details.capacityByDate,
       preferences: details.preferences
     };
     if (!result.feasible) {
       controller.preview = null;
       controller.conflict = {
         month: controller.month,
-        reason: result.reason,
-        shortage: result.shortage || 0,
-        capacities: details.capacityByDate,
-        exceptionsByDate: exceptionCounts(details.record, details.dates)
+        reason: result.reason
       };
       render();
       return;
@@ -673,7 +590,8 @@
     var now = new Date().toISOString();
     var profile = getCurrentProfile(state);
     var actor = profile.displayName || profile.nickname || profile.name || state.user && state.user.name || 'Gestor';
-    var previousData = record && record.data || {};
+    var previousData = Object.assign({}, record && record.data || {});
+    delete previousData.capacityByDate;
     var history = Array.isArray(previousData.history) ? previousData.history.slice() : [];
     history.push({
       action: 'confirmed',
@@ -681,15 +599,13 @@
       confirmedBy: actor,
       changeCount: result.changeCount,
       changes: result.changes,
-      assignments: result.assignments,
-      capacityByDate: controller.draft.capacityByDate
+      assignments: result.assignments
     });
     var payload = {
       title: 'Escala de Folga - ' + controller.month,
       status: 'Confirmada',
       data: Object.assign({}, previousData, {
         month: controller.month,
-        capacityByDate: controller.draft.capacityByDate,
         assignments: result.assignments,
         history: history,
         exceptions: getExceptions(record),
@@ -729,15 +645,6 @@
       throw new Error('Informe colaborador, sábado, tipo e justificativa válidos.');
     }
     var record = currentSchedule(state);
-    var capacities = Object.assign(defaultCapacities(employees.length, dates), record && record.data.capacityByDate || {});
-    var counts = exceptionCounts(record, dates);
-    var assignedCount = (record && Array.isArray(record.data.assignments) ? record.data.assignments : [])
-      .reduce(function (count, assignment) {
-        return count + ((assignment.dates || []).indexOf(date) !== -1 ? 1 : 0);
-      }, 0);
-    if (counts[date] + assignedCount >= Number(capacities[date] || 0)) {
-      throw new Error('O sábado atingiria o limite definido. Aumente a capacidade ou escolha outra data antes de autorizar a exceção.');
-    }
     var profile = getCurrentProfile(state);
     var actor = profile.displayName || profile.nickname || profile.name || state.user && state.user.name || 'Gestor';
     var now = new Date().toISOString();
@@ -751,7 +658,8 @@
       authorizedBy: actor,
       authorizedAt: now
     };
-    var previousData = record && record.data || {};
+    var previousData = Object.assign({}, record && record.data || {});
+    delete previousData.capacityByDate;
     var history = Array.isArray(previousData.history) ? previousData.history.slice() : [];
     history.push({
       action: 'exception_authorized',
@@ -764,7 +672,6 @@
       status: previousData.assignments && previousData.assignments.length ? 'Confirmada' : 'Em planejamento',
       data: Object.assign({}, previousData, {
         month: controller.month,
-        capacityByDate: capacities,
         assignments: Array.isArray(previousData.assignments) ? previousData.assignments : [],
         exceptions: getExceptions(record).concat(exception),
         history: history,
@@ -938,12 +845,6 @@
     if (!controller.target) return;
     var form = controller.target.querySelector('[data-schedule-plan]');
     if (form) {
-      var dates = getSaturdays(controller.month);
-      var capacityByDate = {};
-      dates.forEach(function (date) {
-        var input = form.querySelector('[data-schedule-capacity="' + date + '"]');
-        capacityByDate[date] = input && input.value !== '' ? Number(input.value) : '';
-      });
       var preferenceSlots = new Map();
       Array.prototype.forEach.call(form.querySelectorAll('[data-schedule-preference]'), function (select) {
         var slots = preferenceSlots.get(select.dataset.schedulePreference) || [];
@@ -952,7 +853,6 @@
       });
       controller.draft = {
         month: controller.month,
-        capacityByDate: capacityByDate,
         preferences: preferenceSlots
       };
     }
@@ -960,11 +860,6 @@
     var conflict = controller.target.querySelector('.sales-time-off-conflict');
     if (preview) preview.remove();
     if (conflict && conflict.closest('.sales-time-off-section')) conflict.remove();
-  }
-
-  function handleInput(event) {
-    if (!event.target.closest('[data-schedule-capacity]')) return;
-    invalidatePreview();
   }
 
   function handleChange(event) {
@@ -988,11 +883,6 @@
       controller.conflict = null;
       controller.draft = null;
       render();
-      return;
-    }
-    var capacityInput = event.target.closest('[data-schedule-capacity]');
-    if (capacityInput) {
-      invalidatePreview();
       return;
     }
     if (event.target.closest('[data-schedule-preference]')) {
@@ -1020,7 +910,6 @@
       root.addEventListener('submit', handleSubmit);
       root.addEventListener('click', handleClick);
       root.addEventListener('change', handleChange);
-      root.addEventListener('input', handleInput);
       window.RildonXStore.subscribe(function (nextState) {
         if (!mountedRoot || !mountedRoot.classList.contains('open') ||
             !mountedRoot.querySelector('.dashboard-business-panel--sales-time-off')) return;

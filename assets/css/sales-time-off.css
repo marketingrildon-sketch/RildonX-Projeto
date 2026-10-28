@@ -16,11 +16,10 @@
 .sales-time-off-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
 .sales-time-off-published{padding:6px 9px;border-radius:20px;background:#dff4e6;color:#146c37;font-size:11px;font-weight:750}
 .sales-time-off-publication-outdated{padding:6px 9px;border-radius:20px;background:#fff0d6;color:#865400;font-size:11px;font-weight:750}
-.sales-time-off-capacities{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.sales-time-off-capacity{display:grid;gap:7px;padding:12px;border:1px solid var(--border-soft);border-radius:10px;background:var(--bg,#f8fafc)}
-.sales-time-off-capacity>span{color:var(--text);font-size:12px;font-weight:750;text-transform:capitalize}
-.sales-time-off-capacity>small{color:var(--text-muted);font-size:10px}
-.sales-time-off-capacity>input{width:100%;min-height:36px;padding:7px 9px;border:1px solid var(--border);border-radius:7px;background:var(--card);color:var(--text);font:inherit}
+.sales-time-off-distribution{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}
+.sales-time-off-distribution>div{display:grid;gap:5px;padding:10px;border:1px solid var(--border-soft);border-radius:9px;background:var(--card)}
+.sales-time-off-distribution b{color:var(--text);font-size:11px;text-transform:capitalize}
+.sales-time-off-distribution span,.sales-time-off-distribution small{color:var(--text-muted);font-size:10px}
 .sales-time-off-table-wrap{width:100%;overflow:auto}
 .sales-time-off-table{width:100%;border-collapse:collapse;font-size:12px}
 .sales-time-off-table th,.sales-time-off-table td{padding:10px 9px;border-bottom:1px solid var(--border-soft);text-align:left;vertical-align:middle}
