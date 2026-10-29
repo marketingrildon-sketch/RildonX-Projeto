@@ -820,10 +820,18 @@
 
     try {
       await hydrateFromSupabase();
-      await syncLocalStoreToSupabase();
       watchSharedRealtimeChanges();
+      syncLocalStoreToSupabase().catch(function (error) {
+        console.error('Os dados foram carregados, mas a sincronização inicial dos registros locais falhou:', error);
+        if (typeof window.showToast === 'function') {
+          window.showToast('Os dados locais ainda não foram sincronizados. Verifique sua conexão e atualize a página.');
+        }
+      });
     } catch (error) {
       console.error('Falha na sincronização com Supabase:', error);
+      if (error && error.name === 'TimeoutError' && typeof window.showToast === 'function') {
+        window.showToast('O servidor demorou para responder. A página abrirá com os dados locais; tente atualizar em instantes.');
+      }
     }
   }
 
