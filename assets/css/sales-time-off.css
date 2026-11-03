@@ -40,8 +40,16 @@
 .sales-time-off-table thead th{color:var(--text-muted);font-size:10px;text-transform:uppercase;white-space:nowrap}
 .sales-time-off-table tbody th{min-width:150px;color:var(--text);font-weight:700}
 .sales-time-off-table select,.sales-time-off-table input{width:100%;min-width:150px}
+.sales-time-off-tabs{min-width:0}
+.sales-time-off-tab-list{display:flex;gap:6px;overflow:auto;margin:0 0 12px;padding:4px;border:1px solid var(--border-soft);border-radius:10px;background:var(--bg,#f8fafc)}
+.sales-time-off-tab{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:7px 12px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text-muted);font:inherit;font-size:11px;font-weight:750;white-space:nowrap;cursor:pointer}
+.sales-time-off-tab[aria-selected="true"]{border-color:var(--border);background:var(--card);color:var(--blue-600);box-shadow:0 1px 3px rgba(16,24,55,.08)}
+.sales-time-off-tab:focus-visible{outline:2px solid var(--blue-500);outline-offset:2px}
+.sales-time-off-tab small{display:grid;place-items:center;min-width:19px;height:19px;padding:0 5px;border-radius:20px;background:var(--blue-50);color:var(--blue-600);font-size:10px}
+.sales-time-off-tab-panel[hidden]{display:none}
 .sales-time-off-work-table{min-width:850px}
 .sales-time-off-work-table select{min-width:185px}
+.sales-time-off-work-table select:disabled{border-color:var(--border-soft);background:var(--bg,#f8fafc);color:var(--text-muted);opacity:1;cursor:not-allowed}
 .sales-time-off-work-table tbody th{min-width:165px}
 .sales-time-off-group-row th{padding-top:13px!important;background:var(--blue-50);color:var(--blue-600)!important;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
 .sales-time-off-sector{display:block;margin-top:3px;color:var(--text-muted);font-size:10px;font-weight:500}

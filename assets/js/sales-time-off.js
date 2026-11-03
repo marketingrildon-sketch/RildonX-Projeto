@@ -559,40 +559,92 @@
     }).filter(function (group) { return group.employees.length; });
   }
 
+  function renderGroupTabs(context, groups, renderPanel) {
+    if (!groups.length) return '<p class="sales-time-off-muted">Nenhum colaborador neste grupo.</p>';
+    var activeGroup = controller.activeTabs[context];
+    if (!groups.some(function (group) { return group.name === activeGroup; })) {
+      activeGroup = groups[0].name;
+    }
+    var tabs = groups.map(function (group, index) {
+      var tabId = 'sales-time-off-' + context + '-tab-' + index;
+      var panelId = 'sales-time-off-' + context + '-panel-' + index;
+      var selected = group.name === activeGroup;
+      return '<button type="button" class="sales-time-off-tab" role="tab" id="' + tabId +
+        '" aria-controls="' + panelId + '" aria-selected="' + selected + '" tabindex="' +
+        (selected ? '0' : '-1') + '" data-time-off-tab="' + escapeHtml(group.name) + '">' +
+        '<span>' + escapeHtml(group.name) + '</span><small>' + group.employees.length + '</small></button>';
+    }).join('');
+    var panels = groups.map(function (group, index) {
+      var tabId = 'sales-time-off-' + context + '-tab-' + index;
+      var panelId = 'sales-time-off-' + context + '-panel-' + index;
+      return '<div class="sales-time-off-tab-panel" role="tabpanel" id="' + panelId +
+        '" aria-labelledby="' + tabId + '" tabindex="0"' +
+        (group.name !== activeGroup ? ' hidden' : '') + '>' +
+        renderPanel(group) + '</div>';
+    }).join('');
+    return '<div class="sales-time-off-tabs" data-time-off-tabs="' + context + '">' +
+      '<div class="sales-time-off-tab-list" role="tablist" aria-label="' +
+      (context === 'preferences' ? 'Grupos de preferências de folga' : 'Grupos da distribuição de trabalho') +
+      '">' + tabs + '</div>' + panels + '</div>';
+  }
+
+  function renderPreferenceTabs(employees, preferences, managerCanEdit) {
+    var groups = groupedEmployees(employees);
+    return renderGroupTabs('preferences', groups, function (group) {
+      var rows = group.employees.map(function (employee) {
+        var assigned = preferences.get(employee.id) || [1, 4];
+        var first = assigned[0] || '';
+        var second = assigned[1] || '';
+        return '<tr><th scope="row">' + escapeHtml(employee.name) + '</th><td><select data-schedule-preference="' +
+          escapeHtml(employee.id) + '" data-slot="0" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
+          ordinalOptions(first, 0) + '</select></td><td><select data-schedule-preference="' +
+          escapeHtml(employee.id) + '" data-slot="1" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
+          ordinalOptions(second, 1) + '</select></td></tr>';
+      }).join('');
+      return '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table"><thead><tr>' +
+        '<th>Colaborador</th><th>1ª preferência</th><th>2ª preferência</th></tr></thead><tbody>' +
+        rows + '</tbody></table></div>';
+    });
+  }
+
   function renderWorkAssignments(dates, employees, assignments, record, managerCanEdit) {
     if (!employees.length) return '<p class="sales-time-off-muted">Nenhum colaborador ativo para distribuir.</p>';
     var offDatesByEmployee = new Map(assignments.map(function (assignment) {
       return [String(assignment.userId), assignment.dates || []];
     }));
-    var rows = groupedEmployees(employees).map(function (group) {
-      return '<tr class="sales-time-off-group-row"><th colspan="' + (dates.length + 2) + '">' +
-        escapeHtml(group.name) + '</th></tr>' + group.employees.map(function (employee) {
-          var cells = dates.map(function (date) {
-            var value = workAssignmentsForDate(record, date)[employee.id] || '';
-            var onVacation = isOnVacation(record, employee.id, date);
-            var onLeave = (offDatesByEmployee.get(employee.id) || []).indexOf(date) !== -1;
-            if (onVacation || onLeave) {
-              return '<td><span class="sales-time-off-status-tag' + (onVacation ? ' is-vacation' : ' is-day-off') + '">' +
-                (onVacation ? 'Férias' : 'Folga') + '</span></td>';
-            }
-            return '<td><select aria-label="' + escapeHtml(employee.name + ' · ' + dateLabel(date)) +
-              '" data-work-assignment data-employee="' + escapeHtml(employee.id) + '" data-date="' + date +
-              '"' + (!managerCanEdit ? ' disabled' : '') + '><option value="">Não definido</option>' +
+    return renderGroupTabs('work', groupedEmployees(employees), function (group) {
+      var rows = group.employees.map(function (employee) {
+        var cells = dates.map(function (date) {
+          var value = workAssignmentsForDate(record, date)[employee.id] || '';
+          var onVacation = isOnVacation(record, employee.id, date);
+          var onLeave = (offDatesByEmployee.get(employee.id) || []).indexOf(date) !== -1;
+          if (onVacation || onLeave) {
+            return '<td><select aria-label="' + escapeHtml(employee.name + ' · ' + dateLabel(date) + ' · ' +
+              (onVacation ? 'Férias' : 'Folga')) + '" data-work-assignment data-employee="' +
+              escapeHtml(employee.id) + '" data-date="' + date + '" disabled>' +
+              '<option value="" selected>' + (onVacation ? 'Férias' : 'Folga') + '</option>' +
               WORK_DUTIES.map(function (duty) {
-                return '<option value="' + escapeHtml(duty) + '"' + (value === duty ? ' selected' : '') + '>' +
-                  escapeHtml(duty) + '</option>';
+                return '<option value="' + escapeHtml(duty) + '" disabled>' + escapeHtml(duty) + '</option>';
               }).join('') + '</select></td>';
-          }).join('');
-          return '<tr><th scope="row">' + escapeHtml(employee.name) +
-            '<small class="sales-time-off-sector">' + escapeHtml(employee.sector || 'Setor não informado') +
-            '</small></th><td><span class="sales-time-off-badge">' + escapeHtml(employeeGroup(employee)) +
-            '</span></td>' + cells + '</tr>';
+          }
+          return '<td><select aria-label="' + escapeHtml(employee.name + ' · ' + dateLabel(date)) +
+            '" data-work-assignment data-employee="' + escapeHtml(employee.id) + '" data-date="' + date +
+            '"' + (!managerCanEdit ? ' disabled' : '') + '><option value="">Não definido</option>' +
+            WORK_DUTIES.map(function (duty) {
+              return '<option value="' + escapeHtml(duty) + '"' + (value === duty ? ' selected' : '') + '>' +
+                escapeHtml(duty) + '</option>';
+            }).join('') + '</select></td>';
         }).join('');
-    }).join('');
-    return '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table sales-time-off-work-table"><thead><tr>' +
-      '<th>Colaborador</th><th>Grupo</th>' + dates.map(function (date) {
-        return '<th>' + escapeHtml(dateLabel(date, { day: '2-digit', month: '2-digit' })) + '</th>';
-      }).join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+        return '<tr><th scope="row">' + escapeHtml(employee.name) +
+          '<small class="sales-time-off-sector">' + escapeHtml(employee.sector || 'Setor não informado') +
+          '</small></th><td><span class="sales-time-off-badge">' + escapeHtml(employeeGroup(employee)) +
+          '</span></td>' + cells + '</tr>';
+      }).join('');
+      return '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table sales-time-off-work-table"><thead><tr>' +
+        '<th>Colaborador</th><th>Grupo</th>' + dates.map(function (date) {
+          return '<th>' + escapeHtml(dateLabel(date, { day: '2-digit', month: '2-digit' })) + '</th>';
+        }).join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+    });
   }
 
   function renderExceptions(exceptions) {
@@ -681,25 +733,10 @@
     var hasScheduleData = assignments.length > 0 || vacationCount > 0 || workAssignmentCount > 0 || exceptions.length > 0;
     var managerCanEdit = controller.isManager && !controller.loadError;
 
-    var employeeRows = groupedEmployees(employees).map(function (group) {
-      return '<tr class="sales-time-off-group-row"><th colspan="3">' + escapeHtml(group.name) + '</th></tr>' +
-        group.employees.map(function (employee) {
-          var assigned = preferences.get(employee.id) || [1, 4];
-          var first = assigned[0] || '';
-          var second = assigned[1] || '';
-          return '<tr><th scope="row">' + escapeHtml(employee.name) + '</th><td><select data-schedule-preference="' +
-            escapeHtml(employee.id) + '" data-slot="0" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
-            ordinalOptions(first, 0) + '</select></td><td><select data-schedule-preference="' +
-            escapeHtml(employee.id) + '" data-slot="1" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
-            ordinalOptions(second, 1) + '</select></td></tr>';
-        }).join('');
-    }).join('');
-
     var rosterMarkup = employees.length
       ? '<form data-schedule-plan><div class="sales-time-off-section-heading"><div><h3>Preferências de folga</h3>' +
         '<p>Escolha duas posições de sábado que se repetem para cada pessoa em todos os meses.</p></div></div>' +
-        '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table"><thead><tr><th>Colaborador</th><th>1ª preferência</th><th>2ª preferência</th></tr></thead>' +
-        '<tbody>' + employeeRows + '</tbody></table></div>' +
+        renderPreferenceTabs(employees, preferences, managerCanEdit) +
         '<div class="sales-time-off-form-actions"><button type="submit" class="btn" data-schedule-save' +
         (!managerCanEdit || controller.loadError ? ' disabled title="O armazenamento compartilhado não está disponível"' : '') +
         '>Salvar</button><button type="button" class="btn secondary" data-schedule-export' +
@@ -868,6 +905,10 @@
     var employees = activeScheduleEmployees(state);
     var employeeIds = new Set(employees.map(function (employee) { return employee.id; }));
     var dates = new Set(getSaturdays(controller.month));
+    var record = currentScheduleWithVacations(state);
+    var assignmentsByEmployee = new Map(automaticAssignments(state, controller.month, record).map(function (assignment) {
+      return [String(assignment.userId), assignment.dates || []];
+    }));
     var assignments = {};
     Array.prototype.forEach.call(form.querySelectorAll('[data-work-assignment]'), function (select) {
       var employeeId = String(select.dataset.employee || '');
@@ -876,6 +917,10 @@
       if (!employeeIds.has(employeeId) || !dates.has(date) ||
           duty && WORK_DUTIES.indexOf(duty) === -1) {
         throw new Error('A distribuição contém uma pessoa, data ou responsabilidade inválida.');
+      }
+      if (duty && ((assignmentsByEmployee.get(employeeId) || []).indexOf(date) !== -1 ||
+          isOnVacation(record, employeeId, date))) {
+        throw new Error('Não é possível atribuir trabalho a uma pessoa de folga ou férias.');
       }
       if (!duty) return;
       if (!assignments[date]) assignments[date] = {};
@@ -1153,6 +1198,23 @@
   }
 
   function handleClick(event) {
+    var tab = event.target.closest('[data-time-off-tab]');
+    if (tab) {
+      var tabs = tab.closest('[data-time-off-tabs]');
+      if (!tabs) return;
+      var selectedGroup = tab.dataset.timeOffTab;
+      var context = tabs.dataset.timeOffTabs;
+      controller.activeTabs[context] = selectedGroup;
+      Array.prototype.forEach.call(tabs.querySelectorAll('[data-time-off-tab]'), function (item) {
+        var selected = item === tab;
+        item.setAttribute('aria-selected', String(selected));
+        item.tabIndex = selected ? 0 : -1;
+      });
+      Array.prototype.forEach.call(tabs.querySelectorAll('[role="tabpanel"]'), function (panel) {
+        panel.hidden = panel.getAttribute('aria-labelledby') !== tab.id;
+      });
+      return;
+    }
     if (event.target.closest('[data-schedule-export]')) {
       try {
         exportSchedule();
@@ -1161,6 +1223,21 @@
       }
       return;
     }
+  }
+
+  function handleKeydown(event) {
+    var tab = event.target.closest('[data-time-off-tab]');
+    if (!tab) return;
+    var tabs = Array.prototype.slice.call(tab.closest('[data-time-off-tabs]').querySelectorAll('[data-time-off-tab]'));
+    var index = tabs.indexOf(tab);
+    var nextIndex = event.key === 'ArrowRight' ? (index + 1) % tabs.length
+      : event.key === 'ArrowLeft' ? (index - 1 + tabs.length) % tabs.length
+        : event.key === 'Home' ? 0
+          : event.key === 'End' ? tabs.length - 1 : -1;
+    if (nextIndex === -1) return;
+    event.preventDefault();
+    tabs[nextIndex].focus();
+    tabs[nextIndex].click();
   }
 
   function capturePreferenceDraft() {
@@ -1224,10 +1301,12 @@
         target: options && options.target || root,
         fromLibrary: Boolean(options && options.fromLibrary),
         loadError: '',
-        draft: null
+        draft: null,
+        activeTabs: {}
       };
       root.addEventListener('submit', handleSubmit);
       root.addEventListener('click', handleClick);
+      root.addEventListener('keydown', handleKeydown);
       root.addEventListener('change', handleChange);
       window.RildonXStore.subscribe(function (nextState) {
         if (!mountedRoot || !mountedRoot.classList.contains('open') ||
