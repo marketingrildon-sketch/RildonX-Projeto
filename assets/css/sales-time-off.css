@@ -38,7 +38,22 @@
 .sales-time-off-table th,.sales-time-off-table td{padding:10px 9px;border-bottom:1px solid var(--border-soft);text-align:left;vertical-align:middle}
 .sales-time-off-table thead th{color:var(--text-muted);font-size:10px;text-transform:uppercase;white-space:nowrap}
 .sales-time-off-table tbody th{min-width:150px;color:var(--text);font-weight:700}
-.sales-time-off-table select{width:100%;min-width:170px}
+.sales-time-off-table select,.sales-time-off-table input{width:100%;min-width:150px}
+.sales-time-off-work-table{min-width:850px}
+.sales-time-off-work-table select{min-width:185px}
+.sales-time-off-work-table tbody th{min-width:165px}
+.sales-time-off-group-row th{padding-top:13px!important;background:var(--blue-50);color:var(--blue-600)!important;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+.sales-time-off-sector{display:block;margin-top:3px;color:var(--text-muted);font-size:10px;font-weight:500}
+.sales-time-off-roster-groups{display:grid;gap:8px;margin:10px 0 0;padding:0;list-style:none}
+.sales-time-off-roster-group{display:grid;gap:5px;color:var(--text);font-size:10px}
+.sales-time-off-roster-group>ul{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.sales-time-off-roster-group>ul>li{display:flex;align-items:center;gap:8px}
+.sales-time-off-roster-group>ul>li.sales-time-off-vacation-name{display:grid;gap:2px;padding:5px 7px;border-radius:7px;background:#fff0d6;color:#805300}
+.sales-time-off-vacation-name small{font-size:9px}
+.sales-time-off-status-tag{display:inline-flex;padding:5px 8px;border-radius:20px;font-size:10px;font-weight:750;white-space:nowrap}
+.sales-time-off-status-tag.is-day-off{background:#e8f1ff;color:#2459a6}
+.sales-time-off-status-tag.is-vacation{background:#fff0d6;color:#805300}
+.sales-time-off-vacation-table input{max-width:210px}
 .sales-time-off-form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:14px}
 .sales-time-off-empty{display:grid;gap:5px;padding:18px;border:1px dashed var(--border);border-radius:10px;color:var(--text-muted);font-size:12px}
 .sales-time-off-empty b{color:var(--text)}

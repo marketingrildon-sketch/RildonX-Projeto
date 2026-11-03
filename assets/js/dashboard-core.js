@@ -278,9 +278,9 @@
       fields: []
     },
     {
-      id: 'sales-time-off', sector: 'Comercial', sectorKey: 'comercial', title: 'Escala de Folga', icon: 'calendar', tone: 'green',
-      description: 'Defina duas preferências recorrentes de sábado por pessoa e acompanhe listas mensais geradas automaticamente.',
-      features: ['Duas preferências mensais recorrentes', 'Lista de folgas por sábado', 'Trocas e exceções autorizadas', 'Histórico de ajustes'],
+      id: 'sales-time-off', sector: 'Comercial', sectorKey: 'comercial', title: 'Tabela de Folgas de Sábado', icon: 'calendar', tone: 'green',
+      description: 'Organize folgas, férias e a distribuição de equipes e responsabilidades em cada sábado.',
+      features: ['Folgas por grupo e por sábado', 'Registro de férias por período', 'Distribuição de trabalho por setor', 'Exceções e histórico de ajustes'],
       fields: []
     },
     {
@@ -4206,7 +4206,7 @@
           });
         } else {
           timeOffRoot.innerHTML = '<div class="dashboard-business-panel"><div class="dashboard-business-warning">' +
-            'O módulo Escala de Folga não foi carregado. Atualize a página e tente novamente.</div></div>';
+            'O módulo Tabela de Folgas de Sábado não foi carregado. Atualize a página e tente novamente.</div></div>';
         }
         return;
       }

@@ -2,6 +2,19 @@
   'use strict';
 
   var MODULE_KEY = 'sales-time-off';
+  var WORK_DUTIES = [
+    'Balcão',
+    'Televendas',
+    'Caixa',
+    'Suporte aos setores',
+    'Conferência',
+    'Expedição',
+    'Entrega pelo motoboy',
+    'Estoque',
+    'Garantia',
+    'Supervisão',
+    'OMRE — transferência e expedição'
+  ];
   var mountedRoot = null;
   var controller = null;
 
@@ -68,7 +81,9 @@
       return {
         id: String(profile.id),
         name: profile.displayName || profile.nickname || profile.name || 'Colaborador',
-        avatarUrl: profile.avatarUrl || ''
+        avatarUrl: profile.avatarUrl || '',
+        sector: profile.sector || '',
+        role: profile.role || ''
       };
     }).sort(function (first, second) {
       return first.name.localeCompare(second.name, 'pt-BR');
@@ -97,6 +112,59 @@
     var record = recurringPreferenceRecord(state);
     return record && record.data.preferences && typeof record.data.preferences === 'object'
       ? record.data.preferences : {};
+  }
+
+  function employeeGroup(employee) {
+    var sector = String(employee.sector || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    var role = String(employee.role || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (/venda|comercial/.test(sector) || /venda|comercial/.test(role)) return 'Vendedores';
+    if (/estoque|almoxarifado|motoboy|logistica|expedicao|entrega/.test(sector) ||
+        /estoque|almoxarifado|motoboy|logistica|expedicao|entrega/.test(role)) return 'Estoque e motoboy';
+    return 'Administrativos';
+  }
+
+  function vacationEntries(record) {
+    return record && Array.isArray(record.data.vacations) ? record.data.vacations.filter(function (vacation) {
+      return vacation && vacation.employeeId && /^\d{4}-\d{2}-\d{2}$/.test(vacation.startDate || '') &&
+        /^\d{4}-\d{2}-\d{2}$/.test(vacation.endDate || '') && vacation.startDate <= vacation.endDate;
+    }) : [];
+  }
+
+  function vacationForEmployee(record, employeeId) {
+    return vacationEntries(record).find(function (vacation) {
+      return String(vacation.employeeId) === String(employeeId);
+    }) || null;
+  }
+
+  function isOnVacation(record, employeeId, date) {
+    var vacation = vacationForEmployee(record, employeeId);
+    return Boolean(vacation && vacation.startDate <= date && vacation.endDate >= date);
+  }
+
+  function workAssignmentsForDate(record, date) {
+    var byDate = record && record.data.workAssignments;
+    var byEmployee = byDate && byDate[date];
+    return byEmployee && typeof byEmployee === 'object' ? byEmployee : {};
+  }
+
+  function pruneWorkAssignments(workAssignments, assignments, record) {
+    var offDatesByEmployee = new Map((assignments || []).map(function (assignment) {
+      return [String(assignment.userId), assignment.dates || []];
+    }));
+    var result = {};
+    Object.keys(workAssignments || {}).forEach(function (date) {
+      var source = workAssignments[date];
+      if (!source || typeof source !== 'object') return;
+      Object.keys(source).forEach(function (employeeId) {
+        var duty = source[employeeId];
+        var isOnLeave = (offDatesByEmployee.get(String(employeeId)) || []).indexOf(date) !== -1;
+        if (!isOnLeave && !isOnVacation(record, employeeId, date) && WORK_DUTIES.indexOf(duty) !== -1) {
+          if (!result[date]) result[date] = {};
+          result[date][employeeId] = duty;
+        }
+      });
+    });
+    return result;
   }
 
   function applyExceptions(assignments, exceptions) {
@@ -406,7 +474,7 @@
     return ordinals.length === 2 ? ordinals : [1, 4];
   }
 
-  function renderMonthlyRoster(dates, assignments, employees, hasSchedule) {
+  function renderMonthlyRoster(dates, assignments, employees, record, hasSchedule) {
     var assignmentsByDate = new Map();
     dates.forEach(function (date) { assignmentsByDate.set(date, []); });
     assignments.forEach(function (assignment) {
@@ -426,23 +494,113 @@
         var people = (assignmentsByDate.get(date) || []).slice().sort(function (first, second) {
           return String(first.name || '').localeCompare(String(second.name || ''), 'pt-BR');
         });
+        var groupedPeople = ['Administrativos', 'Vendedores', 'Estoque e motoboy'].map(function (group) {
+          var groupPeople = people.filter(function (person) {
+            var employee = employees.find(function (item) { return item.id === String(person.userId); });
+            return employee && employeeGroup(employee) === group;
+          });
+          return groupPeople.length
+            ? '<li class="sales-time-off-roster-group"><b>' + escapeHtml(group) + '</b><ul>' +
+              groupPeople.map(function (person) {
+                var initials = String(person.name || 'Colaborador').trim().split(/\s+/).slice(0, 2)
+                  .map(function (part) { return part.charAt(0); }).join('').toLocaleUpperCase('pt-BR');
+                var employee = employees.find(function (item) { return item.id === String(person.userId); });
+                var avatarUrl = employee && employee.avatarUrl || person.avatarUrl;
+                var avatar = avatarUrl
+                  ? '<img src="' + escapeHtml(avatarUrl) + '" alt="" loading="lazy">'
+                  : '<span aria-hidden="true">' + escapeHtml(initials) + '</span>';
+                return '<li><span class="sales-time-off-person-avatar">' + avatar + '</span><span class="sales-time-off-person-detail">' +
+                  '<b>' + escapeHtml(person.name || 'Colaborador') + '</b><small>Folga neste sábado</small></span></li>';
+              }).join('') + '</ul></li>'
+            : '';
+        }).join('');
+        var vacationing = employees.filter(function (employee) {
+          return isOnVacation(record, employee.id, date);
+        });
+        var vacationMarkup = vacationing.length
+          ? '<li class="sales-time-off-roster-group"><b>Férias</b><ul>' + vacationing.map(function (employee) {
+            var vacation = vacationForEmployee(record, employee.id);
+            return '<li class="sales-time-off-vacation-name">' + escapeHtml(employee.name) +
+              '<small>' + escapeHtml(dateLabel(vacation.startDate)) +
+              ' a ' + escapeHtml(dateLabel(vacation.endDate)) + '</small></li>';
+          }).join('') + '</ul></li>'
+          : '';
+        var rosterContent = groupedPeople + vacationMarkup;
         return '<article class="sales-time-off-saturday-card"><div class="sales-time-off-saturday-heading">' +
-          '<h4>' + escapeHtml(dateLabel(date)) + '</h4><span>' + people.length + ' pessoa(s)</span></div>' +
-          (people.length
-            ? '<ul>' + people.map(function (person) {
-              var initials = String(person.name || 'Colaborador').trim().split(/\s+/).slice(0, 2)
-                .map(function (part) { return part.charAt(0); }).join('').toLocaleUpperCase('pt-BR');
-              var employee = employees.find(function (item) { return item.id === String(person.userId); });
-              var avatarUrl = employee && employee.avatarUrl || person.avatarUrl;
-              var avatar = avatarUrl
-                ? '<img src="' + escapeHtml(avatarUrl) + '" alt="" loading="lazy">'
-                : '<span aria-hidden="true">' + escapeHtml(initials) + '</span>';
-              return '<li><span class="sales-time-off-person-avatar">' + avatar + '</span><span class="sales-time-off-person-detail">' +
-                '<b>' + escapeHtml(person.name || 'Colaborador') + '</b><small>Próxima folga: ' +
-                escapeHtml(dateLabel(date)) + '</small></span></li>';
-            }).join('') + '</ul>'
-            : '<p class="sales-time-off-saturday-empty">Ninguém escalado</p>') + '</article>';
+          '<h4>' + escapeHtml(dateLabel(date)) + '</h4><span>' + people.length + ' folga(s)</span></div>' +
+          (rosterContent ? '<ul class="sales-time-off-roster-groups">' + rosterContent + '</ul>'
+            : '<p class="sales-time-off-saturday-empty">Nenhuma folga ou férias registradas</p>') + '</article>';
       }).join('') + '</div></section>';
+  }
+
+  function groupedEmployees(employees) {
+    return ['Administrativos', 'Vendedores', 'Estoque e motoboy'].map(function (group) {
+      return {
+        name: group,
+        employees: employees.filter(function (employee) { return employeeGroup(employee) === group; })
+      };
+    }).filter(function (group) { return group.employees.length; });
+  }
+
+  function renderWorkAssignments(dates, employees, assignments, record, managerCanEdit) {
+    if (!employees.length) return '<p class="sales-time-off-muted">Nenhum colaborador ativo para distribuir.</p>';
+    var offDatesByEmployee = new Map(assignments.map(function (assignment) {
+      return [String(assignment.userId), assignment.dates || []];
+    }));
+    var rows = groupedEmployees(employees).map(function (group) {
+      return '<tr class="sales-time-off-group-row"><th colspan="' + (dates.length + 2) + '">' +
+        escapeHtml(group.name) + '</th></tr>' + group.employees.map(function (employee) {
+          var cells = dates.map(function (date) {
+            var value = workAssignmentsForDate(record, date)[employee.id] || '';
+            var onVacation = isOnVacation(record, employee.id, date);
+            var onLeave = (offDatesByEmployee.get(employee.id) || []).indexOf(date) !== -1;
+            if (onVacation || onLeave) {
+              return '<td><span class="sales-time-off-status-tag' + (onVacation ? ' is-vacation' : ' is-day-off') + '">' +
+                (onVacation ? 'Férias' : 'Folga') + '</span></td>';
+            }
+            return '<td><select aria-label="' + escapeHtml(employee.name + ' · ' + dateLabel(date)) +
+              '" data-work-assignment data-employee="' + escapeHtml(employee.id) + '" data-date="' + date +
+              '"' + (!managerCanEdit ? ' disabled' : '') + '><option value="">Não definido</option>' +
+              WORK_DUTIES.map(function (duty) {
+                return '<option value="' + escapeHtml(duty) + '"' + (value === duty ? ' selected' : '') + '>' +
+                  escapeHtml(duty) + '</option>';
+              }).join('') + '</select></td>';
+          }).join('');
+          return '<tr><th scope="row">' + escapeHtml(employee.name) +
+            '<small class="sales-time-off-sector">' + escapeHtml(employee.sector || 'Setor não informado') +
+            '</small></th><td><span class="sales-time-off-badge">' + escapeHtml(employeeGroup(employee)) +
+            '</span></td>' + cells + '</tr>';
+        }).join('');
+    }).join('');
+    return '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table sales-time-off-work-table"><thead><tr>' +
+      '<th>Colaborador</th><th>Grupo</th>' + dates.map(function (date) {
+        return '<th>' + escapeHtml(dateLabel(date, { day: '2-digit', month: '2-digit' })) + '</th>';
+      }).join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  function renderVacationPlan(month, employees, record, managerCanEdit) {
+    if (!employees.length) return '<p class="sales-time-off-muted">Nenhum colaborador ativo para registrar férias.</p>';
+    var parts = month.split('-');
+    var firstDay = month + '-01';
+    var lastDay = month + '-' + String(new Date(Number(parts[0]), Number(parts[1]), 0).getDate()).padStart(2, '0');
+    var rows = groupedEmployees(employees).map(function (group) {
+      return '<tr class="sales-time-off-group-row"><th colspan="3">' + escapeHtml(group.name) + '</th></tr>' +
+        group.employees.map(function (employee) {
+          var vacation = vacationForEmployee(record, employee.id) || {};
+          return '<tr><th scope="row">' + escapeHtml(employee.name) + '</th><td><input type="date" data-vacation-start="' +
+            escapeHtml(employee.id) + '" min="' + firstDay + '" max="' + lastDay + '" value="' +
+            escapeHtml(vacation.startDate || '') + '"' + (!managerCanEdit ? ' disabled' : '') +
+            ' aria-label="Início das férias de ' + escapeHtml(employee.name) + '"></td><td><input type="date" data-vacation-end="' +
+            escapeHtml(employee.id) + '" min="' + firstDay + '" max="' + lastDay + '" value="' +
+            escapeHtml(vacation.endDate || '') + '"' + (!managerCanEdit ? ' disabled' : '') +
+            ' aria-label="Fim das férias de ' + escapeHtml(employee.name) + '"></td></tr>';
+        }).join('');
+    }).join('');
+    return '<form data-schedule-vacations><div class="sales-time-off-table-wrap"><table class="sales-time-off-table sales-time-off-vacation-table">' +
+      '<thead><tr><th>Colaborador</th><th>Início das férias</th><th>Fim das férias</th></tr></thead><tbody>' +
+      rows + '</tbody></table></div>' + (managerCanEdit
+        ? '<div class="sales-time-off-form-actions"><button type="submit" class="btn" data-vacation-save>Salvar férias</button></div>'
+        : '') + '</form>';
   }
 
   function renderExceptions(exceptions) {
@@ -464,13 +622,19 @@
     return '<ol class="sales-time-off-history">' + history.map(function (entry) {
       var action = entry.action === 'exception_authorized' ? 'Exceção autorizada'
         : entry.action === 'preferences_saved' ? 'Preferências recorrentes salvas'
-          : entry.action === 'published' ? 'Escala publicada' : 'Escala confirmada';
+          : entry.action === 'vacations_saved' ? 'Férias atualizadas'
+            : entry.action === 'work_assignments_saved' ? 'Distribuição de trabalho atualizada'
+              : entry.action === 'published' ? 'Escala publicada' : 'Escala confirmada';
       var detail = entry.action === 'exception_authorized'
         ? entry.exception.employeeName + (entry.exception.otherEmployeeName
           ? ' ↔ ' + entry.exception.otherEmployeeName : '') + ' · ' +
           dateLabel(entry.exception.date) + ' · ' + entry.exception.type
         : entry.action === 'preferences_saved'
           ? 'Preferências atualizadas para ' + (entry.employeeCount || 0) + ' pessoa(s)'
+        : entry.action === 'vacations_saved'
+          ? 'Períodos de férias registrados para o mês'
+        : entry.action === 'work_assignments_saved'
+          ? 'Responsabilidades de trabalho registradas para os sábados do mês'
         : entry.action === 'published'
           ? 'Escala disponibilizada para consulta · ' + (entry.assignmentCount || 0) + ' pessoa(s)'
         : (entry.changeCount || 0) + ' folga(s) reajustada(s), ' + (entry.assignments || []).length + ' pessoa(s) na escala';
@@ -509,17 +673,34 @@
     var plannedTimeOffCount = assignments.reduce(function (count, assignment) {
       return count + (Array.isArray(assignment.dates) ? assignment.dates.length : 0);
     }, 0);
+    var vacationCount = vacationEntries(record).length;
+    var workAssignmentCount = dates.reduce(function (count, date) {
+      return count + Object.keys(workAssignmentsForDate(record, date)).length;
+    }, 0);
+    var pendingWorkAssignmentCount = dates.reduce(function (count, date) {
+      var assigned = workAssignmentsForDate(record, date);
+      return count + employees.filter(function (employee) {
+        var off = assignments.some(function (assignment) {
+          return String(assignment.userId) === employee.id && assignment.dates.indexOf(date) !== -1;
+        });
+        return !off && !isOnVacation(record, employee.id, date) && !assigned[employee.id];
+      }).length;
+    }, 0);
+    var hasScheduleData = assignments.length > 0 || vacationCount > 0 || workAssignmentCount > 0 || exceptions.length > 0;
     var managerCanEdit = controller.isManager && !controller.loadError;
 
-    var employeeRows = employees.map(function (employee) {
-      var assigned = preferences.get(employee.id) || [1, 4];
-      var first = assigned[0] || '';
-      var second = assigned[1] || '';
-      return '<tr><th scope="row">' + escapeHtml(employee.name) + '</th><td><select data-schedule-preference="' +
-        escapeHtml(employee.id) + '" data-slot="0" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
-        ordinalOptions(first, 0) + '</select></td><td><select data-schedule-preference="' +
-        escapeHtml(employee.id) + '" data-slot="1" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
-        ordinalOptions(second, 1) + '</select></td></tr>';
+    var employeeRows = groupedEmployees(employees).map(function (group) {
+      return '<tr class="sales-time-off-group-row"><th colspan="3">' + escapeHtml(group.name) + '</th></tr>' +
+        group.employees.map(function (employee) {
+          var assigned = preferences.get(employee.id) || [1, 4];
+          var first = assigned[0] || '';
+          var second = assigned[1] || '';
+          return '<tr><th scope="row">' + escapeHtml(employee.name) + '</th><td><select data-schedule-preference="' +
+            escapeHtml(employee.id) + '" data-slot="0" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
+            ordinalOptions(first, 0) + '</select></td><td><select data-schedule-preference="' +
+            escapeHtml(employee.id) + '" data-slot="1" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
+            ordinalOptions(second, 1) + '</select></td></tr>';
+        }).join('');
     }).join('');
 
     var rosterMarkup = employees.length
@@ -530,7 +711,7 @@
         '<div class="sales-time-off-form-actions"><button type="submit" class="btn" data-schedule-save' +
         (!managerCanEdit || controller.loadError ? ' disabled title="O armazenamento compartilhado não está disponível"' : '') +
         '>Salvar</button><button type="button" class="btn secondary" data-schedule-export' +
-        (!assignments.length ? ' disabled title="Salve as preferências para gerar a escala"' : '') +
+        (!hasScheduleData ? ' disabled title="Registre dados na escala para habilitar a exportação"' : '') +
         '>Exportar escala</button></div></form>'
       : '<div class="sales-time-off-empty"><b>Nenhum usuário ativo foi encontrado.</b>' +
         '<span>Verifique se os perfis estão carregados e ativos.</span></div>';
@@ -556,21 +737,33 @@
       : '';
     controller.target.innerHTML = '<div class="dashboard-business-panel dashboard-business-panel--sales-time-off" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
       '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="green">↻</div>' +
-      '<div><span class="dashboard-library-eyebrow">Comercial · Escala compartilhada</span><h2 id="dashboard-business-title">Escala de Folga</h2>' +
-      '<p>Cada pessoa tem duas preferências recorrentes de sábado. As listas mensais são geradas automaticamente e podem ser ajustadas por exceções autorizadas.</p></div>' +
+      '<div><span class="dashboard-library-eyebrow">Comercial · Escala compartilhada</span><h2 id="dashboard-business-title">Tabela de Folgas de Sábado</h2>' +
+      '<p>Consulte as folgas por grupo, identifique férias e distribua as equipes e responsabilidades de cada sábado.</p></div>' +
       '<div class="dashboard-business-header-actions">' +
       (controller.fromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
       '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
       loadWarning + '<div class="sales-time-off-toolbar"><label><span>Mês da escala</span><input type="month" data-schedule-month value="' +
       escapeHtml(controller.month) + '"></label><div><b>' + employees.length + '</b><small>usuário(s) ativo(s) cadastrado(s)</small></div>' +
-      '<div><b>' + plannedTimeOffCount + '</b><small>folga(s) planejada(s)</small></div></div>' +
-      renderMonthlyRoster(dates, assignments, employees, assignments.length > 0) +
+      '<div><b>' + plannedTimeOffCount + '</b><small>folga(s) planejada(s)</small></div>' +
+      '<div><b>' + vacationCount + '</b><small>colaborador(es) em férias</small></div>' +
+      '<div><b>' + workAssignmentCount + '</b><small>responsabilidade(s) distribuída(s)</small></div></div>' +
+      renderMonthlyRoster(dates, assignments, employees, record, assignments.length > 0) +
       '<section class="sales-time-off-section">' + rosterMarkup + '</section>' +
+      '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Férias do mês</h3>' +
+      '<p>Registre o período de férias para identificar ausências na lista mensal e evitar distribuir essas pessoas para trabalhar nos sábados correspondentes.</p></div>' +
+      '<span>' + vacationCount + ' colaborador(es)</span></div>' +
+      renderVacationPlan(controller.month, employees, record, managerCanEdit) + '</section>' +
+      '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Distribuição das equipes por sábado</h3>' +
+      '<p>Para cada pessoa que não esteja de folga ou em férias, selecione a responsabilidade de trabalho. O preenchimento é manual: confira nomes, datas e cobertura de cada setor antes do sábado. As células sem atribuição ficam visíveis para conferência.</p></div>' +
+      '<span>' + pendingWorkAssignmentCount + ' sem atribuição · ' + workAssignmentCount + ' distribuída(s)</span></div>' +
+      '<form data-schedule-work>' + renderWorkAssignments(dates, employees, assignments, record, managerCanEdit) +
+      (managerCanEdit ? '<div class="sales-time-off-form-actions"><button type="submit" class="btn" data-work-save>Salvar distribuição</button></div>' : '') +
+      '</form></section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Exceções autorizadas</h3>' +
       '<p>Exceções e trocas atualizam automaticamente a lista do sábado selecionado.</p></div></div>' +
       exceptionForm + renderExceptions(exceptions) + '</section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Histórico de reajustes</h3>' +
-      '<p>' + historyCount + ' registro(s) de preferências e exceções.</p></div></div>' +
+      '<p>' + historyCount + ' registro(s) de preferências, férias, atribuições e exceções.</p></div></div>' +
       renderHistory(historyRecord) + '</section></div>';
   }
 
@@ -660,6 +853,7 @@
       data: Object.assign({}, previousData, {
         month: controller.month,
         assignments: assignments,
+        workAssignments: pruneWorkAssignments(previousData.workAssignments, assignments, record),
         history: scheduleHistory,
         exceptions: getExceptions(record),
         updatedBy: actor,
@@ -678,6 +872,119 @@
     controller.draft = null;
     render();
     toast('Preferências salvas. A escala de ' + controller.month + ' foi gerada automaticamente.');
+  }
+
+  function readVacationPlan(form) {
+    var state = window.RildonXStore.getState();
+    var employees = activeScheduleEmployees(state);
+    var vacations = [];
+    employees.forEach(function (employee) {
+      var startInput = Array.prototype.find.call(form.querySelectorAll('[data-vacation-start]'), function (input) {
+        return input.dataset.vacationStart === employee.id;
+      });
+      var endInput = Array.prototype.find.call(form.querySelectorAll('[data-vacation-end]'), function (input) {
+        return input.dataset.vacationEnd === employee.id;
+      });
+      var startDate = startInput && startInput.value || '';
+      var endDate = endInput && endInput.value || '';
+      if (!startDate && !endDate) return;
+      if (!startDate || !endDate || startDate > endDate ||
+          startDate.slice(0, 7) !== controller.month || endDate.slice(0, 7) !== controller.month) {
+        throw new Error('Informe um período de férias válido para ' + employee.name + ' dentro do mês selecionado.');
+      }
+      vacations.push({
+        employeeId: employee.id,
+        employeeName: employee.name,
+        startDate: startDate,
+        endDate: endDate
+      });
+    });
+    return vacations;
+  }
+
+  function readWorkAssignments(form) {
+    var state = window.RildonXStore.getState();
+    var employees = activeScheduleEmployees(state);
+    var employeeIds = new Set(employees.map(function (employee) { return employee.id; }));
+    var dates = new Set(getSaturdays(controller.month));
+    var assignments = {};
+    Array.prototype.forEach.call(form.querySelectorAll('[data-work-assignment]'), function (select) {
+      var employeeId = String(select.dataset.employee || '');
+      var date = String(select.dataset.date || '');
+      var duty = String(select.value || '');
+      if (!employeeIds.has(employeeId) || !dates.has(date) ||
+          duty && WORK_DUTIES.indexOf(duty) === -1) {
+        throw new Error('A distribuição contém uma pessoa, data ou responsabilidade inválida.');
+      }
+      if (!duty) return;
+      if (!assignments[date]) assignments[date] = {};
+      assignments[date][employeeId] = duty;
+    });
+    return assignments;
+  }
+
+  function saveMonthlyPlan(changes, action, successMessage) {
+    if (!controller.isManager) throw new Error('Somente um gestor pode atualizar a escala.');
+    if (controller.loadError) throw new Error(controller.loadError);
+    var state = window.RildonXStore.getState();
+    var record = currentSchedule(state);
+    var profile = getCurrentProfile(state);
+    var actor = profile.displayName || profile.nickname || profile.name || state.user && state.user.name || 'Gestor';
+    var now = new Date().toISOString();
+    var previousData = Object.assign({}, record && record.data || {});
+    var history = Array.isArray(previousData.history) ? previousData.history.slice() : [];
+    history.push({
+      action: action,
+      confirmedAt: now,
+      confirmedBy: actor
+    });
+    var payload = {
+      title: 'Escala de Folga - ' + controller.month,
+      status: record && record.status || 'Em planejamento',
+      data: Object.assign({}, previousData, changes, {
+        month: controller.month,
+        history: history,
+        updatedBy: actor
+      })
+    };
+    var saved = record
+      ? window.RildonXStore.updateBusinessCardRecord(record.id, payload)
+      : window.RildonXStore.addBusinessCardRecord(Object.assign({
+        moduleKey: MODULE_KEY,
+        sector: 'comercial',
+        createdBy: controller.userId || profile.id
+      }, payload));
+    if (!saved) throw new Error('O armazenamento não confirmou as alterações da escala.');
+    render();
+    toast(successMessage);
+  }
+
+  function saveVacationPlan(form) {
+    var vacations = readVacationPlan(form);
+    var record = currentSchedule(window.RildonXStore.getState());
+    var previousData = Object.assign({}, record && record.data || {});
+    var parts = controller.month.split('-');
+    var firstDay = controller.month + '-01';
+    var lastDay = controller.month + '-' + String(new Date(Number(parts[0]), Number(parts[1]), 0).getDate()).padStart(2, '0');
+    var retainedVacations = vacationEntries(record).filter(function (vacation) {
+      return vacation.endDate < firstDay || vacation.startDate > lastDay;
+    });
+    var vacationsForMonth = retainedVacations.concat(vacations);
+    var recordWithUpdatedVacations = {
+      data: Object.assign({}, record && record.data || {}, { vacations: vacationsForMonth })
+    };
+    var assignments = automaticAssignments(window.RildonXStore.getState(), controller.month, record);
+    saveMonthlyPlan({
+      vacations: vacationsForMonth,
+      workAssignments: pruneWorkAssignments(previousData.workAssignments, assignments, recordWithUpdatedVacations)
+    }, 'vacations_saved', 'Períodos de férias salvos na escala mensal.');
+  }
+
+  function saveWorkPlan(form) {
+    var assignments = readWorkAssignments(form);
+    saveMonthlyPlan({
+      workAssignments: assignments
+    }, 'work_assignments_saved', 'Distribuição das equipes salva para os sábados do mês.');
   }
 
   function authorizeException(form) {
@@ -776,6 +1083,7 @@
       data: Object.assign({}, previousData, {
         month: controller.month,
         assignments: assignments,
+        workAssignments: pruneWorkAssignments(previousData.workAssignments, assignments, record),
         exceptions: getExceptions(record).concat(exception),
         history: history,
         updatedBy: actor
@@ -801,23 +1109,49 @@
     var state = window.RildonXStore.getState();
     var record = currentSchedule(state);
     var assignments = automaticAssignments(state, controller.month, record);
-    if (!assignments.length) throw new Error('Confirme uma escala antes de exportar.');
+    var employees = activeScheduleEmployees(state);
+    var vacations = vacationEntries(record);
+    var workAssignments = record && record.data.workAssignments || {};
+    if (!assignments.length && !vacations.length && !Object.keys(workAssignments).length &&
+        !getExceptions(record).length) {
+      throw new Error('Não há dados de escala para exportar neste mês.');
+    }
     var rows = [[
-      'Competência', 'Tipo de registro', 'Colaborador', 'Folgas planejadas',
-      'Data da exceção', 'Tipo da exceção', 'Justificativa', 'Autorizado por', 'Situação'
+      'Competência', 'Tipo de registro', 'Grupo', 'Colaborador', 'Data do sábado',
+      'Responsabilidade', 'Início das férias', 'Fim das férias', 'Data da exceção',
+      'Tipo da exceção', 'Justificativa', 'Autorizado por', 'Situação'
     ]];
     assignments.forEach(function (assignment) {
-      rows.push([
-        controller.month, 'Folga planejada', assignment.name,
-        (assignment.dates || []).map(dateLabel).join(' e '),
-        '', '', '', '', record.status || 'Confirmada'
-      ]);
+      var employee = employees.find(function (item) { return item.id === String(assignment.userId); });
+      (assignment.dates || []).forEach(function (date) {
+        rows.push([controller.month, 'Folga planejada', employee ? employeeGroup(employee) : '',
+          assignment.name, dateLabel(date), '', '', '', '', '', '', '', record.status || 'Em planejamento']);
+      });
+    });
+    getSaturdays(controller.month).forEach(function (date) {
+      var dayAssignments = workAssignmentsForDate(record, date);
+      Object.keys(dayAssignments).forEach(function (employeeId) {
+        var employee = employees.find(function (item) { return item.id === employeeId; });
+        var offDates = assignments.find(function (item) { return String(item.userId) === employeeId; });
+        if (!employee || isOnVacation(record, employeeId, date) ||
+            offDates && offDates.dates.indexOf(date) !== -1) return;
+        rows.push([controller.month, 'Distribuição de trabalho', employeeGroup(employee),
+          employee.name, dateLabel(date), dayAssignments[employeeId], '', '', '', '', '', '',
+          record.status || 'Em planejamento']);
+      });
+    });
+    vacations.forEach(function (vacation) {
+      var employee = employees.find(function (item) { return item.id === String(vacation.employeeId); });
+      rows.push([controller.month, 'Férias', employee ? employeeGroup(employee) : '',
+        vacation.employeeName || employee && employee.name || 'Colaborador', '', '',
+        dateLabel(vacation.startDate), dateLabel(vacation.endDate), '', '', '', '',
+        record.status || 'Em planejamento']);
     });
     getExceptions(record).forEach(function (exception) {
       rows.push([
-        controller.month, 'Exceção autorizada', exception.employeeName, '', '',
-        dateLabel(exception.date), exception.type, exception.reason, exception.authorizedBy,
-        record.status || 'Confirmada'
+        controller.month, 'Exceção autorizada', '', exception.employeeName, dateLabel(exception.date),
+        '', '', '', dateLabel(exception.date), exception.type, exception.reason, exception.authorizedBy,
+        record.status || 'Em planejamento'
       ]);
     });
     var csv = '\ufeff' + rows.map(function (row) {
@@ -845,6 +1179,34 @@
         escapeError(error, 'Não foi possível salvar as preferências da escala.');
       } finally {
         if (saveButton && saveButton.isConnected) saveButton.disabled = false;
+      }
+      return;
+    }
+    var vacationForm = event.target.closest('[data-schedule-vacations]');
+    if (vacationForm) {
+      event.preventDefault();
+      var vacationButton = vacationForm.querySelector('[data-vacation-save]');
+      if (vacationButton) vacationButton.disabled = true;
+      try {
+        saveVacationPlan(vacationForm);
+      } catch (error) {
+        escapeError(error, 'Não foi possível salvar as férias.');
+      } finally {
+        if (vacationButton && vacationButton.isConnected) vacationButton.disabled = false;
+      }
+      return;
+    }
+    var workForm = event.target.closest('[data-schedule-work]');
+    if (workForm) {
+      event.preventDefault();
+      var workButton = workForm.querySelector('[data-work-save]');
+      if (workButton) workButton.disabled = true;
+      try {
+        saveWorkPlan(workForm);
+      } catch (error) {
+        escapeError(error, 'Não foi possível salvar a distribuição de trabalho.');
+      } finally {
+        if (workButton && workButton.isConnected) workButton.disabled = false;
       }
       return;
     }
