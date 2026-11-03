@@ -279,6 +279,12 @@
       ]
     },
     {
+      id: 'sales-commercial-management', sector: 'Comercial', sectorKey: 'comercial', title: 'Gestão Comercial', icon: 'chart', tone: 'green',
+      description: 'Acompanhe atendimentos, metas, vendas e oportunidades perdidas com uma visão individual para cada vendedor.',
+      features: ['Visão executiva e metas por vendedor', 'Registro de atendimentos e vendas', 'Análise de vendas perdidas', 'Consulta de prazos de garantia'],
+      fields: []
+    },
+    {
       id: 'sales-product-signals', sector: 'Comercial', sectorKey: 'comercial', title: 'Sinalização de Produtos', icon: 'cart', tone: 'green',
       description: 'Sinalize produtos para Compras e acompanhe as respostas enviadas.', features: ['Nova sinalização', 'Abas Pendentes e Respondidas', 'Filtros de acompanhamento', 'Respostas compartilhadas com Compras'],
       fields: []
@@ -688,6 +694,12 @@
     return sector;
   }
 
+  function isCommercialProfile(profile) {
+    const sector = String(profile && profile.sector || '').trim().toLocaleLowerCase('pt-BR')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return sector.indexOf('comercial') === 0 || sector.indexOf('vendas') === 0;
+  }
+
   function isBusinessCardManager(data) {
     const profile = getCurrentProfile(data);
     const role = String(profile.role || '').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -733,6 +745,10 @@
       return isBusinessCardManager(data) ||
         (Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1);
     }
+    if (module.id === 'sales-commercial-management') {
+      return isBusinessCardManager(data) || isCommercialProfile(profile) ||
+        (Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1);
+    }
     if (module.id === 'sales-time-off') {
       return isBusinessCardManager(data) || normalizedSector(profile.sector) === 'comercial' ||
         (Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1);
@@ -767,6 +783,10 @@
     }
     if (module.id === 'sales-product-signals') {
       return isManager || (Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1);
+    }
+    if (module.id === 'sales-commercial-management') {
+      return isManager || isCommercialProfile(profile) ||
+        (Array.isArray(profile.enabledPanels) && profile.enabledPanels.indexOf(module.id) !== -1);
     }
     if (module.id === 'sales-time-off') {
       return isManager || normalizedSector(profile.sector) === 'comercial' ||
@@ -4167,6 +4187,31 @@
         businessRoot.innerHTML = '<div class="dashboard-business-panel" role="dialog" aria-modal="true"><div class="dashboard-business-header"><div><span class="dashboard-library-eyebrow">Acesso protegido</span><h2>Card restrito</h2></div><div class="dashboard-business-header-actions">' +
           (businessOpenedFromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
           '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div><p class="dashboard-business-restricted">Seu perfil não possui acesso ao setor ' + escapeHtml(module.sector) + '.</p></div>';
+        return;
+      }
+      if (moduleId === 'sales-commercial-management') {
+        businessRoot.innerHTML = '<div class="dashboard-business-panel dashboard-business-panel--sales-commercial" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
+          '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="' + escapeHtml(module.tone) + '">' + iconMarkup(module.icon) + '</div>' +
+          '<div><span class="dashboard-library-eyebrow">Comercial · Vendas e metas</span><h2 id="dashboard-business-title">' + escapeHtml(module.title) +
+          '</h2><p>' + escapeHtml(module.description) + '</p></div><div class="dashboard-business-header-actions">' +
+          (businessOpenedFromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
+          '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
+          '<div class="dashboard-sales-commercial-root"></div></div>';
+        if (window.RildonXSalesCommercialManagement &&
+            typeof window.RildonXSalesCommercialManagement.mount === 'function') {
+          window.RildonXSalesCommercialManagement.mount(
+            businessRoot.querySelector('.dashboard-sales-commercial-root'),
+            dashboardState,
+            {
+              isManager: isBusinessCardManager(dashboardState),
+              userId: authenticatedUserId || getCurrentProfile(dashboardState).id || '',
+              recordsReady: !dashboardState.businessCardRecordsLoadError
+            }
+          );
+        } else {
+          businessRoot.querySelector('.dashboard-sales-commercial-root').innerHTML =
+            '<div class="dashboard-business-warning">O painel de Gestão Comercial não foi carregado. Atualize a página e tente novamente.</div>';
+        }
         return;
       }
       if (moduleId === 'sales-time-off') {
