@@ -223,8 +223,8 @@
       source: 'profiles', fields: []
     },
     {
-      id: 'hr-leave-attendance', sector: 'RH/DP', sectorKey: 'rh', title: 'Férias e Ponto', icon: 'calendar', tone: 'purple',
-      description: 'Acompanhe férias, banco de horas e registros de ponto.', features: ['Solicitações e aprovações', 'Saldo de férias', 'Ponto do dia', 'Histórico'],
+      id: 'hr-leave-attendance', sector: 'RH/DP', sectorKey: 'rh', title: 'Férias do mês', icon: 'calendar', tone: 'purple',
+      description: 'Organize os períodos de férias dos colaboradores e acompanhe registros de ponto e banco de horas.', features: ['Férias por mês e colaborador', 'Integração com a Tabela de Folgas de Sábado', 'Banco de horas e ajustes de ponto', 'Histórico'],
       fields: [
         { key: 'title', label: 'Colaborador', type: 'text', required: true },
         { key: 'kind', label: 'Tipo de registro', type: 'select', options: ['Férias', 'Banco de horas', 'Ajuste de ponto', 'Ausência'] },
@@ -2542,6 +2542,8 @@
       const filterField = businessFilterField(module);
       return (dashboardState.businessCardRecords || []).filter(function (record) {
         if (!record || record.moduleKey !== module.id || (!includeArchived && record.archived)) return false;
+        if (module.id === 'hr-leave-attendance' &&
+            record.data && record.data.recordType === 'monthly-vacations') return false;
         if (module.id === 'quality-risks' && qualityRiskMatrixFilter &&
             (record.status === 'Encerrado' ||
               Number.parseInt(String(record.data && record.data.probability || ''), 10) !== qualityRiskMatrixFilter.probability ||
@@ -4352,6 +4354,9 @@
             : '') + '</select></label>'
         : '<label class="dashboard-business-filter"><span>Exibição</span><select data-business-filter aria-label="Filtrar registros"><option value="">Todos</option><option value="__favorites"' +
           (businessFilterValue === '__favorites' ? ' selected' : '') + '>Favoritos</option></select></label>';
+      const monthlyVacationsMarkup = module.id === 'hr-leave-attendance'
+        ? '<div class="hr-monthly-vacations-root"></div><h3 class="hr-leave-records-title">Registros de ponto e banco de horas</h3>'
+        : '';
       const marketingToolbar = '<div class="dashboard-business-toolbar marketing-content-toolbar">' +
         '<button type="button" class="btn" data-business-create' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') +
         '>+ Novo conteúdo</button><div class="marketing-content-view-switch" role="group" aria-label="Visualização">' +
@@ -4367,7 +4372,7 @@
         '</h2><p>' + escapeHtml(module.description) + '</p></div><div class="dashboard-business-header-actions">' +
         (businessOpenedFromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
         '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
-        accessError + (moduleId === 'marketing-internal-demands'
+        accessError + monthlyVacationsMarkup + (moduleId === 'marketing-internal-demands'
           ? internalDemandDashboardMarkup()
           : moduleId === 'hr-employee-control' ? '' : renderBusinessMetrics(summary)) +
         (moduleId === 'hr-employee-control'
@@ -4402,6 +4407,16 @@
         '</div>';
       if (!readOnly) {
         renderBusinessRecordList(module, businessSearch);
+        if (moduleId === 'hr-leave-attendance') {
+          const vacationRoot = businessRoot.querySelector('.hr-monthly-vacations-root');
+          if (window.RildonXHRMonthlyVacations &&
+              typeof window.RildonXHRMonthlyVacations.mount === 'function') {
+            window.RildonXHRMonthlyVacations.mount(vacationRoot, dashboardState,
+              canManagePeopleProfiles(dashboardState));
+          } else if (vacationRoot) {
+            vacationRoot.innerHTML = '<div class="dashboard-business-warning">O painel de férias do mês não foi carregado. Atualize a página e tente novamente.</div>';
+          }
+        }
       } else if (module.source === 'projects') {
         const link = '<a class="dashboard-business-source-action" href="projetos.html">Gerenciar projetos</a>';
         businessRoot.querySelector('.dashboard-business-record-list').insertAdjacentHTML('beforeend', link);

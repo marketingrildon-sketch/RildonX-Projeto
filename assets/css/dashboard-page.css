@@ -1,6 +1,23 @@
 #page-meuespaco>.stat-grid,
 #page-meuespaco>.layout-2col{display:none!important}
 #page-meuespaco .page-head{margin-bottom:18px}
+.hr-monthly-vacations{margin:18px 0;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--card);box-shadow:var(--shadow)}
+.hr-monthly-vacations-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:14px}
+.hr-monthly-vacations-heading h3{margin:0 0 5px;color:var(--text);font-size:16px}
+.hr-monthly-vacations-heading p{margin:0;color:var(--text-muted);font-size:12px;line-height:1.55}
+.hr-monthly-vacations-heading label{display:grid;gap:5px;color:var(--text-muted);font-size:11px;font-weight:700}
+.hr-monthly-vacations-heading input,.hr-monthly-vacations-table-wrap input{min-height:36px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font:inherit;font-size:12px}
+.hr-monthly-vacations-table-wrap{overflow:auto}
+.hr-monthly-vacations-table-wrap table{width:100%;border-collapse:collapse}
+.hr-monthly-vacations-table-wrap th,.hr-monthly-vacations-table-wrap td{padding:9px 10px;border-bottom:1px solid var(--border-soft);text-align:left}
+.hr-monthly-vacations-table-wrap th{color:var(--text);font-size:12px}
+.hr-monthly-vacations-table-wrap th small{display:block;margin-top:3px;color:var(--text-muted);font-size:10px;font-weight:400}
+.hr-monthly-vacations-table-wrap input{width:100%;max-width:210px}
+.hr-monthly-vacations-actions{display:flex;justify-content:flex-end;margin-top:14px}
+.hr-monthly-vacations-warning{margin:12px 0;padding:12px;border:1px solid #f0c36d;border-radius:8px;background:#fff8e8;color:#765600;font-size:12px}
+.hr-monthly-vacations-warning p{margin:5px 0 0}
+.hr-monthly-vacations-empty{padding:16px;color:var(--text-muted);font-size:12px}
+.hr-leave-records-title{margin:24px 0 10px;color:var(--text);font-size:15px}
 .dashboard-page-actions{display:flex;align-items:center;gap:9px}
 .dashboard-page-actions>.btn svg{width:16px;height:16px;margin-right:6px;vertical-align:middle}
 .dashboard-page-actions>.dashboard-personalize-button{min-width:142px;box-shadow:0 4px 12px rgba(37, 99, 235, 0.216)}
