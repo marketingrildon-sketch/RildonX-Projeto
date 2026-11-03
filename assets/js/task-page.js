@@ -751,6 +751,7 @@
       if (task.createdBy && String(task.createdBy) !== String(currentUserId) &&
           viewerIds.indexOf(task.createdBy) === -1) viewerIds.push(task.createdBy);
       var files = Array.from(event.target.files);
+      if (files.length > 10) throw new Error('Você pode anexar no máximo 10 arquivos por vez.');
       var uploaded = [];
       for (var i = 0; i < files.length; i += 1) {
         uploaded.push(await uploadService.upload(files[i], {

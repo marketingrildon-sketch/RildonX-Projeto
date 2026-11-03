@@ -640,8 +640,13 @@
     });
 
     input.addEventListener('change', async function () {
-      var file = input.files && input.files[0];
-      if (!file) return;
+      var files = input.files ? Array.prototype.slice.call(input.files) : [];
+      if (!files.length) return;
+      if (files.length > 10) {
+        showDocumentActionError('Você pode enviar no máximo 10 arquivos por vez.');
+        input.value = '';
+        return;
+      }
 
       if (!window.RildonXDocumentUpload || !window.RildonXStore) {
         showDocumentActionError('O envio de arquivos não está disponível. Recarregue a página e tente novamente.');
@@ -650,7 +655,7 @@
       }
 
       button.disabled = true;
-      openDocumentShareModal('upload', file);
+      openDocumentShareModal('upload', files);
       input.value = '';
     });
   }
@@ -675,9 +680,12 @@
     documentShareContext = { mode: mode, value: value, selectedViewerIds: selectedIds };
     title.textContent = mode === 'upload' ? 'Enviar para Documentos' : 'Visualizadores do arquivo';
     caption.textContent = mode === 'upload'
-      ? 'Escolha quem poderá abrir este arquivo além de você. Sem seleção, somente você terá acesso.'
+      ? 'Escolha quem poderá abrir ' + (Array.isArray(value) && value.length > 1 ? 'estes ' + value.length + ' arquivos' : 'este arquivo') +
+        ' além de você. Sem seleção, somente você terá acesso.'
       : (value.name || 'Arquivo') + ' · Você pode adicionar ou remover pessoas com acesso.';
-    submit.textContent = mode === 'upload' ? 'Enviar arquivo' : 'Salvar acessos';
+    submit.textContent = mode === 'upload'
+      ? 'Enviar ' + (Array.isArray(value) && value.length > 1 ? value.length + ' arquivos' : 'arquivo')
+      : 'Salvar acessos';
     usersRoot.innerHTML = profiles.length ? profiles.map(function (profile) {
       var selected = selectedIds.indexOf(profile.id) !== -1;
       var profileName = profile.displayName || profile.nickname || 'Usuário';
@@ -742,13 +750,26 @@
         if (context.mode === 'upload') {
           var activeFolder = document.querySelector('.document-folder-name.active');
           var state = window.RildonXStore.getState();
-          var uploaded = await window.RildonXDocumentUpload.upload(context.value, {
-            folder: activeFolder ? activeFolder.dataset.folderSelect : 'Equipe',
-            senderName: state.user && state.user.name || 'Usuário',
-            viewerIds: viewerIds
-          });
-          window.RildonXStore.addDocument(uploaded);
-          showDocumentActionError('Arquivo enviado para Documentos com sucesso.');
+          var files = Array.isArray(context.value) ? context.value : [context.value];
+          var failures = [];
+          var uploadedCount = 0;
+          for (var index = 0; index < files.length; index += 1) {
+            try {
+              var uploaded = await window.RildonXDocumentUpload.upload(files[index], {
+                folder: activeFolder ? activeFolder.dataset.folderSelect : 'Equipe',
+                senderName: state.user && state.user.name || 'Usuário',
+                viewerIds: viewerIds
+              });
+              window.RildonXStore.addDocument(uploaded);
+              uploadedCount += 1;
+            } catch (uploadError) {
+              console.error('Não foi possível enviar "' + files[index].name + '" para Documentos:', uploadError);
+              failures.push(files[index].name + ': ' + (uploadError && uploadError.message || 'falha no envio'));
+            }
+          }
+          if (!uploadedCount) throw new Error(failures.join(' · ') || 'Nenhum arquivo foi enviado.');
+          showDocumentActionError(uploadedCount + ' arquivo(s) enviado(s) para Documentos.' +
+            (failures.length ? ' Falhas: ' + failures.join(' · ') : ''));
         } else {
           var client = window.supabaseClient;
           if (!client || typeof client.from !== 'function') throw new Error('O serviço de documentos não está disponível.');

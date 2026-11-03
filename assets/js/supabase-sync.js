@@ -6,6 +6,10 @@
   }
 
   let applyingRemoteState = false;
+  let initialHydrationComplete = false;
+  let storeSyncInProgress = false;
+  let storeSyncPending = false;
+  let lastSyncErrorNoticeAt = 0;
 
   function safeJsonParse(value) {
     try {
@@ -173,6 +177,30 @@
     };
   }
 
+  async function createBusinessCardRecord(record) {
+    if (!getSupabaseEnabled()) return null;
+    if (!record || !record.id || !record.moduleKey || !record.sector || !record.title) {
+      throw new Error('Os dados do relatório estão incompletos.');
+    }
+    const payload = {
+      id: record.id,
+      module_key: record.moduleKey,
+      sector: record.sector,
+      title: record.title,
+      status: record.status || 'Pendente',
+      data: record.data || {},
+      archived: Boolean(record.archived),
+      linked_task_id: record.linkedTaskId || null
+    };
+    if (record.createdBy) payload.created_by = record.createdBy;
+    const result = await window.supabaseClient.from('business_card_records')
+      .insert(payload)
+      .select('*')
+      .single();
+    if (result.error) throw result.error;
+    return mapBusinessCardRow(result.data);
+  }
+
   function mapTaskCommentRow(row) {
     return {
       id: row.id,
@@ -295,7 +323,7 @@
     const localProjects = (currentState.projects || []).filter(function (project) {
       return project && !isUuid(project.id);
     });
-    window.RildonXStore.setState({ projects: remote.concat(localProjects) });
+    window.RildonXStore.setRemoteState({ projects: remote.concat(localProjects) });
   }
 
   function watchProjectRealtimeChanges() {
@@ -316,7 +344,11 @@
   async function syncLocalStoreToSupabase() {
     if (!getSupabaseEnabled() || !window.RildonXStore) return;
 
+    const failures = [];
     const state = window.RildonXStore.getState();
+    const pendingSyncChanges = typeof window.RildonXStore.getPendingSyncChanges === 'function'
+      ? window.RildonXStore.getPendingSyncChanges()
+      : {};
     const profiles = state.profiles || [];
     const authResult = await window.supabaseClient.auth.getUser();
     if (authResult.error) throw authResult.error;
@@ -341,7 +373,10 @@
         updated_at: conversation.updatedAt
       };
       const { error } = await window.supabaseClient.from('conversations').upsert(payload, { onConflict: 'id' });
-      if (error) console.error('Erro ao sync conversas:', error);
+      if (error) {
+        console.error('Erro ao sync conversas:', error);
+        failures.push('conversas');
+      }
     }
 
     for (const msg of msgs) {
@@ -357,7 +392,10 @@
       };
 
       const { error } = await window.supabaseClient.from('messages').upsert(payload, { onConflict: 'id' });
-      if (error) console.error('Erro ao sync mensagens:', error);
+      if (error) {
+        console.error('Erro ao sync mensagens:', error);
+        failures.push('mensagens');
+      }
     }
 
     for (const task of tasks) {
@@ -387,7 +425,10 @@
       if (isUuid(task.createdBy)) payload.created_by = task.createdBy;
 
       const { error } = await window.supabaseClient.from('tasks').upsert(payload, { onConflict: 'id' });
-      if (error) console.error('Erro ao sync tarefas:', error);
+      if (error) {
+        console.error('Erro ao sync tarefas:', error);
+        failures.push('tarefas');
+      }
     }
 
     for (const project of projects) {
@@ -415,7 +456,10 @@
       };
 
       const { error } = await window.supabaseClient.from('projects').upsert(payload, { onConflict: 'id' });
-      if (error) console.error('Erro ao sync projetos:', error);
+      if (error) {
+        console.error('Erro ao sync projetos:', error);
+        failures.push('projetos');
+      }
     }
 
     for (const record of businessCardRecords) {
@@ -440,15 +484,25 @@
         .maybeSingle();
       if (existing.error) {
         console.error('Erro ao verificar registro do card setorial:', existing.error);
+        failures.push('cards setoriais');
         continue;
       }
       const result = existing.data
         ? await window.supabaseClient.from('business_card_records').update(payload).eq('id', record.id)
         : await window.supabaseClient.from('business_card_records').insert(payload);
       const error = result.error;
-      if (error) console.error('Erro ao sincronizar registros dos cards setoriais:', error);
+      if (error) {
+        console.error('Erro ao sincronizar registros dos cards setoriais:', error);
+        failures.push('cards setoriais');
+      }
     }
 
+    if (failures.length) {
+      throw new Error('Não foi possível sincronizar: ' + Array.from(new Set(failures)).join(', ') + '.');
+    }
+    if (typeof window.RildonXStore.clearPendingSyncChanges === 'function') {
+      window.RildonXStore.clearPendingSyncChanges(pendingSyncChanges);
+    }
   }
 
   async function hydrateFromSupabase() {
@@ -458,6 +512,16 @@
     if (authResult.error) console.error('Erro ao identificar usuario para carregar conversas:', authResult.error);
     const currentUser = authResult.data && authResult.data.user;
     const currentUserId = currentUser ? currentUser.id : null;
+    const hydrationFields = [
+      'documents', 'documentFolders', 'messages', 'tasks', 'taskComments', 'projects',
+      'profiles', 'conversations', 'visibleConversationIds', 'conversationReads',
+      'conversationMemberships', 'events', 'posts', 'businessCardRecords'
+    ];
+    const hydrationStartState = window.RildonXStore.getState();
+    const hydrationBaseline = {};
+    hydrationFields.forEach(function (key) {
+      hydrationBaseline[key] = JSON.stringify(hydrationStartState[key] || []);
+    });
     const [documentsResult, documentFoldersResult, messagesResult, tasksResult, projectsResult, profilesResult, conversationsResult, postsResult, commentsResult, reactionsResult, pollVotesResult, eventsResult, membershipResult, taskCommentsResult, businessCardRecordsResult] = await Promise.all([
       window.supabaseClient.from('documents').select('*').order('sent_at', { ascending: false }),
       window.supabaseClient.from('document_folders').select('id,name').order('name', { ascending: true }),
@@ -581,24 +645,26 @@
     const nextState = {
       ...currentState,
       user: authenticatedUser,
-      documents: (documentsResult.data || []).map(mapDocumentRow),
-      documentFolders: (documentFoldersResult.data || []).map(function (folder) {
+      documents: docError ? currentState.documents || [] : (documentsResult.data || []).map(mapDocumentRow),
+      documentFolders: documentFoldersError ? currentState.documentFolders || [] : (documentFoldersResult.data || []).map(function (folder) {
         return { id: folder.id, name: folder.name };
       }),
-      messages: (messagesResult.data || []).map(mapMessageRow),
-      tasks: (tasksResult.data || []).map(mapTaskRow),
-      taskComments: taskComments,
-      projects: (projectsResult.data || []).map(mapProjectRow),
-      profiles: profileRows,
-      conversations: (conversationsResult.data || []).map(mapConversationRow),
-      visibleConversationIds: isAdmin
+      messages: msgError ? currentState.messages || [] : (messagesResult.data || []).map(mapMessageRow),
+      tasks: taskError ? currentState.tasks || [] : (tasksResult.data || []).map(mapTaskRow),
+      taskComments: taskCommentsError ? currentState.taskComments || [] : taskComments,
+      projects: projectError ? currentState.projects || [] : (projectsResult.data || []).map(mapProjectRow),
+      profiles: profileError ? currentState.profiles || [] : profileRows,
+      conversations: conversationError ? currentState.conversations || [] : (conversationsResult.data || []).map(mapConversationRow),
+      visibleConversationIds: membershipError || conversationError
+        ? currentState.visibleConversationIds || []
+        : isAdmin
         ? (conversationsResult.data || []).map(function (row) { return row.id; })
         : Array.from(new Set((membershipResult.data || [])
           .filter(function (row) {
             return row.user_id === currentUserId && !row.hidden_at;
           })
           .map(function (row) { return row.conversation_id; }))),
-      conversationReads: (membershipResult.data || []).filter(function(row) {
+      conversationReads: membershipError ? currentState.conversationReads || [] : (membershipResult.data || []).filter(function(row) {
         return row.user_id === currentUserId;
       }).map(function (row) {
         return {
@@ -609,7 +675,7 @@
           hiddenAt: row.hidden_at || null
         };
       }),
-      conversationMemberships: (membershipResult.data || []).map(function (row) {
+      conversationMemberships: membershipError ? currentState.conversationMemberships || [] : (membershipResult.data || []).map(function (row) {
         return {
           conversationId: row.conversation_id,
           userId: row.user_id,
@@ -618,15 +684,15 @@
           hiddenAt: row.hidden_at || null
         };
       }),
-      events: mergeRemoteWithCurrent(
+      events: eventsError ? currentState.events || [] : mergeRemoteWithCurrent(
         (eventsResult.data || []).map(mapEventRow),
         currentState.events
       ).filter(function (event) {
         return event.visibility !== 'private' || event.ownerId === currentUserId;
       }),
-      posts: mergeRemoteWithCurrent(remotePosts, currentState.posts),
+      posts: postError ? currentState.posts || [] : mergeRemoteWithCurrent(remotePosts, currentState.posts),
       businessCardRecords: businessCardRecordsError
-        ? []
+        ? currentState.businessCardRecords || []
         : (businessCardRecordsResult.data || []).map(mapBusinessCardRow),
       businessCardRecordsLoadError: businessCardRecordsError
         ? 'Não foi possível carregar os cards setoriais. Verifique se a migração do Supabase foi aplicada e se seu perfil tem acesso ao setor.'
@@ -636,6 +702,12 @@
         : ''
     };
 
+    const latestState = window.RildonXStore.getState();
+    hydrationFields.forEach(function (key) {
+      if (JSON.stringify(latestState[key] || []) !== hydrationBaseline[key]) {
+        nextState[key] = latestState[key];
+      }
+    });
     applyingRemoteState = true;
     try {
       window.RildonXStore.setRemoteState(nextState);
@@ -793,8 +865,16 @@
     if (!getSupabaseEnabled() || !window.RildonXStore) return;
     const result = await window.supabaseClient.from('business_card_records').select('*').order('updated_at', { ascending: false });
     if (result.error) throw result.error;
+    const current = window.RildonXStore.getState().businessCardRecords || [];
     const remote = (result.data || []).map(mapBusinessCardRow);
-    window.RildonXStore.setState({ businessCardRecords: remote, businessCardRecordsLoadError: '' });
+    const remoteIds = new Set(remote.map(function (record) { return String(record.id); }));
+    const pendingLocal = current.filter(function (record) {
+      return record && record.id && !remoteIds.has(String(record.id));
+    });
+    window.RildonXStore.setRemoteState({
+      businessCardRecords: remote.concat(pendingLocal),
+      businessCardRecordsLoadError: ''
+    });
   }
 
   function watchBusinessCardRealtimeChanges() {
@@ -821,46 +901,58 @@
     try {
       await hydrateFromSupabase();
       watchSharedRealtimeChanges();
-      syncLocalStoreToSupabase().catch(function (error) {
-        console.error('Os dados foram carregados, mas a sincronização inicial dos registros locais falhou:', error);
-        if (typeof window.showToast === 'function') {
-          window.showToast('Os dados locais ainda não foram sincronizados. Verifique sua conexão e atualize a página.');
-        }
-      });
+      initialHydrationComplete = true;
+      storeSyncPending = true;
+      drainStoreSyncQueue();
     } catch (error) {
       console.error('Falha na sincronização com Supabase:', error);
+      initialHydrationComplete = true;
+      if (storeSyncPending) drainStoreSyncQueue();
       if (error && error.name === 'TimeoutError' && typeof window.showToast === 'function') {
         window.showToast('O servidor demorou para responder. A página abrirá com os dados locais; tente atualizar em instantes.');
+      } else if (typeof window.showToast === 'function') {
+        window.showToast('Não foi possível carregar os dados da conta. Verifique a conexão e tente atualizar a página.');
       }
     }
+  }
+
+  function drainStoreSyncQueue() {
+    if (!initialHydrationComplete || storeSyncInProgress || !storeSyncPending || !getSupabaseEnabled()) return;
+    storeSyncInProgress = true;
+    (async function () {
+      do {
+        storeSyncPending = false;
+        await syncLocalStoreToSupabase();
+      } while (storeSyncPending);
+    })().catch(function (error) {
+      console.error('Falha ao sincronizar alteração local:', error);
+      const now = Date.now();
+      if (now - lastSyncErrorNoticeAt > 15000 && typeof window.showToast === 'function') {
+        lastSyncErrorNoticeAt = now;
+        window.showToast((error && error.message) ||
+          'A alteração ficou salva localmente, mas não foi sincronizada. Verifique a conexão e tente novamente.');
+      }
+    }).finally(function () {
+      storeSyncInProgress = false;
+      if (storeSyncPending) drainStoreSyncQueue();
+    });
   }
 
   function watchStoreChanges() {
     if (!window.RildonXStore || typeof window.RildonXStore.subscribe !== 'function') return;
 
-    var syncing = false;
-    var syncPending = false;
     window.RildonXStore.subscribe(function (_, source) {
       if (!getSupabaseEnabled() || applyingRemoteState || source !== 'local') return;
-      if (syncing) {
-        syncPending = true;
-        return;
-      }
-      syncing = true;
-      (async function () {
-        do {
-          syncPending = false;
-          await syncLocalStoreToSupabase();
-        } while (syncPending);
-      })().catch(function (error) {
-        console.error('Falha ao sincronizar alteração local:', error);
-      }).finally(function () {
-        syncing = false;
-      });
+      storeSyncPending = true;
+      drainStoreSyncQueue();
     });
   }
 
   window.addEventListener('DOMContentLoaded', watchStoreChanges);
+  window.addEventListener('online', function () {
+    storeSyncPending = true;
+    drainStoreSyncQueue();
+  });
   window.addEventListener('DOMContentLoaded', function () {
     syncReady = initSupabaseSync();
   });
@@ -869,6 +961,7 @@
     setProfilesFromServer: setProfilesFromServer,
     refreshProfilesFromSupabase: refreshProfilesFromSupabase,
     refreshBusinessCardRecordsFromSupabase: refreshBusinessCardRecordsFromSupabase,
+    createBusinessCardRecord: createBusinessCardRecord,
     markConversationRead: markConversationRead,
     hideConversationForUser: hideConversationForUser
   };

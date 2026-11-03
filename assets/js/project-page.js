@@ -439,6 +439,7 @@
     var image = form.elements.image.files && form.elements.image.files[0];
     var imageUrl = project.imageUrl || null;
     var documents = [];
+    if (fileList.length + (image ? 1 : 0) > 10) throw new Error('Você pode enviar no máximo 10 arquivos por projeto por vez.');
     if ((fileList.length || image) && !uploader) throw new Error('O serviço de arquivos não está disponível. Recarregue a página e tente novamente.');
     if (image) {
       var imageResult = await uploader.uploadProfileImage(image);

@@ -269,6 +269,33 @@ function showToast(message) {
     setTimeout(function(){ toast.remove(); }, 300);
   }, 4200);
 }
+var MAX_UPLOAD_FILES = 10;
+function getUploadFiles(input) {
+  var files = input && input.files ? Array.prototype.slice.call(input.files) : [];
+  if (files.length > MAX_UPLOAD_FILES) {
+    throw new Error('Você pode enviar ou importar no máximo 10 arquivos por vez.');
+  }
+  return files;
+}
+window.RildonXFileUploadPolicy = {
+  maxFiles: MAX_UPLOAD_FILES,
+  getFiles: getUploadFiles
+};
+document.addEventListener('change', function (event) {
+  var input = event.target;
+  if (!input || input.type !== 'file' || !input.files || !input.files.length) return;
+  var selectedCount = input.files.length;
+  var form = input.form;
+  if (form) {
+    selectedCount = Array.prototype.reduce.call(form.querySelectorAll('input[type="file"]'), function (total, fileInput) {
+      return total + (fileInput.files ? fileInput.files.length : 0);
+    }, 0);
+  }
+  if (selectedCount <= MAX_UPLOAD_FILES) return;
+  input.value = '';
+  event.stopImmediatePropagation();
+  showToast('O limite é de 10 arquivos por envio. Reduza a seleção e tente novamente.');
+}, true);
 function nowStamp() {
   var d = new Date();
   var dd = String(d.getDate()).padStart(2,'0');
@@ -2923,8 +2950,9 @@ function updateSocialComposerFiles(form) {
   var names = [];
   ['photo', 'document'].forEach(function(name) {
     var input = form.querySelector('[name="' + name + '"]');
-    var file = input && input.files && input.files[0];
-    if (file) names.push((name === 'photo' ? 'Foto: ' : 'Documento: ') + file.name);
+    Array.prototype.forEach.call(input && input.files || [], function (file) {
+      names.push((name === 'photo' ? 'Foto: ' : 'Documento: ') + file.name);
+    });
   });
   var display = form.querySelector('.composer-file-names');
   if (display) display.textContent = names.join(' · ');
@@ -2946,7 +2974,10 @@ function bindSocialComposerControls() {
     });
     form.querySelectorAll('.composer-file-input').forEach(function(input) {
       input.addEventListener('change', function() {
-        if (input.name === 'photo' && input.files[0] && !input.files[0].type.startsWith('image/')) {
+        var invalidPhoto = input.name === 'photo' && Array.prototype.some.call(input.files || [], function (file) {
+          return !file.type.startsWith('image/');
+        });
+        if (invalidPhoto) {
           input.value = '';
           showToast('Selecione um arquivo de imagem para anexar como foto.');
         }
@@ -2994,17 +3025,19 @@ async function prepareSocialPost(form, user, profile, authorName) {
   }
 
   var attachments = [];
-  var photo = form.querySelector('[name="photo"]').files[0];
-  var documentFile = form.querySelector('[name="document"]').files[0];
-  if ((photo || documentFile) && !window.RildonXDocumentUpload) {
+  var photos = Array.prototype.slice.call(form.querySelector('[name="photo"]').files || []);
+  var documentFiles = Array.prototype.slice.call(form.querySelector('[name="document"]').files || []);
+  var allFiles = photos.concat(documentFiles);
+  if (allFiles.length > MAX_UPLOAD_FILES) throw new Error('Você pode anexar no máximo 10 arquivos por publicação.');
+  if (allFiles.length && !window.RildonXDocumentUpload) {
     throw new Error('O serviço de anexos não está disponível. Recarregue a página e tente novamente.');
   }
-  if (photo) {
-    if (!photo.type.startsWith('image/')) throw new Error('O anexo de foto deve ser uma imagem.');
-    attachments.push(await window.RildonXDocumentUpload.upload(photo, { senderName: authorName, folder: 'Mural' }));
+  for (var photoIndex = 0; photoIndex < photos.length; photoIndex += 1) {
+    if (!photos[photoIndex].type.startsWith('image/')) throw new Error('Os anexos de foto devem ser imagens.');
+    attachments.push(await window.RildonXDocumentUpload.upload(photos[photoIndex], { senderName: authorName, folder: 'Mural' }));
   }
-  if (documentFile) {
-    attachments.push(await window.RildonXDocumentUpload.upload(documentFile, { senderName: authorName, folder: 'Mural' }));
+  for (var documentIndex = 0; documentIndex < documentFiles.length; documentIndex += 1) {
+    attachments.push(await window.RildonXDocumentUpload.upload(documentFiles[documentIndex], { senderName: authorName, folder: 'Mural' }));
   }
   return {
     type: type,
@@ -3724,6 +3757,11 @@ function bindMessageComposer() {
 
   function stageSelectedFiles() {
     if (!fileInput || !fileInput.files) return;
+    if (pendingFiles.length + fileInput.files.length > MAX_UPLOAD_FILES) {
+      showToast('Você pode anexar no máximo 10 arquivos por mensagem.');
+      fileInput.value = '';
+      return;
+    }
     Array.prototype.forEach.call(fileInput.files, function(file) {
       pendingFiles.push({ file: file, document: null });
     });

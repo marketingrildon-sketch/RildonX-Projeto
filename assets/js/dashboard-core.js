@@ -3671,7 +3671,7 @@
             (canArchive ? '<button type="button" data-business-archive="' + escapeHtml(report.id) + '">Arquivar</button>' : '') + '</article>';
         }).join('') : '<p class="marketing-insights-empty">Envie um relatório para começar a acompanhar os resultados.</p>') + '</section>';
       return toolbar + '<form class="marketing-report-upload" data-marketing-report-upload>' +
-        '<label><span>Arquivo de relatório</span><input type="file" name="reportFile" accept=".csv,.xls,.xlsx,.pdf,image/png,image/jpeg,image/webp,image/bmp,image/tiff" required></label>' +
+        '<label><span>Arquivos de relatório (até 10)</span><input type="file" name="reportFile" accept=".csv,.xls,.xlsx,.pdf,image/png,image/jpeg,image/webp,image/bmp,image/tiff" multiple required></label>' +
         '<label><span>Mês do relatório, quando não estiver no arquivo</span><input type="month" name="reportMonth" value="' +
         new Date().toISOString().slice(0, 7) + '" required></label><button type="submit" class="btn"' +
         (dashboardState.businessCardRecordsLoadError || !window.RildonXMarketingReportImport
@@ -3733,7 +3733,7 @@
             (marketingMaterialsView === tab[0] ? ' class="is-active"' : '') + '>' + tab[1] + '</button>';
         }).join('') + '</div></div>' +
         '<form class="marketing-material-upload" data-marketing-material-upload>' +
-        '<label><span>Adicionar arquivo à Central</span><input type="file" name="materialFile" required></label>' +
+        '<label><span>Adicionar arquivos à Central (até 10)</span><input type="file" name="materialFile" multiple required></label>' +
         '<label><span>Categoria</span><select name="category"><option>Logo</option><option>Identidade visual</option><option>Imagem</option><option>Vídeo</option><option>Apresentação</option><option>Documento</option><option>Outro</option></select></label>' +
         '<label><span>Seção</span><select name="section"><option>Banco de materiais</option><option>Identidade visual</option></select></label>' +
         '<label><span>Tags</span><input type="text" name="tags" placeholder="campanha, produto, marca"></label>' +
@@ -3785,106 +3785,149 @@
     async function saveMarketingReportUpload(form) {
       if (dashboardState.businessCardRecordsLoadError) throw new Error(dashboardState.businessCardRecordsLoadError);
       const formData = new FormData(form);
-      const file = formData.get('reportFile');
-      if (!(file instanceof File) || !file.size) throw new Error('Selecione um arquivo de relatório.');
+      const files = formData.getAll('reportFile').filter(function (file) {
+        return file instanceof File && file.size;
+      });
+      if (!files.length) throw new Error('Selecione pelo menos um arquivo de relatório.');
+      if (files.length > 10) throw new Error('Você pode importar no máximo 10 relatórios por vez.');
       if (!window.RildonXMarketingReportImport) {
         throw new Error('O leitor de relatórios não foi carregado. Atualize a página e tente novamente.');
       }
-      const parsed = await window.RildonXMarketingReportImport.read(file);
-      const metrics = window.RildonXMarketingReportImport.normalize(parsed, formData.get('reportMonth'));
       const profile = getCurrentProfile(dashboardState);
       if (!window.RildonXDocumentUpload || !window.RildonXStore) {
         throw new Error('O armazenamento de arquivos não está disponível. Recarregue Meu Espaço.');
       }
-      const uploaded = await window.RildonXDocumentUpload.upload(file, {
-        folder: 'Marketing - Indicadores',
-        senderName: profile.displayName || profile.nickname || profile.name || authenticatedUserName || 'Usuário',
-        viewerIds: businessAttachmentViewers(BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-insights'; }), dashboardState)
-      });
-      if (!uploaded || !uploaded.id) throw new Error('O serviço não confirmou o arquivo enviado.');
-      const extension = String(file.name).split('.').pop().toUpperCase();
-      let saved;
-      try {
-        saved = window.RildonXStore.addBusinessCardRecord({
-          moduleKey: 'marketing-insights',
-          sector: 'marketing',
-          title: file.name,
-          status: 'Importado',
-          createdBy: authenticatedUserId || profile.id,
-          data: {
-            metrics: metrics,
-            documentId: uploaded.id,
-            fileName: file.name,
-            fileType: extension,
-            source: 'Relatório ' + extension,
-            importedAt: new Date().toISOString()
-          }
-        });
-        if (!saved) throw new Error('O relatório não pôde ser salvo.');
-      } catch (error) {
+      const results = [];
+      const failures = [];
+      for (const file of files) {
+        let uploaded = null;
+        let recordPersisted = false;
         try {
-          await window.RildonXDocumentUpload.removeDocument(uploaded);
-        } catch (cleanupError) {
-          console.error('Não foi possível remover o arquivo enviado sem relatório associado:', cleanupError);
+          const parsed = await window.RildonXMarketingReportImport.read(file);
+          const metrics = window.RildonXMarketingReportImport.normalize(parsed, formData.get('reportMonth'));
+          uploaded = await window.RildonXDocumentUpload.upload(file, {
+            folder: 'Marketing - Indicadores',
+            senderName: profile.displayName || profile.nickname || profile.name || authenticatedUserName || 'Usuário',
+            viewerIds: businessAttachmentViewers(BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-insights'; }), dashboardState)
+          });
+          if (!uploaded || !uploaded.id) throw new Error('O serviço não confirmou o arquivo enviado.');
+          const extension = String(file.name).split('.').pop().toUpperCase();
+          const record = {
+            id: window.crypto && typeof window.crypto.randomUUID === 'function' ? window.crypto.randomUUID() : null,
+            moduleKey: 'marketing-insights',
+            sector: 'marketing',
+            title: file.name,
+            status: 'Importado',
+            createdBy: authenticatedUserId || profile.id,
+            data: {
+              metrics: metrics,
+              documentId: uploaded.id,
+              fileName: file.name,
+              fileType: extension,
+              source: 'Relatório ' + extension,
+              importedAt: new Date().toISOString()
+            }
+          };
+          if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+            if (!record.id || !window.RildonXSync || typeof window.RildonXSync.createBusinessCardRecord !== 'function') {
+              throw new Error('Não foi possível confirmar a gravação do relatório no servidor.');
+            }
+            await window.RildonXSync.createBusinessCardRecord(record);
+            recordPersisted = true;
+          }
+          const existing = (window.RildonXStore.getState().businessCardRecords || []).find(function (item) {
+            return record.id && String(item.id) === String(record.id);
+          });
+          const saved = existing || window.RildonXStore.addBusinessCardRecord(record);
+          if (!saved) throw new Error('O relatório não pôde ser salvo.');
+          recordPersisted = true;
+          window.RildonXStore.addDocument(uploaded);
+          results.push({ file: file.name, metrics: metrics.length });
+        } catch (error) {
+          if (uploaded && !recordPersisted) {
+            try {
+              await window.RildonXDocumentUpload.removeDocument(uploaded);
+            } catch (cleanupError) {
+              console.error('Não foi possível remover o arquivo enviado sem relatório associado:', cleanupError);
+            }
+          }
+          failures.push(file.name + ': ' + (error && error.message || 'falha ao importar'));
+          console.error('Falha ao importar relatório de Marketing "' + file.name + '":', error);
         }
-        throw error;
       }
-      if (!saved) throw new Error('O arquivo foi enviado, mas o relatório não pôde ser salvo.');
-      window.RildonXStore.addDocument(uploaded);
+      if (!results.length) throw new Error('Nenhum relatório foi importado. ' + failures.join(' · '));
       businessSearch = '';
       marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
       marketingComparisonMonths = { primary: '', secondary: '' };
       renderBusinessModule('marketing-insights');
-      if (typeof window.showToast === 'function') window.showToast('Relatório importado. ' + metrics.length + ' valor(es) reconhecido(s).');
+      if (typeof window.showToast === 'function') {
+        const totalMetrics = results.reduce(function (total, result) { return total + result.metrics; }, 0);
+        window.showToast(results.length + ' relatório(s) importado(s), ' + totalMetrics + ' valor(es) reconhecido(s).' +
+          (failures.length ? ' Falhas: ' + failures.join(' · ') : ''));
+      }
     }
 
     async function saveMarketingMaterialUpload(form) {
       if (dashboardState.businessCardRecordsLoadError) throw new Error(dashboardState.businessCardRecordsLoadError);
       const formData = new FormData(form);
-      const file = formData.get('materialFile');
-      if (!(file instanceof File) || !file.size) throw new Error('Selecione um arquivo para adicionar à Central.');
+      const files = formData.getAll('materialFile').filter(function (file) {
+        return file instanceof File && file.size;
+      });
+      if (!files.length) throw new Error('Selecione pelo menos um arquivo para adicionar à Central.');
+      if (files.length > 10) throw new Error('Você pode adicionar no máximo 10 arquivos por vez.');
       if (!window.RildonXDocumentUpload || !window.RildonXStore) {
         throw new Error('O armazenamento de arquivos não está disponível. Recarregue Meu Espaço.');
       }
       const profile = getCurrentProfile(dashboardState);
       const module = BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-materials'; });
-      const uploaded = await window.RildonXDocumentUpload.upload(file, {
-        folder: 'Marketing - Branding',
-        senderName: profile.displayName || profile.nickname || profile.name || authenticatedUserName || 'Usuário',
-        viewerIds: businessAttachmentViewers(module, dashboardState)
-      });
-      if (!uploaded || !uploaded.id) throw new Error('O serviço não confirmou o arquivo enviado.');
-      let saved;
-      try {
-        saved = window.RildonXStore.addBusinessCardRecord({
-          moduleKey: 'marketing-materials',
-          sector: 'marketing',
-          title: file.name,
-          status: 'Disponível',
-          createdBy: authenticatedUserId || profile.id,
-          data: {
-            documentId: uploaded.id,
-            category: String(formData.get('category') || 'Outro'),
-            section: String(formData.get('section') || 'Banco de materiais'),
-            tags: String(formData.get('tags') || '').trim(),
-            notes: String(formData.get('notes') || '').trim(),
-            isFavorite: false
-          }
-        });
-        if (!saved) throw new Error('O material não pôde ser cadastrado.');
-      } catch (error) {
+      const failures = [];
+      let uploadedCount = 0;
+      for (const file of files) {
+        let uploaded = null;
         try {
-          await window.RildonXDocumentUpload.removeDocument(uploaded);
-        } catch (cleanupError) {
-          console.error('Não foi possível remover o arquivo enviado sem material associado:', cleanupError);
+          uploaded = await window.RildonXDocumentUpload.upload(file, {
+            folder: 'Marketing - Branding',
+            senderName: profile.displayName || profile.nickname || profile.name || authenticatedUserName || 'Usuário',
+            viewerIds: businessAttachmentViewers(module, dashboardState)
+          });
+          if (!uploaded || !uploaded.id) throw new Error('O serviço não confirmou o arquivo enviado.');
+          const saved = window.RildonXStore.addBusinessCardRecord({
+            moduleKey: 'marketing-materials',
+            sector: 'marketing',
+            title: file.name,
+            status: 'Disponível',
+            createdBy: authenticatedUserId || profile.id,
+            data: {
+              documentId: uploaded.id,
+              category: String(formData.get('category') || 'Outro'),
+              section: String(formData.get('section') || 'Banco de materiais'),
+              tags: String(formData.get('tags') || '').trim(),
+              notes: String(formData.get('notes') || '').trim(),
+              isFavorite: false
+            }
+          });
+          if (!saved) throw new Error('O material não pôde ser cadastrado.');
+          window.RildonXStore.addDocument(uploaded);
+          uploadedCount += 1;
+        } catch (error) {
+          if (uploaded) {
+            try {
+              await window.RildonXDocumentUpload.removeDocument(uploaded);
+            } catch (cleanupError) {
+              console.error('Não foi possível remover o arquivo enviado sem material associado:', cleanupError);
+            }
+          }
+          failures.push(file.name + ': ' + (error && error.message || 'falha ao adicionar'));
+          console.error('Falha ao adicionar "' + file.name + '" à Central de Branding:', error);
         }
-        throw error;
       }
-      if (!saved) throw new Error('O arquivo foi enviado, mas o material não pôde ser cadastrado.');
-      window.RildonXStore.addDocument(uploaded);
+      if (!uploadedCount) throw new Error(failures.join(' · ') || 'Nenhum material foi adicionado.');
       businessSearch = '';
       renderBusinessModule('marketing-materials');
-      if (typeof window.showToast === 'function') window.showToast('Material adicionado à Central de Branding.');
+      if (typeof window.showToast === 'function') {
+        window.showToast(uploadedCount + ' material(is) adicionado(s) à Central de Branding.' +
+          (failures.length ? ' Falhas: ' + failures.join(' · ') : ''));
+      }
     }
 
     function openMarketingDocument(documentId, download) {
@@ -4073,8 +4116,8 @@
         return businessFieldMarkup(field, value, blockedOptions);
       }).join('');
       const integrationMarkup = businessIntegrationMarkup(module, record, formFields, recordType);
-      const attachmentMarkup = '<label class="dashboard-business-field"><span>Anexar arquivo (máx. 1 por envio)</span>' +
-        '<input type="file" name="attachmentFile" data-business-file></label>' + renderBusinessAttachments(record, dashboardState);
+      const attachmentMarkup = '<label class="dashboard-business-field"><span>Anexar arquivos (até 10 por envio)</span>' +
+        '<input type="file" name="attachmentFile" data-business-file multiple></label>' + renderBusinessAttachments(record, dashboardState);
       const formTitle = module.id === 'hr-training'
         ? recordType === 'investment' ? 'Investimento em capacitação' : 'Turma de capacitação'
         : module.title;
@@ -4710,7 +4753,10 @@
           values.completedAt = '';
         }
       }
-      const attachmentFile = formData.get('attachmentFile');
+      const attachmentFiles = formData.getAll('attachmentFile').filter(function (file) {
+        return file instanceof File && file.size;
+      });
+      if (attachmentFiles.length > 10) throw new Error('Você pode anexar no máximo 10 arquivos por vez.');
       if (module.id === 'hr-training') {
         values.recordType = recordType;
         if (!values.trainingType) throw new Error('Selecione o tipo de capacitação.');
@@ -4807,18 +4853,20 @@
       if (module.id === 'purchase-quotes' && existing && existing.data && existing.data.approval) {
         values.approval = existing.data.approval;
       }
-      if (attachmentFile && attachmentFile.size) {
+      if (attachmentFiles.length) {
         if (!window.RildonXDocumentUpload || typeof window.RildonXDocumentUpload.upload !== 'function') {
           throw new Error('O serviço de anexos não está disponível. Recarregue Meu Espaço e tente novamente.');
         }
-        const uploaded = await window.RildonXDocumentUpload.upload(attachmentFile, {
-          folder: 'Cards setoriais',
-          senderName: currentProfile.displayName || currentProfile.name || authenticatedUserName || 'Usuário',
-          viewerIds: businessAttachmentViewers(module, dashboardState)
-        });
-        if (!uploaded || !uploaded.id) throw new Error('O serviço não retornou o arquivo enviado.');
-        window.RildonXStore.addDocument(uploaded);
-        attachmentIds.push(uploaded.id);
+        for (const attachmentFile of attachmentFiles) {
+          const uploaded = await window.RildonXDocumentUpload.upload(attachmentFile, {
+            folder: 'Cards setoriais',
+            senderName: currentProfile.displayName || currentProfile.name || authenticatedUserName || 'Usuário',
+            viewerIds: businessAttachmentViewers(module, dashboardState)
+          });
+          if (!uploaded || !uploaded.id) throw new Error('O serviço não retornou o arquivo enviado: ' + attachmentFile.name);
+          window.RildonXStore.addDocument(uploaded);
+          attachmentIds.push(uploaded.id);
+        }
       }
       if (attachmentIds.length) values.attachmentIds = attachmentIds;
       const payload = {

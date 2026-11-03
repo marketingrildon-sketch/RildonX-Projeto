@@ -2,6 +2,8 @@
   'use strict';
 
   const STORAGE_KEY = 'rildonx_shared_store_v1';
+  const SYNC_OUTBOX_KEY = 'rildonx_sync_outbox_v1';
+  const SYNC_COLLECTION_KEYS = ['messages', 'tasks', 'projects', 'conversations', 'businessCardRecords'];
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -133,14 +135,71 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedState));
   }
 
+  function readSyncOutbox() {
+    try {
+      const value = JSON.parse(localStorage.getItem(SYNC_OUTBOX_KEY) || '{}');
+      return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    } catch (error) {
+      console.error('Não foi possível ler alterações pendentes de sincronização:', error);
+      return {};
+    }
+  }
+
+  function writeSyncOutbox() {
+    localStorage.setItem(SYNC_OUTBOX_KEY, JSON.stringify(syncOutbox));
+  }
+
   const store = {
     state: readState(),
     listeners: []
   };
+  let syncOutbox = readSyncOutbox();
+  let lastSyncSnapshot = clone(store.state);
+
+  function mergePendingCollection(remoteItems, localItems) {
+    const merged = new Map();
+    (Array.isArray(remoteItems) ? remoteItems : []).forEach(function (item) {
+      if (item && item.id != null) merged.set(String(item.id), item);
+    });
+    (Array.isArray(localItems) ? localItems : []).forEach(function (item) {
+      if (item && item.id != null) merged.set(String(item.id), item);
+    });
+    return Array.from(merged.values());
+  }
 
   function notify(source) {
+    const changeSource = source || 'local';
+    if (changeSource === 'local') {
+      let outboxChanged = false;
+      SYNC_COLLECTION_KEYS.forEach(function (key) {
+        const previous = new Map((lastSyncSnapshot[key] || []).filter(function (item) {
+          return item && item.id != null;
+        }).map(function (item) { return [String(item.id), item]; }));
+        const pending = new Map((syncOutbox[key] || []).filter(function (item) {
+          return item && item.id != null;
+        }).map(function (item) { return [String(item.id), item]; }));
+        (store.state[key] || []).forEach(function (item) {
+          if (!item || item.id == null) return;
+          const id = String(item.id);
+          const prior = previous.get(id);
+          if (JSON.stringify(item) !== JSON.stringify(prior)) {
+            pending.set(id, clone(item));
+            outboxChanged = true;
+          } else if (pending.delete(id)) {
+            outboxChanged = true;
+          }
+        });
+        if (pending.size) syncOutbox[key] = Array.from(pending.values());
+        else if (Object.prototype.hasOwnProperty.call(syncOutbox, key)) {
+          delete syncOutbox[key];
+          outboxChanged = true;
+        }
+      });
+      if (outboxChanged) writeSyncOutbox();
+    }
+    lastSyncSnapshot = clone(store.state);
     store.listeners.forEach(function (listener) {
-      listener(clone(store.state), source || 'local');
+      listener(clone(store.state), changeSource);
     });
   }
 
@@ -162,8 +221,27 @@
 
   function setRemoteState(nextState) {
     store.state = Object.assign({}, store.state, nextState || {});
+    SYNC_COLLECTION_KEYS.forEach(function (key) {
+      if (Array.isArray(syncOutbox[key])) {
+        store.state[key] = mergePendingCollection(store.state[key], syncOutbox[key]);
+      }
+    });
     writeState(store.state);
     notify('remote');
+  }
+
+  function getPendingSyncChanges() {
+    return clone(syncOutbox);
+  }
+
+  function clearPendingSyncChanges(syncedChanges) {
+    const synced = syncedChanges || {};
+    Object.keys(synced).forEach(function (key) {
+      if (JSON.stringify(syncOutbox[key]) === JSON.stringify(synced[key])) {
+        delete syncOutbox[key];
+      }
+    });
+    writeSyncOutbox();
   }
 
   window.addEventListener('storage', function (event) {
@@ -459,6 +537,8 @@
     getRecentDocuments: getRecentDocuments,
     readState: getState,
     STORAGE_KEY: STORAGE_KEY,
+    getPendingSyncChanges: getPendingSyncChanges,
+    clearPendingSyncChanges: clearPendingSyncChanges,
     cloudConfig: {
       enabled: false,
       provider: 'supabase',

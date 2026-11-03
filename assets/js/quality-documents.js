@@ -126,7 +126,7 @@
       }).join('') + '</div>' +
       '<label class="qdm-field qdm-drive-field"><span>Anexo (Drive) · link externo</span><input type="url" name="driveLink" value="' +
       escapeHtml(data.driveLink || '') + '" placeholder="https://drive.google.com/..."></label>' +
-      '<label class="qdm-field qdm-upload-field"><span>Enviar arquivo para Documentos</span><input type="file" name="attachmentFile" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"></label>' +
+      '<label class="qdm-field qdm-upload-field"><span>Enviar arquivos para Documentos (até 10)</span><input type="file" name="attachmentFile" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"></label>' +
       renderAttachments(data.attachmentIds) +
       '<p class="qdm-disclaimer">Os responsáveis são informações descritivas digitadas no cadastro. Este painel não envia solicitações, não registra aceite individual, não verifica a identidade de aprovadores e não mantém histórico de versões do arquivo. Editar substitui os dados do mesmo registro.</p>' +
       '<div class="qdm-form-actions"><button type="button" class="btn secondary" data-qdm-back>Cancelar</button>' +
@@ -332,21 +332,26 @@
     var existing = id ? getRecord(id) : null;
     var savedRecordId = existing && existing.id;
     var fileInput = form.querySelector('[name="attachmentFile"]');
-    var file = fileInput && fileInput.files && fileInput.files[0];
-    var uploaded = null;
+    var files = fileInput && fileInput.files ? Array.prototype.slice.call(fileInput.files) : [];
+    if (files.length > 10) throw new Error('Você pode anexar no máximo 10 arquivos por vez.');
+    var uploaded = [];
     var attachmentIds = existing && existing.data && Array.isArray(existing.data.attachmentIds)
       ? existing.data.attachmentIds.slice()
       : [];
-    if (file) {
+    if (files.length) {
       if (!window.RildonXDocumentUpload || typeof window.RildonXDocumentUpload.upload !== 'function') {
         throw new Error('O envio de documentos não está disponível. Atualize a página e tente novamente.');
       }
-      uploaded = await window.RildonXDocumentUpload.upload(file, {
-        folder: 'Gestão de Documentos',
-        senderName: (dashboardState.user && dashboardState.user.name) || 'Usuário',
-        viewerIds: documentViewers()
-      });
-      attachmentIds.push(uploaded.id);
+      for (var fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
+        var uploadedFile = await window.RildonXDocumentUpload.upload(files[fileIndex], {
+          folder: 'Gestão de Documentos',
+          senderName: (dashboardState.user && dashboardState.user.name) || 'Usuário',
+          viewerIds: documentViewers()
+        });
+        if (!uploadedFile || !uploadedFile.id) throw new Error('O serviço não confirmou o envio de "' + files[fileIndex].name + '".');
+        uploaded.push(uploadedFile);
+        attachmentIds.push(uploadedFile.id);
+      }
     }
     if (attachmentIds.length) payload.data.attachmentIds = attachmentIds;
     try {
@@ -391,13 +396,15 @@
         savedRecordId = created.id;
       }
     } catch (error) {
-      if (uploaded && window.RildonXDocumentUpload) {
-        try { await window.RildonXDocumentUpload.removeDocument(uploaded); }
-        catch (cleanupError) { console.error('Não foi possível remover o arquivo não vinculado:', cleanupError); }
+      if (uploaded.length && window.RildonXDocumentUpload) {
+        for (var cleanupIndex = 0; cleanupIndex < uploaded.length; cleanupIndex += 1) {
+          try { await window.RildonXDocumentUpload.removeDocument(uploaded[cleanupIndex]); }
+          catch (cleanupError) { console.error('Não foi possível remover o arquivo não vinculado:', cleanupError); }
+        }
       }
       throw error;
     }
-    if (uploaded) window.RildonXStore.addDocument(uploaded);
+    uploaded.forEach(function (documentItem) { window.RildonXStore.addDocument(documentItem); });
     activeView = 'list';
     activeRecordId = '';
     var calendarSyncFailed = false;
