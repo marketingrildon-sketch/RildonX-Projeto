@@ -1225,7 +1225,8 @@ async function createPeopleUser(form) {
     await syncPeoplePanelCatalog();
     result = await window.supabaseClient.functions.invoke('invite-rildonx-user', { body: body });
     if (result.error && /lista de pain[eé]is.*(?:mudou|desatualizad|op[cç][aã]o)|panel list changed/i.test(await responseErrorMessage(result.error))) {
-      throw new Error('O catálogo de painéis do Supabase continua desatualizado. Aplique docs/supabase-panel-catalog-sync.sql no Supabase e tente novamente.');
+      throw new Error('O catálogo de painéis continua divergente após sincronização. ' +
+        (await responseErrorMessage(result.error) || 'Recarregue a página e tente novamente.'));
     }
   }
   if (result.error) {
