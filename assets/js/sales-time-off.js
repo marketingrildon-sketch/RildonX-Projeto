@@ -449,17 +449,6 @@
     });
   }
 
-  function ordinalOptions(selected, slot) {
-    var labels = ['1º sábado de cada mês', '2º sábado de cada mês', '3º sábado de cada mês',
-      '4º sábado de cada mês', '5º sábado de cada mês'];
-    return '<option value="">Escolher ' + (slot === 0 ? '1ª' : '2ª') + ' preferência</option>' +
-      labels.map(function (label, index) {
-        var value = index + 1;
-        return '<option value="' + value + '"' + (Number(selected) === value ? ' selected' : '') +
-          '>' + label + '</option>';
-      }).join('');
-  }
-
   function preferencesForEmployee(state, employee, record) {
     var saved = recurringPreferences(state)[employee.id];
     if (Array.isArray(saved) && saved.length === 2) return saved;
@@ -486,7 +475,7 @@
     });
     var scheduleStatus = hasSchedule
       ? 'Consulte as pessoas escaladas para cada sábado.'
-      : 'Salve as preferências recorrentes para gerar a escala deste mês.';
+      : 'Gere a escala deste mês para consultar as folgas por sábado.';
     return '<section class="sales-time-off-section sales-time-off-monthly-roster" aria-labelledby="sales-time-off-roster-title">' +
       '<div class="sales-time-off-section-heading"><div><h3 id="sales-time-off-roster-title">Folgas por sábado</h3>' +
       '<p>' + scheduleStatus + '</p></div><span>' + dates.length + ' sábado(s)</span></div>' +
@@ -621,6 +610,7 @@
     if (!history.length) return '<p class="sales-time-off-muted">As preferências e exceções autorizadas aparecerão aqui.</p>';
     return '<ol class="sales-time-off-history">' + history.map(function (entry) {
       var action = entry.action === 'exception_authorized' ? 'Exceção autorizada'
+        : entry.action === 'schedule_generated' ? 'Escala mensal gerada'
         : entry.action === 'preferences_saved' ? 'Preferências recorrentes salvas'
           : entry.action === 'vacations_saved' ? 'Férias atualizadas'
             : entry.action === 'work_assignments_saved' ? 'Distribuição de trabalho atualizada'
@@ -629,6 +619,8 @@
         ? entry.exception.employeeName + (entry.exception.otherEmployeeName
           ? ' ↔ ' + entry.exception.otherEmployeeName : '') + ' · ' +
           dateLabel(entry.exception.date) + ' · ' + entry.exception.type
+        : entry.action === 'schedule_generated'
+          ? 'Escala gerada para ' + (entry.employeeCount || 0) + ' pessoa(s)'
         : entry.action === 'preferences_saved'
           ? 'Preferências atualizadas para ' + (entry.employeeCount || 0) + ' pessoa(s)'
         : entry.action === 'vacations_saved'
@@ -664,10 +656,6 @@
     var exceptions = getExceptions(record);
     var assignments = automaticAssignments(state, controller.month, record);
     var recurringRecord = recurringPreferenceRecord(state);
-    var preferences = controller.draft && controller.draft.preferences ||
-      new Map(employees.map(function (employee) {
-        return [employee.id, preferencesForEmployee(state, employee, record)];
-      }));
     var historyRecord = record && record.data.history && record.data.history.length ? record : recurringRecord;
     var historyCount = historyRecord && Array.isArray(historyRecord.data.history) ? historyRecord.data.history.length : 0;
     var plannedTimeOffCount = assignments.reduce(function (count, assignment) {
@@ -688,33 +676,6 @@
     }, 0);
     var hasScheduleData = assignments.length > 0 || vacationCount > 0 || workAssignmentCount > 0 || exceptions.length > 0;
     var managerCanEdit = controller.isManager && !controller.loadError;
-
-    var employeeRows = groupedEmployees(employees).map(function (group) {
-      return '<tr class="sales-time-off-group-row"><th colspan="3">' + escapeHtml(group.name) + '</th></tr>' +
-        group.employees.map(function (employee) {
-          var assigned = preferences.get(employee.id) || [1, 4];
-          var first = assigned[0] || '';
-          var second = assigned[1] || '';
-          return '<tr><th scope="row">' + escapeHtml(employee.name) + '</th><td><select data-schedule-preference="' +
-            escapeHtml(employee.id) + '" data-slot="0" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
-            ordinalOptions(first, 0) + '</select></td><td><select data-schedule-preference="' +
-            escapeHtml(employee.id) + '" data-slot="1" required' + (!managerCanEdit ? ' disabled' : '') + '>' +
-            ordinalOptions(second, 1) + '</select></td></tr>';
-        }).join('');
-    }).join('');
-
-    var rosterMarkup = employees.length
-      ? '<form data-schedule-plan><div class="sales-time-off-section-heading"><div><h3>Preferências de folga</h3>' +
-        '<p>Escolha duas posições de sábado que se repetem para cada pessoa em todos os meses.</p></div></div>' +
-        '<div class="sales-time-off-table-wrap"><table class="sales-time-off-table"><thead><tr><th>Colaborador</th><th>1ª preferência</th><th>2ª preferência</th></tr></thead>' +
-        '<tbody>' + employeeRows + '</tbody></table></div>' +
-        '<div class="sales-time-off-form-actions"><button type="submit" class="btn" data-schedule-save' +
-        (!managerCanEdit || controller.loadError ? ' disabled title="O armazenamento compartilhado não está disponível"' : '') +
-        '>Salvar</button><button type="button" class="btn secondary" data-schedule-export' +
-        (!hasScheduleData ? ' disabled title="Registre dados na escala para habilitar a exportação"' : '') +
-        '>Exportar escala</button></div></form>'
-      : '<div class="sales-time-off-empty"><b>Nenhum usuário ativo foi encontrado.</b>' +
-        '<span>Verifique se os perfis estão carregados e ativos.</span></div>';
 
     var exceptionOptions = employees.map(function (employee) {
       return '<option value="' + escapeHtml(employee.id) + '">' + escapeHtml(employee.name) + '</option>';
@@ -748,11 +709,17 @@
       '<div><b>' + vacationCount + '</b><small>colaborador(es) em férias</small></div>' +
       '<div><b>' + workAssignmentCount + '</b><small>responsabilidade(s) distribuída(s)</small></div></div>' +
       renderMonthlyRoster(dates, assignments, employees, record, assignments.length > 0) +
-      '<section class="sales-time-off-section">' + rosterMarkup + '</section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Férias do mês</h3>' +
       '<p>Registre o período de férias para identificar ausências na lista mensal e evitar distribuir essas pessoas para trabalhar nos sábados correspondentes.</p></div>' +
       '<span>' + vacationCount + ' colaborador(es)</span></div>' +
-      renderVacationPlan(controller.month, employees, record, managerCanEdit) + '</section>' +
+      renderVacationPlan(controller.month, employees, record, managerCanEdit) +
+      '<div class="sales-time-off-form-actions sales-time-off-vacation-actions">' +
+      (controller.isManager ? '<button type="button" class="btn" data-schedule-generate' +
+        (controller.loadError ? ' disabled title="O armazenamento compartilhado não está disponível"' : '') +
+        '>Gerar escala</button>' : '') +
+      '<button type="button" class="btn secondary" data-schedule-export' +
+        (!hasScheduleData ? ' disabled title="Registre dados na escala para habilitar a exportação"' : '') +
+        '>Exportar escala</button></div></section>' +
       '<section class="sales-time-off-section"><div class="sales-time-off-section-heading"><div><h3>Distribuição das equipes por sábado</h3>' +
       '<p>Para cada pessoa que não esteja de folga ou em férias, selecione a responsabilidade de trabalho. O preenchimento é manual: confira nomes, datas e cobertura de cada setor antes do sábado. As células sem atribuição ficam visíveis para conferência.</p></div>' +
       '<span>' + pendingWorkAssignmentCount + ' sem atribuição · ' + workAssignmentCount + ' distribuída(s)</span></div>' +
@@ -767,85 +734,30 @@
       renderHistory(historyRecord) + '</section></div>';
   }
 
-  function readPreferenceForm(form) {
+  function generateMonthlySchedule() {
+    if (!controller.isManager) throw new Error('Somente um gestor pode gerar a escala.');
+    if (controller.loadError) throw new Error(controller.loadError);
     var state = window.RildonXStore.getState();
     var employees = activeScheduleEmployees(state);
-    var preferences = {};
-    employees.forEach(function (employee) {
-      var selects = Array.prototype.filter.call(form.querySelectorAll('[data-schedule-preference]'), function (select) {
-        return select.dataset.schedulePreference === employee.id;
-      });
-      var picks = selects
-        .sort(function (first, second) { return Number(first.dataset.slot) - Number(second.dataset.slot); })
-        .map(function (select) { return Number(select.value); });
-      if (picks.length !== 2 || picks.some(function (ordinal) {
-        return !Number.isInteger(ordinal) || ordinal < 1 || ordinal > 5;
-      })) {
-        throw new Error('Escolha as duas preferências de sábado de ' + employee.name + '.');
-      }
-      if (picks[0] === picks[1]) {
-        throw new Error('As duas preferências de ' + employee.name + ' precisam ser diferentes.');
-      }
-      preferences[employee.id] = picks;
-    });
-    return {
-      state: state,
-      employees: employees,
-      preferences: preferences
-    };
-  }
-
-  function savePreferences(form) {
-    if (!controller.isManager) throw new Error('Somente um gestor pode salvar as preferências da escala.');
-    if (controller.loadError) throw new Error(controller.loadError);
-    var details = readPreferenceForm(form);
-    if (!details.employees.length) throw new Error('Não há usuários ativos para salvar preferências.');
-    var state = window.RildonXStore.getState();
+    if (!employees.length) throw new Error('Não há usuários ativos para gerar a escala.');
     var record = currentSchedule(state);
-    var preferencesRecord = recurringPreferenceRecord(state);
     var now = new Date().toISOString();
     var profile = getCurrentProfile(state);
     var actor = profile.displayName || profile.nickname || profile.name || state.user && state.user.name || 'Gestor';
-    var previousPreferenceData = Object.assign({}, preferencesRecord && preferencesRecord.data || {});
-    var preferenceHistory = Array.isArray(previousPreferenceData.history)
-      ? previousPreferenceData.history.slice() : [];
-    preferenceHistory.push({
-      action: 'preferences_saved',
-      confirmedAt: now,
-      confirmedBy: actor,
-      employeeCount: details.employees.length
+    var preferences = {};
+    employees.forEach(function (employee) {
+      preferences[employee.id] = preferencesForEmployee(state, employee, record);
     });
-    var preferencePayload = {
-      title: 'Preferências recorrentes - Escala de Folga',
-      status: 'Ativa',
-      data: Object.assign({}, previousPreferenceData, {
-        recordType: 'recurring-preferences',
-        preferences: details.preferences,
-        history: preferenceHistory,
-        updatedBy: actor,
-        savedAt: now
-      })
-    };
-    var savedPreferences = preferencesRecord
-      ? window.RildonXStore.updateBusinessCardRecord(preferencesRecord.id, preferencePayload)
-      : window.RildonXStore.addBusinessCardRecord(Object.assign({
-        moduleKey: MODULE_KEY,
-        sector: 'comercial',
-        createdBy: controller.userId || profile.id
-      }, preferencePayload));
-    if (!savedPreferences) throw new Error('O armazenamento não salvou as preferências recorrentes.');
-
-    state = window.RildonXStore.getState();
-    record = currentSchedule(state);
-    var assignments = generateAssignments(state, controller.month, details.preferences, getExceptions(record));
+    var assignments = generateAssignments(state, controller.month, preferences, getExceptions(record));
     var previousData = Object.assign({}, record && record.data || {});
     delete previousData.capacityByDate;
+    delete previousData.generatedFromPreferencesAt;
     var scheduleHistory = Array.isArray(previousData.history) ? previousData.history.slice() : [];
     scheduleHistory.push({
-      action: 'preferences_saved',
+      action: 'schedule_generated',
       confirmedAt: now,
       confirmedBy: actor,
-      employeeCount: details.employees.length
+      employeeCount: employees.length
     });
     var payload = {
       title: 'Escala de Folga - ' + controller.month,
@@ -857,8 +769,7 @@
         history: scheduleHistory,
         exceptions: getExceptions(record),
         updatedBy: actor,
-        generatedAt: now,
-        generatedFromPreferencesAt: now
+        generatedAt: now
       })
     };
     var savedSchedule = record
@@ -868,10 +779,9 @@
         sector: 'comercial',
         createdBy: controller.userId || profile.id
       }, payload));
-    if (!savedSchedule) throw new Error('As preferências foram salvas, mas a lista mensal não foi gravada.');
-    controller.draft = null;
+    if (!savedSchedule) throw new Error('A escala mensal não foi gravada.');
     render();
-    toast('Preferências salvas. A escala de ' + controller.month + ' foi gerada automaticamente.');
+    toast('Escala de ' + controller.month + ' gerada.');
   }
 
   function readVacationPlan(form) {
@@ -1168,20 +1078,6 @@
   }
 
   function handleSubmit(event) {
-    var planForm = event.target.closest('[data-schedule-plan]');
-    if (planForm) {
-      event.preventDefault();
-      var saveButton = planForm.querySelector('[data-schedule-save]');
-      if (saveButton) saveButton.disabled = true;
-      try {
-        savePreferences(planForm);
-      } catch (error) {
-        escapeError(error, 'Não foi possível salvar as preferências da escala.');
-      } finally {
-        if (saveButton && saveButton.isConnected) saveButton.disabled = false;
-      }
-      return;
-    }
     var vacationForm = event.target.closest('[data-schedule-vacations]');
     if (vacationForm) {
       event.preventDefault();
@@ -1226,6 +1122,18 @@
   }
 
   function handleClick(event) {
+    if (event.target.closest('[data-schedule-generate]')) {
+      var generateButton = controller.target.querySelector('[data-schedule-generate]');
+      if (generateButton) generateButton.disabled = true;
+      try {
+        generateMonthlySchedule();
+      } catch (error) {
+        escapeError(error, 'Não foi possível gerar a escala.');
+      } finally {
+        if (generateButton && generateButton.isConnected) generateButton.disabled = false;
+      }
+      return;
+    }
     if (event.target.closest('[data-schedule-export]')) {
       try {
         exportSchedule();
@@ -1233,23 +1141,6 @@
         escapeError(error, 'Não foi possível exportar a escala.');
       }
       return;
-    }
-  }
-
-  function capturePreferenceDraft() {
-    if (!controller.target) return;
-    var form = controller.target.querySelector('[data-schedule-plan]');
-    if (form) {
-      var preferenceSlots = new Map();
-      Array.prototype.forEach.call(form.querySelectorAll('[data-schedule-preference]'), function (select) {
-        var slots = preferenceSlots.get(select.dataset.schedulePreference) || [];
-        slots[Number(select.dataset.slot)] = select.value;
-        preferenceSlots.set(select.dataset.schedulePreference, slots);
-      });
-      controller.draft = {
-        month: controller.month,
-        preferences: preferenceSlots
-      };
     }
   }
 
@@ -1261,13 +1152,7 @@
         return;
       }
       controller.month = monthInput.value;
-      controller.draft = null;
       render();
-      return;
-    }
-    var preference = event.target.closest('[data-schedule-preference]');
-    if (preference) {
-      capturePreferenceDraft();
       return;
     }
     var exceptionType = event.target.closest('[data-exception-type]');
@@ -1297,7 +1182,6 @@
         target: options && options.target || root,
         fromLibrary: Boolean(options && options.fromLibrary),
         loadError: '',
-        draft: null
       };
       root.addEventListener('submit', handleSubmit);
       root.addEventListener('click', handleClick);

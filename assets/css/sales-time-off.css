@@ -13,6 +13,7 @@
 .sales-time-off-section-heading h3{margin:0 0 5px;color:var(--text);font-size:15px}
 .sales-time-off-section-heading p,.sales-time-off-muted{margin:0;color:var(--text-muted);font-size:12px;line-height:1.55}
 .sales-time-off-section-heading>span{flex:0 0 auto;padding:6px 9px;border-radius:20px;background:var(--blue-50);color:var(--blue-600);font-size:11px;font-weight:750}
+.sales-time-off-vacation-actions{justify-content:flex-start}
 .sales-time-off-saturday-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px}
 .sales-time-off-saturday-card{min-width:0;padding:12px;border:1px solid var(--border-soft);border-radius:10px;background:var(--bg,#f8fafc)}
 .sales-time-off-saturday-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding-bottom:9px;border-bottom:1px solid var(--border-soft)}
