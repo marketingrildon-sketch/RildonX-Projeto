@@ -1048,9 +1048,7 @@ function currentUserCanManagePeople(state) {
 }
 
 function peoplePanelPermissionMarkup(enabledPanels) {
-  var catalog = (window.RildonXPanelCatalog || []).filter(function(panel) {
-    return panel.sector !== 'Financeiro / Fiscal' && panel.sector !== 'Logística';
-  });
+  var catalog = window.RildonXPanelCatalog || [];
   var enabled = new Set(Array.isArray(enabledPanels) ? enabledPanels : []);
   var groups = {};
   catalog.forEach(function(panel) {
@@ -1072,19 +1070,9 @@ async function syncPeoplePanelCatalog() {
   if (!client || !client.rpc) {
     throw new Error('O serviço de permissões de painéis não está disponível.');
   }
-  var panelKeys = (window.RildonXPanelCatalog || []).filter(function(panel) {
-    return panel.sector !== 'Financeiro / Fiscal' && panel.sector !== 'Logística';
-  }).map(function(panel) { return panel.id; });
+  var panelKeys = (window.RildonXPanelCatalog || []).map(function(panel) { return panel.id; });
   var result = await client.rpc('sync_business_card_panel_catalog', { p_panel_keys: panelKeys });
   if (result.error) throw result.error;
-}
-
-function getPeoplePurchasePanelIds() {
-  return (window.RildonXPanelCatalog || []).filter(function(panel) {
-    return normalizeSearchText(panel.sector) === 'compras';
-  }).map(function(panel) {
-    return panel.id;
-  });
 }
 
 function isStalePeoplePanelError(error) {
@@ -1093,9 +1081,7 @@ function isStalePeoplePanelError(error) {
 }
 
 function profileInitialPanelPermissions(profile) {
-  var catalog = (window.RildonXPanelCatalog || []).filter(function(panel) {
-    return panel.sector !== 'Financeiro / Fiscal' && panel.sector !== 'Logística';
-  });
+  var catalog = window.RildonXPanelCatalog || [];
   if (Array.isArray(profile.enabledPanels)) {
     var availablePanelIds = new Set(catalog.map(function(panel) { return panel.id; }));
     return profile.enabledPanels.filter(function(panelId) { return availablePanelIds.has(panelId); });
@@ -1117,11 +1103,26 @@ function profileInitialPanelPermissions(profile) {
     sector.indexOf('qualidade') === 0 || sector === 'quality' || sector.indexOf('sgq') === 0 ? 'Qualidade' :
     sector.indexOf('marketing') === 0 || sector.indexOf('comunicacao') === 0 ? 'Marketing' :
     sector.indexOf('comercial') === 0 || sector.indexOf('vendas') !== -1 ? 'Comercial' :
-    sector.indexOf('compras') === 0 ? 'Compras' : '';
+    sector.indexOf('compras') === 0 ? 'Compras' :
+    sector.indexOf('financeiro') === 0 || sector.indexOf('fiscal') === 0 ? 'Financeiro / Fiscal' :
+    sector.indexOf('logistica') === 0 || sector.indexOf('estoque') === 0 ||
+      sector.indexOf('entrega') === 0 || sector.indexOf('motoboy') === 0 ? 'Logística' : '';
   return catalog.filter(function(panel) {
-    return (panel.sector === sectorKey || panel.id === 'it-support-tickets') &&
-      panel.id !== 'hr-recruitment';
+    return panel.sector === sectorKey || panel.id === 'it-support-tickets';
   }).map(function(panel) { return panel.id; });
+}
+
+function applyPeopleNewUserPanelDefaults(form) {
+  var permissions = document.getElementById('people-new-user-panel-permissions');
+  if (!permissions) return;
+  var defaults = profileInitialPanelPermissions({
+    sector: form.elements.sector.value,
+    role: form.elements.role.value
+  });
+  var signature = defaults.slice().sort().join(',');
+  if (signature === form.dataset.lastDefaultPanelSelection) return;
+  form.dataset.lastDefaultPanelSelection = signature;
+  permissions.innerHTML = peoplePanelPermissionMarkup(defaults);
 }
 
 function openPeopleUserForm() {
@@ -1151,7 +1152,7 @@ function openPeopleUserForm() {
       '<label class="person-profile-field"><span>Telefone corporativo</span><input name="workPhone" type="tel" maxlength="40"></label>' +
       '<label class="person-profile-field"><span>Número de ramal</span><input name="extension" type="tel" maxlength="20"></label></div>' +
       '<p class="people-user-password-note">Entregue a senha temporária por um canal seguro. No primeiro acesso, a pessoa deverá cadastrar uma senha própria.</p>' +
-      '<section class="people-panel-permissions"><h4>Painéis habilitados</h4><p>Selecione os painéis que ficarão disponíveis na biblioteca da pessoa.</p><div id="people-new-user-panel-permissions"></div></section>' +
+      '<section class="people-panel-permissions"><h4>Painéis habilitados</h4><p>Os painéis do setor são pré-selecionados. Você pode alterar a seleção manualmente antes de cadastrar.</p><div id="people-new-user-panel-permissions"></div></section>' +
       '<div class="people-user-form-actions"><button class="btn" type="submit">Cadastrar usuário</button></div></form></section>';
     document.body.appendChild(modal);
   }
@@ -1162,23 +1163,11 @@ function openPeopleUserForm() {
   permissions.innerHTML = peoplePanelPermissionMarkup([]);
   form.dataset.lastDefaultPanelSelection = '';
   if (!form.dataset.salesPanelDefaultsBound) {
-    form.elements.sector.addEventListener('input', function() {
-      var sector = normalizeSearchText(form.elements.sector.value);
-      if (sector.indexOf('compras') === -1 && sector.indexOf('vendas') === -1) {
-        if (form.dataset.lastDefaultPanelSelection) {
-          form.dataset.lastDefaultPanelSelection = '';
-          permissions.innerHTML = peoplePanelPermissionMarkup([]);
-        }
-        return;
-      }
-      var defaults = profileInitialPanelPermissions({
-        sector: form.elements.sector.value,
-        role: form.elements.role.value
-      });
-      var signature = defaults.join(',');
-      if (signature === form.dataset.lastDefaultPanelSelection) return;
-      form.dataset.lastDefaultPanelSelection = signature;
-      permissions.innerHTML = peoplePanelPermissionMarkup(defaults);
+    form.elements.sector.addEventListener('change', function() {
+      applyPeopleNewUserPanelDefaults(form);
+    });
+    form.elements.role.addEventListener('change', function() {
+      applyPeopleNewUserPanelDefaults(form);
     });
     form.dataset.salesPanelDefaultsBound = 'true';
   }
@@ -1194,6 +1183,7 @@ async function createPeopleUser(form) {
   if (!window.supabaseClient || !window.supabaseClient.functions) {
     throw new Error('O serviço de cadastro de usuários não está disponível.');
   }
+  applyPeopleNewUserPanelDefaults(form);
   var email = form.elements.workEmail.value.trim().toLowerCase();
   var initialPassword = form.elements.initialPassword.value;
   if (initialPassword.length < 6) {
@@ -1214,9 +1204,6 @@ async function createPeopleUser(form) {
     enabledPanels: Array.from(form.querySelectorAll('[data-panel-permission][aria-pressed="true"]'))
       .map(function(button) { return button.dataset.panelPermission; })
   };
-  if (normalizeSearchText(body.sector).indexOf('compras') !== -1) {
-    body.enabledPanels = Array.from(new Set(body.enabledPanels.concat(getPeoplePurchasePanelIds())));
-  }
   await syncPeoplePanelCatalog();
   var result = await window.supabaseClient.functions.invoke('invite-rildonx-user', { body: body });
   async function responseErrorMessage(error) {
@@ -1436,10 +1423,6 @@ async function saveAdminPersonProfile(form) {
     enabled_panels: Array.from(form.querySelectorAll('[data-panel-permission][aria-pressed="true"]'))
       .map(function(button) { return button.dataset.panelPermission; })
   };
-  if (normalizeSearchText(values.sector).indexOf('compras') !== -1) {
-    values.enabled_panels = Array.from(new Set(values.enabled_panels.concat(getPeoplePurchasePanelIds())));
-  }
-
   try {
     await syncPeoplePanelCatalog();
     var result = await window.supabaseClient.rpc('admin_update_rildonx_profile', {
