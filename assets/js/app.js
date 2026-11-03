@@ -1116,7 +1116,7 @@ function profileInitialPanelPermissions(profile) {
     sector === 'ti' || sector.indexOf('tecnologia') === 0 || sector.indexOf('infra') === 0 ? 'TI' :
     sector.indexOf('qualidade') === 0 || sector === 'quality' || sector.indexOf('sgq') === 0 ? 'Qualidade' :
     sector.indexOf('marketing') === 0 || sector.indexOf('comunicacao') === 0 ? 'Marketing' :
-    sector.indexOf('comercial') === 0 || sector.indexOf('vendas') === 0 ? 'Comercial' :
+    sector.indexOf('comercial') === 0 || sector.indexOf('vendas') !== -1 ? 'Comercial' :
     sector.indexOf('compras') === 0 ? 'Compras' : '';
   return catalog.filter(function(panel) {
     return (panel.sector === sectorKey || panel.id === 'it-support-tickets') &&
@@ -1160,19 +1160,27 @@ function openPeopleUserForm() {
   if (!modal || !form || !permissions) return;
   form.reset();
   permissions.innerHTML = peoplePanelPermissionMarkup([]);
-  if (!form.dataset.purchasePanelDefaultsBound) {
-    ['input', 'change'].forEach(function(eventName) {
-      form.elements.sector.addEventListener(eventName, function() {
-        var sector = normalizeSearchText(form.elements.sector.value);
-        if (sector.indexOf('compras') !== -1) {
-          permissions.innerHTML = peoplePanelPermissionMarkup(profileInitialPanelPermissions({
-            sector: form.elements.sector.value,
-            role: form.elements.role.value
-          }));
+  form.dataset.lastDefaultPanelSelection = '';
+  if (!form.dataset.salesPanelDefaultsBound) {
+    form.elements.sector.addEventListener('input', function() {
+      var sector = normalizeSearchText(form.elements.sector.value);
+      if (sector.indexOf('compras') === -1 && sector.indexOf('vendas') === -1) {
+        if (form.dataset.lastDefaultPanelSelection) {
+          form.dataset.lastDefaultPanelSelection = '';
+          permissions.innerHTML = peoplePanelPermissionMarkup([]);
         }
+        return;
+      }
+      var defaults = profileInitialPanelPermissions({
+        sector: form.elements.sector.value,
+        role: form.elements.role.value
       });
+      var signature = defaults.join(',');
+      if (signature === form.dataset.lastDefaultPanelSelection) return;
+      form.dataset.lastDefaultPanelSelection = signature;
+      permissions.innerHTML = peoplePanelPermissionMarkup(defaults);
     });
-    form.dataset.purchasePanelDefaultsBound = 'true';
+    form.dataset.salesPanelDefaultsBound = 'true';
   }
   modal.hidden = false;
 }

@@ -66,7 +66,7 @@ as $$
           p_module_key = 'sales-commercial-management'
           and (
             regexp_replace(lower(coalesce(p.sector, '')), '[^a-z0-9]', '', 'g') like 'comercial%'
-            or regexp_replace(lower(coalesce(p.sector, '')), '[^a-z0-9]', '', 'g') like 'vendas%'
+            or regexp_replace(lower(coalesce(p.sector, '')), '[^a-z0-9]', '', 'g') like '%vendas%'
           )
         )
       )

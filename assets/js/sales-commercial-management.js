@@ -31,7 +31,7 @@
     return (state.profiles || []).filter(function (profile) {
       var sector = String(profile.sector || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
       return profile && profile.id != null && profile.active !== false &&
-        (sector.indexOf('comercial') === 0 || sector.indexOf('vendas') === 0);
+        (sector.indexOf('comercial') === 0 || sector.indexOf('vendas') !== -1);
     }).sort(function (first, second) {
       return personName(first).localeCompare(personName(second), 'pt-BR');
     });
@@ -120,7 +120,7 @@
       ['lost', 'Vendas perdidas'],
       ['warranties', 'Garantias']
     ];
-    return '<nav class="sales-commercial-tabs" aria-label="Seções da Gestão Comercial">' +
+    return '<nav class="sales-commercial-tabs" aria-label="Seções da Gestão de Vendas">' +
       tabs.map(function (tab) {
         return '<button type="button" data-sales-tab="' + tab[0] + '"' +
           (activeTab === tab[0] ? ' aria-current="page"' : '') + '>' + tab[1] + '</button>';

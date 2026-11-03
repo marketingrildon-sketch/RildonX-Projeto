@@ -267,19 +267,7 @@
       source: 'profiles', fields: []
     },
     {
-      id: 'sales-pipeline', sector: 'Comercial', sectorKey: 'comercial', title: 'Pipeline de Vendas', icon: 'funnel', tone: 'green',
-      description: 'Acompanhe oportunidades e etapas do funil comercial.', features: ['Estágios do funil', 'Próximos contatos', 'Valor das negociações', 'Responsável'],
-      fields: [
-        { key: 'title', label: 'Oportunidade', type: 'text', required: true },
-        { key: 'company', label: 'Empresa', type: 'text' },
-        { key: 'amount', label: 'Valor estimado (R$)', type: 'number' },
-        { key: 'status', label: 'Etapa', type: 'select', options: ['Prospecção', 'Qualificação', 'Proposta', 'Negociação', 'Ganho', 'Perdido'] },
-        { key: 'owner', label: 'Responsável', type: 'text' },
-        { key: 'nextContact', label: 'Próximo contato', type: 'date' }
-      ]
-    },
-    {
-      id: 'sales-commercial-management', sector: 'Comercial', sectorKey: 'comercial', title: 'Gestão Comercial', icon: 'chart', tone: 'green',
+      id: 'sales-commercial-management', sector: 'Comercial', sectorKey: 'comercial', title: 'Gestão de Vendas', icon: 'chart', tone: 'green',
       description: 'Acompanhe atendimentos, metas, vendas e oportunidades perdidas com uma visão individual para cada vendedor.',
       features: ['Visão executiva e metas por vendedor', 'Registro de atendimentos e vendas', 'Análise de vendas perdidas', 'Consulta de prazos de garantia'],
       fields: []
@@ -687,7 +675,7 @@
     if (sector === 'rh' || sector.indexOf('rh/') === 0 || sector.indexOf('rhdp') === 0 ||
         sector.indexOf('recursos humanos') === 0) return 'rh';
     if (sector.indexOf('compras') === 0) return 'compras';
-    if (sector.indexOf('comercial') === 0 || sector.indexOf('vendas') === 0) return 'comercial';
+    if (sector.indexOf('comercial') === 0 || sector.indexOf('vendas') !== -1) return 'comercial';
     if (sector.indexOf('financeiro') === 0 || sector.indexOf('fiscal') === 0) return 'financeiro';
     if (sector.indexOf('logistica') === 0 || sector.indexOf('estoque') === 0) return 'logistica';
     if (sector.indexOf('gerencia') === 0 || sector.indexOf('gestao') === 0 || sector.indexOf('diretoria') === 0) return 'gerencia';
@@ -697,7 +685,7 @@
   function isCommercialProfile(profile) {
     const sector = String(profile && profile.sector || '').trim().toLocaleLowerCase('pt-BR')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return sector.indexOf('comercial') === 0 || sector.indexOf('vendas') === 0;
+    return sector.indexOf('comercial') === 0 || sector.indexOf('vendas') !== -1;
   }
 
   function isBusinessCardManager(data) {
@@ -1421,14 +1409,6 @@
         chart = Object.keys(totals).slice(0, 4).map(function (label) {
           return { label: label, value: totals[label] };
         });
-      } else if (module.id === 'sales-pipeline') {
-        const amountByStage = {};
-        records.forEach(function (record) {
-          const stage = String(record.status || 'Prospecção');
-          amountByStage[stage] = (amountByStage[stage] || 0) + (Number(record.data && record.data.amount) || 0);
-        });
-        chart = Object.keys(amountByStage).slice(0, 4).map(function (stage) { return { label: stage, value: amountByStage[stage] }; });
-        metrics[0] = { value: 'R$ ' + records.reduce(function (sum, record) { return sum + (Number(record.data && record.data.amount) || 0); }, 0).toLocaleString('pt-BR'), label: 'Pipeline estimado', icon: 'funnel' };
       } else if (module.id === 'finance-payables-receivables') {
         const openAmount = records.filter(function (record) { return !/pago|recebido|cancelado/i.test(String(record.status || '')); })
           .reduce(function (sum, record) { return sum + (Number(record.data && record.data.amount) || 0); }, 0);
@@ -4210,7 +4190,7 @@
           );
         } else {
           businessRoot.querySelector('.dashboard-sales-commercial-root').innerHTML =
-            '<div class="dashboard-business-warning">O painel de Gestão Comercial não foi carregado. Atualize a página e tente novamente.</div>';
+            '<div class="dashboard-business-warning">O painel de Gestão de Vendas não foi carregado. Atualize a página e tente novamente.</div>';
         }
         return;
       }
