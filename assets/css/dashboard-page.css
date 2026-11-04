@@ -460,10 +460,33 @@ html[data-theme="dark"] .dashboard-library-card{background:#252525}
 .marketing-insight-bar>span{display:block;height:7px;margin-top:4px;overflow:hidden;border-radius:10px;background:var(--bg)}
 .marketing-insight-bar i{display:block;height:100%;border-radius:10px;background:var(--blue-600)}
 .marketing-insights-empty{margin:0;color:var(--text-muted);font-size:9px}
+.marketing-insight-trend{margin:10px 0;padding:14px;border:1px solid var(--border-soft);border-radius:10px;background:var(--card)}
+.marketing-insight-chart-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.marketing-insight-chart-heading h3{margin:0;color:var(--text);font-size:12px}
+.marketing-insight-chart-heading small,.marketing-insight-chart-heading>span{color:var(--text-muted);font-size:9px}
+.marketing-insight-line-wrap{width:100%;margin-top:12px;overflow-x:auto}
+.marketing-insight-line-wrap svg{display:block;width:100%;min-width:440px;height:auto;overflow:visible}
+.marketing-chart-gridline{stroke:var(--border-soft);stroke-width:1;stroke-dasharray:3 5}
+.marketing-chart-axis{stroke:var(--border);stroke-width:1}
+.marketing-chart-line{fill:none;stroke:var(--blue-600);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.marketing-chart-point{fill:var(--card);stroke:var(--blue-600);stroke-width:3}
+.marketing-chart-x-label,.marketing-chart-y-label{fill:var(--text-muted);font-family:inherit;font-size:10px}
 .marketing-insight-breakdowns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .marketing-insight-breakdown{margin:10px 0;padding:12px;border:1px solid var(--border-soft);border-radius:10px;background:var(--card)}
 .marketing-insight-breakdown h3{margin:0 0 4px;color:var(--text);font-size:12px}
 .marketing-insight-breakdown>small{color:var(--text-muted);font-size:8px}
+.marketing-insight-donut-layout{display:grid;grid-template-columns:minmax(115px,.8fr) minmax(0,1.2fr);align-items:center;gap:14px;margin-top:14px}
+.marketing-insight-donut{display:grid;width:min(100%,170px);aspect-ratio:1;place-items:center;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(15,23,42,.06)}
+.marketing-insight-donut>div{display:flex;width:62%;aspect-ratio:1;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:50%;background:var(--card);text-align:center}
+.marketing-insight-donut>div>b{max-width:100%;overflow:hidden;color:var(--text);font-size:15px;text-overflow:ellipsis}
+.marketing-insight-donut>div>span{color:var(--text-muted);font-size:8px}
+.marketing-insight-legend{display:flex;min-width:0;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.marketing-insight-legend li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 8px}
+.marketing-insight-legend li>span{display:flex;min-width:0;align-items:center;gap:6px}
+.marketing-insight-legend li>span>b{overflow:hidden;color:var(--text);font-size:9px;text-overflow:ellipsis;white-space:nowrap}
+.marketing-insight-legend li>span>i{width:8px;height:8px;flex:none;border-radius:3px;background:var(--marketing-chart-color)}
+.marketing-insight-legend li>strong{color:var(--text);font-size:9px}
+.marketing-insight-legend li>small{grid-column:1/-1;padding-left:14px;color:var(--text-muted);font-size:8px}
 .marketing-insight-comparison{display:grid;grid-template-columns:minmax(300px,2fr) repeat(3,minmax(100px,1fr));align-items:center;gap:10px}
 .marketing-insight-comparison>div{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
 .marketing-insight-comparison h3{flex-basis:100%}
@@ -498,9 +521,10 @@ html[data-theme="dark"] .marketing-insight-category,
 html[data-theme="dark"] .marketing-insight-comparison,
 html[data-theme="dark"] .marketing-insight-reports,
 html[data-theme="dark"] .marketing-insight-data,
+html[data-theme="dark"] .marketing-insight-trend,
 html[data-theme="dark"] .marketing-material-card{background:#252525}
 @media(max-width:900px){.marketing-insight-categories,.marketing-insight-breakdowns{grid-template-columns:1fr}.marketing-insight-comparison{grid-template-columns:repeat(3,minmax(90px,1fr))}.marketing-insight-comparison>div{grid-column:1/-1}}
-@media(max-width:650px){.marketing-content-board{grid-auto-columns:minmax(78vw,1fr)}.marketing-content-list-row{grid-template-columns:1fr auto;gap:6px}.marketing-content-list-row>span:nth-of-type(1){grid-column:1}.marketing-content-calendar-grid{grid-template-columns:repeat(7,minmax(62px,1fr))}.marketing-content-calendar-day{min-height:74px;padding:3px}.marketing-insight-comparison{grid-template-columns:1fr}.marketing-insight-reports>article{align-items:flex-start;flex-wrap:wrap}.marketing-material-card{flex-wrap:wrap}.marketing-material-card>div:nth-child(2){flex-basis:calc(100% - 55px)}}
+@media(max-width:650px){.marketing-content-board{grid-auto-columns:minmax(78vw,1fr)}.marketing-content-list-row{grid-template-columns:1fr auto;gap:6px}.marketing-content-list-row>span:nth-of-type(1){grid-column:1}.marketing-content-calendar-grid{grid-template-columns:repeat(7,minmax(62px,1fr))}.marketing-content-calendar-day{min-height:74px;padding:3px}.marketing-insight-comparison{grid-template-columns:1fr}.marketing-insight-donut-layout{grid-template-columns:minmax(105px,.8fr) minmax(0,1.2fr);gap:8px}.marketing-insight-donut>div>b{font-size:12px}.marketing-insight-reports>article{align-items:flex-start;flex-wrap:wrap}.marketing-material-card{flex-wrap:wrap}.marketing-material-card>div:nth-child(2){flex-basis:calc(100% - 55px)}}
 @media print{
   body *{visibility:hidden!important}
   #dashboard-business-root,#dashboard-business-root *{visibility:visible!important}
@@ -508,7 +532,8 @@ html[data-theme="dark"] .marketing-material-card{background:#252525}
   .dashboard-business-panel--marketing{position:static!important;width:100%!important;max-width:none!important;height:auto!important;max-height:none!important;margin:0!important;padding:0!important;overflow:visible!important;border:0!important;box-shadow:none!important;background:#fff!important;color:#111!important}
   .dashboard-business-panel--marketing .dashboard-business-header-actions,.marketing-insights-toolbar,.marketing-report-upload,.marketing-insight-reports button{display:none!important}
   .marketing-insight-categories{grid-template-columns:repeat(3,1fr)!important}
-  .marketing-insight-category,.marketing-insight-comparison,.marketing-insight-reports,.marketing-insight-data{break-inside:avoid;border-color:#aaa!important;background:#fff!important}
+  .marketing-insight-category,.marketing-insight-trend,.marketing-insight-breakdown,.marketing-insight-comparison,.marketing-insight-reports,.marketing-insight-data{break-inside:avoid;border-color:#aaa!important;background:#fff!important}
+  .marketing-insight-donut>div{background:#fff!important}
   .marketing-insight-table-wrap{overflow:visible!important}
   .marketing-insight-table-wrap table{font-size:8pt!important}
 }

@@ -3815,19 +3815,78 @@
           });
         }
         const items = Object.keys(grouped).map(function (label) { return { label: label, value: grouped[label] }; })
+          .filter(function (item) { return item.value > 0; })
           .sort(function (first, second) { return second.value - first.value; });
-        const maximum = Math.max.apply(null, items.map(function (item) { return item.value; }).concat([1]));
+        const chartItems = items.slice(0, 5);
+        if (items.length > 5) {
+          chartItems.push({
+            label: 'Outros',
+            value: items.slice(5).reduce(function (sum, item) { return sum + item.value; }, 0)
+          });
+        }
+        const total = chartItems.reduce(function (sum, item) { return sum + item.value; }, 0);
+        const colors = ['#2563eb', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
+        let angle = 0;
+        const gradient = chartItems.map(function (item, index) {
+          const start = angle;
+          angle += total ? item.value * 360 / total : 0;
+          return colors[index % colors.length] + ' ' + start.toFixed(2) + 'deg ' + angle.toFixed(2) + 'deg';
+        }).join(', ');
         return '<section class="marketing-insight-breakdown"><h3>' + heading + '</h3><small>' +
           escapeHtml(breakdownMetric ? 'Métrica: ' + breakdownMetric.label : 'Selecione uma métrica com estes dados.') + '</small>' +
-          (items.length ? items.slice(0, 10).map(function (item) {
-            return '<div class="marketing-insight-bar"><div><b>' + escapeHtml(item.label) + '</b><strong>' +
-              escapeHtml(Number(item.value).toLocaleString('pt-BR')) + '</strong></div><span><i style="width:' +
-              Math.max(2, Math.round(item.value * 100 / maximum)) + '%"></i></span></div>';
-          }).join('') : '<p class="marketing-insights-empty">Sem dados para os filtros atuais.</p>') + '</section>';
+          (chartItems.length ? '<div class="marketing-insight-donut-layout"><div class="marketing-insight-donut" role="img" aria-label="' +
+            escapeHtml('Distribuição de ' + (breakdownMetric ? breakdownMetric.label : 'métricas') + ' por ' + heading.toLocaleLowerCase('pt-BR')) +
+            '" style="background:conic-gradient(' + gradient + ')"><div><b>' + escapeHtml(Number(total).toLocaleString('pt-BR')) +
+            '</b><span>Total</span></div></div><ul class="marketing-insight-legend">' +
+            chartItems.map(function (item, index) {
+              const percentage = total ? item.value * 100 / total : 0;
+              return '<li><span><i style="--marketing-chart-color:' + colors[index % colors.length] + '"></i><b>' +
+                escapeHtml(item.label) + '</b></span><strong>' + escapeHtml(percentage.toLocaleString('pt-BR', { maximumFractionDigits: 1 })) +
+                '%</strong><small>' + escapeHtml(Number(item.value).toLocaleString('pt-BR')) + '</small></li>';
+            }).join('') + '</ul></div>'
+            : '<p class="marketing-insights-empty">Sem dados positivos para montar o gráfico com os filtros atuais.</p>') + '</section>';
       }
       const breakdowns = '<div class="marketing-insight-breakdowns">' +
         breakdownMarkup('channel', 'Desempenho das redes sociais') +
         breakdownMarkup('campaign', 'Desempenho das campanhas') + '</div>';
+      const trendValues = {};
+      rows.filter(function (row) { return row.metric === comparisonMetric && row.month; }).forEach(function (row) {
+        trendValues[row.month] = (trendValues[row.month] || 0) + (Number(row.value) || 0);
+      });
+      const trendMonths = Object.keys(trendValues).sort();
+      const trendMaximum = Math.max.apply(null, trendMonths.map(function (month) { return trendValues[month]; }).concat([1]));
+      const chartWidth = 680;
+      const chartHeight = 210;
+      const chartPadding = { left: 48, right: 16, top: 16, bottom: 36 };
+      const plotWidth = chartWidth - chartPadding.left - chartPadding.right;
+      const plotHeight = chartHeight - chartPadding.top - chartPadding.bottom;
+      const trendPoints = trendMonths.map(function (month, index) {
+        const x = chartPadding.left + (trendMonths.length < 2 ? plotWidth / 2 : index * plotWidth / (trendMonths.length - 1));
+        const y = chartPadding.top + plotHeight - trendValues[month] * plotHeight / trendMaximum;
+        return { month: month, value: trendValues[month], x: x, y: y };
+      });
+      const trendPath = trendPoints.map(function (point, index) {
+        return (index ? 'L' : 'M') + point.x.toFixed(1) + ' ' + point.y.toFixed(1);
+      }).join(' ');
+      const trendChart = '<section class="marketing-insight-trend"><div class="marketing-insight-chart-heading"><div><h3>Evolução mensal</h3><small>' +
+        escapeHtml(comparisonMetric ? (rows.find(function (row) { return row.metric === comparisonMetric; }) || {}).label || 'Métrica selecionada' : 'Selecione uma métrica') +
+        '</small></div><span>' + escapeHtml(trendMonths.length + (trendMonths.length === 1 ? ' mês' : ' meses')) + '</span></div>' +
+        (trendPoints.length ? '<div class="marketing-insight-line-wrap"><svg viewBox="0 0 ' + chartWidth + ' ' + chartHeight +
+          '" role="img" aria-label="' + escapeHtml('Evolução mensal de ' + ((rows.find(function (row) { return row.metric === comparisonMetric; }) || {}).label || 'indicadores')) +
+          '"><line class="marketing-chart-gridline" x1="' + chartPadding.left + '" y1="' + chartPadding.top + '" x2="' + chartWidth +
+          '" y2="' + chartPadding.top + '"></line><line class="marketing-chart-gridline" x1="' + chartPadding.left + '" y1="' +
+          (chartPadding.top + plotHeight / 2) + '" x2="' + chartWidth + '" y2="' + (chartPadding.top + plotHeight / 2) +
+          '"></line><line class="marketing-chart-axis" x1="' + chartPadding.left + '" y1="' + (chartPadding.top + plotHeight) +
+          '" x2="' + chartWidth + '" y2="' + (chartPadding.top + plotHeight) + '"></line><text class="marketing-chart-y-label" x="0" y="' +
+          (chartPadding.top + 4) + '">' + escapeHtml(Number(trendMaximum).toLocaleString('pt-BR')) + '</text><text class="marketing-chart-y-label" x="0" y="' +
+          (chartPadding.top + plotHeight) + '">0</text><path class="marketing-chart-line" d="' + trendPath + '"></path>' +
+          trendPoints.map(function (point) {
+            return '<circle class="marketing-chart-point" cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) +
+              '" r="4"><title>' + escapeHtml(marketingMonthLabel(point.month) + ': ' + Number(point.value).toLocaleString('pt-BR')) +
+              '</title></circle><text class="marketing-chart-x-label" x="' + point.x.toFixed(1) + '" y="' + (chartHeight - 8) +
+              '" text-anchor="middle">' + escapeHtml(marketingMonthLabel(point.month)) + '</text>';
+          }).join('') + '</svg></div>'
+          : '<p class="marketing-insights-empty">Importe dados com mês e valores para visualizar a evolução.</p>') + '</section>';
       function comparisonOptions(selected) {
         return '<option value="">Selecione o mês</option>' + months.map(function (month) {
           const label = marketingMonthLabel(month);
@@ -3869,7 +3928,7 @@
           ? ' disabled title="Aguarde o carregamento dos dados e do leitor de relatórios"' : '') + '>Importar relatório</button>' +
         '<small>CSV, Excel, PDF ou imagem. Os dados são interpretados localmente no navegador e os arquivos ficam em Documentos. Relatórios enviados à pasta “Marketing - Indicadores” também são lidos automaticamente.</small></form>' +
         documentStatusMarkup + documentErrorsMarkup +
-        '<div class="marketing-insight-categories">' + categoryPanels + '</div>' + breakdowns + comparison + recent +
+        '<div class="marketing-insight-categories">' + categoryPanels + '</div>' + trendChart + breakdowns + comparison + recent +
         '<section class="marketing-insight-data"><h3>Dados usados no relatório</h3>' +
         (rows.length ? '<div class="marketing-insight-table-wrap"><table><thead><tr><th>Mês</th><th>Métrica</th><th>Valor</th><th>Canal</th><th>Campanha</th><th>Arquivo</th></tr></thead><tbody>' +
           rows.map(function (row) {
