@@ -8,11 +8,19 @@
   var currentUserId = null;
   var activeFilter = 'all';
   var searchText = '';
+  var projectViewMode = 'list';
   var detailProjectId = null;
   var detailTab = 'overview';
   var composing = false;
   var composingProjectId = null;
   var composingBusy = false;
+
+  try {
+    var savedProjectViewMode = localStorage.getItem('rildonx_project_view_mode');
+    if (savedProjectViewMode === 'grid' || savedProjectViewMode === 'list') projectViewMode = savedProjectViewMode;
+  } catch (error) {
+    console.warn('Não foi possível restaurar a visualização dos projetos:', error);
+  }
 
   root.innerHTML = '<div class="project-loading">Carregando seus projetos...</div>';
 
@@ -213,13 +221,29 @@
         '<button type="button" class="project-icon-btn" data-action="delete" data-id="' + escapeHtml(project.id) + '" title="Excluir projeto" aria-label="Excluir projeto">' + icon('trash') + '</button>' +
         '</div>';
     }
-    return '<article class="project-card" data-action="details" data-id="' + escapeHtml(project.id) + '"><div class="project-card-head">' + image +
-      '<div class="project-title-wrap"><h3>' + escapeHtml(project.name) + '</h3><p class="project-description">' + escapeHtml(project.description || 'Sem descrição.') + '</p></div>' +
-      '<span class="project-status ' + statusClass(status) + '">' + status + '</span></div>' +
-      '<div class="project-progress-row"><div class="project-progress"><span style="width:' + calculated.progress + '%"></span></div><span class="project-progress-label">' + calculated.progress + '%</span></div>' +
-      '<div class="project-card-meta"><span>' + calculated.tasks.length + ' tarefas · ' + calculated.completed + ' concluídas</span><span>Atualizado ' + formatDate(project.updatedAt) + '</span></div>' +
-      '<div class="project-card-footer"><div class="project-card-owner">' + avatar({ displayName: getOwner(project, s) }) + '<span>' + escapeHtml(getOwner(project, s)) + '</span><span aria-hidden="true">·</span><span>Conclusão ' + formatDate(project.completedAt || project.endDate) + '</span></div>' +
-      '<div class="project-member-stack" aria-label="Participantes">' + (project.allUsers ? '<span class="project-task-meta">Todos os usuários</span>' : profileMarkup) + '</div>' + actions + '</div></article>';
+    var members = project.allUsers
+      ? '<span class="project-all-members">Todos os usuários</span>'
+      : profileMarkup || '<span class="project-all-members">Sem participantes</span>';
+    if (projectViewMode === 'grid') {
+      return '<article class="project-card project-card--grid" data-action="details" data-id="' + escapeHtml(project.id) + '">' +
+        '<div class="project-grid-top">' + image + (actions || '<span></span>') + '</div>' +
+        '<div class="project-grid-title"><h3>' + escapeHtml(project.name) + '</h3><p>' + escapeHtml(project.description || 'Sem descrição.') + '</p></div>' +
+        '<span class="project-status ' + statusClass(status) + '">' + status + '</span>' +
+        '<div class="project-grid-dates"><span><small>Início</small>' + escapeHtml(formatDate(project.startDate)) + '</span>' +
+        '<span><small>Conclusão prevista</small>' + escapeHtml(formatDate(project.endDate)) + '</span></div>' +
+        '<div class="project-progress-row"><div class="project-progress"><span style="width:' + calculated.progress + '%"></span></div><span class="project-progress-label">' + calculated.progress + '%</span></div>' +
+        '<div class="project-grid-footer"><span><b>' + calculated.tasks.length + '</b> tarefas · ' + calculated.completed + ' concluídas</span>' +
+        '<div class="project-member-stack" aria-label="Participantes">' + members + '</div></div></article>';
+    }
+    return '<article class="project-card project-card--list" data-action="details" data-id="' + escapeHtml(project.id) + '">' +
+      '<div class="project-list-primary">' + image + '<div class="project-title-wrap"><h3>' + escapeHtml(project.name) + '</h3>' +
+      '<p class="project-description">' + escapeHtml(project.description || 'Sem descrição.') + '</p>' +
+      '<span class="project-status ' + statusClass(status) + '">' + status + '</span></div></div>' +
+      '<div class="project-list-date"><small>Início</small><span>' + escapeHtml(formatDate(project.startDate)) + '</span></div>' +
+      '<div class="project-list-date"><small>Conclusão prevista</small><span>' + escapeHtml(formatDate(project.endDate)) + '</span></div>' +
+      '<div class="project-list-task-count"><b>' + calculated.tasks.length + '</b><span>tarefas · ' + calculated.completed + ' concluídas</span></div>' +
+      '<div class="project-member-stack" aria-label="Participantes">' + members + '</div>' +
+      (actions || '<span class="project-list-open" aria-hidden="true">›</span>') + '</article>';
   }
 
   function renderPage() {
@@ -252,12 +276,15 @@
       '<div class="project-stats">' +
       statCard('all', 'Projetos visíveis', counts.all) + statCard('in-progress', 'Em andamento', counts['in-progress']) +
       statCard('planning', 'Em planejamento', counts.planning) + statCard('completed', 'Concluídos', counts.completed) + '</div>' +
-      '<div class="project-section"><div class="project-toolbar"><div class="project-tabs">' +
+      '<div class="project-section"><div class="project-toolbar"><div class="project-view-toggle" role="group" aria-label="Modo de visualização">' +
+      '<button type="button" class="' + (projectViewMode === 'list' ? 'active' : '') + '" data-action="view-mode" data-view-mode="list" aria-pressed="' + (projectViewMode === 'list') + '">☷ <span>Lista</span></button>' +
+      '<button type="button" class="' + (projectViewMode === 'grid' ? 'active' : '') + '" data-action="view-mode" data-view-mode="grid" aria-pressed="' + (projectViewMode === 'grid') + '">▦ <span>Grade</span></button>' +
+      '</div><div class="project-tabs">' +
       tab('all', 'Todos', counts.all) + tab('in-progress', 'Em andamento', counts['in-progress']) +
       tab('planning', 'Planejamento', counts.planning) + tab('completed', 'Concluídos', counts.completed) +
       tab('archived', 'Arquivados', counts.archived) + '</div>' +
       '<input class="project-search" type="search" aria-label="Buscar projetos" placeholder="Buscar projetos..." value="' + escapeHtml(searchText) + '"></div>' +
-      '<div class="project-list" style="margin-top:16px">' + content + '</div></div></main>' +
+      '<div class="project-list project-list--' + projectViewMode + '" style="margin-top:16px">' + content + '</div></div></main>' +
       '<aside class="project-side-widgets">' +
       '<section class="project-section project-overall-card"><div class="project-section-head"><h2>Conclusão geral</h2></div>' +
       '<div class="project-overall-donut" style="background:conic-gradient(var(--green) 0 ' + total.percent + '%,var(--border-soft) ' + total.percent + '% 100%)"><div><b>' +
@@ -340,15 +367,16 @@
       escapeHtml(relativeDate(project.updatedAt)) + '</strong></div></div><p class="project-detail-description">' + escapeHtml(project.description || 'Sem descrição.') + '</p>';
     return '<div class="project-overlay" data-overlay="detail"><section class="project-dialog" role="dialog" aria-modal="true" aria-label="' + escapeHtml(project.name) + '">' +
       '<header class="project-dialog-head"><h2>' + escapeHtml(project.name) + '</h2><button type="button" class="project-icon-btn" data-action="close-overlay" aria-label="Fechar">' + icon('close') + '</button></header>' +
-      '<div class="project-dialog-body"><div class="project-detail-tabs">' +
+      '<div class="project-dialog-body"><div class="project-detail-tabs" role="tablist" aria-label="Detalhes do projeto">' +
       detailTabButton('overview', 'Visão geral') + detailTabButton('tasks', 'Tarefas (' + calculated.tasks.length + ')') +
-      detailTabButton('files', 'Arquivos (' + files.length + ')') + detailTabButton('activity', 'Atividade') + '</div>' + body + '</div>' +
+      detailTabButton('activity', 'Atividade') + detailTabButton('files', 'Documentos (' + files.length + ')') + '</div>' + body + '</div>' +
       '<footer class="project-dialog-foot">' + (isCreator(project) ? '<button type="button" class="btn secondary" data-action="edit" data-id="' + escapeHtml(project.id) + '">Editar projeto</button>' : '') +
       '<button type="button" class="btn" data-action="close-overlay">Fechar</button></footer></section></div>';
   }
 
   function detailTabButton(tabName, label) {
-    return '<button type="button" class="project-detail-tab ' + (detailTab === tabName ? 'active' : '') + '" data-action="detail-tab" data-tab="' + tabName + '">' + label + '</button>';
+    return '<button type="button" role="tab" aria-selected="' + (detailTab === tabName) + '" class="project-detail-tab ' +
+      (detailTab === tabName ? 'active' : '') + '" data-action="detail-tab" data-tab="' + tabName + '">' + label + '</button>';
   }
 
   function renderDetail() {
@@ -602,6 +630,16 @@
     var action = target.getAttribute('data-action');
     if (action === 'filter') {
       activeFilter = target.getAttribute('data-filter') || 'all';
+      renderPage();
+    } else if (action === 'view-mode') {
+      var nextMode = target.getAttribute('data-view-mode');
+      if (nextMode !== 'list' && nextMode !== 'grid') return;
+      projectViewMode = nextMode;
+      try {
+        localStorage.setItem('rildonx_project_view_mode', projectViewMode);
+      } catch (error) {
+        console.warn('Não foi possível salvar a visualização dos projetos:', error);
+      }
       renderPage();
     } else if (action === 'new-project') {
       openCompose(null);

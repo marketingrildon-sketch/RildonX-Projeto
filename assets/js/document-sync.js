@@ -3,6 +3,7 @@
 
   var PAGE_SIZE = 10;
   var currentPage = 1;
+  var documentViewMode = 'list';
   var currentFolderPage = 1;
   var FOLDER_PAGE_SIZE = 10;
   var selectedFolderName = '';
@@ -14,6 +15,12 @@
   var storageRefreshPending = false;
   var supabaseClientWait;
   var documentShareContext = null;
+  try {
+    var savedDocumentViewMode = localStorage.getItem('rildonx_document_view_mode');
+    if (savedDocumentViewMode === 'grid' || savedDocumentViewMode === 'list') documentViewMode = savedDocumentViewMode;
+  } catch (error) {
+    console.warn('Não foi possível restaurar a visualização dos documentos:', error);
+  }
 
   function escapeHtml(value) {
     return String(value == null ? '' : value)
@@ -204,6 +211,41 @@
     ].join('');
   }
 
+  function renderDocumentCard(documentItem) {
+    var file = getFilePresentation(documentItem);
+    var id = escapeHtml(documentItem.id);
+    var profile = getProfileById(documentItem.ownerId) || getSenderProfile(documentItem);
+    var name = escapeHtml(documentItem.name || 'Arquivo sem nome');
+    var actions = [
+      '<button class="document-download-btn" type="button" data-document-action="open" data-document-id="' + id + '" title="Abrir documento" aria-label="Abrir ' + name + '">↗</button>',
+      '<button class="document-download-btn" type="button" data-document-action="download" data-document-id="' + id + '" title="Baixar documento" aria-label="Baixar ' + name + '">↓</button>'
+    ];
+    if (!isMedicalDocument(documentItem) && window.RildonXDocumentUpload &&
+        window.RildonXDocumentUpload.canRemoveDocument(documentItem, currentUserId)) {
+      actions.push('<button class="document-delete-btn" type="button" data-document-action="remove" data-document-id="' + id + '" title="Remover arquivo" aria-label="Remover ' + name + '">×</button>');
+    }
+    if (!isMedicalDocument(documentItem) && (window.RildonXIsAdmin || documentItem.ownerId && documentItem.ownerId === currentUserId)) {
+      actions.push('<button class="document-share-btn" type="button" data-document-action="share" data-document-id="' + id + '" title="Gerenciar compartilhamento" aria-label="Gerenciar quem pode acessar ' + name + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M19 8v6m-3-3h6"/></svg></button>');
+    }
+    return '<article class="document-grid-card" data-document-id="' + id + '">' +
+      '<div class="document-grid-card-actions">' + actions.join('') + '</div>' +
+      '<button class="document-grid-open" type="button" data-document-action="open" data-document-id="' + id + '" aria-label="Abrir ' + name + '">' +
+      '<span class="doc-icon ' + escapeHtml(file.extension) + '">' + escapeHtml(file.label) + '</span>' +
+      '<strong title="' + name + '">' + name + '</strong></button>' +
+      '<span class="document-grid-size">' + escapeHtml(documentItem.sizeLabel || '0 KB') + '</span>' +
+      '<span class="document-grid-folder">' + escapeHtml(documentItem.folder || 'Sem pasta') + '</span>' +
+      '<div class="document-grid-people">' + renderDocumentPeople(documentItem, profile) + '</div></article>';
+  }
+
+  function renderDocumentViewToggle() {
+    return '<div class="document-view-toolbar"><div class="document-view-toggle" role="group" aria-label="Modo de visualização">' +
+      '<button type="button" data-document-view="list" class="' + (documentViewMode === 'list' ? 'active' : '') +
+      '" aria-pressed="' + (documentViewMode === 'list') + '"><span aria-hidden="true">☷</span> Lista</button>' +
+      '<button type="button" data-document-view="grid" class="' + (documentViewMode === 'grid' ? 'active' : '') +
+      '" aria-pressed="' + (documentViewMode === 'grid') + '"><span aria-hidden="true">▦</span> Grade</button>' +
+      '</div></div>';
+  }
+
   function renderPagination(total, pageCount) {
     var root = document.getElementById('documents-live-root');
     var first = total ? (currentPage - 1) * PAGE_SIZE + 1 : 0;
@@ -251,14 +293,13 @@
     currentPage = Math.min(currentPage, Math.max(pageCount, 1));
     var pageDocuments = documents.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-    root.innerHTML = [
-      '<div class="doc-table-head" style="padding-top:16px;">',
-      '<span>Nome</span><span>Modificado</span><span>Tamanho</span><span>Ações</span>',
-      '</div>',
-      pageDocuments.map(renderDocumentRow).join('') ||
-        '<div class="doc-table-row"><div class="name-cell"><div class="doc-icon file">ARQ</div><div><b>Nenhum documento encontrado</b><span>Ajuste a busca ou selecione outra pasta.</span></div></div></div>',
-      '<div class="pagination"><div class="page-btns"></div><div class="count"></div></div>'
-    ].join('');
+    var emptyState = '<div class="document-empty-state"><div class="doc-icon file">ARQ</div><b>Nenhum documento encontrado</b><span>Ajuste a busca ou selecione outra pasta.</span></div>';
+    var content = documentViewMode === 'grid'
+      ? '<div class="document-grid">' + (pageDocuments.map(renderDocumentCard).join('') || emptyState) + '</div>'
+      : '<div class="doc-table-head"><span>Nome</span><span>Modificado</span><span>Tamanho</span><span>Ações</span></div>' +
+        (pageDocuments.map(renderDocumentRow).join('') || emptyState);
+    root.innerHTML = renderDocumentViewToggle() + content +
+      '<div class="pagination"><div class="page-btns"></div><div class="count"></div></div>';
     renderPagination(documents.length, pageCount);
     if (window.RildonXAvatar) window.RildonXAvatar.hydrate(root);
   }
@@ -984,6 +1025,27 @@
     }
   }
 
+  function handleDocumentViewControls(event) {
+    var viewButton = event.target.closest('[data-document-view]');
+    if (viewButton) {
+      var nextMode = viewButton.dataset.documentView;
+      if (nextMode !== 'list' && nextMode !== 'grid') return;
+      documentViewMode = nextMode;
+      try {
+        localStorage.setItem('rildonx_document_view_mode', documentViewMode);
+      } catch (error) {
+        console.warn('Não foi possível salvar a visualização dos documentos:', error);
+      }
+      renderDocumentList();
+      return;
+    }
+    var card = event.target.closest('.document-grid-card');
+    if (card && !event.target.closest('[data-document-action]')) {
+      var openButton = card.querySelector('[data-document-action="open"]');
+      if (openButton) openButton.click();
+    }
+  }
+
   function bootstrapDocumentSync() {
     bindDocumentUpload();
     bindDocumentShareModal();
@@ -1000,6 +1062,7 @@
     bindFolderCreation();
     bindFolderControls();
 
+    document.addEventListener('click', handleDocumentViewControls);
     document.addEventListener('click', handleDocumentAction);
     renderDocumentList();
     renderRecentDocuments();

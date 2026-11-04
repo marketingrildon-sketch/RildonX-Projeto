@@ -2357,6 +2357,8 @@
     let marketingCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     let marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
     let marketingComparisonMonths = { primary: '', secondary: '' };
+    let marketingDocumentInsightCache = new Map();
+    let marketingDocumentInsightLoads = new Map();
     let marketingMaterialsView = 'materials';
     let businessFavoritesStorageKey = 'rildonx_business_favorites:local';
     let businessFavorites = {};
@@ -3521,17 +3523,160 @@
       });
     }
 
+    function marketingInsightDocuments() {
+      return documentList(dashboardState).filter(function (file) {
+        return String(file.folder || '').trim().toLocaleLowerCase('pt-BR') === 'marketing - indicadores';
+      });
+    }
+
+    function marketingInsightDocumentStateSignature(data) {
+      return JSON.stringify((data.documents || []).filter(function (file) {
+        return file && String(file.folder || '').trim().toLocaleLowerCase('pt-BR') === 'marketing - indicadores';
+      }).map(function (file) {
+        return [file.id || '', file.url || '', file.size || '', file.sentAt || ''].join('|');
+      }).sort());
+    }
+
+    function marketingDocumentSignature(file) {
+      return [file.url || '', file.size || '', file.sentAt || ''].join('|');
+    }
+
+    function marketingInsightHasSavedMetrics(documentId) {
+      return marketingInsightRecords().some(function (record) {
+        return String(record.data && record.data.documentId || '') === String(documentId) &&
+          Array.isArray(record.data && record.data.metrics) && record.data.metrics.length > 0;
+      });
+    }
+
     function marketingInsightRows() {
-      return marketingInsightRecords().reduce(function (rows, report) {
-        const metrics = report.data && Array.isArray(report.data.metrics) ? report.data.metrics : [];
-        return rows.concat(metrics.map(function (metric) {
+      const reports = marketingInsightRecords();
+      const linkedDocumentIds = new Set();
+      const rows = reports.reduce(function (allRows, report) {
+        const data = report.data || {};
+        const documentId = String(data.documentId || '');
+        if (documentId) linkedDocumentIds.add(documentId);
+        const savedMetrics = Array.isArray(data.metrics) ? data.metrics : [];
+        const cached = documentId && marketingDocumentInsightCache.get(documentId);
+        const documentItem = marketingInsightDocuments().find(function (file) {
+          return String(file.id || '') === documentId;
+        });
+        const cachedMetrics = cached && documentItem &&
+          cached.signature === marketingDocumentSignature(documentItem) ? cached.metrics : [];
+        const metrics = savedMetrics.length ? savedMetrics : cachedMetrics;
+        return allRows.concat(metrics.map(function (metric) {
           return Object.assign({}, metric, {
             reportId: report.id,
             reportTitle: report.title,
-            documentId: report.data.documentId || ''
+            documentId: documentId
           });
         }));
       }, []);
+      return marketingInsightDocuments().reduce(function (allRows, file) {
+        const fileId = String(file.id || '');
+        const cached = fileId && marketingDocumentInsightCache.get(fileId);
+        if (!cached || cached.signature !== marketingDocumentSignature(file) ||
+            !cached.metrics || linkedDocumentIds.has(fileId)) return allRows;
+        return allRows.concat(cached.metrics.map(function (metric) {
+          return Object.assign({}, metric, {
+            reportId: 'document-' + fileId,
+            reportTitle: file.name,
+            documentId: fileId
+          });
+        }));
+      }, rows);
+    }
+
+    function loadMarketingDocumentInsights() {
+      if (!window.RildonXMarketingReportImport || !window.RildonXDocumentUpload ||
+          typeof window.RildonXDocumentUpload.getViewUrl !== 'function') return;
+      const files = marketingInsightDocuments();
+      const currentIds = new Set(files.map(function (file) { return String(file.id || ''); }));
+      let startedLoading = false;
+      marketingDocumentInsightCache.forEach(function (value, documentId) {
+        if (!currentIds.has(documentId)) marketingDocumentInsightCache.delete(documentId);
+      });
+      const tasks = files.map(function (file) {
+        const documentId = String(file.id || '');
+        const signature = marketingDocumentSignature(file);
+        if (!documentId || marketingInsightHasSavedMetrics(documentId)) return Promise.resolve();
+        const cached = marketingDocumentInsightCache.get(documentId);
+        if (cached && cached.signature === signature) return Promise.resolve();
+        const inFlight = marketingDocumentInsightLoads.get(documentId);
+        if (inFlight && inFlight.signature === signature) return inFlight.promise;
+
+        const promise = (async function () {
+          try {
+            const url = await window.RildonXDocumentUpload.getViewUrl(file);
+            if (!url) throw new Error('Não foi possível gerar um link seguro para o arquivo.');
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('O arquivo não pôde ser lido (HTTP ' + response.status + ').');
+            const blob = await response.blob();
+            const modifiedAt = Date.parse(file.sentAt || '');
+            const reportFile = new File([blob], file.name, {
+              type: file.mimeType || blob.type || 'application/octet-stream',
+              lastModified: Number.isFinite(modifiedAt) ? modifiedAt : Date.now()
+            });
+            const parsed = await window.RildonXMarketingReportImport.read(reportFile);
+            const fallbackMonth = Number.isFinite(modifiedAt)
+              ? new Date(modifiedAt).toISOString().slice(0, 7)
+              : '';
+            const metrics = window.RildonXMarketingReportImport.normalize(parsed, fallbackMonth);
+            if (marketingInsightDocuments().some(function (currentFile) {
+              return String(currentFile.id || '') === documentId &&
+                marketingDocumentSignature(currentFile) === signature;
+            })) {
+              marketingDocumentInsightCache.set(documentId, {
+                signature: signature,
+                metrics: metrics,
+                error: ''
+              });
+            }
+          } catch (error) {
+            console.error('Não foi possível ler o relatório de Marketing "' + file.name + '":', error);
+            if (marketingInsightDocuments().some(function (currentFile) {
+              return String(currentFile.id || '') === documentId &&
+                marketingDocumentSignature(currentFile) === signature;
+            })) {
+              marketingDocumentInsightCache.set(documentId, {
+                signature: signature,
+                metrics: [],
+                error: error && error.message || 'Falha ao ler o relatório.'
+              });
+            }
+          } finally {
+            const currentLoad = marketingDocumentInsightLoads.get(documentId);
+            if (currentLoad && currentLoad.promise === promise) marketingDocumentInsightLoads.delete(documentId);
+          }
+        })();
+        startedLoading = true;
+        marketingDocumentInsightLoads.set(documentId, { signature: signature, promise: promise });
+        return promise;
+      });
+      if (!startedLoading) return;
+      Promise.all(tasks).then(function () {
+        if (activeBusinessModule === 'marketing-insights' && businessRoot.classList.contains('open')) {
+          renderBusinessModule('marketing-insights');
+        }
+      });
+    }
+
+    function marketingDocumentInsightStatus() {
+      const files = marketingInsightDocuments();
+      const pending = files.filter(function (file) {
+        if (marketingInsightHasSavedMetrics(file.id)) return false;
+        const cached = marketingDocumentInsightCache.get(String(file.id || ''));
+        return !cached || cached.signature !== marketingDocumentSignature(file);
+      });
+      const errors = files.map(function (file) {
+        const cached = marketingDocumentInsightCache.get(String(file.id || ''));
+        return cached && cached.signature === marketingDocumentSignature(file) && cached.error
+          ? file.name + ': ' + cached.error
+          : '';
+      }).filter(Boolean);
+      return {
+        loading: pending.length > 0,
+        errors: errors
+      };
     }
 
     function filteredMarketingInsightRows() {
@@ -3582,10 +3727,53 @@
       const firstTotal = monthTotal(firstMonth);
       const secondTotal = monthTotal(secondMonth);
       const change = secondTotal ? ((firstTotal - secondTotal) * 100 / secondTotal) : null;
-      const reportList = marketingInsightRecords().slice().sort(function (first, second) {
+      const savedReports = marketingInsightRecords().map(function (report) {
+        const data = report.data || {};
+        const file = marketingInsightDocuments().find(function (item) {
+          return String(item.id || '') === String(data.documentId || '');
+        });
+        const cached = file && marketingDocumentInsightCache.get(String(file.id));
+        const cachedMetrics = cached && cached.signature === marketingDocumentSignature(file) ? cached.metrics : [];
+        return Object.assign({}, report, {
+          data: Object.assign({}, data, {
+            metrics: Array.isArray(data.metrics) && data.metrics.length ? data.metrics : cachedMetrics
+          })
+        });
+      });
+      const linkedDocumentIds = new Set(savedReports.map(function (report) {
+        return String(report.data && report.data.documentId || '');
+      }).filter(Boolean));
+      const documentReports = marketingInsightDocuments().reduce(function (reports, file) {
+        const documentId = String(file.id || '');
+        const cached = marketingDocumentInsightCache.get(documentId);
+        if (!cached || cached.signature !== marketingDocumentSignature(file) ||
+            !cached.metrics.length || linkedDocumentIds.has(documentId)) return reports;
+        reports.push({
+          id: 'document-' + documentId,
+          title: file.name,
+          createdAt: file.sentAt || '',
+          documentOnly: true,
+          data: {
+            metrics: cached.metrics,
+            documentId: documentId,
+            source: 'Arquivo em Documentos',
+            importedAt: file.sentAt || ''
+          }
+        });
+        return reports;
+      }, []);
+      const reportList = savedReports.concat(documentReports).sort(function (first, second) {
         return String(second.data && second.data.importedAt || second.createdAt || '')
           .localeCompare(String(first.data && first.data.importedAt || first.createdAt || ''));
       }).slice(0, 8);
+      const documentStatus = marketingDocumentInsightStatus();
+      const documentStatusMarkup = documentStatus.loading
+        ? '<p class="marketing-insights-empty" role="status">Lendo arquivos da pasta “Marketing - Indicadores” em Documentos…</p>'
+        : '';
+      const documentErrorsMarkup = documentStatus.errors.length
+        ? '<div class="dashboard-business-warning" role="status"><b>Alguns arquivos não geraram indicadores:</b> ' +
+          escapeHtml(documentStatus.errors.join(' · ')) + '</div>'
+        : '';
       const currentUserId = authenticatedUserId || getCurrentProfile(dashboardState).id;
       const toolbar = '<div class="dashboard-business-toolbar marketing-insights-toolbar">' +
         '<label><span>' + iconMarkup('activity') + '</span><input type="search" data-business-search value="' + escapeHtml(businessSearch) +
@@ -3663,7 +3851,8 @@
       const recent = '<section class="marketing-insight-reports"><h3>Relatórios recentes</h3>' +
         (reportList.length ? reportList.map(function (report) {
           const data = report.data || {};
-          const canArchive = String(report.createdBy || '') === String(currentUserId || '') || isBusinessCardManager(dashboardState);
+          const canArchive = !report.documentOnly &&
+            (String(report.createdBy || '') === String(currentUserId || '') || isBusinessCardManager(dashboardState));
           return '<article><div><b>' + escapeHtml(report.title) + '</b><small>' +
             escapeHtml((data.metrics || []).length + ' métricas · ' + (data.source || 'Relatório importado') + ' · ' +
               dateLabel(data.importedAt || report.createdAt, { day: '2-digit', month: 'short', year: 'numeric' })) +
@@ -3678,7 +3867,8 @@
         new Date().toISOString().slice(0, 7) + '" required></label><button type="submit" class="btn"' +
         (dashboardState.businessCardRecordsLoadError || !window.RildonXMarketingReportImport
           ? ' disabled title="Aguarde o carregamento dos dados e do leitor de relatórios"' : '') + '>Importar relatório</button>' +
-        '<small>CSV, Excel, PDF ou imagem. Os dados são interpretados localmente no navegador e os arquivos ficam em Documentos.</small></form>' +
+        '<small>CSV, Excel, PDF ou imagem. Os dados são interpretados localmente no navegador e os arquivos ficam em Documentos. Relatórios enviados à pasta “Marketing - Indicadores” também são lidos automaticamente.</small></form>' +
+        documentStatusMarkup + documentErrorsMarkup +
         '<div class="marketing-insight-categories">' + categoryPanels + '</div>' + breakdowns + comparison + recent +
         '<section class="marketing-insight-data"><h3>Dados usados no relatório</h3>' +
         (rows.length ? '<div class="marketing-insight-table-wrap"><table><thead><tr><th>Mês</th><th>Métrica</th><th>Valor</th><th>Canal</th><th>Campanha</th><th>Arquivo</th></tr></thead><tbody>' +
@@ -3769,6 +3959,7 @@
         (businessOpenedFromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
         '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
         accessWarning + content + '</div>';
+      if (module.id === 'marketing-insights') loadMarketingDocumentInsights();
     }
 
     function refreshMarketingSpecialModule(moduleId, preserveSearchFocus) {
@@ -4171,6 +4362,10 @@
           '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div><p class="dashboard-business-restricted">Seu perfil não possui acesso ao setor ' + escapeHtml(module.sector) + '.</p></div>';
         return;
       }
+      if (moduleId === 'marketing-insights' || moduleId === 'marketing-materials') {
+        renderMarketingSpecialModule(module);
+        return;
+      }
       if (moduleId === 'sales-commercial-management') {
         businessRoot.innerHTML = '<div class="dashboard-business-panel dashboard-business-panel--sales-commercial" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
           '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="' + escapeHtml(module.tone) + '">' + iconMarkup(module.icon) + '</div>' +
@@ -4441,10 +4636,6 @@
           if (typeof window.showToast === 'function') window.showToast('Este painel é restrito ao setor ' + module.sector + '.');
           return;
         }
-        if (moduleId === 'marketing-insights' || moduleId === 'marketing-materials') {
-          renderMarketingSpecialModule(module);
-          return;
-        }
         window.RildonXInfrastructure.open({ assetId: recordId || '', fromLibrary: businessOpenedFromLibrary }).catch(function (error) {
           console.error('Não foi possível abrir o painel de Infraestrutura:', error);
           if (typeof window.showToast === 'function') window.showToast(error.message || 'Não foi possível abrir o painel de Infraestrutura.');
@@ -4466,6 +4657,10 @@
       marketingComparisonMonths = { primary: '', secondary: '' };
       marketingMaterialsView = 'materials';
       businessRoot.classList.add('open');
+      if (moduleId === 'marketing-insights' || moduleId === 'marketing-materials') {
+        renderBusinessModule(moduleId);
+        return;
+      }
       if (recordId && !module.source) {
         if (!canAccessBusinessCard(module, dashboardState)) {
           renderBusinessModule(moduleId);
@@ -5916,8 +6111,14 @@
           nextDashboardState.infrastructureAssets = [];
           nextDashboardState.infrastructureAssetsLoadError = '';
         }
+        const marketingDocumentsChanged = marketingInsightDocumentStateSignature(dashboardState) !==
+          marketingInsightDocumentStateSignature(nextDashboardState);
         dashboardState = nextDashboardState;
         render();
+        if (marketingDocumentsChanged && activeBusinessModule === 'marketing-insights' &&
+            businessRoot && businessRoot.classList.contains('open')) {
+          renderBusinessModule('marketing-insights');
+        }
       });
     }
 

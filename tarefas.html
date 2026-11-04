@@ -6,9 +6,9 @@
 <title>Tarefas · RildonX</title>
 <meta name="description" content="RildonX — ecossistema digital da Rildon.">
 <link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
-  <script type="module" crossorigin src="./assets/supabase-client-DG4kT2gQ.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/supabase-client-DM3d6-un.css">
-  <link rel="stylesheet" href="./assets/css/styles.css?v=20261105c">
+  <script type="module" crossorigin src="./assets/supabase-client-DL4FSV51.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/supabase-client-G6WVxBTe.css">
+  <link rel="stylesheet" href="./assets/css/styles.css?v=20261105d">
 </head>
 <body data-page="tarefas">
 <div class="app" id="app-root">
@@ -274,9 +274,9 @@
 </div>
 
 <div class="modal-backdrop" id="modal-backdrop" onclick="closeModal()">
-  <div class="modal-panel wide" id="modal-nova-tarefa" onclick="event.stopPropagation()">
+  <div class="modal-panel wide" id="modal-nova-tarefa" role="dialog" aria-modal="true" aria-labelledby="modal-nova-tarefa-title" onclick="event.stopPropagation()">
     <div class="modal-head">
-      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>Nova tarefa</h3>
+      <h3 id="modal-nova-tarefa-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>Nova tarefa</h3>
       <button class="modal-close-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
@@ -483,6 +483,6 @@
 <script src="assets/js/app.js?v=20261104a"></script>
 <script src="assets/js/department-requests.js?v=20261028a"></script>
 <script src="assets/js/support-center.js?v=20261028a"></script>
-<script src="assets/js/task-page.js?v=20261103a"></script>
+<script src="assets/js/task-page.js?v=20261104a"></script>
 </body>
 </html>

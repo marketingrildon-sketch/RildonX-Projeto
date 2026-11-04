@@ -212,33 +212,58 @@
     return complete + '/' + checklist.length + ' checklist';
   }
 
+  function renderTaskAvatars(names, state) {
+    var visible = names.slice(0, 3).map(function (name) {
+      var profile = (state.profiles || []).find(function (item) {
+        return [item.displayName, item.nickname].some(function (value) {
+          return String(value || '').toLocaleLowerCase('pt-BR') === String(name).toLocaleLowerCase('pt-BR');
+        });
+      });
+      var initials = String(name).split(/\s+/).map(function (part) { return part.charAt(0); }).join('').slice(0, 2).toUpperCase();
+      return '<span class="task-card-avatar" title="' + escapeHtml(name) + '">' +
+        (profile && profile.avatarUrl ? '<img src="' + escapeHtml(profile.avatarUrl) + '" alt="">' : escapeHtml(initials || 'U')) +
+        '</span>';
+    }).join('');
+    var extra = Math.max(0, names.length - 3);
+    if (extra) visible += '<span class="task-card-avatar task-card-avatar--extra">+' + extra + '</span>';
+    return visible || '<span class="task-card-no-assignees">Sem responsáveis</span>';
+  }
+
   function renderTaskCard(task) {
-    var project = (getStoreState().projects || []).find(function (item) { return String(item.id) === String(task.projectId); });
-    var assignees = getTaskAssigneeNames(task, getStoreState());
+    var state = getStoreState();
+    var project = (state.projects || []).find(function (item) { return String(item.id) === String(task.projectId); });
+    var assignees = getTaskAssigneeNames(task, state);
     var title = escapeHtml(task.title || 'Tarefa sem título');
     var canMove = isTaskCreator(task);
-    var priority = String(task.priority || 'média');
-    var priorityClass = priority.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    var checklist = Array.isArray(task.checklist) ? task.checklist : [];
+    var completedChecklist = checklist.filter(function (item) { return item && item.completed === true; }).length;
     var status = taskStatus(task);
+    var progress = checklist.length
+      ? Math.round(completedChecklist * 100 / checklist.length)
+      : status === 'concluida' ? 100 : 0;
+    var comments = (state.taskComments || []).filter(function (comment) {
+      return String(comment.taskId) === String(task.id);
+    }).length;
     return '<article class="task-card task-card--' + dateColor(task) + '" data-task-id="' + escapeHtml(task.id) + '" tabindex="0"' +
       (canMove ? ' draggable="true" aria-label="' + title + ', arrastável"' : ' aria-label="' + title + '"') +
-      '><div class="task-card-top"><span class="task-priority task-priority--' + escapeHtml(priorityClass) + '">' + escapeHtml(priority) + '</span>' +
-      '<span class="task-due">' + escapeHtml(formatDate(task.dueDate)) + '</span></div>' +
-      '<h3>' + title + '</h3>' +
-      (task.description ? '<p class="task-card-description">' + escapeHtml(task.description) + '</p>' : '') +
-      '<div class="task-card-meta">' +
-      (project ? '<span class="task-project-chip">' + escapeHtml(project.name) + '</span>' : '') +
-      (checklistSummary(task) ? '<span>' + escapeHtml(checklistSummary(task)) + '</span>' : '') +
-      '</div><div class="task-card-footer"><span>' + (assignees.length ? escapeHtml(assignees.join(', ')) : 'Sem colaboradores') + '</span>' +
-      (status === 'em-andamento' ? '<span class="task-status-chip">Em andamento</span>' : '') +
-      (Array.isArray(task.attachments) && task.attachments.length ? '<span>' + task.attachments.length + ' arquivo(s)</span>' : '') +
+      '><div class="task-card-heading"><div class="task-card-heading-copy"><h3>' + title + '</h3>' +
+      '<p>' + escapeHtml(project && project.name || task.description || 'Tarefa da equipe') + '</p></div>' +
+      '<button type="button" class="task-card-more" aria-label="Abrir detalhes da tarefa" title="Abrir detalhes">···</button></div>' +
+      '<div class="task-card-progress-label"><span>Progresso</span><strong>' + completedChecklist + '/' + checklist.length + '</strong></div>' +
+      '<div class="task-card-progress" role="progressbar" aria-label="Progresso da checklist" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + progress + '">' +
+      '<span class="task-card-progress--' + status + '" style="width:' + progress + '%"></span></div>' +
+      '<div class="task-card-footer"><span class="task-card-due task-card-due--' + dateColor(task) + '">' + escapeHtml(formatDate(task.dueDate)) + '</span>' +
+      '<span class="task-card-signals">' +
+      (comments ? '<span aria-label="' + comments + ' comentários"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-4-.99L3 21l1.99-5.5a8.4 8.4 0 0 1-.99-4A8.5 8.5 0 0 1 12.5 3h.5a8.5 8.5 0 0 1 8 8v.5Z"/></svg>' + comments + '</span>' : '') +
+      (Array.isArray(task.attachments) && task.attachments.length ? '<span aria-label="' + task.attachments.length + ' anexos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.82-2.83l8.48-8.48"/></svg>' + task.attachments.length + '</span>' : '') +
+      '</span><span class="task-card-avatars">' + renderTaskAvatars(assignees, state) +
       (canMove ? renderCollaboratorPicker(
-        (getStoreState().profiles || []).filter(function (profile) {
+        (state.profiles || []).filter(function (profile) {
           return profile.active !== false && String(profile.id) !== String(task.createdBy);
         }),
         assignees,
         'task-' + task.id
-      ) : '') +
+      ) : '') + '</span>' +
       '</div></article>';
   }
 
@@ -261,7 +286,7 @@
       });
       board.innerHTML = '<div class="task-project-task-group">' +
         '<div class="task-project-task-heading"><h2>' + escapeHtml(selectedProject && selectedProject.name || 'Projeto') + '</h2></div>' +
-        '<div class="task-kanban-board">' + renderKanbanColumns(filtered, selectedProject) + '</div></div>';
+        '<div class="task-kanban-board">' + renderKanbanColumns(filtered, selectedProject, true) + '</div></div>';
       return;
     }
     var projects = (state.projects || []).filter(function (project) { return project && project.isDemo !== true; })
@@ -287,14 +312,15 @@
       });
     });
     board.innerHTML = groups.length ? groups.map(function (group) {
+      var groupProject = projects.find(function (project) { return String(project.id) === String(group.id); }) || { id: group.id };
       return '<section class="task-project-task-group"><div class="task-project-task-heading"><h2>' +
         escapeHtml(group.name) + '</h2><span>' + group.tasks.length + ' tarefas</span></div>' +
-        '<div class="task-kanban-board task-kanban-board--all-projects">' + renderKanbanColumns(group.tasks, null) + '</div></section>';
+        '<div class="task-kanban-board task-kanban-board--all-projects">' + renderKanbanColumns(group.tasks, groupProject, false) + '</div></section>';
     }).join('') : '<p class="task-empty-column task-all-projects-empty">Nenhuma tarefa encontrada nos projetos.</p>';
   }
 
-  function renderKanbanColumns(tasks, project) {
-    var backlog = project ? renderProjectBacklog(project) : '';
+  function renderKanbanColumns(tasks, project, includeBacklog) {
+    var backlog = includeBacklog && project ? renderProjectBacklog(project) : '';
     return backlog + statuses.map(function (column) {
       var cards = tasks.filter(function (task) { return taskStatus(task) === column.id; })
         .sort(function (a, b) {
@@ -302,7 +328,10 @@
           return positionDiff || new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
         });
       return '<section class="task-kanban-column" data-task-status="' + column.id + '">' +
-        '<header><h2>' + column.label + '</h2><span>' + cards.length + '</span></header>' +
+        '<header><div class="task-kanban-column-title"><h2>' + column.label + '</h2><span>' + cards.length + '</span></div>' +
+        '<button type="button" class="task-add-card-button" data-add-task-stage="' + column.id + '"' +
+        (project && project.id ? ' data-project-id="' + escapeHtml(project.id) + '"' : '') +
+        '><span aria-hidden="true">+</span> Adicionar tarefa</button></header>' +
         '<div class="task-kanban-dropzone" data-task-dropzone="' + column.id + '">' +
         (cards.length ? cards.map(renderTaskCard).join('') : '<p class="task-empty-column">Nenhuma tarefa</p>') +
         '</div></section>';
@@ -924,6 +953,21 @@
         var input = form && form.querySelector('[data-backlog-title]');
         if (form) form.hidden = false;
         if (input) input.focus();
+        return;
+      }
+      var addTaskButton = event.target.closest('[data-add-task-stage]');
+      if (addTaskButton) {
+        if (typeof window.openModal !== 'function') return;
+        window.openModal('modal-nova-tarefa');
+        var stage = addTaskButton.dataset.addTaskStage;
+        var stageLabel = stage === 'em-andamento' ? 'Em andamento' : stage === 'concluida' ? 'Concluída' : 'Pendente';
+        document.querySelectorAll('#nt-etapa-group .choice-btn').forEach(function (button) {
+          button.classList.toggle('selected', button.dataset.etapa === stageLabel);
+        });
+        var projectSelect = document.getElementById('nt-projeto');
+        if (projectSelect && addTaskButton.dataset.projectId) projectSelect.value = addTaskButton.dataset.projectId;
+        var titleInput = document.getElementById('nt-nome');
+        if (titleInput) titleInput.focus();
         return;
       }
       var removeBacklogButton = event.target.closest('[data-backlog-remove]');
