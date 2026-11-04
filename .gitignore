@@ -1,0 +1,20 @@
+# Sistema operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Arquivos temporarios de editores
+*.swp
+*.swo
+*~
+
+# Diretorios locais de IDE
+.vscode/
+.idea/
+
+# Dependencias locais
+node_modules/
+
+# Segredos locais (nunca versionar)
+.env
+.env.*
