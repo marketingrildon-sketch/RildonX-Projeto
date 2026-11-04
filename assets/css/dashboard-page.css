@@ -613,6 +613,45 @@ html[data-theme="dark"] .dashboard-library-card-header .dashboard-library-info>s
 .pm-status{display:inline-block;border-radius:999px;padding:4px 8px;background:#e8f7ed;color:#24733b;font-size:10px;font-weight:800}
 .pm-status.is-inactive{background:#f2f3f5;color:#677085}
 .pm-empty{padding:24px;text-align:center;color:var(--muted);font-size:12px}
+
+.home-dashboard-grid{gap:16px}
+.dashboard-card{border-color:var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+.dashboard-card:hover{border-color:#d6dced;box-shadow:var(--shadow-raised);transform:translateY(-1px)}
+.dashboard-card .dashboard-card-header{background:#fff;color:var(--text);cursor:grab}
+.dashboard-card .dashboard-card-header .dashboard-card-title-wrap h4{color:var(--text)}
+.dashboard-card .dashboard-card-header .dashboard-card-icon{border:0;background:var(--blue-50);color:var(--blue-600)}
+.dashboard-card .dashboard-card-header .dashboard-card-icon[data-tone="blue"]{background:#e8f0ff;color:#2463eb}
+.dashboard-card .dashboard-card-header .dashboard-card-icon[data-tone="cyan"]{background:#def7fb;color:#0786a5}
+.dashboard-card .dashboard-card-header .dashboard-card-icon[data-tone="purple"]{background:#efe8ff;color:#7141dc}
+.dashboard-card .dashboard-card-header .dashboard-card-icon[data-tone="green"]{background:#e3f8ec;color:#168a4a}
+.dashboard-card .dashboard-card-header .dashboard-card-icon[data-tone="orange"]{background:#fff0dd;color:#c66a08}
+.dashboard-card .dashboard-card-header .dashboard-card-icon[data-tone="indigo"]{background:#e7eaff;color:#4137c9}
+.dashboard-card .dashboard-card-header .dashboard-card-icon[data-tone="red"]{background:#ffeaec;color:#b42332}
+.dashboard-card .dashboard-card-header .dashboard-card-icon[data-tone="pink"]{background:#ffe9f2;color:#b93670}
+.dashboard-card .dashboard-card-header .dashboard-card-count{background:#f0f2f8;color:var(--text-muted)}
+.dashboard-card .dashboard-card-header .dashboard-card-tool-button{border-color:var(--border);background:#f5f6fa;color:var(--text-muted)}
+.dashboard-card .dashboard-card-header .dashboard-card-tool-button:hover{border-color:#cdd7f1;background:var(--blue-50);color:var(--blue-600)}
+.dashboard-card .dashboard-card-header .dashboard-card-tool-button:focus-visible{outline:2px solid var(--blue-500);outline-offset:2px}
+#inicio-fit .card.fit-card>.card-head{background:#fff;color:var(--text)}
+#inicio-fit .card-head h3{color:var(--text)}
+#inicio-fit .card-head .see-all{color:var(--blue-600)}
+.dashboard-quick-action{border-color:var(--border-soft);border-radius:9px;background:#f8f9fc;transition:border-color .16s ease,background-color .16s ease,transform .16s ease}
+.dashboard-quick-action:hover{border-color:#cdd7f1;background:var(--blue-50);transform:translateY(-1px)}
+.dashboard-kpi-stat,.dashboard-module-metric{border-color:var(--border-soft);border-radius:10px;background:#f8f9fc}
+.dashboard-kpi-stat:hover{border-color:#d6def2;transform:translateY(-1px)}
+.dashboard-module-chart{border-color:var(--border-soft);border-radius:10px;background:#fff}
+.dashboard-kpi-track,.dashboard-kpi-bar-row>div,.dashboard-module-chart-row>div{background:#eceef5}
+.dashboard-kpi-track>span,.dashboard-module-chart-row>div>i{background:linear-gradient(90deg,var(--blue-600),#7f96f5)}
+.dashboard-library-panel,.dashboard-business-panel{border-color:var(--border);border-radius:14px;box-shadow:0 20px 56px rgba(18,30,68,.2)}
+.dashboard-business-back{border-radius:8px;background:#f3f4f9}
+.dashboard-empty-state{padding:24px;border:1px dashed #dfe3ef;border-radius:12px;background:#fafbfe;color:var(--text-muted);line-height:1.55}
+
+@media(max-width:760px){
+  .home-dashboard-grid[data-card-count="2"],
+  .home-dashboard-grid[data-card-count="3"]{grid-template-columns:repeat(1,minmax(0,1fr))}
+  #dashboard-grid .dashboard-card[data-size="ratio-landscape"],
+  #dashboard-grid .dashboard-card[data-size="ratio-double-landscape"]{grid-column:auto;aspect-ratio:auto}
+}
 .pm-details{margin-top:5px;white-space:normal}
 .pm-details summary{cursor:pointer;color:var(--blue-600);font-size:10px;font-weight:700}
 .pm-details>span{display:block;margin-top:4px;white-space:normal}
