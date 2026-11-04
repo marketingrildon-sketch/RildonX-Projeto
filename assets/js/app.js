@@ -57,9 +57,10 @@ function initCollapsibleSidebar() {
   var storageKey = 'rildonx_sidebar_collapsed';
   var collapseTimer = null;
   var expandTimer = null;
-  var collapsed = false;
+  var collapsed = true;
   try {
-    collapsed = localStorage.getItem(storageKey) === 'true';
+    var savedCollapsePreference = localStorage.getItem(storageKey);
+    if (savedCollapsePreference !== null) collapsed = savedCollapsePreference === 'true';
   } catch (error) {
     console.warn('Não foi possível restaurar a preferência da barra lateral:', error);
   }
