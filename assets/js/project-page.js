@@ -273,9 +273,9 @@
     var total = overallProgress(all, s);
     root.innerHTML = '<div class="project-layout"><main class="project-workspace">' +
       '<div class="project-toolbar-top"><button type="button" class="btn" data-action="new-project">+ Novo projeto</button></div>' +
-      '<div class="project-stats">' +
-      statCard('all', 'Projetos visíveis', counts.all) + statCard('in-progress', 'Em andamento', counts['in-progress']) +
-      statCard('planning', 'Em planejamento', counts.planning) + statCard('completed', 'Concluídos', counts.completed) + '</div>' +
+      (counts.all ? '<div class="project-stats" role="group" aria-label="Gráfico dos projetos">' +
+      statCard('all', 'Projetos visíveis', counts.all, counts.all) + statCard('in-progress', 'Em andamento', counts['in-progress'], counts.all) +
+      statCard('planning', 'Em planejamento', counts.planning, counts.all) + statCard('completed', 'Concluídos', counts.completed, counts.all) + '</div>' : '') +
       '<div class="project-section"><div class="project-toolbar"><div class="project-view-toggle" role="group" aria-label="Modo de visualização">' +
       '<button type="button" class="' + (projectViewMode === 'list' ? 'active' : '') + '" data-action="view-mode" data-view-mode="list" aria-pressed="' + (projectViewMode === 'list') + '">☷ <span>Lista</span></button>' +
       '<button type="button" class="' + (projectViewMode === 'grid' ? 'active' : '') + '" data-action="view-mode" data-view-mode="grid" aria-pressed="' + (projectViewMode === 'grid') + '">▦ <span>Grade</span></button>' +
@@ -286,18 +286,21 @@
       '<input class="project-search" type="search" aria-label="Buscar projetos" placeholder="Buscar projetos..." value="' + escapeHtml(searchText) + '"></div>' +
       '<div class="project-list project-list--' + projectViewMode + '" style="margin-top:16px">' + content + '</div></div></main>' +
       '<aside class="project-side-widgets">' +
-      '<section class="project-section project-overall-card"><div class="project-section-head"><h2>Conclusão geral</h2></div>' +
+      (total.totalTasks ? '<section class="project-section project-overall-card"><div class="project-section-head"><h2>Conclusão geral</h2></div>' +
       '<div class="project-overall-donut" style="background:conic-gradient(var(--green) 0 ' + total.percent + '%,var(--border-soft) ' + total.percent + '% 100%)"><div><b>' +
       total.percent + '%</b><span>concluído</span></div></div><p class="project-overall-caption"><strong>' + total.completedTasks + ' de ' + total.totalTasks +
       ' tarefas</strong><span>concluídas nos projetos ativos</span></p><div class="project-overall-footer">' + total.completedProjects + ' de ' + total.totalProjects +
-      ' projetos concluídos</div></section>' +
+      ' projetos concluídos</div></section>' : '') +
       '<section class="project-section project-activity-card"><div class="project-section-head"><h2>Atividades recentes</h2></div>' +
       '<div class="project-activity-list">' + activityMarkup + '</div></section></aside></div>';
   }
 
-  function statCard(filter, label, value) {
+  function statCard(filter, label, value, total) {
+    if (!value) return '';
+    var width = total ? Math.max(0, Math.min(100, value / total * 100)) : 0;
     return '<button type="button" class="project-stat" data-action="filter" data-filter="' + filter + '"><span class="project-stat-label">' +
-      label + '</span><strong class="project-stat-value">' + value + '</strong></button>';
+      escapeHtml(label) + '</span><span class="project-stat-track"><i style="width:' + width + '%"></i></span><strong class="project-stat-value">' +
+      value.toLocaleString('pt-BR') + '</strong></button>';
   }
 
   function tab(filter, label, count) {

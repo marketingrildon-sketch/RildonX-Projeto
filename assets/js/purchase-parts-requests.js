@@ -205,6 +205,12 @@
     var selected = records.find(function (record) { return String(record.id) === String(selectedId); });
     var pendingCount = records.filter(function (record) { return normalize(record.status || 'Pendente') === 'pendente'; }).length;
     var answeredCount = records.length - pendingCount;
+    var summaryMetrics = [
+      { label: 'Total de sinalizações', value: records.length },
+      { label: 'Pendentes', value: pendingCount },
+      { label: 'Respondidas', value: answeredCount }
+    ].filter(function (metric) { return metric.value > 0; });
+    var summaryMax = Math.max.apply(Math, summaryMetrics.map(function (metric) { return metric.value; }).concat([1]));
     var supplierSelectOptions = '<option value="">Selecione um fornecedor</option>' + supplierOptions.map(function (supplier) {
       return '<option value="' + escapeHtml(supplier) + '"' + (requestDraft.supplierChoice === supplier ? ' selected' : '') + '>' +
         escapeHtml(supplier) + '</option>';
@@ -227,9 +233,11 @@
         escapeHtml(requestDraft.supplierChoice) + '</option>' + supplierSelectOptions;
     }
     mountedRoot.innerHTML = '<div class="ppr-panel">' + notice + (loadError ? '<div class="ppr-notice is-error" role="alert">' + escapeHtml(loadError) + '</div>' : '') +
-      '<div class="ppr-summary"><article><small>Total de sinalizações</small><strong>' + records.length + '</strong></article>' +
-      '<article class="is-pending"><small>Pendentes</small><strong>' + pendingCount + '</strong></article><article class="is-complete"><small>Respondidas</small><strong>' +
-      answeredCount + '</strong></article></div>' +
+      (summaryMetrics.length ? '<div class="ppr-summary" role="img" aria-label="Gráfico de sinalizações">' + summaryMetrics.map(function (metric) {
+        return '<article><small>' + escapeHtml(metric.label) + '</small><span><i style="width:' +
+          Math.max(0, Math.min(100, metric.value / summaryMax * 100)) + '%"></i></span><strong>' +
+          metric.value.toLocaleString('pt-BR') + '</strong></article>';
+      }).join('') + '</div>' : '') +
       (!isBuyer ? '<div class="ppr-create-action"><button class="btn" type="button" data-toggle-request>' +
         (requestDraft.open ? 'Cancelar sinalização' : 'Sinalizar produto') + '</button></div>' +
         (requestDraft.open ? '<section class="ppr-create"><form data-request-form><div class="ppr-form-grid">' +

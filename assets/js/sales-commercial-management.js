@@ -134,6 +134,17 @@
       '<button type="submit">Aplicar</button></form>';
   }
 
+  function renderMetricChart(title, rows, formatValue) {
+    if (!rows.length) return '';
+    var maximum = Math.max.apply(Math, rows.map(function (row) { return row.value; }).concat([1]));
+    return '<section class="sales-commercial-chart"><h3>' + escapeHtml(title) + '</h3>' +
+      rows.map(function (row) {
+        var width = Math.max(0, Math.min(100, row.value / maximum * 100));
+        return '<div class="sales-commercial-chart-row"><span>' + escapeHtml(row.label) + '</span><div><i style="width:' + width +
+          '%"></i></div><b>' + escapeHtml(formatValue(row.value)) + '</b></div>';
+      }).join('') + '</section>';
+  }
+
   function renderOverview(state, options) {
     var records = filteredRecords(state, options);
     var goalRecords = records.filter(function (record) { return record.data.recordType === 'goal'; });
@@ -143,6 +154,27 @@
     var goal = goalRecords.reduce(function (sum, record) { return sum + Number(record.data.goalAmount || 0); }, 0);
     var totalSales = sales.reduce(function (sum, record) { return sum + Number(record.data.amount || 0); }, 0);
     var targetPercent = goal > 0 ? Math.min(100, totalSales / goal * 100) : 0;
+    var targetRows = [];
+    if (goalRecords.length) targetRows.push({ label: 'Meta do mês', value: goal });
+    if (sales.length || goalRecords.length) targetRows.push({ label: 'Vendas realizadas', value: totalSales });
+    var activityRows = [
+      { label: 'Atendimentos', value: attendances.length, present: attendances.length > 0 },
+      { label: 'Vendas fechadas', value: sales.length, present: sales.length > 0 },
+      { label: 'Vendas perdidas', value: lost.length, present: lost.length > 0 }
+    ].filter(function (row) { return row.present; });
+    var metricsMarkup = renderMetricChart('Meta e vendas', targetRows, money) +
+      renderMetricChart('Atividade do período', activityRows, function (value) { return value.toLocaleString('pt-BR'); });
+    var sellerFinancialRows = [];
+    var sellerActivityRows = [];
+    commercialSummaries.forEach(function (summary) {
+      if (summary.goal || summary.total) {
+        if (summary.goal) sellerFinancialRows.push({ label: summary.name + ' · Meta', value: summary.goal });
+        sellerFinancialRows.push({ label: summary.name + ' · Realizado', value: summary.total });
+      }
+      if (summary.attendanceCount) sellerActivityRows.push({ label: summary.name + ' · Atendimentos', value: summary.attendanceCount });
+      if (summary.salesCount) sellerActivityRows.push({ label: summary.name + ' · Vendas', value: summary.salesCount });
+      if (summary.lostCount) sellerActivityRows.push({ label: summary.name + ' · Perdidas', value: summary.lostCount });
+    });
     var commercialSummaries = commercialEmployees(state).map(function (profile) {
       var sellerId = String(profile.id);
       var sellerGoals = goalRecords.filter(function (record) {
@@ -176,30 +208,17 @@
     var goalCards = options.isManager
       ? '<button type="button" class="sales-commercial-primary" data-sales-new-goal>Definir meta</button>'
       : '';
-    return '<section class="sales-commercial-metrics" aria-label="Indicadores do mês">' +
-      '<article><span>Meta do mês</span><strong>' + money(goal) + '</strong></article>' +
-      '<article><span>Vendas realizadas</span><strong>' + money(totalSales) + '</strong></article>' +
-      '<article><span>Atendimentos</span><strong>' + attendances.length + '</strong></article>' +
-      '<article><span>Vendas fechadas</span><strong>' + sales.length + '</strong></article>' +
-      '<article><span>Vendas perdidas</span><strong>' + lost.length + '</strong></article></section>' +
-      '<section class="sales-commercial-progress"><div><b>Progresso da meta</b><span>' +
-      (goal > 0 ? targetPercent.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' : 'Meta não definida') +
-      '</span></div><progress max="100" value="' + targetPercent + '"></progress></section>' +
+    return (metricsMarkup ? '<div class="sales-commercial-charts" aria-label="Indicadores do período">' + metricsMarkup + '</div>' : '') +
+      (goalRecords.length && goal > 0 ? '<section class="sales-commercial-progress"><div><b>Progresso da meta</b><span>' +
+      targetPercent.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%</span></div><progress max="100" value="' +
+      targetPercent + '"></progress></section>' : '') +
       '<div class="sales-commercial-toolbar"><h3>Resumo de ' + escapeHtml(selectedMonth) + '</h3>' + goalCards + '</div>' +
       (newRecordType === 'goal' ? recordForm(state, options, null, 'goal') : '') +
       (options.isManager && !commercialEmployees(state).length
         ? '<p class="sales-commercial-note">Nenhum perfil ativo do setor Comercial/Vendas foi encontrado para associar metas.</p>' : '') +
       (options.isManager
-        ? '<div class="sales-commercial-goals"><h3>Desempenho por vendedor</h3>' +
-          '<div class="sales-commercial-table-wrap"><table class="sales-commercial-table"><thead><tr>' +
-          '<th>Vendedor</th><th>Meta</th><th>Realizado</th><th>Atingimento</th><th>Atendimentos</th><th>Vendas</th><th>Perdidas</th>' +
-          '</tr></thead><tbody>' + commercialSummaries.map(function (summary) {
-            return '<tr><td>' + escapeHtml(summary.name) + '</td><td>' + money(summary.goal) + '</td><td>' +
-              money(summary.total) + '</td><td>' + (summary.goal > 0
-                ? summary.percentage.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%' : '—') +
-              '</td><td>' + summary.attendanceCount +
-              '</td><td>' + summary.salesCount + '</td><td>' + summary.lostCount + '</td></tr>';
-          }).join('') + '</tbody></table></div></div>'
+        ? renderMetricChart('Meta e realizado por vendedor', sellerFinancialRows, money) +
+          renderMetricChart('Atividade por vendedor', sellerActivityRows, function (value) { return value.toLocaleString('pt-BR'); })
         : goalRecords.length ? '<div class="sales-commercial-goals"><h3>Minha meta</h3>' +
           goalRecords.map(function (record) {
             return '<div><span>' + escapeHtml(sellerLabel(state, record.data.sellerId)) + '</span><b>' +

@@ -1173,6 +1173,7 @@
     let records = (data.businessCardRecords || []).filter(function (record) {
       return record && record.moduleKey === module.id && !record.archived;
     });
+    let metricDataPresent = null;
     if (module.id === 'sales-time-off') {
       const nextSaturday = new Date();
       nextSaturday.setHours(0, 0, 0, 0);
@@ -1330,17 +1331,17 @@
       const tasks = (data.tasks || []).filter(function (task) { return task && !task.isDemo; });
       const projects = (data.projects || []).filter(function (project) { return project && !project.isDemo && !project.archived; });
       const completedTasks = tasks.filter(isTaskDone).length;
-      items = [
-        { title: String(tasks.length), meta: 'Tarefas no workspace', href: 'tarefas.html' },
-        { title: String(completedTasks), meta: 'Tarefas concluídas', href: 'tarefas.html' },
-        { title: String(projects.length), meta: 'Projetos ativos', href: 'projetos.html' },
-        { title: String((data.posts || []).length), meta: 'Publicações no Mural', href: 'mural.html' }
-      ];
-      metrics = [
-        { value: tasks.length, label: 'Tarefas', icon: 'task' },
-        { value: projects.length, label: 'Projetos', icon: 'project' },
-        { value: tasks.length ? Math.round(completedTasks * 100 / tasks.length) + '%' : '0%', label: 'Concluído', icon: 'check' }
-      ];
+      const inProgressTasks = tasks.filter(function (task) { return readableStatus(task.status) === 'Em andamento'; }).length;
+      const pendingTasks = Math.max(0, tasks.length - completedTasks - inProgressTasks);
+      metrics = [];
+      if (tasks.length) {
+        metrics.push({ value: tasks.length, label: 'Tarefas', icon: 'task' });
+        if (completedTasks) metrics.push({ value: completedTasks, label: 'Concluídas', icon: 'check' });
+        if (inProgressTasks) metrics.push({ value: inProgressTasks, label: 'Em andamento', icon: 'clock' });
+        if (pendingTasks) metrics.push({ value: pendingTasks, label: 'Pendentes', icon: 'alert' });
+      }
+      if (projects.length) metrics.push({ value: projects.length, label: 'Projetos ativos', icon: 'project' });
+      items = [];
     } else {
       items = records.slice(0, quantity).map(function (record) {
         const recordData = record.data || {};
@@ -1406,9 +1407,11 @@
             totals[metric.label] = (totals[metric.label] || 0) + (Number(metric.value) || 0);
           });
         });
-        chart = Object.keys(totals).slice(0, 4).map(function (label) {
+        chart = Object.keys(totals).map(function (label) {
           return { label: label, value: totals[label] };
         });
+        metrics = [];
+        metricDataPresent = chart.length > 0;
       } else if (module.id === 'finance-payables-receivables') {
         const openAmount = records.filter(function (record) { return !/pago|recebido|cancelado/i.test(String(record.status || '')); })
           .reduce(function (sum, record) { return sum + (Number(record.data && record.data.amount) || 0); }, 0);
@@ -1442,7 +1445,14 @@
       }
     }
     return {
-      count: module.source === 'profiles' || module.source === 'projects' ? items.length : module.source === 'overview' ? items.length : records.length,
+      count: module.source === 'profiles' || module.source === 'projects' ? items.length :
+        module.source === 'overview' ? metrics.reduce(function (total, metric) {
+          return total + (metric.label === 'Tarefas' || metric.label === 'Projetos ativos' ? metric.value : 0);
+        }, 0) : records.length,
+      hasData: metricDataPresent != null ? metricDataPresent :
+        module.source === 'profiles' || module.source === 'projects' ? items.length > 0 :
+        module.source === 'overview' ? metrics.length > 0 :
+          records.length > 0,
       summary: module.source === 'profiles' ? items.length + ' aniversário(s) neste mês' :
         module.source === 'projects' ? items.length + ' projeto(s) estratégico(s)' :
           module.source === 'overview' ? 'Indicadores consolidados' : records.length + ' registro(s)',
@@ -1565,6 +1575,15 @@
 
     if (card.type === 'indicadores') {
       const tasks = taskListForDashboard(data);
+      if (!tasks.length) {
+        return {
+          count: 0,
+          summary: 'Resumo pessoal',
+          indicators: null,
+          items: [],
+          empty: 'Ainda não há tarefas para calcular indicadores.'
+        };
+      }
       const completed = tasks.filter(isTaskDone).length;
       const overdue = tasks.filter(function (task) {
         const due = dateValue(task.dueDate);
@@ -1744,11 +1763,21 @@
   }
 
   function renderBusinessMetrics(items) {
-    if (!items || !items.metrics || !items.metrics.length) return '';
-    const metricsMarkup = items.metrics.map(function (metric) {
-      return '<div class="dashboard-module-metric">' +
-        '<span>' + iconMarkup(metric.icon) + '</span><b>' + escapeHtml(metric.value) + '</b><small>' + escapeHtml(metric.label) + '</small></div>';
-    }).join('');
+    if (!items || !items.hasData) return '';
+    const metricRows = (items.metrics || []).map(function (metric) {
+      const rawValue = String(metric.value == null ? '' : metric.value);
+      const numericValue = typeof metric.value === 'number' ? metric.value :
+        Number(rawValue.replace(/[^\d,.-]/g, '').replace(/\.(?=.*[,])/g, '').replace(',', '.'));
+      return Number.isFinite(numericValue) ? { label: metric.label, value: numericValue, display: rawValue } : null;
+    }).filter(Boolean);
+    const metricMax = Math.max.apply(Math, metricRows.map(function (metric) { return Math.abs(metric.value); }).concat([1]));
+    const metricsMarkup = metricRows.length
+      ? '<div class="dashboard-module-chart dashboard-module-metric-chart" role="img" aria-label="Gráfico dos indicadores">' +
+        metricRows.map(function (metric) {
+          return '<div class="dashboard-module-chart-row"><span title="' + escapeHtml(metric.label) + '">' + escapeHtml(metric.label) +
+            '</span><div><i style="width:' + Math.max(0, Math.min(100, Math.abs(metric.value) / metricMax * 100)) + '%"></i></div><b>' +
+            escapeHtml(metric.display) + '</b></div>';
+        }).join('') + '</div>' : '';
     let chartMarkup = '';
     if (items.chart && items.chart.length) {
       const max = Math.max.apply(Math, items.chart.map(function (item) { return Number(item.value) || 0; }).concat([1]));
@@ -1759,7 +1788,9 @@
           escapeHtml(value.toLocaleString('pt-BR')) + '</b></div>';
       }).join('') + '</div>';
     }
-    return '<div class="dashboard-module-visual"><div class="dashboard-module-metrics">' + metricsMarkup + '</div>' + chartMarkup + '</div>';
+    return metricsMarkup || chartMarkup
+      ? '<div class="dashboard-module-visual">' + metricsMarkup + chartMarkup + '</div>'
+      : '';
   }
 
   function buildCardMarkup(card, data, options) {
@@ -1799,8 +1830,10 @@
             itemIcon + '<span><b>' +
             escapeHtml(item.title) + '</b><small>' + escapeHtml(item.meta || '') + '</small></span><i aria-hidden="true">›</i></a>';
         }).join('') + '</div>'
-        : '<div class="dashboard-data-empty"><span>' + iconMarkup(catalog.icon) + '</span><b>Sem itens para mostrar</b><small>' +
-          escapeHtml(items.empty) + '</small></div>';
+        : module && items.hasData && ((items.metrics && items.metrics.length) || (items.chart && items.chart.length))
+          ? ''
+          : '<div class="dashboard-data-empty"><span>' + iconMarkup(catalog.icon) + '</span><b>Sem itens para mostrar</b><small>' +
+            escapeHtml(items.empty) + '</small></div>';
     const moduleCanOpen = module && canAccessBusinessCard(module, data);
     const pageTargets = {
       atividade: 'meu-espaco.html',
@@ -1847,7 +1880,11 @@
   }
 
   function renderIndicatorCard(indicators, size) {
-    const data = indicators || { completed: 0, total: 0, percent: 0, overdue: 0, upcoming: 0, projects: 0, inProgress: 0, pending: 0 };
+    if (!indicators || !indicators.total) {
+      return '<div class="dashboard-data-empty"><span>' + iconMarkup('chart') + '</span><b>Sem indicadores disponíveis</b>' +
+        '<small>Os gráficos aparecem quando houver tarefas registradas.</small></div>';
+    }
+    const data = indicators;
     const total = Math.max(1, data.total);
     const barWidth = function (value) { return Math.max(0, Math.min(100, Math.round(value * 100 / total))); };
     const overview =
@@ -1855,15 +1892,22 @@
       '<div class="dashboard-kpi-ring" style="--kpi-progress:' + data.percent + '%"><div><b>' + data.percent + '%</b><small>concluído</small></div></div>' +
       '<div class="dashboard-kpi-overview-copy"><b>' + data.completed + ' de ' + data.total + ' tarefas concluídas</b><small>Seu progresso geral em tarefas atribuídas ou criadas por você.</small>' +
       '<div class="dashboard-kpi-track" role="img" aria-label="' + data.percent + '% das tarefas concluídas"><span style="width:' + data.percent + '%"></span></div></div></div>';
-    const stats = size === 'ratio-landscape' ? '' : '<div class="dashboard-kpi-stats">' +
-      '<a href="tarefas.html" class="dashboard-kpi-stat kpi-warning"><span>' + iconMarkup('alert') + '</span><b>' + data.overdue + '</b><small>Atrasadas</small></a>' +
-      '<a href="tarefas.html" class="dashboard-kpi-stat kpi-upcoming"><span>' + iconMarkup('clock') + '</span><b>' + data.upcoming + '</b><small>Próximos 7 dias</small></a>' +
-      '<a href="projetos.html" class="dashboard-kpi-stat kpi-projects"><span>' + iconMarkup('project') + '</span><b>' + data.projects + '</b><small>Projetos ativos</small></a>' +
-      '</div>';
+    const statsRows = [
+      data.overdue ? '<a href="tarefas.html" class="dashboard-kpi-stat kpi-warning"><span>' + iconMarkup('alert') + '</span><b>' + data.overdue + '</b><small>Atrasadas</small></a>' : '',
+      data.upcoming ? '<a href="tarefas.html" class="dashboard-kpi-stat kpi-upcoming"><span>' + iconMarkup('clock') + '</span><b>' + data.upcoming + '</b><small>Próximos 7 dias</small></a>' : '',
+      data.projects ? '<a href="projetos.html" class="dashboard-kpi-stat kpi-projects"><span>' + iconMarkup('project') + '</span><b>' + data.projects + '</b><small>Projetos ativos</small></a>' : ''
+    ].filter(Boolean);
+    const stats = size === 'ratio-landscape' || !statsRows.length ? '' : '<div class="dashboard-kpi-stats">' + statsRows.join('') + '</div>';
+    const breakdownRows = [
+      { label: 'Concluídas', value: data.completed, tone: 'kpi-bar-complete' },
+      { label: 'Em andamento', value: data.inProgress, tone: 'kpi-bar-progress' },
+      { label: 'Pendentes', value: data.pending, tone: 'kpi-bar-pending' }
+    ].filter(function (row) { return row.value > 0; });
     const breakdown = size === 'ratio-double-landscape' ? '<div class="dashboard-kpi-breakdown"><div class="dashboard-kpi-breakdown-head"><b>Status das tarefas</b><span>' + data.total + ' no total</span></div>' +
-      '<div class="dashboard-kpi-bar-row"><span>Concluídas</span><div><i class="kpi-bar-complete" style="width:' + barWidth(data.completed) + '%"></i></div><b>' + data.completed + '</b></div>' +
-      '<div class="dashboard-kpi-bar-row"><span>Em andamento</span><div><i class="kpi-bar-progress" style="width:' + barWidth(data.inProgress) + '%"></i></div><b>' + data.inProgress + '</b></div>' +
-      '<div class="dashboard-kpi-bar-row"><span>Pendentes</span><div><i class="kpi-bar-pending" style="width:' + barWidth(data.pending) + '%"></i></div><b>' + data.pending + '</b></div>' +
+      breakdownRows.map(function (row) {
+        return '<div class="dashboard-kpi-bar-row"><span>' + row.label + '</span><div><i class="' + row.tone +
+          '" style="width:' + barWidth(row.value) + '%"></i></div><b>' + row.value + '</b></div>';
+      }).join('') +
       '</div>' : '';
     return '<div class="dashboard-kpi">' + overview + stats + breakdown + '</div>';
   }
@@ -2830,6 +2874,7 @@
 
     function internalDemandDashboardMarkup() {
       const records = internalDemandRecords();
+      if (!records.length) return '';
       const activeStatuses = records.filter(function (record) {
         return !/^(concluida|cancelada|finalizada)$/i.test(normalizeSearchText(record.status || ''));
       });
@@ -2854,32 +2899,36 @@
         return Math.max(0, (completedAt.getTime() - createdDate.getTime()) / 86400000);
       }).filter(function (days) { return days != null; });
       const averageDays = completionDays.length
-        ? (completionDays.reduce(function (total, days) { return total + days; }, 0) / completionDays.length).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' dias'
-        : '—';
+        ? completionDays.reduce(function (total, days) { return total + days; }, 0) / completionDays.length
+        : null;
       const sectors = {};
       records.forEach(function (record) {
-        const sector = String(record.data && record.data.requesterSector || '').trim() || 'Não informado';
-        sectors[sector] = (sectors[sector] || 0) + 1;
+        const sector = String(record.data && record.data.requesterSector || '').trim();
+        if (sector) sectors[sector] = (sectors[sector] || 0) + 1;
       });
       const sectorRows = Object.keys(sectors).sort(function (first, second) {
         return sectors[second] - sectors[first] || first.localeCompare(second, 'pt-BR');
-      }).slice(0, 4).map(function (sector) {
-        return '<span><b>' + escapeHtml(sector) + '</b><small>' + sectors[sector] + (sectors[sector] === 1 ? ' demanda' : ' demandas') + '</small></span>';
-      }).join('');
-      const metrics = [
-        { label: 'Solicitações Recebidas', value: records.length, detail: 'Demandas registradas', tone: 'blue' },
-        { label: 'Demandas Pendentes', value: activeStatuses.length, detail: 'Aguardando conclusão', tone: 'orange' },
-        { label: 'Aprovações Necessárias', value: approvals.length, detail: 'Aguardando aprovação', tone: 'purple' },
-        { label: 'Demandas por Setor', value: '', detail: sectorRows || '<span><b>Sem demandas</b><small>Os setores aparecem após os primeiros pedidos.</small></span>', tone: 'green', isSector: true },
-        { label: 'Tempo de Atendimento', value: averageDays, detail: completedRecords.length + (completedRecords.length === 1 ? ' demanda concluída' : ' demandas concluídas'), tone: 'cyan' },
-        { label: 'Briefings Incompletos', value: incompleteBriefings.length, detail: 'Precisam de objetivo, público e peças', tone: 'red' }
-      ];
-      return '<section class="internal-demand-dashboard" aria-label="Indicadores de demandas internas">' +
-        metrics.map(function (metric) {
-          return '<article class="internal-demand-kpi" data-tone="' + metric.tone + '"><span>' + escapeHtml(metric.label) + '</span>' +
-            (metric.isSector ? '<div class="internal-demand-sector-list">' + metric.detail + '</div>' :
-              '<b>' + escapeHtml(metric.value) + '</b><small>' + escapeHtml(metric.detail) + '</small>') + '</article>';
-        }).join('') + '</section>';
+      }).slice(0, 4);
+      const countMetrics = [
+        { label: 'Solicitações recebidas', value: records.length },
+        { label: 'Demandas pendentes', value: activeStatuses.length },
+        { label: 'Aprovações necessárias', value: approvals.length },
+        { label: 'Briefings incompletos', value: incompleteBriefings.length }
+      ].concat(sectorRows.map(function (sector) {
+        return { label: 'Setor · ' + sector, value: sectors[sector] };
+      }));
+      const maximum = Math.max.apply(Math, countMetrics.map(function (metric) { return metric.value; }).concat([1]));
+      const countChart = '<div class="dashboard-module-chart">' + countMetrics.map(function (metric) {
+        return '<div class="dashboard-module-chart-row"><span title="' + escapeHtml(metric.label) + '">' + escapeHtml(metric.label) +
+          '</span><div><i style="width:' + Math.max(0, Math.min(100, metric.value / maximum * 100)) + '%"></i></div><b>' +
+          metric.value.toLocaleString('pt-BR') + '</b></div>';
+      }).join('') + '</div>';
+      const timeChart = averageDays == null ? '' : '<div class="dashboard-module-chart"><div class="dashboard-module-chart-row">' +
+        '<span>Tempo médio de atendimento</span><div><i style="width:100%"></i></div><b>' +
+        escapeHtml(averageDays.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' dias') +
+        '</b></div></div>';
+      return '<section class="internal-demand-dashboard" aria-label="Gráficos de demandas internas">' +
+        '<h3>Indicadores calculados a partir das solicitações registradas</h3>' + countChart + timeChart + '</section>';
     }
 
     function businessRecordMeta(record, module) {

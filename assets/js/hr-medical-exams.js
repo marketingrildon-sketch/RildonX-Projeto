@@ -240,11 +240,19 @@
     }
     var upcoming = exams.filter(function (exam) { return alertState(exam) === 'upcoming'; }).length;
     var overdue = exams.filter(function (exam) { return alertState(exam) === 'overdue'; }).length;
+    var summaryMetrics = [
+      { label: 'Agendamentos e exames', value: exams.length },
+      { label: 'Próximos', value: upcoming },
+      { label: 'Atrasados', value: overdue }
+    ].filter(function (metric) { return metric.value > 0; });
+    var summaryMax = Math.max.apply(Math, summaryMetrics.map(function (metric) { return metric.value; }).concat([1]));
     root.innerHTML = '<section class="hme-panel"><div class="hme-privacy-note"><b>Acesso restrito ao RH e à Gestão.</b> Anexos também aparecem em Documentos, ' +
       'mas somente para quem enviou e perfis autorizados de RH/Gestão. A agenda exibe apenas “Compromisso de RH”, sem nome, tipo ou documentos.</div>' +
-      '<div class="hme-summary"><article><small>Agendamentos e exames</small><strong>' + exams.length + '</strong></article>' +
-      '<article class="is-upcoming"><small>Próximos</small><strong>' + upcoming + '</strong></article>' +
-      '<article class="is-overdue"><small>Atrasados</small><strong>' + overdue + '</strong></article></div>' +
+      (summaryMetrics.length ? '<div class="hme-summary" role="img" aria-label="Gráfico de agendamentos e exames">' + summaryMetrics.map(function (metric) {
+        return '<article><small>' + escapeHtml(metric.label) + '</small><span><i style="width:' +
+          Math.max(0, Math.min(100, metric.value / summaryMax * 100)) + '%"></i></span><strong>' +
+          metric.value.toLocaleString('pt-BR') + '</strong></article>';
+      }).join('') + '</div>' : '') +
       (loadError ? '<div class="hme-notice is-error">' + escapeHtml(loadError) + '</div>' : '') +
       formMarkup(editingId ? exams.find(function (exam) { return exam.id === editingId; }) : null) +
       '<div class="hme-toolbar"><label><span>Tipo de exame</span><select data-hme-filter-type>' +

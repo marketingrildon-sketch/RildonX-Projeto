@@ -137,17 +137,24 @@
     var visibleTickets = tickets.filter(function (ticket) {
       return !monthFilter || String(ticket.created_at || '').slice(0, 7) === monthFilter;
     });
+    if (!visibleTickets.length) return '';
     var openCount = visibleTickets.filter(function (ticket) { return ticket.status === 'Aberto'; }).length;
     var workingCount = visibleTickets.filter(function (ticket) { return ticket.status === 'Em atendimento'; }).length;
     var resolvedCount = visibleTickets.filter(function (ticket) {
       return ticket.status === 'Resolvido' || ticket.status === 'Encerrado';
     }).length;
-    return '<div class="support-kpis">' +
-      '<div><span>' + (monthFilter ? 'Chamados no mês' : 'Chamados visíveis') + '</span><b>' + visibleTickets.length + '</b></div>' +
-      '<div data-tone="red"><span>Abertos</span><b>' + openCount + '</b></div>' +
-      '<div data-tone="orange"><span>Em atendimento</span><b>' + workingCount + '</b></div>' +
-      '<div data-tone="green"><span>Resolvidos / encerrados</span><b>' + resolvedCount + '</b></div>' +
-      '</div>';
+    var metrics = [
+      { label: monthFilter ? 'Chamados no mês' : 'Chamados visíveis', value: visibleTickets.length },
+      { label: 'Abertos', value: openCount },
+      { label: 'Em atendimento', value: workingCount },
+      { label: 'Resolvidos / encerrados', value: resolvedCount }
+    ].filter(function (metric) { return metric.value > 0; });
+    var maximum = Math.max.apply(Math, metrics.map(function (metric) { return metric.value; }).concat([1]));
+    return '<div class="support-kpis" role="img" aria-label="Gráfico dos chamados">' + metrics.map(function (metric) {
+      return '<div><span>' + escapeHtml(metric.label) + '</span><i><b style="width:' +
+        Math.max(0, Math.min(100, metric.value / maximum * 100)) + '%"></b></i><strong>' +
+        metric.value.toLocaleString('pt-BR') + '</strong></div>';
+    }).join('') + '</div>';
   }
 
   function ticketListMarkup() {

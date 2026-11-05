@@ -394,6 +394,17 @@
       : '<div class="pm-empty">' + escapeHtml(empty || 'Nenhum registro cadastrado.') + '</div>';
   }
 
+  function renderMetricBars(title, rows) {
+    if (!rows.length) return '';
+    var maximum = Math.max.apply(Math, rows.map(function (item) { return Math.abs(item.value); }).concat([1]));
+    return '<section class="pm-dashboard-chart pm-dashboard-metric-chart"><h3>' + escapeHtml(title) + '</h3><div class="pm-dashboard-metric-bars">' +
+      rows.map(function (item) {
+        var width = Math.max(0, Math.min(100, Math.abs(item.value) / maximum * 100));
+        return '<div class="pm-dashboard-metric-row"><b>' + escapeHtml(item.label) + '</b><span><i style="width:' + width +
+          '%"></i></span><strong>' + escapeHtml(item.display) + '</strong></div>';
+      }).join('') + '</div></section>';
+  }
+
   function renderOverview() {
     var monthRecords = all('order').filter(function (order) {
       return areaMatches(order, purchaseAreaFilter) && String(order.data.orderDate || '').slice(0, 7) === dashboardMonth;
@@ -422,13 +433,39 @@
     var salesPrevious = monthBudgets.reduce(function (sum, item) { return sum + Number(item.data.salesPrevious || 0); }, 0);
     var weeklyGoal = monthBalance ? monthBalance.weekly : 0;
     var remaining = Math.max(0, available - ordered + cancelled);
-    var cards = [
-      ['Fornecedores ativos', activeSuppliers().length],
-      ['Fornecedores inativos', all('supplier').length - activeSuppliers().length],
-      ['Média de avaliações', number(avgScore, 2)],
-      ['Tempo médio geral', avgDelivery == null ? 'Sem dados' : number(avgDelivery, 0) + ' dias'],
-      ['Índice de custo com frete FOB', orderTotalAll ? number(freight / orderTotalAll * 100, 2) + '%' : 'Sem dados']
-    ];
+    var suppliers = all('supplier');
+    var activeSupplierCount = activeSuppliers().length;
+    var supplierMetrics = [];
+    if (suppliers.length) {
+      supplierMetrics.push({ label: 'Fornecedores ativos', value: activeSupplierCount, display: activeSupplierCount.toLocaleString('pt-BR') });
+      supplierMetrics.push({ label: 'Fornecedores inativos', value: suppliers.length - activeSupplierCount, display: (suppliers.length - activeSupplierCount).toLocaleString('pt-BR') });
+    }
+    if (avgScore != null) supplierMetrics.push({ label: 'Média de avaliações', value: avgScore, display: number(avgScore, 2) });
+    if (avgDelivery != null) supplierMetrics.push({ label: 'Tempo médio geral', value: avgDelivery, display: number(avgDelivery, 0) + ' dias' });
+    if (orderTotalAll > 0) {
+      var freightPercent = freight / orderTotalAll * 100;
+      supplierMetrics.push({ label: 'Índice de custo com frete FOB', value: freightPercent, display: number(freightPercent, 2) + '%' });
+    }
+    var budgetMetrics = [];
+    if (monthBalance || monthBudgets.length || monthRecords.length) {
+      budgetMetrics.push(
+        { label: 'Saldo disponível para compra', value: available, tone: 'green' },
+        { label: 'Total pedido', value: ordered, tone: 'red' },
+        { label: 'Total recebido', value: received, tone: 'yellow' },
+        { label: 'Saldo a receber', value: pending, tone: 'orange' }
+      );
+      if (monthBudgets.length || previousBalance) {
+        budgetMetrics.push({ label: 'Vendas de ' + formatMonth(previousMonth), value: salesPrevious, tone: 'blue' });
+        budgetMetrics.push({ label: 'Saldo de ' + formatMonth(previousMonth), value: previousBalance ? previousBalance.closing : 0, tone: 'blue' });
+      }
+      if (monthBalance) {
+        budgetMetrics.push(
+          { label: 'Meta compra semanal', value: weeklyGoal, tone: 'blue' },
+          { label: 'Saldo restante a comprar', value: remaining, tone: 'green' }
+        );
+      }
+    }
+    var budgetMax = Math.max.apply(Math, budgetMetrics.map(function (item) { return Math.abs(item.value); }).concat([1]));
     var adjustment = '<button type="button" class="btn secondary" data-pm-adjust-budget>' +
       (dashboardBudgetOpen ? 'Fechar parâmetros' : '⚙ Ajustar parâmetros') + '</button>';
     var budgetForm = dashboardBudgetOpen ? recordForm('budget', budget || { id: '', data: {
@@ -440,28 +477,12 @@
       '<label class="pm-field"><span>Mês do orçamento</span><input type="month" data-pm-dashboard-month value="' +
       escapeHtml(dashboardMonth) + '"></label><small>' + escapeHtml(formatMonth(dashboardMonth)) + ' · ' +
       (budget ? 'Orçamento configurado' : 'Sem orçamento definido') + '</small></div>' + budgetForm +
-      '<div class="pm-budget-bars">' + [
-        ['Saldo disponível para compra', available, 'green'],
-        ['Total pedido', ordered, 'red'],
-        ['Total recebido', received, 'yellow'],
-        ['Saldo a receber', pending, 'orange']
-      ].map(function (item) {
-        var width = available > 0 ? Math.min(100, item[1] / available * 100) : item[1] > 0 ? 100 : 0;
-        return '<div class="pm-budget-bar"><b>' + escapeHtml(item[0]) + '</b><span class="pm-budget-track"><i class="is-' + item[2] +
-          '" style="width:' + width + '%"></i></span><strong>' + escapeHtml(money(item[1])) + '</strong></div>';
-      }).join('') + '</div><div class="pm-budget-summary">' +
-      [
-        ['Vendas de ' + formatMonth(previousMonth), money(salesPrevious)],
-        ['Saldo de ' + formatMonth(previousMonth), money(previousBalance ? previousBalance.closing : 0)],
-        ['Meta compra semanal', money(weeklyGoal)],
-        ['Saldo restante a comprar', money(remaining)]
-      ].map(function (item) {
-        return '<article><small>' + escapeHtml(item[0]) + '</small><strong>' + escapeHtml(item[1]) + '</strong></article>';
-      }).join('') + '</div></section>' +
-      '<div class="pm-metrics pm-dashboard-metrics">' + cards.map(function (item) {
-        return '<article class="pm-metric"><small>' + escapeHtml(item[0]) + '</small><strong>' + escapeHtml(item[1]) + '</strong>' +
-          (item[0] === 'Índice de custo com frete FOB' ? '<span>Frete FOB: ' + escapeHtml(money(freight)) + '</span>' : '') + '</article>';
-      }).join('') + '</div>' +
+      (budgetMetrics.length ? '<div class="pm-budget-bars">' + budgetMetrics.map(function (item) {
+        var width = budgetMax > 0 ? Math.min(100, Math.abs(item.value) / budgetMax * 100) : 0;
+        return '<div class="pm-budget-bar"><b>' + escapeHtml(item.label) + '</b><span class="pm-budget-track"><i class="is-' + item.tone +
+          '" style="width:' + width + '%"></i></span><strong>' + escapeHtml(money(item.value)) + '</strong></div>';
+      }).join('') + '</div>' : '<div class="pm-empty">Não há orçamento ou pedidos registrados para este período.</div>') + '</section>' +
+      renderMetricBars('Indicadores de fornecedores e compras', supplierMetrics) +
       '<div class="pm-dashboard-charts"><section class="pm-dashboard-chart"><h3>🏆 Top 10 melhores fornecedores</h3>' +
       renderSupplierRanking() + '</section><section class="pm-dashboard-chart"><h3>🎯 Média por critério</h3>' +
       renderEvaluationCriteria() + '</section></div>' + renderAnnualDashboard();
@@ -738,6 +759,26 @@
       late: supplied.filter(function (item) { return item.band === 'late'; }).length
     };
     var noOrders = supplied.filter(function (item) { return item.band === 'none'; });
+    var statusMetrics = [
+      { key: 'ontime', label: 'Em dia (< 30 dias)', value: counts.ontime },
+      { key: 'attention', label: 'Atenção (31 a 45 dias)', value: counts.attention },
+      { key: 'late', label: 'Ruptura / atraso (> 45 dias)', value: counts.late },
+      { key: '', label: 'Sem pedido registrado', value: noOrders.length }
+    ].filter(function (metric) { return metric.value > 0; });
+    var statusMax = Math.max.apply(Math, statusMetrics.map(function (metric) { return metric.value; }).concat([1]));
+    var deliveryAverage = average(all('order').filter(function (order) {
+      return areaMatches(order, purchaseAreaFilter);
+    }).map(orderTerm));
+    var statusChart = statusMetrics.length || deliveryAverage != null ? '<div class="pm-order-metrics">' + statusMetrics.map(function (metric) {
+      var width = Math.max(0, Math.min(100, metric.value / statusMax * 100));
+      var className = metric.key ? 'pm-order-metric is-' + metric.key + (ordersStatusFilter === metric.key ? ' is-selected' : '') : 'pm-order-metric';
+      var buttonAttrs = metric.key ? ' type="button" data-pm-order-status="' + metric.key + '"' : '';
+      return '<' + (metric.key ? 'button' : 'div') + buttonAttrs + ' class="pm-metric ' + className + '"><small>' + escapeHtml(metric.label) +
+        '</small><span class="pm-order-metric-track"><i style="width:' + width + '%"></i></span><strong>' +
+        metric.value.toLocaleString('pt-BR') + '</strong></' + (metric.key ? 'button' : 'div') + '>';
+    }).join('') + (deliveryAverage == null ? '' : '<div class="pm-metric pm-order-average"><small>Tempo médio geral de entrega</small>' +
+      '<span class="pm-order-metric-track"><i style="width:100%"></i></span><strong>' + escapeHtml(number(deliveryAverage, 0) + ' dias') +
+      '</strong></div>') + '</div>' : '';
     var bandNames = { ontime: 'Em dia', attention: 'Atenção', late: 'Ruptura / atraso' };
     var selectedSuppliers = ordersStatusFilter
       ? supplied.filter(function (item) { return item.band === ordersStatusFilter; })
@@ -764,22 +805,7 @@
         '</td><td>' + escapeHtml(money(orderCancelled(order))) + '</td><td>' + escapeHtml(money(orderPending(order))) + '</td><td>' + actions + '</td></tr>';
     });
     return '<h2 class="pm-dashboard-title">Acompanhamento de pedidos e tempo de entrega</h2>' +
-      '<div class="pm-order-metrics">' + [
-        ['ontime', 'Em dia (&lt; 30 dias)', counts.ontime],
-        ['attention', 'Atenção (31 a 45 dias)', counts.attention],
-        ['late', 'Ruptura / atraso (&gt; 45 dias)', counts.late],
-        ['', 'Tempo médio geral de entrega', average(all('order').filter(function (order) {
-          return areaMatches(order, purchaseAreaFilter);
-        }).map(orderTerm)) == null
-          ? 'Sem dados' : number(average(all('order').filter(function (order) {
-            return areaMatches(order, purchaseAreaFilter);
-          }).map(orderTerm)), 0) + ' dias']
-      ].map(function (item) {
-        return item[0]
-          ? '<button type="button" class="pm-metric pm-order-metric is-' + item[0] + (ordersStatusFilter === item[0] ? ' is-selected' : '') +
-            '" data-pm-order-status="' + item[0] + '"><small>' + item[1] + '</small><strong>' + item[2] + '</strong></button>'
-          : '<article class="pm-metric"><small>' + escapeHtml(item[1]) + '</small><strong>' + escapeHtml(item[2]) + '</strong></article>';
-      }).join('') + '</div><div class="pm-dashboard-filters">' + areaSelectMarkup('data-pm-area-filter') +
+      statusChart + '<div class="pm-dashboard-filters">' + areaSelectMarkup('data-pm-area-filter') +
       '</div><p class="pm-help">Clique nos indicadores para consultar fornecedores da área selecionada. As faixas contam os dias desde o último pedido; fornecedores inativos ou suspensos entram em Ruptura / Atraso. O prazo médio considera entregas válidas.</p>' +
       (noOrders.length ? '<section class="pm-dashboard-chart pm-order-no-orders"><div class="pm-section-head"><div><h3>Fornecedores e fabricantes sem pedido <span class="pm-count">' +
         noOrders.length + '</span></h3><p class="pm-help">Cadastros que ainda não possuem pedido em todo o histórico.</p></div><div class="pm-dashboard-section-actions">' +
@@ -1019,20 +1045,32 @@
     var metricNames = ['Pedidos', 'Valor pedido', 'Recebido', 'Cancelado', 'Saldo a receber', 'Média final', 'Qualidade', 'Preço',
       'Entrega', 'Estoque', 'Garantia média', 'Prazo faturamento', 'Prazo entrega', 'Frete FOB', 'C/ faturamento', 'C/ entrega'];
     var validSelection = selected.length >= 2 && selected.length <= 5;
+    var comparisonCharts = validSelection ? metricNames.map(function (metric, index) {
+      var values = rows.map(function (row, rowIndex) {
+        var cell = document.createElement('template');
+        cell.innerHTML = row;
+        var text = cell.content.querySelectorAll('td')[index].textContent.trim();
+        var normalized = text.replace(/[^\d,.-]/g, '');
+        if (normalized.indexOf(',') >= 0) normalized = normalized.replace(/\./g, '').replace(',', '.');
+        else normalized = normalized.replace(/\./g, '');
+        return { label: selected[rowIndex].title, display: text, value: normalized ? Number(normalized) : NaN };
+      }).filter(function (item) { return Number.isFinite(item.value); });
+      if (!values.length) return '';
+      var maximum = Math.max.apply(Math, values.map(function (item) { return Math.abs(item.value); }).concat([1]));
+      return '<section class="pm-dashboard-chart pm-compare-chart"><h3>' + escapeHtml(metric) + '</h3><div class="pm-dashboard-metric-bars">' +
+        values.map(function (item) {
+          var width = Math.max(0, Math.min(100, Math.abs(item.value) / maximum * 100));
+          return '<div class="pm-dashboard-metric-row"><b>' + escapeHtml(item.label) + '</b><span><i style="width:' + width +
+            '%"></i></span><strong>' + escapeHtml(item.display) + '</strong></div>';
+        }).join('') + '</div></section>';
+    }).join('') : '';
     return '<p class="pm-help">Selecione de dois a cinco fornecedores. O intervalo de datas é o mesmo para todos; pedidos usam a data do pedido e avaliações, a data de emissão.</p>' +
       '<div class="pm-compare-picker">' + picker + '</div>' +
       '<div class="pm-compare-period"><label class="pm-field"><span>De</span><input type="date" data-pm-compare-from value="' + escapeHtml(dateFrom) + '"></label>' +
       '<label class="pm-field"><span>Até</span><input type="date" data-pm-compare-to value="' + escapeHtml(dateTo) + '"></label></div>' +
-      (validSelection ? '<div class="pm-table-wrap"><table class="pm-table pm-compare-table"><thead><tr><th>Métrica</th>' +
-        selected.map(function (supplier) { return '<th>' + escapeHtml(supplier.title) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-        metricNames.map(function (metric, index) {
-          var values = rows.map(function (row) {
-            var cell = document.createElement('template');
-            cell.innerHTML = row;
-            return cell.content.querySelectorAll('td')[index].textContent;
-          });
-          return '<tr><th>' + escapeHtml(metric) + '</th>' + values.map(function (value) { return '<td>' + escapeHtml(value) + '</td>'; }).join('') + '</tr>';
-        }).join('') + '</tbody></table></div>' :
+      (validSelection ? comparisonCharts
+        ? '<div class="pm-dashboard-charts pm-compare-charts">' + comparisonCharts + '</div>'
+        : '<div class="pm-empty">Não há métricas numéricas disponíveis no período selecionado.</div>' :
         '<div class="pm-empty">Marque de dois a cinco fornecedores para comparar.</div>');
   }
 
@@ -1059,20 +1097,24 @@
     var guarantee = average(evaluations.map(function (item) {
       return item.data.warrantyValue === '' ? null : Number(item.data.warrantyValue);
     }));
-    var freight = orders.filter(function (order) { return order.data.freightType === 'FOB'; })
+    var freightOrders = orders.filter(function (order) { return order.data.freightType === 'FOB'; });
+    var freight = freightOrders
       .reduce(function (sum, order) { return sum + Number(order.data.freightValue || 0); }, 0);
-    var metrics = [
-      ['Pedidos no período', orders.length],
-      ['Total comprado', money(orders.reduce(function (sum, order) { return sum + Number(order.data.amount || 0); }, 0))],
-      ['Média das avaliações', number(average(scores.map(function (score) { return score.final; })), 2)],
-      ['Média de garantias', money(guarantee)],
-      ['Tempo médio de faturamento', billing == null ? 'Sem dados' : number(billing, 0) + ' dias'],
-      ['Tempo médio de entrega', delivery == null ? 'Sem dados' : number(delivery, 0) + ' dias'],
-      ['Frete FOB informado', money(freight)]
-    ];
-    return selector + '<div class="pm-metrics">' + metrics.map(function (item) {
-      return '<article class="pm-metric"><small>' + escapeHtml(item[0]) + '</small><strong>' + escapeHtml(item[1]) + '</strong></article>';
-    }).join('') + '</div><h3>Pedidos de ' + escapeHtml(supplier.title) + '</h3>' +
+    var metrics = [];
+    if (orders.length) {
+      var totalPurchased = orders.reduce(function (sum, order) { return sum + Number(order.data.amount || 0); }, 0);
+      metrics.push({ label: 'Pedidos no período', value: orders.length, display: orders.length.toLocaleString('pt-BR') });
+      metrics.push({ label: 'Total comprado', value: totalPurchased, display: money(totalPurchased) });
+    }
+    if (scores.length) {
+      var averageScore = average(scores.map(function (score) { return score.final; }));
+      metrics.push({ label: 'Média das avaliações', value: averageScore, display: number(averageScore, 2) });
+      if (guarantee != null) metrics.push({ label: 'Média de garantias', value: guarantee, display: money(guarantee) });
+    }
+    if (billing != null) metrics.push({ label: 'Tempo médio de faturamento', value: billing, display: number(billing, 0) + ' dias' });
+    if (delivery != null) metrics.push({ label: 'Tempo médio de entrega', value: delivery, display: number(delivery, 0) + ' dias' });
+    if (freightOrders.length) metrics.push({ label: 'Frete FOB informado', value: freight, display: money(freight) });
+    return selector + renderMetricBars('Indicadores do período', metrics) + '<h3>Pedidos de ' + escapeHtml(supplier.title) + '</h3>' +
       table(['Nº', 'Data', 'Status', 'Pedido', 'Recebido', 'Cancelado', 'Pendente'], orders.map(function (order) {
         return '<tr><td>' + escapeHtml(order.data.orderNumber || 'Não informado') + '</td><td>' + escapeHtml(order.data.orderDate) + '</td><td>' +
           escapeHtml(order.status) + '</td><td>' + escapeHtml(money(order.data.amount)) + '</td><td>' + escapeHtml(money(orderReceived(order))) +

@@ -151,17 +151,26 @@
 
   function metricsMarkup() {
     var active = assets.filter(function (asset) { return !asset.archived; });
+    if (!active.length) return '';
     var operational = active.filter(function (asset) { return asset.status === 'Operacional'; }).length;
     var inMaintenance = active.filter(function (asset) { return asset.status === 'Em manutenção'; }).length;
     var attention = active.filter(function (asset) {
       var due = assetDueState(asset);
       return due.key === 'overdue' || due.key === 'soon' || asset.status === 'Atenção' || asset.status === 'Indisponível';
     }).length;
-    return '<div class="infrastructure-metrics">' +
-      '<div><b>' + active.length + '</b><span>Equipamentos ativos</span></div>' +
-      '<div><b>' + operational + '</b><span>Operacionais</span></div>' +
-      '<div><b>' + attention + '</b><span>Com alerta</span></div>' +
-      '<div><b>' + inMaintenance + '</b><span>Em manutenção</span></div></div>';
+    var metrics = [
+      { label: 'Equipamentos ativos', value: active.length },
+      { label: 'Operacionais', value: operational },
+      { label: 'Com alerta', value: attention },
+      { label: 'Em manutenção', value: inMaintenance }
+    ].filter(function (metric) { return metric.value > 0; });
+    var maximum = Math.max.apply(Math, metrics.map(function (metric) { return metric.value; }).concat([1]));
+    return '<div class="infrastructure-metrics" role="img" aria-label="Gráfico dos equipamentos ativos">' +
+      metrics.map(function (metric) {
+        return '<div><span>' + escape(metric.label) + '</span><i><b style="width:' +
+          Math.max(0, Math.min(100, metric.value / maximum * 100)) + '%"></b></i><strong>' +
+          metric.value.toLocaleString('pt-BR') + '</strong></div>';
+      }).join('') + '</div>';
   }
 
   function assetCard(asset) {

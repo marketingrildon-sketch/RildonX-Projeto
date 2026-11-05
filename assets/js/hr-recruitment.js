@@ -169,18 +169,36 @@
 
   function renderAnalytics() {
     var people = candidates();
-    var open = vacancies().filter(function (record) { return record.status === 'Aberta'; }).length;
-    var active = people.filter(function (record) { return ['Contratado', 'Reprovado'].indexOf(record.status) === -1; }).length;
-    var hired = people.filter(function (record) { return record.status === 'Contratado'; }).length;
-    var rejected = people.filter(function (record) { return record.status === 'Reprovado'; }).length;
-    return '<div class="hr-rec-analytics-grid"><article><small>Vagas abertas</small><strong>' + open + '</strong></article>' +
-      '<article><small>Talentos ativos</small><strong>' + active + '</strong></article><article><small>Contratações</small><strong>' + hired +
-      '</strong></article><article><small>Encerrados sem contratação</small><strong>' + rejected + '</strong></article></div>' +
-      '<section class="hr-rec-stage-report"><h3>Talentos por etapa</h3>' + STAGES.map(function (stage) {
+    var peopleInProcess = people.filter(function (record) { return ['Contratado', 'Reprovado'].indexOf(record.status) === -1; }).length;
+    var openVacancies = vacancies().filter(function (record) { return record.status === 'Aberta'; }).length;
+    var metrics = [];
+    if (vacancies().length) metrics.push({ label: 'Vagas abertas', value: openVacancies });
+    if (people.length) {
+      metrics.push({ label: 'Talentos no processo', value: peopleInProcess });
+      metrics.push({ label: 'Entrevistas', value: people.filter(function (record) { return record.status === 'Entrevista'; }).length });
+      metrics.push({ label: 'Contratados', value: people.filter(function (record) { return record.status === 'Contratado'; }).length });
+      metrics.push({ label: 'Encerrados sem contratação', value: people.filter(function (record) { return record.status === 'Reprovado'; }).length });
+    }
+    return renderCountChart('Indicadores do processo', metrics) +
+      (people.length ? '<section class="hr-rec-stage-report"><h3>Talentos por etapa</h3>' + STAGES.filter(function (stage) {
+        return people.some(function (record) { return record.status === stage; });
+      }).map(function (stage) {
         var count = people.filter(function (record) { return record.status === stage; }).length;
         var percent = people.length ? Math.round(count * 100 / people.length) : 0;
         return '<div class="hr-rec-stage-row"><span>' + escapeHtml(stage) + '</span><div><i style="width:' + percent + '%"></i></div><b>' + count + '</b></div>';
-      }).join('') + '</section><p class="hr-rec-muted">Indicadores calculados a partir dos registros ativos deste painel.</p>';
+      }).join('') + '</section>' : '') +
+      (metrics.length ? '<p class="hr-rec-muted">Indicadores calculados a partir dos registros ativos deste painel.</p>' : '');
+  }
+
+  function renderCountChart(title, metrics) {
+    if (!metrics.length) return '';
+    var maximum = Math.max.apply(Math, metrics.map(function (metric) { return metric.value; }).concat([1]));
+    return '<section class="hr-rec-stage-report hr-rec-metric-chart"><h3>' + escapeHtml(title) + '</h3>' +
+      metrics.map(function (metric) {
+        var width = Math.max(0, Math.min(100, metric.value / maximum * 100));
+        return '<div class="hr-rec-stage-row"><span>' + escapeHtml(metric.label) + '</span><div><i style="width:' + width + '%"></i></div><b>' +
+          metric.value.toLocaleString('pt-BR') + '</b></div>';
+      }).join('') + '</section>';
   }
 
   function renderCandidateDetail(record) {
@@ -253,7 +271,16 @@
   function render() {
     if (!root || !root.isConnected) return;
     var people = candidates();
-    var vacanciesTotal = vacancies().filter(function (record) { return record.status === 'Aberta'; }).length;
+    var vacancyRecords = vacancies();
+    var vacanciesTotal = vacancyRecords.filter(function (record) { return record.status === 'Aberta'; }).length;
+    var activePeople = people.filter(function (record) { return ['Contratado', 'Reprovado'].indexOf(record.status) === -1; }).length;
+    var overviewMetrics = [];
+    if (vacancyRecords.length) overviewMetrics.push({ label: 'Vagas ativas', value: vacanciesTotal });
+    if (people.length) {
+      overviewMetrics.push({ label: 'Talentos no processo', value: activePeople });
+      overviewMetrics.push({ label: 'Entrevistas', value: people.filter(function (record) { return record.status === 'Entrevista'; }).length });
+      overviewMetrics.push({ label: 'Contratados', value: people.filter(function (record) { return record.status === 'Contratado'; }).length });
+    }
     var content = '';
     if (selectedId) {
       var selected = people.find(function (record) { return String(record.id) === String(selectedId); });
@@ -278,10 +305,7 @@
         '</select></label><button class="btn" type="button" data-new-candidate>+ Novo talento</button></div>' + renderPipeline();
     }
     root.innerHTML = '<div class="hr-rec-app">' + notice + (loadError ? '<div class="hr-rec-notice is-error" role="alert">' + escapeHtml(loadError) + '</div>' : '') +
-      '<div class="hr-rec-metrics"><article><small>Vagas ativas</small><strong>' + vacanciesTotal + '</strong></article>' +
-      '<article><small>Talentos no processo</small><strong>' + people.filter(function (record) { return ['Contratado', 'Reprovado'].indexOf(record.status) === -1; }).length +
-      '</strong></article><article><small>Entrevistas</small><strong>' + people.filter(function (record) { return record.status === 'Entrevista'; }).length +
-      '</strong></article><article><small>Contratados</small><strong>' + people.filter(function (record) { return record.status === 'Contratado'; }).length + '</strong></article></div>' +
+      renderCountChart('Resumo do recrutamento', overviewMetrics) +
       '<nav class="hr-rec-tabs" aria-label="Seções de recrutamento"><button type="button" data-tab="talentos" class="' + (tab === 'talentos' ? 'is-active' : '') +
       '">Talentos <span>' + people.length + '</span></button><button type="button" data-tab="vagas" class="' + (tab === 'vagas' ? 'is-active' : '') +
       '">Vagas <span>' + vacanciesTotal + '</span></button><button type="button" data-tab="indicadores" class="' + (tab === 'indicadores' ? 'is-active' : '') +

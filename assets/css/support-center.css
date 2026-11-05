@@ -26,13 +26,12 @@
 .support-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 13px}
 .support-section-heading h3{margin:0;color:var(--text);font-size:14px;font-weight:850}
 .support-section-heading p{margin:4px 0 0;color:var(--text-muted);font-size:10px;line-height:1.5}
-.support-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 16px}
-.support-kpis>div{display:flex;align-items:center;justify-content:space-between;gap:9px;min-height:58px;padding:11px 13px;border:1px solid var(--border-soft);border-radius:11px;background:var(--bg)}
-.support-kpis span{color:var(--text-muted);font-size:9px;font-weight:700}
-.support-kpis b{color:var(--sidebar-top);font-size:19px;font-weight:900}
-.support-kpis>div[data-tone="red"] b{color:#b42332}
-.support-kpis>div[data-tone="orange"] b{color:#c66a08}
-.support-kpis>div[data-tone="green"] b{color:#16804a}
+.support-kpis{display:grid;gap:9px;margin:0 0 16px;padding:13px;border:1px solid var(--border-soft);border-radius:11px;background:var(--bg)}
+.support-kpis>div{display:grid;grid-template-columns:minmax(140px,200px) minmax(80px,1fr) 44px;align-items:center;gap:10px}
+.support-kpis span{color:var(--text-muted);font-size:11px;font-weight:700}
+.support-kpis i{height:8px;overflow:hidden;border-radius:999px;background:var(--blue-50)}
+.support-kpis i>b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--blue-600),#7f96f5)}
+.support-kpis strong{color:var(--sidebar-top);font-size:12px;text-align:right}
 .support-toolbar{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin:0 0 11px}
 .support-search{display:flex;align-items:center;gap:7px;flex:1 1 210px;min-width:180px;min-height:35px;padding:0 10px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text-muted)}
 .support-search>span{font-size:20px;line-height:1}
@@ -108,7 +107,7 @@
   .support-header-actions{gap:5px}
   .support-back-library{padding:7px;font-size:8px}
   .support-header-actions .btn{padding:7px;font-size:8px}
-  .support-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .support-kpis>div{grid-template-columns:minmax(100px,1fr) minmax(60px,1.5fr) 36px}
   .support-ticket-row{grid-template-columns:minmax(95px,.7fr) minmax(110px,1.3fr) auto 12px;gap:7px;padding:8px}
   .support-ticket-date{display:none}
   .support-form-grid{grid-template-columns:1fr}
