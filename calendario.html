@@ -8,7 +8,8 @@
 <link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
   <script type="module" crossorigin src="./assets/supabase-client-DL4FSV51.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/supabase-client-G6WVxBTe.css">
-  <link rel="stylesheet" href="./assets/css/styles.css?v=20261105d">
+  <link rel="stylesheet" href="./assets/css/styles.css?v=20261105l">
+  <link rel="stylesheet" href="./assets/css/calendar-enhancements.css?v=20261105a">
 </head>
 <body data-page="calendario">
 <div class="app" id="app-root">
@@ -148,16 +149,21 @@
         <button class="page-btn" id="calendar-next-btn" type="button" aria-label="Próximo período">›</button>
       </div>
       <div class="calendar-page-actions">
-        <button class="calendar-icon-action" id="calendar-sync-btn" type="button" title="Sincronizar Google Calendar" aria-label="Sincronizar Google Calendar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5"/><path d="M4.9 9A7.5 7.5 0 0 1 18 6.5L20 12"/><path d="M4 17v-5h5"/><path d="M19.1 15A7.5 7.5 0 0 1 6 17.5L4 12"/></svg>
-        </button>
-        <button class="calendar-icon-action" id="calendar-export-btn" type="button" title="Exportar calendário (.ics)" aria-label="Exportar calendário (.ics)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 17v3h14v-3"/></svg>
-        </button>
         <button class="btn calendar-primary-action" id="calendar-new-event-btn" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Novo evento
         </button>
+        <button class="btn secondary small calendar-sidebar-toggle" id="calendar-sidebar-toggle" type="button" aria-controls="calendar-sidebar" aria-expanded="false">
+          Filtros e calendários
+        </button>
+        <div class="calendar-secondary-actions" aria-label="Ações secundárias do calendário">
+          <button class="calendar-icon-action" id="calendar-sync-btn" type="button" title="Sincronizar Google Calendar" aria-label="Sincronizar Google Calendar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5"/><path d="M4.9 9A7.5 7.5 0 0 1 18 6.5L20 12"/><path d="M4 17v-5h5"/><path d="M19.1 15A7.5 7.5 0 0 1 6 17.5L4 12"/></svg>
+          </button>
+          <button class="calendar-icon-action" id="calendar-export-btn" type="button" title="Exportar calendário (.ics)" aria-label="Exportar calendário (.ics)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 17v3h14v-3"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -184,13 +190,50 @@
           <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Prazo</div>
           <div class="item"><svg viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>Comemorativa</div>
         </div>
-      </div>
 
-      <div class="side-widgets">
-        <div class="mini-cal">
-          <div class="mini-cal-head"><button type="button" id="calendar-mini-prev" aria-label="Mês anterior">‹</button><span id="calendar-mini-title"></span><button type="button" id="calendar-mini-next" aria-label="Próximo mês">›</button></div>
-          <div class="cal-grid" id="calendar-mini-grid"></div>
-        </div>
+      </div>
+              <aside class="calendar-sidebar" id="calendar-sidebar" hidden>
+              <div class="side-widgets">
+                <div class="card card-pad calendar-filter-card">
+                  <h3>Buscar e filtrar</h3>
+                  <div class="field">
+                    <label for="calendar-filter-search">Busca</label>
+                    <input id="calendar-filter-search" type="search" placeholder="Evento, local ou descrição">
+                  </div>
+                  <div class="field">
+                    <label for="calendar-filter-project">Projeto</label>
+                    <select id="calendar-filter-project"><option value="">Todos os projetos</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="calendar-filter-source">Origem</label>
+                    <select id="calendar-filter-source">
+                      <option value="">Todas as origens</option>
+                      <option value="manual">Evento criado no calendário</option>
+                      <option value="task">Tarefa</option>
+                      <option value="project">Projeto</option>
+                      <option value="google">Google Calendar</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="calendar-filter-responsible">Responsável</label>
+                    <select id="calendar-filter-responsible"><option value="">Todas as pessoas</option></select>
+                  </div>
+                  <div class="field-row">
+                    <div class="field">
+                      <label for="calendar-filter-from">De</label>
+                      <input id="calendar-filter-from" type="date">
+                    </div>
+                    <div class="field">
+                      <label for="calendar-filter-to">Até</label>
+                      <input id="calendar-filter-to" type="date">
+                    </div>
+                  </div>
+                  <button class="btn secondary small calendar-filter-clear" id="calendar-filter-clear" type="button">Limpar filtros</button>
+                </div>
+                <div class="mini-cal">
+                  <div class="mini-cal-head"><button type="button" id="calendar-mini-prev" aria-label="Mês anterior">‹</button><span id="calendar-mini-title"></span><button type="button" id="calendar-mini-next" aria-label="Próximo mês">›</button></div>
+                  <div class="cal-grid" id="calendar-mini-grid"></div>
+                </div>
 
         <div class="card card-pad">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -207,10 +250,11 @@
             <div class="conn-info"><b>Google Calendar</b><span>Sincronize seus eventos com o Google</span></div>
             <button class="calendar-connect-btn" type="button" data-calendar-provider="google">Conectar</button>
           </div>
-          <p class="calendar-connect-note" id="calendar-connection-status">Verificando calendários conectados...</p>
+          <p class="calendar-connect-note calendar-connection-state" id="calendar-connection-status" role="status" aria-live="polite">Verificando calendários conectados...</p>
           <p class="calendar-connect-note">Eventos importados são pessoais e só ficam visíveis para você.</p>
         </div>
       </div>
+      </aside>
     </div>
 </section>
   </div>
@@ -458,10 +502,10 @@
 <script src="assets/js/auth.js?v=20261027c"></script>
 <script src="assets/js/data-store.js?v=20261103a"></script>
 <script src="assets/js/supabase-sync.js?v=20261103a"></script>
-<script src="assets/js/business-calendar-sync.js?v=20261028a"></script>
+<script src="assets/js/business-calendar-sync.js?v=20261105b"></script>
 <script src="assets/js/app.js?v=20261104a"></script>
 <script src="assets/js/department-requests.js?v=20261028a"></script>
 <script src="assets/js/support-center.js?v=20261028a"></script>
-<script src="assets/js/calendar-page.js?v=20261028a"></script>
+<script src="assets/js/calendar-page.js?v=20261105b"></script>
 </body>
 </html>

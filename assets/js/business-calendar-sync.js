@@ -62,7 +62,12 @@
       allDayStartDate: row.all_day_start_date || null,
       allDayEndDate: row.all_day_end_date || null,
       deletedAt: row.deleted_at || null,
-      projectId: row.project_id || null
+      projectId: row.project_id || null,
+      sourceType: row.source_type || 'manual',
+      sourceRecordId: row.source_record_id || null,
+      sourceSlot: row.source_slot || null,
+      viewerIds: Array.isArray(row.viewer_ids) ? row.viewer_ids : [],
+      assigneeIds: Array.isArray(row.assignee_ids) ? row.assignee_ids : []
     };
     window.RildonXStore.setState({
       events: [event].concat(current.filter(function (item) { return String(item.id) !== String(event.id); }))
@@ -76,6 +81,48 @@
     return auth.data.user;
   }
 
+  function resolveIds(values, profiles) {
+    return (values || []).map(function (value) {
+      var id = value && typeof value === 'object' ? value.id || value.userId : value;
+      var profile = (profiles || []).find(function (item) {
+        return String(item.id) === String(id) ||
+          String(item.displayName || '').toLocaleLowerCase('pt-BR') === String(id || '').toLocaleLowerCase('pt-BR') ||
+          String(item.nickname || '').toLocaleLowerCase('pt-BR') === String(id || '').toLocaleLowerCase('pt-BR');
+      });
+      return profile ? String(profile.id) : (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(String(id || '')) ? String(id) : null);
+    }).filter(Boolean);
+  }
+
+  function sourcePermissions(record, source, userId) {
+    var storeState = window.RildonXStore ? window.RildonXStore.getState() : {};
+    var profiles = storeState.profiles || [];
+    var project = source === 'project'
+      ? record
+      : (storeState.projects || []).find(function (item) {
+        return String(item.id) === String(record.projectId || '');
+      });
+    var projectMembers = project ? resolveIds(project.members, profiles) : [];
+    var taskMembers = source === 'task'
+      ? resolveIds([].concat(record.viewerIds || [], record.assignees || []), profiles)
+      : [];
+    var creatorId = record.createdBy ? String(record.createdBy) : null;
+    var projectCreatorId = project && project.createdBy ? String(project.createdBy) : null;
+    var publicProject = Boolean(project && (project.allUsers || !project.createdBy));
+    var publicSource = source === 'project'
+      ? Boolean(record.allUsers || !record.createdBy)
+      : Boolean((!record.createdBy && !(record.viewerIds || []).length &&
+        !(record.assignees || []).length && !record.projectId) || publicProject);
+    var viewerIds = resolveIds([creatorId, projectCreatorId, userId].concat(taskMembers, projectMembers), profiles);
+    if (creatorId) viewerIds.push(creatorId);
+    if (projectCreatorId) viewerIds.push(projectCreatorId);
+    if (userId) viewerIds.push(String(userId));
+    return {
+      visibility: publicSource ? 'team' : 'restricted',
+      viewerIds: Array.from(new Set(viewerIds)),
+      assigneeIds: source === 'task' ? taskMembers : []
+    };
+  }
+
   async function sync(options) {
     var settings = options || {};
     var client = window.supabaseClient;
@@ -84,12 +131,20 @@
       throw new Error('Não foi possível identificar o registro a sincronizar com o calendário.');
     }
     var user = await getUser(client);
-    var isTeamEvent = settings.visibility === 'team';
-    var id = eventId(isTeamEvent ? 'team' : user.id, settings.source, settings.recordId, settings.slot);
+    var idScope = settings.visibility === 'private' ? user.id : 'team';
+    var id = eventId(idScope, settings.source, settings.recordId, settings.slot);
+    var viewerIds = (settings.viewerIds || []).map(String);
+    if (settings.visibility === 'restricted' && viewerIds.indexOf(String(user.id)) === -1) {
+      viewerIds.push(String(user.id));
+    }
     var dates = eventDates(settings.date);
     if (dates === null) {
-      var removeQuery = client.from('events').update({ deleted_at: new Date().toISOString() }).eq('id', id);
-      if (!isTeamEvent) removeQuery = removeQuery.eq('owner_id', user.id);
+      var candidateIds = [eventId('team', settings.source, settings.recordId, settings.slot),
+        eventId('restricted', settings.source, settings.recordId, settings.slot)];
+      if (settings.visibility === 'private') candidateIds.push(id);
+      var removeQuery = client.from('events').update({ deleted_at: new Date().toISOString() })
+        .in('id', candidateIds);
+      if (settings.visibility === 'private') removeQuery = removeQuery.eq('owner_id', user.id);
       var removed = await removeQuery.select('*').maybeSingle();
       if (removed.error) throw removed.error;
       if (removed.data) updateStore(removed.data);
@@ -103,14 +158,19 @@
       ends_at: dates.endsAt,
       category: String(settings.category || 'reuniao').slice(0, 40),
       location: String(settings.location || '').slice(0, 500),
-      visibility: isTeamEvent ? 'team' : 'private',
-      owner_id: isTeamEvent ? null : user.id,
+      visibility: settings.visibility || 'team',
+      owner_id: settings.visibility === 'private' ? user.id : null,
       all_day: dates.allDay,
       all_day_start_date: dates.startDate,
       all_day_end_date: dates.endDate,
       deleted_at: null,
       created_by: user.id,
-      project_id: settings.projectId || null
+      project_id: settings.projectId || null,
+      source_type: settings.source,
+      source_record_id: String(settings.recordId),
+      source_slot: settings.slot,
+      viewer_ids: viewerIds,
+      assignee_ids: settings.assigneeIds || []
     };
     var result = await client.from('events').upsert(payload, { onConflict: 'id' }).select('*').single();
     if (result.error) throw result.error;
@@ -141,10 +201,13 @@
     var record = project || {};
     if (!record.id) return Promise.reject(new Error('Não foi possível identificar o projeto para sincronização.'));
     var title = String(record.name || 'Projeto');
+    var permissions = sourcePermissions(record, 'project');
     return syncMany({
       source: 'project',
       recordId: record.id,
-      visibility: 'team',
+      visibility: permissions.visibility,
+      viewerIds: permissions.viewerIds,
+      assigneeIds: permissions.assigneeIds,
       category: 'projeto',
       projectId: record.id,
       description: String(record.description || '')
@@ -158,17 +221,22 @@
     var record = task || {};
     if (!record.id) return Promise.reject(new Error('Não foi possível identificar a tarefa para sincronização.'));
     var title = String(record.title || 'Tarefa');
-    return syncMany({
-      source: 'task',
-      recordId: record.id,
-      visibility: 'team',
-      category: 'tarefa',
-      projectId: record.projectId || null,
-      description: String(record.description || '')
-    }, [
-      { slot: 'start', date: record.startDate, title: 'Início da tarefa: ' + title },
-      { slot: 'due', date: record.dueDate, title: 'Prazo da tarefa: ' + title }
-    ]);
+    return getUser(window.supabaseClient).then(function (user) {
+      var permissions = sourcePermissions(record, 'task', user.id);
+      return syncMany({
+        source: 'task',
+        recordId: record.id,
+        visibility: permissions.visibility,
+        viewerIds: permissions.viewerIds,
+        assigneeIds: permissions.assigneeIds,
+        category: 'tarefa',
+        projectId: record.projectId || null,
+        description: String(record.description || '')
+      }, [
+        { slot: 'start', date: record.startDate, title: 'Início da tarefa: ' + title },
+        { slot: 'due', date: record.dueDate, title: 'Prazo da tarefa: ' + title }
+      ]);
+    });
   }
 
   function syncDeletedRecord(source, recordId, slots, category, projectId) {
@@ -186,10 +254,16 @@
     var store = window.RildonXStore;
     if (!store || typeof store.subscribe !== 'function') return;
     var previousTasks = new Map((store.getState().tasks || []).map(function (task) {
-      return [String(task.id), JSON.stringify([task.startDate || null, task.dueDate || null, task.title, task.projectId])];
+      return [String(task.id), JSON.stringify([
+        task.startDate || null, task.dueDate || null, task.title, task.projectId,
+        task.createdBy || null, task.viewerIds || [], task.assignees || []
+      ])];
     }));
     var previousProjects = new Map((store.getState().projects || []).map(function (project) {
-      return [String(project.id), JSON.stringify([project.startDate || null, project.endDate || null, project.name])];
+      return [String(project.id), JSON.stringify([
+        project.startDate || null, project.endDate || null, project.name, project.createdBy || null,
+        Boolean(project.allUsers), project.members || []
+      ])];
     }));
     var pending = new Map();
     var flushTimer = null;
@@ -206,7 +280,8 @@
         }, Promise.resolve()).catch(function (error) {
           console.error('Não foi possível sincronizar as datas de tarefas e projetos com o calendário:', error);
           if (typeof window.showToast === 'function') {
-            window.showToast('As datas foram salvas, mas não foi possível sincronizá-las com o calendário.');
+            var detail = error && error.message ? ' (' + error.message + ')' : '';
+            window.showToast('As datas foram salvas, mas não foi possível sincronizá-las com o calendário.' + detail);
           }
         });
       }, 250);
@@ -219,7 +294,10 @@
       tasks.forEach(function (task) {
         var id = String(task.id);
         currentTaskIds.add(id);
-        var fingerprint = JSON.stringify([task.startDate || null, task.dueDate || null, task.title, task.projectId]);
+        var fingerprint = JSON.stringify([
+          task.startDate || null, task.dueDate || null, task.title, task.projectId,
+          task.createdBy || null, task.viewerIds || [], task.assignees || []
+        ]);
         if (previousTasks.get(id) === fingerprint) return;
         previousTasks.set(id, fingerprint);
         enqueue('task:' + id, function () { return syncTask(task); });
@@ -236,7 +314,10 @@
       projects.forEach(function (project) {
         var id = String(project.id);
         currentProjectIds.add(id);
-        var fingerprint = JSON.stringify([project.startDate || null, project.endDate || null, project.name]);
+        var fingerprint = JSON.stringify([
+          project.startDate || null, project.endDate || null, project.name, project.createdBy || null,
+          Boolean(project.allUsers), project.members || []
+        ]);
         if (previousProjects.get(id) === fingerprint) return;
         previousProjects.set(id, fingerprint);
         enqueue('project:' + id, function () { return syncProject(project); });
@@ -249,6 +330,38 @@
         });
       });
     });
+
+    if (document.body.dataset.page === 'calendario' && window.RildonXSync &&
+        typeof window.RildonXSync.ready === 'function') {
+      window.RildonXSync.ready().then(function () {
+        var current = store.getState();
+        var knownEvents = new Map((current.events || []).map(function (event) {
+          return [String(event.sourceType || '') + ':' + String(event.sourceRecordId || '') + ':' +
+            String(event.sourceSlot || ''), event];
+        }));
+        (current.tasks || []).forEach(function (task) {
+          if (!task || !task.id || (!task.startDate && !task.dueDate)) return;
+          var startIsLinked = !task.startDate || knownEvents.has('task:' + String(task.id) + ':start');
+          var dueIsLinked = !task.dueDate || knownEvents.has('task:' + String(task.id) + ':due');
+          if (!startIsLinked || !dueIsLinked) {
+            enqueue('task:' + task.id, function () { return syncTask(task); });
+          }
+        });
+        (current.projects || []).forEach(function (project) {
+          if (!project || !project.id || (!project.startDate && !project.endDate)) return;
+          var startIsLinked = !project.startDate || knownEvents.has('project:' + String(project.id) + ':start');
+          var endIsLinked = !project.endDate || knownEvents.has('project:' + String(project.id) + ':end');
+          if (!startIsLinked || !endIsLinked) {
+            enqueue('project:' + project.id, function () { return syncProject(project); });
+          }
+        });
+      }).catch(function (error) {
+        console.error('Não foi possível atualizar as permissões dos eventos vinculados:', error);
+        if (typeof window.showToast === 'function') {
+          window.showToast('Não foi possível atualizar as permissões dos eventos de tarefas e projetos.');
+        }
+      });
+    }
   }
 
   watchDatedRecords();
