@@ -20,18 +20,7 @@
 .dashboard-page-actions>.btn svg{width:16px;height:16px;margin-right:6px;vertical-align:middle}
 .dashboard-page-actions>.dashboard-personalize-button{min-width:142px;box-shadow:0 4px 12px rgba(37, 99, 235, 0.216)}
 .dashboard-page-actions>.dashboard-personalize-button svg{margin-right:2px}
-#page-meuespaco .mini-calendar-board{padding:18px 20px}
-#page-meuespaco .mini-calendar-board .mcb-head{align-items:flex-start;gap:12px}
-#page-meuespaco .mini-calendar-board .mcb-head p{margin:5px 0 0;color:var(--text-muted);font-size:11px;line-height:1.45}
-#page-meuespaco .mini-calendar-board .mcb-nav{flex-wrap:wrap;justify-content:flex-end}
-#page-meuespaco .mini-calendar-board .mcb-nav .btn{min-height:34px;padding:7px 10px;font-size:11px;text-decoration:none}
-.marketing-content-overview-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
-.marketing-content-overview-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--border-soft);border-radius:8px;background:var(--card)}
-.marketing-content-overview-list li>a:first-child{display:grid;min-width:0;gap:3px;color:var(--text);text-decoration:none}
-.marketing-content-overview-list li>a:first-child b{overflow:hidden;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
-.marketing-content-overview-list li>a:first-child span,.marketing-content-overview-list li>a:first-child small{color:var(--text-muted);font-size:10px}
-.marketing-content-overview-list li>a:last-child{flex:0 0 auto;color:var(--blue-600);font-size:11px;font-weight:700;text-decoration:none}
-.marketing-content-overview-empty,.calendar-commemorations-empty{margin:0;padding:12px;color:var(--text-muted);font-size:12px;line-height:1.5}
+.calendar-commemorations-empty{margin:0;padding:12px;color:var(--text-muted);font-size:12px;line-height:1.5}
 .calendar-commemoration-link{display:flex;min-width:0;align-items:center;gap:8px;color:var(--text);text-decoration:none}
 .calendar-commemoration-link b{overflow:hidden;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
 .calendar-commemoration-date{flex:0 0 auto;color:var(--text-muted);font-size:10px}
@@ -106,6 +95,10 @@
 .dashboard-card-body-action:hover{background:var(--dashboard-tone-bottom,var(--sidebar-bottom));color:#fff;text-decoration:none}
 .dashboard-card-body-action:disabled{border-color:var(--border);background:var(--card);color:var(--text-muted);opacity:.7;cursor:not-allowed}
 .dashboard-card-body-action:focus-visible{outline:2px solid var(--dashboard-tone-top,var(--sidebar-top));outline-offset:2px}
+.dashboard-card-body-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:auto 0 0}
+.dashboard-card-body-actions .dashboard-card-body-action{margin:0}
+.dashboard-card-body-action-secondary{border-color:var(--border);background:var(--card);color:var(--text-muted)}
+.dashboard-card-body-action-secondary:hover{border-color:var(--dashboard-tone-top,var(--sidebar-top));background:var(--card);color:var(--dashboard-tone-top,var(--sidebar-top))}
 .dashboard-card-count{display:inline-grid;place-items:center;min-width:25px;height:25px;padding:0 7px;border-radius:20px;background:var(--blue-50);color:var(--blue-600);font-size:11px;font-weight:800}
 .dashboard-card-body{display:flex;min-height:0;flex:1;flex-direction:column;overflow:hidden;padding:12px 16px 17px;gap:0}
 .dashboard-card-list-heading{flex:0 0 auto;margin:0 0 5px;color:var(--text);font-size:11px;font-weight:800}
@@ -299,11 +292,6 @@
 .dashboard-library-search svg,.dashboard-business-toolbar>label:first-child svg{width:17px;height:17px}
 .dashboard-library-search input,.dashboard-business-toolbar input[type="search"]{width:100%;min-width:0;padding:10px 0;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:11px}
 .dashboard-library-tabs{display:flex;gap:7px;margin:0 0 16px;padding:0 0 8px;overflow-x:auto;border-bottom:1px solid var(--border-soft)}
-.dashboard-library-kinds{display:flex;gap:5px;width:max-content;max-width:100%;margin:-5px 0 16px;padding:4px;border:1px solid var(--border-soft);border-radius:9px;background:var(--bg)}
-.dashboard-library-kinds button{min-height:32px;padding:6px 12px;border:0;border-radius:7px;background:transparent;color:var(--text-muted);font:inherit;font-size:10px;font-weight:750;cursor:pointer}
-.dashboard-library-kinds button.active{background:var(--card);color:var(--blue-600);box-shadow:0 1px 4px rgba(20,35,60,.12)}
-.dashboard-library-kind{flex:none;padding:4px 7px;border-radius:20px;background:#e8f0ff;color:#2456c5;font-size:8px;font-weight:800;white-space:nowrap}
-.dashboard-library-kind[data-kind="process"]{background:#fff0dd;color:#a9580a}
 .dashboard-library-tab{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;flex:0 0 auto;padding:7px 12px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text-muted);font:inherit;font-size:10px;font-weight:750;white-space:nowrap;cursor:pointer;transition:background .15s ease,border-color .15s ease,color .15s ease}
 .dashboard-library-tab svg{width:15px;height:15px}
 .dashboard-library-tab:hover{border-color:var(--blue-500);color:var(--blue-600)}
@@ -321,10 +309,10 @@
 .dashboard-library-general-icon{font-size:16px;line-height:1}
 .dashboard-library-card.is-restricted{opacity:.54;filter:grayscale(.75)}
 .dashboard-library-card.is-restricted:hover{transform:none;border-color:var(--border-soft);box-shadow:none}
-.dashboard-library-core{margin-bottom:18px}
-.dashboard-library-core>h3{margin:0 0 9px;font-size:12px;font-weight:850}
 .dashboard-library-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
 .dashboard-library-sector{display:grid;grid-template-columns:minmax(150px,.62fr) minmax(0,3fr);gap:10px;margin:10px 0}
+.dashboard-library-sector.is-general{grid-template-columns:1fr}
+.dashboard-library-sector.is-general>header{min-height:0}
 .dashboard-library-sector>header{display:flex;align-items:flex-start;gap:11px;min-height:100%;padding:14px 12px;border:1px solid transparent;border-radius:11px;background:#e8f0ff;color:#154fbc}
 .dashboard-library-sector>header>span{display:grid;place-items:center;width:35px;height:35px;flex:0 0 35px;border-radius:10px;background:#fff;color:inherit}
 .dashboard-library-sector>header svg{width:19px;height:19px}

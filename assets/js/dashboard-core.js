@@ -11,7 +11,6 @@
     'management-overview',
     'management-strategic-projects'
   ]);
-  let activeLibraryKind = 'panels';
   let activeStorageKey = STORAGE_KEY + ':local';
   let activeHomeCardsStorageKey = HOME_CARDS_STORAGE_KEY + ':local';
   let authenticatedUserId = null;
@@ -1095,6 +1094,8 @@
       return { count: 0, summary: 'Acesso restrito ao setor', items: [], empty: 'Este card é reservado ao setor ' + (module && module.sector || '') + '.' };
     }
     const quantity = Math.max(1, Math.min(20, Number(card.filters.quantity) || 5));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     if (module.id === 'it-support-tickets') {
       const tickets = Array.isArray(data.supportTickets) ? data.supportTickets : [];
       const open = tickets.filter(function (ticket) { return ticket.status === 'Aberto'; }).length;
@@ -1365,7 +1366,29 @@
       if (projects.length) metrics.push({ value: projects.length, label: 'Projetos ativos', icon: 'project' });
       items = [];
     } else {
-      items = records.slice(0, quantity).map(function (record) {
+      if (module.id === 'marketing-content-calendar') {
+        const todayKey = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0'),
+          String(today.getDate()).padStart(2, '0')].join('-');
+        const upcomingRecords = records.filter(function (record) {
+          return record.status !== 'Arquivo' && record.data && record.data.publishAt &&
+            String(record.data.publishAt).slice(0, 10) >= todayKey;
+        }).sort(function (first, second) {
+          return String(first.data.publishAt).localeCompare(String(second.data.publishAt)) ||
+            String(first.data.publishTime || '').localeCompare(String(second.data.publishTime || ''));
+        });
+        items = upcomingRecords.slice(0, quantity).map(function (record) {
+          const recordData = record.data || {};
+          const meta = [record.status, dateLabel(recordData.publishAt, { day: '2-digit', month: 'short' }),
+            recordData.publishTime, recordData.channel, recordData.format].filter(Boolean).join(' · ');
+          return {
+            title: record.title || 'Conteúdo sem título',
+            meta: meta || 'Publicação planejada',
+            href: 'calendario.html?source=marketing-content-calendar&date=' +
+              encodeURIComponent(String(recordData.publishAt).slice(0, 10))
+          };
+        });
+      } else {
+        items = records.slice(0, quantity).map(function (record) {
         const recordData = record.data || {};
         const detailParts = [record.status, recordData.dueDate || recordData.publishAt || recordData.date || recordData.channel || recordData.company];
         if (module.id === 'it-infrastructure' && recordData.incidentNotes) {
@@ -1374,7 +1397,8 @@
         const detail = detailParts
           .filter(Boolean).join(' · ');
         return { title: record.title || 'Registro', meta: detail || 'Atualizado ' + dateLabel(record.updatedAt), href: 'meu-espaco.html', recordId: record.id };
-      });
+        });
+      }
       const completed = records.filter(function (record) { return /conclu|resolvido|fechado|publicado|ganho|pago|recebido|entregue/i.test(String(record.status || '')); }).length;
       const pending = Math.max(0, records.length - completed);
       metrics = [
@@ -1478,10 +1502,16 @@
       summary: module.source === 'profiles' ? items.length + ' aniversário(s) neste mês' :
         module.source === 'projects' ? items.length + ' projeto(s) estratégico(s)' :
           module.source === 'overview' ? 'Indicadores consolidados' : records.length + ' registro(s)',
+      heading: module.id === 'marketing-content-calendar' ? 'Próximas publicações' : '',
       items: items.slice(0, quantity),
       metrics: metrics,
       chart: chart,
-      empty: module.source === 'profiles' ? 'Nenhum aniversário cadastrado neste mês.' :
+      emptyTitle: module.id === 'marketing-content-calendar' && data.businessCardRecordsLoadError
+        ? 'Conteúdos indisponíveis' : '',
+      empty: module.id === 'marketing-content-calendar'
+        ? data.businessCardRecordsLoadError || 'Nenhuma publicação futura com data. Agende conteúdos para vê-los aqui.'
+        :
+        module.source === 'profiles' ? 'Nenhum aniversário cadastrado neste mês.' :
         module.source === 'projects' ? 'Nenhum projeto estratégico visível.' : 'Adicione o primeiro registro a este card.'
     };
   }
@@ -1852,6 +1882,10 @@
             itemIcon + '<span><b>' +
             escapeHtml(item.title) + '</b><small>' + escapeHtml(item.meta || '') + '</small></span><i aria-hidden="true">›</i></a>';
         }).join('') + '</div>'
+        : module && items.heading
+          ? '<div class="dashboard-data-empty"><span>' + iconMarkup(catalog.icon) + '</span><b>' +
+            escapeHtml(items.emptyTitle || 'Sem publicações futuras') + '</b><small>' +
+            escapeHtml(items.empty) + '</small></div>'
         : module && items.hasData && ((items.metrics && items.metrics.length) || (items.chart && items.chart.length))
           ? ''
           : '<div class="dashboard-data-empty"><span>' + iconMarkup(catalog.icon) + '</span><b>Sem itens para mostrar</b><small>' +
@@ -1872,11 +1906,19 @@
     };
     const nextSize = cardSizes[(cardSizes.indexOf(card.size) + 1) % cardSizes.length];
     const nextSizeLabel = sizeLabels[nextSize];
-    const bodyAction = module
+    const moduleOpenAction = module
       ? staticHomeCard
-        ? '<a class="dashboard-card-body-action" href="meu-espaco.html?businessCard=' + encodeURIComponent(module.id) + '">Abrir painel</a>'
+        ? '<a class="dashboard-card-body-action" href="meu-espaco.html?businessCard=' + encodeURIComponent(module.id) + '">Abrir módulo</a>'
         : '<button type="button" class="dashboard-card-body-action" data-business-module-open="' + escapeHtml(module.id) + '"' +
-          (!moduleCanOpen ? ' disabled title="Acesso restrito ao setor"' : '') + '>Abrir painel</button>'
+          (!moduleCanOpen ? ' disabled title="Acesso restrito ao setor"' : '') + '>Abrir módulo</button>'
+      : '';
+    const calendarAction = module && module.id === 'marketing-content-calendar'
+      ? '<a class="dashboard-card-body-action dashboard-card-body-action-secondary" href="calendario.html?source=marketing-content-calendar">Ver no Calendário</a>'
+      : '';
+    const bodyAction = module
+      ? calendarAction
+        ? '<div class="dashboard-card-body-actions">' + moduleOpenAction + calendarAction + '</div>'
+        : moduleOpenAction
       : '<a class="dashboard-card-body-action" draggable="false" href="' + escapeHtml(pageHref) + '">Abrir página</a>';
     return [
       '<article class="dashboard-card dashboard-card--' + escapeHtml(card.type) + '" data-tone="' + escapeHtml(staticHomeCard ? module && module.tone || 'general' : card.tone || module && module.tone || 'general') + '" data-size="' + escapeHtml(card.size) + '" data-card-id="' + escapeHtml(card.id) + '" draggable="' + (staticHomeCard ? 'false' : 'true') + '">',
@@ -2197,18 +2239,6 @@
       '<button type="button" class="dashboard-remove-btn" data-card-remove>Remover</button></div></article>';
   }
 
-  const CORE_LIBRARY_CARDS = [
-    { type: 'tarefas', description: 'Tarefas pessoais e prazos do seu quadro.', features: ['Pendentes e atrasadas', 'Filtros e prioridades', 'Abrir tarefa'] },
-    { type: 'projetos', description: 'Projetos participantes, andamento e conclusões.', features: ['Progresso por tarefas', 'Datas e responsáveis', 'Abrir projetos'] },
-    { type: 'indicadores', description: 'Resumo visual de produtividade e prazos.', features: ['Progresso ilustrado', 'Tarefas atrasadas', 'Próximos prazos'] },
-    { type: 'calendario', description: 'Eventos e compromissos da sua agenda.', features: ['Hoje e próximos dias', 'Eventos compartilhados', 'Abrir calendário'] },
-    { type: 'documentos', description: 'Documentos acessíveis e arquivos recentes.', features: ['Lista recente', 'Ordenação', 'Abrir documentos'] },
-    { type: 'comunicacao', description: 'Mensagens enviadas e atividade de comunicação.', features: ['Atividade recente', 'Conversas', 'Abrir mensagens'] },
-    { type: 'atividade', description: 'Atualizações recentes das suas tarefas, projetos e documentos.', features: ['Ordenação por data', 'Acesso ao item original'] },
-    { type: 'atalhos', description: 'Acesso rápido às ações e áreas de trabalho.', features: ['Nova tarefa', 'Projetos', 'Calendário e documentos'] },
-    { type: 'comemoracoes', description: 'Aniversários cadastrados nos perfis da equipe.', features: ['Próximas datas', 'Dados do perfil'] }
-  ];
-
   function libraryCardMarkup(type, description, features, sector, tone, config, data, module, homeCards) {
     const catalog = CARD_CATALOG[type];
     const added = config.cards.some(function (card) { return card.type === type; });
@@ -2231,15 +2261,13 @@
       '<div class="dashboard-library-card-header"><span class="dashboard-library-icon">' + iconMarkup(catalog.icon) + '</span>' +
       '<div class="dashboard-library-info"><h4>' + escapeHtml(catalog.label) + '</h4>' +
       '<small>' + escapeHtml(sector || 'Geral') + '</small></div>' +
-      '<span class="dashboard-library-kind" data-kind="' + (module && module.kind === 'process' ? 'process' : 'panel') + '">' +
-      (module && module.kind === 'process' ? 'Processo' : 'Painel') + '</span></div>' +
+      '</div></div>' +
       '<p class="dashboard-library-description">' + escapeHtml(description) + '</p>' +
       '<ul>' + featureList + '</ul>' +
       '<div class="dashboard-library-card-actions">' +
       (module
         ? '<button type="button" class="btn secondary dashboard-library-open" data-library-open="' + escapeHtml(type) + '"' +
-          (!permitted ? ' disabled title="Acesso restrito ao setor"' : '') + '>' +
-          (module.kind === 'process' ? 'Abrir processo' : 'Abrir painel') + '</button>'
+          (!permitted ? ' disabled title="Acesso restrito ao setor"' : '') + '>Abrir módulo</button>'
         : '<a class="btn secondary dashboard-library-open" href="' + escapeHtml(pageHref) + '">Abrir página</a>') +
       '<details class="dashboard-library-add-menu"><summary class="dashboard-card-action">Adicionar</summary><div class="dashboard-library-add-options">' +
       '<button type="button" class="dashboard-card-action dashboard-library-home-toggle" data-home-toggle="' + escapeHtml(type) + '"' +
@@ -2265,34 +2293,25 @@
   function renderLibraryContent(root, config, data, homeCards, activeSector) {
     if (!root) return;
     const selectedSector = activeSector || 'general';
-    if (selectedSector === 'general') {
-      const coreCards = activeLibraryKind === 'panels' ? CORE_LIBRARY_CARDS.map(function (item) {
-        return libraryCardMarkup(item.type, item.description, item.features, 'Geral', 'blue', config, data, null, homeCards);
-      }).join('') : '';
-      root.innerHTML = coreCards
-        ? '<section class="dashboard-library-core" data-library-panel="general"><h3>Cards gerais do Meu Espaço</h3><div class="dashboard-library-cards">' + coreCards + '</div></section>'
-        : '<div class="dashboard-data-empty">Não há processos gerais no momento. Os processos disponíveis estão organizados por setor.</div>';
-      return;
-    }
-
-    const sector = getLibrarySectors().find(function (item) { return item.key === selectedSector; });
-    if (!sector) {
+    const sector = selectedSector === 'general'
+      ? null
+      : getLibrarySectors().find(function (item) { return item.key === selectedSector; });
+    if (selectedSector !== 'general' && !sector) {
       root.innerHTML = '<div class="dashboard-data-empty">Nenhum card disponível.</div>';
       return;
     }
-    const modules = sector.modules.filter(function (module) {
-      return module.kind === (activeLibraryKind === 'processes' ? 'process' : 'panel');
+    const modules = (sector ? sector.modules : BUSINESS_CARD_MODULES).slice().sort(function (first, second) {
+      return first.title.localeCompare(second.title, 'pt-BR');
     });
     const moduleCards = modules.map(function (module) {
       return libraryCardMarkup(module.id, module.description, module.features, module.sector, module.tone, config, data, module, homeCards);
     }).join('');
     root.innerHTML = moduleCards
-      ? '<section class="dashboard-library-sector" data-library-panel="' + escapeHtml(selectedSector) + '" data-tone="' + escapeHtml(modules[0].tone) + '">' +
-        '<header><span>' + iconMarkup(modules[0].icon) + '</span><div><h3>' + escapeHtml(modules[0].sector) +
-        '</h3><small>' + modules.length + (activeLibraryKind === 'processes' ? ' processos' : ' painéis') +
-        ' · acesso conforme o setor</small></div></header>' +
+      ? '<section class="dashboard-library-sector' + (sector ? '' : ' is-general') + '" data-library-panel="' + escapeHtml(selectedSector) + '" data-tone="' + escapeHtml(modules[0].tone) + '">' +
+        '<header><span>' + iconMarkup(sector ? modules[0].icon : 'star') + '</span><div><h3>' + escapeHtml(sector ? modules[0].sector : 'Todos os módulos') +
+        '</h3><small>' + modules.length + ' módulos · acesso conforme o setor</small></div></header>' +
         '<div class="dashboard-library-cards">' + moduleCards + '</div></section>'
-      : '<div class="dashboard-data-empty">Nenhum ' + (activeLibraryKind === 'processes' ? 'processo' : 'painel') + ' disponível neste setor.</div>';
+      : '<div class="dashboard-data-empty">Nenhum módulo disponível neste setor.</div>';
   }
 
   function hydrateLibrary(root, dashboardConfig, data, homeCards, activeSector) {
@@ -2307,17 +2326,12 @@
     }).join('');
     root.innerHTML = '<div class="dashboard-library-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-library-title">' +
       '<div class="dashboard-library-header"><div><span class="dashboard-library-eyebrow">RildonX · Componentes reutilizáveis</span>' +
-      '<h2 id="dashboard-library-title">Módulos por setor</h2><p>Consulte Painéis e Indicadores ou abra Processos para cadastros, solicitações e atualizações. O acesso segue as permissões do seu perfil.</p></div>' +
-      '<div class="dashboard-library-header-actions"><button type="button" class="dashboard-library-close" data-library-close aria-label="Fechar biblioteca de painéis">×</button></div></div>' +
+      '<h2 id="dashboard-library-title">Biblioteca de Módulos</h2><p>Explore os módulos por setor ou veja todos juntos em ordem alfabética. O acesso segue as permissões do seu perfil.</p></div>' +
+      '<div class="dashboard-library-header-actions"><button type="button" class="dashboard-library-close" data-library-close aria-label="Fechar biblioteca de módulos">×</button></div></div>' +
       '<div class="dashboard-library-tabs" role="tablist" aria-label="Setores">' +
       '<button type="button" class="dashboard-library-tab' + (selectedSector === 'general' ? ' active' : '') +
       '" data-library-sector="general" data-tone="general" role="tab" aria-controls="dashboard-library-results" aria-selected="' + (selectedSector === 'general') + '"><span class="dashboard-library-general-icon">✦</span><span>Geral</span></button>' +
-      sectorTabs + '</div><div class="dashboard-library-kinds" role="group" aria-label="Tipo de módulo">' +
-      '<button type="button" data-library-kind="panels" aria-pressed="' + (activeLibraryKind === 'panels') + '"' +
-      (activeLibraryKind === 'panels' ? ' class="active"' : '') + '>Painéis</button>' +
-      '<button type="button" data-library-kind="processes" aria-pressed="' + (activeLibraryKind === 'processes') + '"' +
-      (activeLibraryKind === 'processes' ? ' class="active"' : '') + '>Processos</button>' +
-      '</div><div id="dashboard-library-results" class="dashboard-library-content" role="tabpanel"></div></div>';
+      sectorTabs + '</div><div id="dashboard-library-results" class="dashboard-library-content" role="tabpanel"></div></div>';
     root.dataset.activeSector = selectedSector;
     renderLibraryContent(root.querySelector('.dashboard-library-content'), dashboardConfig, data, homeCards, selectedSector);
   }
@@ -2425,7 +2439,6 @@
     let businessReturnTo = '';
     let businessReturnLibrary = false;
     let businessReturnSector = 'general';
-    let businessReturnKind = 'panels';
     let businessReturnScroll = 0;
     let businessReturnLibraryScroll = 0;
     let activeLibrarySector = 'general';
@@ -2824,45 +2837,6 @@
       return [];
     }
 
-    function renderMarketingContentOverview() {
-      const root = document.getElementById('marketing-content-overview');
-      if (!root) return;
-      if (!businessCardsVerified) {
-        root.innerHTML = '<p>Carregando conteúdos compartilhados…</p>';
-        return;
-      }
-      const module = BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; });
-      if (!module || !canAccessBusinessCard(module, dashboardState)) {
-        root.innerHTML = '<p class="marketing-content-overview-empty">O módulo de conteúdo está disponível apenas para pessoas autorizadas.</p>';
-        return;
-      }
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const records = (dashboardState.businessCardRecords || []).filter(function (record) {
-        const date = parseCalendarDate(record && record.data && record.data.publishAt);
-        return record && record.moduleKey === 'marketing-content-calendar' &&
-          !record.archived && record.status !== 'Arquivo' && date && date >= today;
-      }).sort(function (first, second) {
-        return String(first.data.publishAt).localeCompare(String(second.data.publishAt)) ||
-          String(first.data.publishTime || '').localeCompare(String(second.data.publishTime || ''));
-      }).slice(0, 5);
-      root.innerHTML = records.length
-        ? '<ul class="marketing-content-overview-list">' + records.map(function (record) {
-          const data = record.data || {};
-          const date = parseCalendarDate(data.publishAt);
-          const calendarHref = 'calendario.html?source=marketing-content-calendar&date=' +
-            encodeURIComponent(data.publishAt);
-          const recordHref = 'meu-espaco.html?businessCard=marketing-content-calendar&record=' +
-            encodeURIComponent(record.id);
-          return '<li><a href="' + calendarHref + '"><b>' + escapeHtml(record.title) + '</b><span>' +
-            escapeHtml(date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })) +
-            (data.publishTime ? ' · ' + escapeHtml(data.publishTime) : '') + '</span><small>' +
-            escapeHtml([data.channel, data.format, record.status].filter(Boolean).join(' · ') || 'Conteúdo planejado') +
-            '</small></a><a class="marketing-content-overview-open" href="' + recordHref + '">Abrir</a></li>';
-        }).join('') + '</ul>'
-        : '<p class="marketing-content-overview-empty">Nenhuma publicação futura com data. Adicione e agende conteúdos no módulo.</p>';
-    }
-
     function renderCommemorativeDates() {
       const root = document.getElementById('calendar-commemorations-list');
       if (!root) return;
@@ -2913,7 +2887,6 @@
       renderDashboard(dashboardRoot, current, dashboardState);
       const homeCards = getStoredHomeCards();
       renderHomeDashboard(homeDashboardRoot, homeCards, dashboardState);
-      renderMarketingContentOverview();
       renderCommemorativeDates();
       if (libraryRoot && libraryRoot.classList.contains('open')) {
         hydrateLibrary(libraryRoot, current, dashboardState, homeCards, activeLibrarySector);
@@ -2929,7 +2902,6 @@
       const config = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
       const params = new URLSearchParams(window.location.search);
       activeLibrarySector = params.get('librarySector') || 'general';
-      activeLibraryKind = params.get('libraryKind') === 'processes' ? 'processes' : 'panels';
       hydrateLibrary(libraryRoot, config, dashboardState, getStoredHomeCards(), activeLibrarySector);
       libraryRoot.classList.add('open');
     }
@@ -2961,7 +2933,6 @@
         const panel = libraryRoot.querySelector('.dashboard-library-panel');
         target.searchParams.set('returnLibrary', '1');
         target.searchParams.set('returnSector', activeLibrarySector);
-        target.searchParams.set('returnKind', activeLibraryKind);
         target.searchParams.set('returnScroll', String(window.scrollY));
         target.searchParams.set('returnLibraryScroll', String(panel ? panel.scrollTop : 0));
       }
@@ -4961,7 +4932,6 @@
       businessReturnTo = params.get('returnTo') || new URL('meu-espaco.html', window.location.href).href;
       businessReturnLibrary = params.get('returnLibrary') === '1';
       businessReturnSector = params.get('returnSector') || 'general';
-      businessReturnKind = params.get('returnKind') === 'processes' ? 'processes' : 'panels';
       businessReturnScroll = Number(params.get('returnScroll')) || 0;
       businessReturnLibraryScroll = Number(params.get('returnLibraryScroll')) || 0;
       businessRoot.classList.add('is-standalone');
@@ -4974,7 +4944,6 @@
         if (businessReturnLibrary) {
           returnUrl.searchParams.set('restoreLibrary', '1');
           returnUrl.searchParams.set('librarySector', businessReturnSector);
-          returnUrl.searchParams.set('libraryKind', businessReturnKind);
           returnUrl.searchParams.set('libraryScroll', String(businessReturnScroll));
           returnUrl.searchParams.set('libraryPanelScroll', String(businessReturnLibraryScroll));
         }
@@ -5691,24 +5660,6 @@
       libraryRoot.addEventListener('click', function (event) {
         if (event.target === libraryRoot || event.target.closest('[data-library-close]')) {
           closeLibrary();
-          return;
-        }
-        const kindButton = event.target.closest('[data-library-kind]');
-        if (kindButton) {
-          activeLibraryKind = kindButton.dataset.libraryKind === 'processes' ? 'processes' : 'panels';
-          libraryRoot.querySelectorAll('[data-library-kind]').forEach(function (button) {
-            const selected = button === kindButton;
-            button.classList.toggle('active', selected);
-            button.setAttribute('aria-pressed', String(selected));
-          });
-          const current = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
-          renderLibraryContent(
-            libraryRoot.querySelector('.dashboard-library-content'),
-            current,
-            dashboardState,
-            getStoredHomeCards(),
-            activeLibrarySector
-          );
           return;
         }
         const sectorTab = event.target.closest('[data-library-sector]');
