@@ -526,7 +526,7 @@ function renderProjectCard(project) {
 
   return [
     '<div class="proj-row">',
-    '  <div class="proj-thumb" style="background:linear-gradient(135deg,#0d1c40,#f5a623);display:flex;align-items:center;justify-content:center;color:#fff;font-family:\'Manrope\',sans-serif;font-weight:800;font-size:11px;text-align:center;">' + escapeHtml((project.name || 'R').slice(0, 2).toUpperCase()) + '</div>',
+    '  <div class="proj-thumb" style="background:linear-gradient(135deg,#0d1c40,#f5a623);display:flex;align-items:center;justify-content:center;color:#fff;font-family:\'Montserrat\',sans-serif;font-weight:700;font-size:11px;text-align:center;">' + escapeHtml((project.name || 'R').slice(0, 2).toUpperCase()) + '</div>',
     '  <div class="proj-info">',
     '    <h4>' + name + '</h4>',
     '    <p>Projeto do setor ' + escapeHtml(project.sector || 'marketing') + ' com progresso atual.</p>',

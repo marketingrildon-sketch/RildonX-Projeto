@@ -5,12 +5,15 @@
   const HOME_CARDS_LIMIT = 3;
   const PANEL_MODULE_IDS = new Set([
     'marketing-insights',
+    'marketing-commemorations',
     'hr-birthdays',
     'purchase-dashboard',
     'purchase-comparison',
     'management-overview',
+    'management-active-projects',
     'management-strategic-projects'
   ]);
+  let activeLibraryView = 'grid';
   let activeStorageKey = STORAGE_KEY + ':local';
   let activeHomeCardsStorageKey = HOME_CARDS_STORAGE_KEY + ':local';
   let authenticatedUserId = null;
@@ -92,33 +95,6 @@
       sorts: { meta: 'Resumo' },
       href: 'tarefas.html'
     },
-    atividade: {
-      label: 'Atividade recente',
-      icon: 'activity',
-      defaults: { show: 'recentes', sort: 'recente', quantity: 5 },
-      filters: { recentes: 'Recentes' },
-      sorts: { recente: 'Mais recentes' }
-    },
-    atalhos: {
-      label: 'Ações rápidas',
-      icon: 'quick',
-      defaults: { show: 'principais', sort: 'personalizada', quantity: 4 },
-      filters: { principais: 'Principais ações' },
-      sorts: { personalizada: 'Ordem padrão' }
-    },
-    comemoracoes: {
-      label: 'Datas comemorativas',
-      icon: 'calendar',
-      defaults: { show: 'todas', sort: 'data', quantity: 5 },
-      filters: {
-        todas: 'Feriados, aniversários e ações comerciais',
-        feriado: 'Feriados e datas comemorativas',
-        aniversario: 'Aniversários',
-        acao_comercial: 'Ações comerciais'
-      },
-      sorts: { data: 'Próxima data' }
-    }
-
   };
 
   const BUSINESS_CARD_MODULES = [
@@ -147,6 +123,31 @@
         { key: 'publishedUrl', label: 'Link da publicação original', type: 'url' },
         { key: 'notes', label: 'Briefing e observações', type: 'textarea' }
       ]
+    },
+    {
+      id: 'marketing-ideas-agenda', sector: 'Marketing', sectorKey: 'marketing', title: 'Ideias e pautas', icon: 'lightbulb', tone: 'blue',
+      description: 'Organize ideias, temas e pautas de comunicação e acompanhe sua preparação para produção.',
+      features: ['Cadastro, edição e arquivamento', 'Busca por tema, canal e responsável', 'Prioridade e etapa da ideia', 'Referências e briefing'],
+      defaultStatus: 'Nova ideia',
+      fields: [
+        { key: 'title', label: 'Ideia ou pauta', type: 'text', required: true },
+        { key: 'status', label: 'Etapa', type: 'select', required: true, options: ['Nova ideia', 'Em avaliação', 'Aprovada', 'Em produção', 'Convertida em conteúdo', 'Arquivada'] },
+        { key: 'theme', label: 'Tema ou categoria', type: 'text' },
+        { key: 'campaign', label: 'Campanha relacionada', type: 'text' },
+        { key: 'channel', label: 'Canal', type: 'select', options: ['Instagram', 'Facebook', 'LinkedIn', 'TikTok', 'Blog', 'Site', 'Outro'] },
+        { key: 'objective', label: 'Objetivo e briefing', type: 'textarea' },
+        { key: 'audience', label: 'Público-alvo', type: 'text' },
+        { key: 'priority', label: 'Prioridade', type: 'select', options: ['Baixa', 'Normal', 'Alta', 'Urgente'], defaultValue: 'Normal' },
+        { key: 'owner', label: 'Responsável', type: 'text' },
+        { key: 'referenceUrl', label: 'Referência ou link', type: 'url' },
+        { key: 'notes', label: 'Observações', type: 'textarea' }
+      ]
+    },
+    {
+      id: 'marketing-commemorations', sector: 'Marketing', sectorKey: 'marketing', title: 'Datas comemorativas', icon: 'birthday', tone: 'blue',
+      description: 'Consulte feriados, aniversários e ações comerciais do Calendário, respeitando a visibilidade de cada evento.',
+      features: ['Eventos reais do Calendário', 'Filtro por categoria e busca', 'Acesso ao evento de origem', 'Sem cópias independentes de eventos'],
+      source: 'events', fields: []
     },
     {
       id: 'marketing-insights', sector: 'Marketing', sectorKey: 'marketing', title: 'Indicadores de Marketing', icon: 'chart', tone: 'blue',
@@ -525,6 +526,12 @@
       source: 'overview', fields: []
     },
     {
+      id: 'management-active-projects', sector: 'Gerência / Gestão', sectorKey: 'gerencia', title: 'Projetos ativos', icon: 'project', tone: 'red',
+      description: 'Acompanhe todos os projetos ativos permitidos para o seu perfil, com estado, prazo e progresso.',
+      features: ['Projetos em planejamento ou andamento', 'Estado e intervalo de datas', 'Progresso calculado pelas regras do projeto', 'Link para o projeto de origem'],
+      source: 'projects', fields: []
+    },
+    {
       id: 'management-sector-performance', sector: 'Gerência / Gestão', sectorKey: 'gerencia', title: 'Performance por Setor', icon: 'users', tone: 'red',
       description: 'Compare resultados, metas e indicadores entre setores.', features: ['Metas e resultados', 'Ranking de setores', 'Indicadores personalizados', 'Comparativos'],
       fields: [
@@ -552,15 +559,22 @@
   });
 
   BUSINESS_CARD_MODULES.forEach(function (module) {
+    const isCalendarSource = module.source === 'events';
     CARD_CATALOG[module.id] = {
       label: module.title,
       icon: module.icon,
       moduleType: true,
       module: module.id,
       sector: module.sectorKey,
-      defaults: { show: 'todos', sort: 'recente', quantity: 5 },
-      filters: { todos: 'Todos', pendentes: 'Pendentes', andamento: 'Em andamento', concluidos: 'Concluídos' },
-      sorts: { recente: 'Mais recentes', nome: 'Nome' },
+      defaults: isCalendarSource
+        ? { show: 'todas', sort: 'data', quantity: 5 }
+        : { show: 'todos', sort: 'recente', quantity: 5 },
+      filters: isCalendarSource
+        ? { todas: 'Todas as categorias', feriado: 'Datas comemorativas', aniversario: 'Aniversários', acao_comercial: 'Ações comerciais' }
+        : { todos: 'Todos', pendentes: 'Pendentes', andamento: 'Em andamento', concluidos: 'Concluídos' },
+      sorts: isCalendarSource
+        ? { data: 'Próxima data', nome: 'Nome' }
+        : { recente: 'Mais recentes', nome: 'Nome' },
       href: 'meu-espaco.html'
     };
   });
@@ -602,14 +616,6 @@
         position: 3,
         filters: { show: 'hoje', sort: 'data', quantity: 5 }
       },
-      {
-        id: 'card-atividade',
-        type: 'atividade',
-        title: 'Atividade recente',
-        enabled: true,
-        position: 4,
-        filters: { show: 'recentes', sort: 'recente', quantity: 5 }
-      }
     ]
   };
 
@@ -632,6 +638,8 @@
       chat: '<path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/><path d="M8 12h8M8 9h5"/>',
       chart: '<path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 6-7"/>',
       activity: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+      search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+      lightbulb: '<path d="M9 18h6M10 22h4M8.2 14.8a7 7 0 1 1 7.6 0c-.9.6-1.3 1.4-1.4 2.2h-4.8c-.1-.8-.5-1.6-1.4-2.2z"/>',
       quick: '<path d="M12 5v14M5 12h14"/>',
       star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z"/>',
       settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06-1.7 2.94-.08-.03a1.65 1.65 0 0 0-1.85.33l-.06.06h-3.4l-.03-.08a1.65 1.65 0 0 0-1.52-1.1 1.65 1.65 0 0 0-.73.16l-.08.04-2.94-1.7.03-.08a1.65 1.65 0 0 0-.33-1.85l-.06-.06v-3.4l.08-.03a1.65 1.65 0 0 0 1.1-1.52 1.65 1.65 0 0 0-.16-.73l-.04-.08 1.7-2.94.08.03a1.65 1.65 0 0 0 1.85-.33l.06-.06h3.4l.03.08a1.65 1.65 0 0 0 1.52 1.1 1.65 1.65 0 0 0 .73-.16l.08-.04 2.94 1.7-.03.08a1.65 1.65 0 0 0 .33 1.85l.06.06v3.4z"/>',
@@ -1093,7 +1101,12 @@
     if (!module || !canAccessBusinessCard(module, data)) {
       return { count: 0, summary: 'Acesso restrito ao setor', items: [], empty: 'Este card é reservado ao setor ' + (module && module.sector || '') + '.' };
     }
-    const quantity = Math.max(1, Math.min(20, Number(card.filters.quantity) || 5));
+    const sourceMax = module && module.source === 'events'
+      ? (data.events || []).length
+      : module && module.id === 'management-active-projects'
+        ? (data.projects || []).length
+        : 20;
+    const quantity = Math.max(1, Math.min(sourceMax, Number(card.filters.quantity) || 5));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (module.id === 'it-support-tickets') {
@@ -1346,9 +1359,75 @@
         return { title: profile.displayName || profile.nickname || 'Colaborador', meta: dateLabel(profile.birthday, { day: '2-digit', month: 'long' }), href: 'perfil.html' };
       });
     } else if (module.source === 'projects') {
-      items = (data.projects || []).filter(function (project) { return isProjectVisible(project, data); }).map(function (project) {
+      const manager = isBusinessCardManager(data);
+      const projects = (data.projects || []).filter(function (project) {
+        const showAllProjects = module.id === 'management-active-projects' && manager;
+        if (!project || project.isDemo || project.archived || (!showAllProjects && !isProjectVisible(project, data))) return false;
+        if (module.id !== 'management-active-projects') return true;
+        const status = projectStatus(project, data);
+        return status === 'Em andamento' || status === 'Planejamento';
+      });
+      items = projects.map(function (project) {
         const progress = projectProgress(project, data);
-        return { title: project.name || 'Projeto', meta: projectStatus(project, data) + ' · ' + progress.progress + '% concluído', href: 'projetos.html' };
+        const status = projectStatus(project, data);
+        const dateRange = [project.startDate, project.endDate].filter(Boolean).map(function (value) {
+          const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(String(value));
+          return dateLabel(dateOnly ? parseCalendarDate(value) : value, { day: '2-digit', month: 'short' });
+        }).join('–');
+        return {
+          title: project.name || 'Projeto',
+          meta: [status, dateRange, progress.progress + '% concluído'].filter(Boolean).join(' · '),
+          href: 'projetos.html'
+        };
+      });
+      if (items.length && module.id === 'management-active-projects') {
+        const planning = projects.filter(function (project) { return projectStatus(project, data) === 'Planejamento'; }).length;
+        const inProgress = projects.length - planning;
+        metrics = [
+          { value: projects.length, label: 'Projetos ativos', icon: 'project' },
+          { value: inProgress, label: 'Em andamento', icon: 'clock' },
+          { value: planning, label: 'Em planejamento', icon: 'calendar' }
+        ];
+      }
+    } else if (module.source === 'events') {
+      const currentUser = getCurrentProfile(data);
+      const selectedCategory = card.filters.show || 'todas';
+      const events = (data.events || []).filter(function (event) {
+        if (!event || event.deletedAt ||
+            ['feriado', 'aniversario', 'acao_comercial'].indexOf(event.category) === -1 ||
+            (selectedCategory !== 'todas' && event.category !== selectedCategory)) return false;
+        const ownerId = String(event.ownerId || event.createdBy || '');
+        const viewerId = String(currentUser.id || '');
+        if (event.visibility === 'private' && ownerId !== viewerId) return false;
+        if (event.visibility === 'restricted' && ownerId !== viewerId &&
+            !(event.viewerIds || []).some(function (id) { return String(id) === viewerId; })) return false;
+        return true;
+      }).map(function (event) {
+        const allDayValue = event.allDay && event.allDayStartDate;
+        const date = allDayValue && /^\d{4}-\d{2}-\d{2}$/.test(String(allDayValue))
+          ? parseCalendarDate(allDayValue)
+          : dateValue(event.startsAt);
+        if (!date) return null;
+        date.setHours(0, 0, 0, 0);
+        if (date < today) return null;
+        return { event: event, date: date };
+      }).filter(Boolean);
+      events.sort(function (first, second) {
+        if (card.filters.sort === 'nome') {
+          return String(first.event.title || '').localeCompare(String(second.event.title || ''), 'pt-BR');
+        }
+        return first.date - second.date;
+      });
+      items = events.map(function (item) {
+        const dateKey = [item.date.getFullYear(), String(item.date.getMonth() + 1).padStart(2, '0'),
+          String(item.date.getDate()).padStart(2, '0')].join('-');
+        const categoryLabel = item.event.category === 'feriado' ? 'Data comemorativa'
+          : item.event.category === 'acao_comercial' ? 'Ação comercial' : 'Aniversário';
+        return {
+          title: item.event.title || 'Data comemorativa',
+          meta: categoryLabel + ' · ' + dateLabel(item.date, { weekday: 'short', day: '2-digit', month: 'long' }),
+          href: 'calendario.html?date=' + encodeURIComponent(dateKey)
+        };
       });
     } else if (module.source === 'overview') {
       const tasks = (data.tasks || []).filter(function (task) { return task && !task.isDemo; });
@@ -1491,16 +1570,17 @@
       }
     }
     return {
-      count: module.source === 'profiles' || module.source === 'projects' ? items.length :
+      count: module.source === 'profiles' || module.source === 'projects' || module.source === 'events' ? items.length :
         module.source === 'overview' ? metrics.reduce(function (total, metric) {
           return total + (metric.label === 'Tarefas' || metric.label === 'Projetos ativos' ? metric.value : 0);
         }, 0) : records.length,
       hasData: metricDataPresent != null ? metricDataPresent :
-        module.source === 'profiles' || module.source === 'projects' ? items.length > 0 :
+        module.source === 'profiles' || module.source === 'projects' || module.source === 'events' ? items.length > 0 :
         module.source === 'overview' ? metrics.length > 0 :
           records.length > 0,
       summary: module.source === 'profiles' ? items.length + ' aniversário(s) neste mês' :
-        module.source === 'projects' ? items.length + ' projeto(s) estratégico(s)' :
+        module.source === 'projects' ? items.length + (module.id === 'management-active-projects' ? ' projeto(s) ativo(s)' : ' projeto(s) estratégico(s)') :
+        module.source === 'events' ? items.length + ' data(s) no calendário' :
           module.source === 'overview' ? 'Indicadores consolidados' : records.length + ' registro(s)',
       heading: module.id === 'marketing-content-calendar' ? 'Próximas publicações' : '',
       items: items.slice(0, quantity),
@@ -1512,7 +1592,9 @@
         ? data.businessCardRecordsLoadError || 'Nenhuma publicação futura com data. Agende conteúdos para vê-los aqui.'
         :
         module.source === 'profiles' ? 'Nenhum aniversário cadastrado neste mês.' :
-        module.source === 'projects' ? 'Nenhum projeto estratégico visível.' : 'Adicione o primeiro registro a este card.'
+        module.source === 'projects' ? 'Nenhum projeto ativo visível.' :
+        module.source === 'events' ? 'Nenhuma data comemorativa disponível para o seu perfil.' :
+          'Adicione o primeiro registro a este card.'
     };
   }
 
@@ -1666,93 +1748,7 @@
       };
     }
 
-    if (card.type === 'atividade') {
-      const events = [];
-      (data.tasks || []).forEach(function (task) {
-        if (task && !task.isDemo && (task.createdBy === currentUser.id || isOwnTask(task, data))) {
-          events.push({ date: task.updatedAt || task.createdAt, title: task.title || 'Tarefa', meta: 'Tarefa · ' + readableStatus(task.status), href: 'tarefas.html' });
-        }
-      });
-      (data.projects || []).forEach(function (project) {
-        if (!isProjectVisible(project, data)) return;
-        (project.activityLog || []).forEach(function (entry) {
-          events.push({ date: entry.createdAt, title: entry.description || 'Projeto atualizado', meta: 'Projeto · ' + project.name, href: 'projetos.html' });
-        });
-      });
-      (data.documents || []).forEach(function (item) {
-        if (item && item.ownerId === currentUser.id && documentList(data).some(function (visible) { return visible.id === item.id; })) {
-          events.push({ date: item.sentAt, title: item.name, meta: 'Documento enviado', href: 'documentos.html' });
-        }
-      });
-      events.sort(function (a, b) { return new Date(b.date || 0) - new Date(a.date || 0); });
-      return {
-        count: events.length,
-        summary: events.length + ' atualização(ões)',
-        items: events.slice(0, quantity).map(function (event) {
-          return { title: event.title, meta: event.meta + ' · ' + dateLabel(event.date), href: event.href };
-        }),
-        empty: 'Nenhuma atividade recente.'
-      };
-    }
-
-    if (card.type === 'comemoracoes') {
-      const selectedCategory = card.filters.show || 'todas';
-      const calendarItems = (data.events || []).filter(function (event) {
-        return event && !event.deletedAt &&
-          ['feriado', 'aniversario', 'acao_comercial'].indexOf(event.category) !== -1 &&
-          (event.visibility !== 'private' || String(event.ownerId || event.createdBy || '') === String(currentUser.id || '')) &&
-          (selectedCategory === 'todas' || event.category === selectedCategory);
-      }).map(function (event) {
-        const eventDate = dateValue(event.allDayStartDate || event.startsAt);
-        if (!eventDate || eventDate < today) return null;
-        return {
-          name: event.title || 'Data comemorativa',
-          date: eventDate,
-          category: event.category
-        };
-      }).filter(Boolean);
-      const birthdays = selectedCategory !== 'feriado' && selectedCategory !== 'acao_comercial'
-        ? (data.profiles || []).filter(function (profile) {
-        return profile && profile.active !== false && profile.birthday;
-      }).map(function (profile) {
-        const birthDate = dateValue(profile.birthday);
-        if (!birthDate) return null;
-        const next = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-        if (next < today) next.setFullYear(next.getFullYear() + 1);
-        const name = profile.displayName || profile.nickname || 'Colaborador';
-        const alreadySynced = calendarItems.some(function (item) {
-          return item.category === 'aniversario' && item.date.getMonth() === next.getMonth() &&
-            item.date.getDate() === next.getDate() && item.name.toLocaleLowerCase('pt-BR').indexOf(name.toLocaleLowerCase('pt-BR')) !== -1;
-        });
-        return alreadySynced ? null : { name: 'Aniversário · ' + name, date: next, category: 'aniversario' };
-      }).filter(Boolean) : [];
-      const dates = calendarItems.concat(birthdays).sort(function (a, b) { return a.date - b.date; });
-      return {
-        count: dates.length,
-        summary: dates.length + ' data(s) no calendário',
-        items: dates.slice(0, quantity).map(function (item) {
-          const categoryLabel = item.category === 'feriado' ? 'Feriado/data comemorativa'
-            : item.category === 'acao_comercial' ? 'Ação comercial' : 'Aniversário';
-          return { title: item.name, meta: categoryLabel + ' · ' + dateLabel(item.date, { weekday: 'short', day: '2-digit', month: 'long' }), href: 'calendario.html' };
-        }),
-        empty: 'Não há feriados, aniversários ou ações comerciais próximos no Calendário.'
-      };
-    }
-
     return { count: 0, summary: '', items: [], empty: 'Conteúdo indisponível.' };
-  }
-
-  function renderQuickActions(quantity) {
-    const actions = [
-      '<button type="button" class="dashboard-quick-action" data-dashboard-action="new-task"><span>' + iconMarkup('task') + '</span><b>Nova tarefa</b></button>',
-      '<a href="projetos.html" class="dashboard-quick-action"><span>' + iconMarkup('project') + '</span><b>Projetos</b></a>',
-      '<a href="calendario.html" class="dashboard-quick-action"><span>' + iconMarkup('calendar') + '</span><b>Calendário</b></a>',
-      '<a href="documentos.html" class="dashboard-quick-action"><span>' + iconMarkup('doc') + '</span><b>Documentos</b></a>',
-      '<a href="mensagens.html" class="dashboard-quick-action"><span>' + iconMarkup('chat') + '</span><b>Mensagens</b></a>',
-      '<a href="mural.html" class="dashboard-quick-action"><span>' + iconMarkup('quick') + '</span><b>Publicar no Mural</b></a>'
-    ];
-    return '<div class="dashboard-quick-actions">' +
-      actions.slice(0, quantity).join('') + '</div>';
   }
 
   function getStoredDashboard() {
@@ -1785,8 +1781,15 @@
     const sourceCards = Array.isArray(source.cards) ? source.cards : DEFAULT_DASHBOARD.cards;
     next.columns = Math.max(1, Math.min(3, Number(next.columns) || 2));
     next.density = ['compact', 'comfortable', 'spacious'].indexOf(next.density) >= 0 ? next.density : 'comfortable';
-    next.cards = sourceCards.filter(function (card) {
-      return card && CARD_CATALOG[card.type];
+    const migratedCards = sourceCards.map(function (card) {
+      if (!card || card.type !== 'comemoracoes') return card;
+      return Object.assign({}, card, { type: 'marketing-commemorations', title: 'Datas comemorativas' });
+    });
+    const seenTypes = new Set();
+    next.cards = migratedCards.filter(function (card) {
+      if (!card || !CARD_CATALOG[card.type] || seenTypes.has(card.type)) return false;
+      seenTypes.add(card.type);
+      return true;
     }).map(function (card, index) {
       const catalog = CARD_CATALOG[card.type];
       const safeCard = Object.assign({
@@ -1859,11 +1862,9 @@
         quantity: Math.min(card.filters.quantity, layoutQuantity)
       })
     });
-    const items = card.type === 'atalhos' ? [] : cardData(layoutCard, data);
+    const items = cardData(layoutCard, data);
     const listMarkup = card.type === 'indicadores'
       ? renderIndicatorCard(items.indicators, card.size)
-      : card.type === 'atalhos'
-      ? renderQuickActions(layoutCard.filters.quantity)
       : items.items.length
         ? '<div class="dashboard-data-list">' + items.items.map(function (item) {
           const recordAction = module && item.recordId
@@ -1891,12 +1892,7 @@
           : '<div class="dashboard-data-empty"><span>' + iconMarkup(catalog.icon) + '</span><b>Sem itens para mostrar</b><small>' +
             escapeHtml(items.empty) + '</small></div>';
     const moduleCanOpen = module && canAccessBusinessCard(module, data);
-    const pageTargets = {
-      atividade: 'meu-espaco.html',
-      atalhos: 'meu-espaco.html',
-      comemoracoes: 'pessoas.html'
-    };
-    const pageHref = catalog.href || pageTargets[card.type] || 'meu-espaco.html';
+    const pageHref = catalog.href || 'meu-espaco.html';
     const cardSizes = ['ratio-square', 'ratio-portrait', 'ratio-landscape', 'ratio-double-landscape'];
     const sizeLabels = {
       'ratio-square': '1:1',
@@ -1992,49 +1988,15 @@
   function layoutDashboardCards(rootEl) {
     if (!rootEl) return;
     const cards = Array.prototype.slice.call(rootEl.querySelectorAll('.dashboard-card'));
-    rootEl.style.position = 'relative';
-    if (!cards.length) {
-      rootEl.style.height = '';
-      return;
-    }
-    const gap = 16;
-    const minimumColumnWidth = 290;
-    const containerWidth = rootEl.clientWidth;
-    if (!containerWidth) return;
-    const columns = Math.max(1, Math.floor((containerWidth + gap) / (minimumColumnWidth + gap)));
-    const columnWidth = (containerWidth - gap * (columns - 1)) / columns;
-    const columnEnds = Array(columns).fill(0);
     cards.forEach(function (card) {
-      const wide = card.dataset.size === 'ratio-double-landscape' && columns > 1;
-      const span = wide ? 2 : 1;
-      let startColumn = 0;
-      let top = Infinity;
-      for (let column = 0; column <= columns - span; column += 1) {
-        const candidateTop = Math.max.apply(Math, columnEnds.slice(column, column + span));
-        if (candidateTop < top) {
-          top = candidateTop;
-          startColumn = column;
-        }
-      }
-      const width = columnWidth * span + gap * (span - 1);
-      const ratios = {
-        'ratio-square': 1,
-        'ratio-portrait': 4 / 5,
-        'ratio-landscape': 1.91,
-        'ratio-double-landscape': 1.91
-      };
-      const height = width / (ratios[card.dataset.size] || 1);
-      card.style.position = 'absolute';
-      card.style.left = (startColumn * (columnWidth + gap)) + 'px';
-      card.style.top = top + 'px';
-      card.style.width = width + 'px';
-      card.style.height = height + 'px';
-      const nextBottom = top + height + gap;
-      for (let column = startColumn; column < startColumn + span; column += 1) {
-        columnEnds[column] = nextBottom;
-      }
+      card.style.removeProperty('position');
+      card.style.removeProperty('left');
+      card.style.removeProperty('top');
+      card.style.removeProperty('width');
+      card.style.removeProperty('height');
     });
-    rootEl.style.height = Math.max(0, Math.max.apply(Math, columnEnds) - gap) + 'px';
+    rootEl.style.removeProperty('position');
+    rootEl.style.removeProperty('height');
   }
 
   function getStoredHomeCards() {
@@ -2043,8 +2005,11 @@
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) throw new Error('A lista de painéis da página Início não é válida.');
-      return parsed.filter(function (type, index) {
-        return typeof type === 'string' && CARD_CATALOG[type] && parsed.indexOf(type) === index;
+      const migrated = parsed.map(function (type) {
+        return type === 'comemoracoes' ? 'marketing-commemorations' : type;
+      });
+      return migrated.filter(function (type, index) {
+        return typeof type === 'string' && CARD_CATALOG[type] && migrated.indexOf(type) === index;
       }).slice(0, HOME_CARDS_LIMIT);
     } catch (error) {
       console.error('Não foi possível carregar os painéis da página Início:', error);
@@ -2245,12 +2210,7 @@
     const addedToHome = homeCards.indexOf(type) >= 0;
     const homeLimitReached = homeCards.length >= HOME_CARDS_LIMIT;
     const permitted = !module || canAccessBusinessCard(module, data);
-    const pageTargets = {
-      atividade: 'meu-espaco.html',
-      atalhos: 'meu-espaco.html',
-      comemoracoes: 'pessoas.html'
-    };
-    const pageHref = catalog.href || pageTargets[type] || 'meu-espaco.html';
+    const pageHref = catalog.href || 'meu-espaco.html';
     const availableFeatures = module
       ? module.source
         ? ['Dados ligados às páginas existentes', 'Atualização pelo store compartilhado', 'Exportação CSV']
@@ -2312,6 +2272,8 @@
         '</h3><small>' + modules.length + ' módulos · acesso conforme o setor</small></div></header>' +
         '<div class="dashboard-library-cards">' + moduleCards + '</div></section>'
       : '<div class="dashboard-data-empty">Nenhum módulo disponível neste setor.</div>';
+    const section = root.querySelector('.dashboard-library-sector');
+    if (section) section.dataset.view = activeLibraryView;
   }
 
   function hydrateLibrary(root, dashboardConfig, data, homeCards, activeSector) {
@@ -2331,7 +2293,12 @@
       '<div class="dashboard-library-tabs" role="tablist" aria-label="Setores">' +
       '<button type="button" class="dashboard-library-tab' + (selectedSector === 'general' ? ' active' : '') +
       '" data-library-sector="general" data-tone="general" role="tab" aria-controls="dashboard-library-results" aria-selected="' + (selectedSector === 'general') + '"><span class="dashboard-library-general-icon">✦</span><span>Geral</span></button>' +
-      sectorTabs + '</div><div id="dashboard-library-results" class="dashboard-library-content" role="tabpanel"></div></div>';
+      sectorTabs + '</div><div class="dashboard-library-view-toggle" role="group" aria-label="Visualização dos módulos">' +
+      '<button type="button" data-library-view="grid" aria-pressed="' + (activeLibraryView === 'grid') + '"' +
+      (activeLibraryView === 'grid' ? ' class="active"' : '') + '>Grade</button>' +
+      '<button type="button" data-library-view="list" aria-pressed="' + (activeLibraryView === 'list') + '"' +
+      (activeLibraryView === 'list' ? ' class="active"' : '') + '>Lista</button>' +
+      '</div><div id="dashboard-library-results" class="dashboard-library-content" role="tabpanel"></div></div>';
     root.dataset.activeSector = selectedSector;
     renderLibraryContent(root.querySelector('.dashboard-library-content'), dashboardConfig, data, homeCards, selectedSector);
   }
@@ -2815,13 +2782,30 @@
       }
       if (module.source === 'projects') {
         return (dashboardState.projects || []).filter(function (project) {
-          return isProjectVisible(project, dashboardState);
+          const manager = isBusinessCardManager(dashboardState);
+          const showAllProjects = module.id === 'management-active-projects' && manager;
+          if (!project || project.isDemo || project.archived || (!showAllProjects && !isProjectVisible(project, dashboardState))) return false;
+          if (module.id !== 'management-active-projects') return true;
+          const status = projectStatus(project, dashboardState);
+          return status === 'Em andamento' || status === 'Planejamento';
         }).map(function (project) {
           const progress = projectProgress(project, dashboardState);
           return {
             title: project.name || 'Projeto',
-            details: projectStatus(project, dashboardState) + ' · ' + progress.progress + '% concluído'
+            details: [projectStatus(project, dashboardState), project.startDate, project.endDate, progress.progress + '% concluído']
+              .filter(Boolean).join(' · ')
           };
+        });
+      }
+      if (module.source === 'events') {
+        const card = { type: module.id, filters: clone(CARD_CATALOG[module.id].defaults) };
+        card.filters.quantity = Math.max(1, (dashboardState.events || []).length);
+        if (businessFilterValue) card.filters.show = businessFilterValue;
+        return businessCardData(card, dashboardState).items.filter(function (item) {
+          const query = businessSearch.trim().toLocaleLowerCase('pt-BR');
+          return !query || [item.title, item.meta].join(' ').toLocaleLowerCase('pt-BR').indexOf(query) !== -1;
+        }).map(function (item) {
+          return { title: item.title, details: item.meta };
         });
       }
       if (module.source === 'overview') {
@@ -4765,9 +4749,15 @@
         return;
       }
       const card = { type: module.id, filters: clone(CARD_CATALOG[module.id].defaults) };
+      if (module.source === 'events') card.filters.quantity = Math.max(1, (dashboardState.events || []).length);
+      if (module.id === 'management-active-projects') card.filters.quantity = Math.max(1, (dashboardState.projects || []).length);
+      if (module.source === 'events' && businessFilterValue) card.filters.show = businessFilterValue;
       const summary = businessCardData(card, dashboardState);
       const readOnly = Boolean(module.source);
-      const sourceRows = readOnly ? summary.items.map(function (item) {
+      const sourceQuery = businessSearch.trim().toLocaleLowerCase('pt-BR');
+      const sourceRows = readOnly ? summary.items.filter(function (item) {
+        return !sourceQuery || [item.title, item.meta].join(' ').toLocaleLowerCase('pt-BR').indexOf(sourceQuery) !== -1;
+      }).map(function (item) {
         return '<a class="dashboard-business-source-row" href="' + escapeHtml(item.href || '#') + '"><span>' + iconMarkup(module.icon) +
           '</span><div><b>' + escapeHtml(item.title) + '</b><small>' + escapeHtml(item.meta || '') + '</small></div><i>›</i></a>';
       }).join('') : '';
@@ -4776,7 +4766,12 @@
           (/migra/i.test(dashboardState.businessCardRecordsLoadError) ? ' SQL: docs/supabase-business-cards.sql.' : '') + '</div>'
         : '';
       const filterField = businessFilterField(module);
-      const filterOptions = filterField
+      const filterOptions = module.source === 'events'
+        ? '<label class="dashboard-business-filter"><span>Categoria</span><select data-business-filter aria-label="Filtrar por categoria"><option value="">Todas</option>' +
+          [['feriado', 'Datas comemorativas'], ['aniversario', 'Aniversários'], ['acao_comercial', 'Ações comerciais']].map(function (option) {
+            return '<option value="' + option[0] + '"' + (businessFilterValue === option[0] ? ' selected' : '') + '>' + option[1] + '</option>';
+          }).join('') + '</select></label>'
+        : filterField
         ? '<label class="dashboard-business-filter"><span>Filtrar ' + escapeHtml(filterField.label.toLocaleLowerCase('pt-BR')) + '</span><select data-business-filter aria-label="Filtrar por ' +
           escapeHtml(filterField.label) + '"><option value="">Todos</option><option value="__favorites"' + (businessFilterValue === '__favorites' ? ' selected' : '') +
           '>Favoritos</option>' + (filterField.options || []).map(function (option) {
@@ -4801,6 +4796,11 @@
             (marketingContentView === view ? 'is-active' : '') + '" aria-pressed="' +
             (marketingContentView === view ? 'true' : 'false') + '">' + label + '</button>';
         }).join('') + '</div></div>';
+      const sourceToolbar = '<div class="dashboard-business-toolbar">' +
+        '<label><span>' + iconMarkup('search') + '</span><input type="search" data-business-search value="' +
+        escapeHtml(businessSearch) + '" placeholder="Buscar por nome ou detalhes"></label>' +
+        (module.source === 'events' ? filterOptions : '') +
+        '<button type="button" class="btn secondary" data-business-export>Exportar CSV</button></div>';
       businessRoot.innerHTML = '<div class="dashboard-business-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
         '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="' + escapeHtml(module.tone) + '">' + iconMarkup(module.icon) + '</div>' +
         '<div><span class="dashboard-library-eyebrow">' + escapeHtml(module.sector) + ' · Módulo compartilhado</span><h2 id="dashboard-business-title">' + escapeHtml(module.title) +
@@ -4815,7 +4815,7 @@
             '<button type="button" class="btn" data-people-create-user>Cadastrar Usuário</button></div>' +
             '<div class="employee-control-list" data-employee-list>' + renderEmployeeControlRows('') + '</div>'
           : readOnly
-          ? '<div class="dashboard-business-toolbar"><button type="button" class="btn secondary" data-business-export>Exportar CSV</button></div>' +
+          ? sourceToolbar +
             '<div class="dashboard-business-record-list">' + (sourceRows || '<div class="dashboard-business-empty"><b>Sem dados disponíveis</b><small>Os itens aparecem quando há dados cadastrados nas páginas conectadas.</small></div>') + '</div>'
           : module.id === 'hr-training'
             ? '<div class="dashboard-business-toolbar"><label><span>' + iconMarkup('activity') + '</span><input type="search" data-business-search value="' +
@@ -5660,6 +5660,24 @@
       libraryRoot.addEventListener('click', function (event) {
         if (event.target === libraryRoot || event.target.closest('[data-library-close]')) {
           closeLibrary();
+          return;
+        }
+        const viewButton = event.target.closest('[data-library-view]');
+        if (viewButton && viewButton.dataset.libraryView !== activeLibraryView) {
+          activeLibraryView = viewButton.dataset.libraryView;
+          Array.prototype.forEach.call(libraryRoot.querySelectorAll('[data-library-view]'), function (button) {
+            const selected = button === viewButton;
+            button.classList.toggle('active', selected);
+            button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+          });
+          const current = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
+          renderLibraryContent(
+            libraryRoot.querySelector('.dashboard-library-content'),
+            current,
+            dashboardState,
+            getStoredHomeCards(),
+            activeLibrarySector
+          );
           return;
         }
         const sectorTab = event.target.closest('[data-library-sector]');

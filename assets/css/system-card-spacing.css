@@ -1,7 +1,10 @@
-:root{--system-card-gap:14px}
+:root{--system-card-gap:clamp(12px,1.15vw,18px)}
 :is(.layout-2col,.dashboard-grid,.stat-grid,.mural-posts,.home-dashboard-grid,.inicio-subrow){gap:var(--system-card-gap)!important}
 #inicio-fit{gap:var(--system-card-gap)!important}
 #inicio-fit>.inicio-cols{gap:var(--system-card-gap)!important}
 #inicio-fit .inicio-cols>.side-widgets,
 #inicio-fit>.inicio-cols>.home-sidebar,
 #inicio-fit .inicio-cols .inicio-subrow{gap:var(--system-card-gap)!important}
+.layout-2col{grid-template-columns:minmax(0,1fr) minmax(250px,clamp(250px,25vw,340px))}
+.layout-2col>.side-widgets{width:100%;min-width:0}
+.stat-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
