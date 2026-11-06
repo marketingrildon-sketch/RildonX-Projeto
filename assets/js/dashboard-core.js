@@ -3,6 +3,15 @@
   const LEGACY_STORAGE_KEY = 'rildonx_dashboard_config';
   const HOME_CARDS_STORAGE_KEY = 'rildonx_home_dashboard_cards';
   const HOME_CARDS_LIMIT = 3;
+  const PANEL_MODULE_IDS = new Set([
+    'marketing-insights',
+    'hr-birthdays',
+    'purchase-dashboard',
+    'purchase-comparison',
+    'management-overview',
+    'management-strategic-projects'
+  ]);
+  let activeLibraryKind = 'panels';
   let activeStorageKey = STORAGE_KEY + ':local';
   let activeHomeCardsStorageKey = HOME_CARDS_STORAGE_KEY + ':local';
   let authenticatedUserId = null;
@@ -534,6 +543,10 @@
       source: 'projects', fields: []
     }
   ];
+
+  BUSINESS_CARD_MODULES.forEach(function (module) {
+    module.kind = PANEL_MODULE_IDS.has(module.id) ? 'panel' : 'process';
+  });
 
   window.RildonXPanelCatalog = BUSINESS_CARD_MODULES.map(function (module) {
     return { id: module.id, title: module.title, sector: module.sector, tone: module.tone };
@@ -2217,13 +2230,16 @@
     return '<article class="dashboard-library-card' + (!permitted ? ' is-restricted' : '') + '" data-access="' + (permitted ? 'allowed' : 'restricted') + '" data-tone="' + escapeHtml(module ? tone || 'blue' : 'general') + '">' +
       '<div class="dashboard-library-card-header"><span class="dashboard-library-icon">' + iconMarkup(catalog.icon) + '</span>' +
       '<div class="dashboard-library-info"><h4>' + escapeHtml(catalog.label) + '</h4>' +
-      '<small>' + escapeHtml(sector || 'Geral') + '</small></div></div>' +
+      '<small>' + escapeHtml(sector || 'Geral') + '</small></div>' +
+      '<span class="dashboard-library-kind" data-kind="' + (module && module.kind === 'process' ? 'process' : 'panel') + '">' +
+      (module && module.kind === 'process' ? 'Processo' : 'Painel') + '</span></div>' +
       '<p class="dashboard-library-description">' + escapeHtml(description) + '</p>' +
       '<ul>' + featureList + '</ul>' +
       '<div class="dashboard-library-card-actions">' +
       (module
         ? '<button type="button" class="btn secondary dashboard-library-open" data-library-open="' + escapeHtml(type) + '"' +
-          (!permitted ? ' disabled title="Acesso restrito ao setor"' : '') + '>Abrir painel</button>'
+          (!permitted ? ' disabled title="Acesso restrito ao setor"' : '') + '>' +
+          (module.kind === 'process' ? 'Abrir processo' : 'Abrir painel') + '</button>'
         : '<a class="btn secondary dashboard-library-open" href="' + escapeHtml(pageHref) + '">Abrir página</a>') +
       '<details class="dashboard-library-add-menu"><summary class="dashboard-card-action">Adicionar</summary><div class="dashboard-library-add-options">' +
       '<button type="button" class="dashboard-card-action dashboard-library-home-toggle" data-home-toggle="' + escapeHtml(type) + '"' +
@@ -2238,7 +2254,6 @@
   function getLibrarySectors() {
     const grouped = new Map();
     BUSINESS_CARD_MODULES.forEach(function (module) {
-      if (module.sectorKey === 'financeiro' || module.sectorKey === 'logistica') return;
       if (!grouped.has(module.sectorKey)) grouped.set(module.sectorKey, []);
       grouped.get(module.sectorKey).push(module);
     });
@@ -2251,12 +2266,12 @@
     if (!root) return;
     const selectedSector = activeSector || 'general';
     if (selectedSector === 'general') {
-      const coreCards = CORE_LIBRARY_CARDS.map(function (item) {
+      const coreCards = activeLibraryKind === 'panels' ? CORE_LIBRARY_CARDS.map(function (item) {
         return libraryCardMarkup(item.type, item.description, item.features, 'Geral', 'blue', config, data, null, homeCards);
-      }).join('');
+      }).join('') : '';
       root.innerHTML = coreCards
         ? '<section class="dashboard-library-core" data-library-panel="general"><h3>Cards gerais do Meu Espaço</h3><div class="dashboard-library-cards">' + coreCards + '</div></section>'
-        : '<div class="dashboard-data-empty">Nenhum card geral disponível.</div>';
+        : '<div class="dashboard-data-empty">Não há processos gerais no momento. Os processos disponíveis estão organizados por setor.</div>';
       return;
     }
 
@@ -2265,16 +2280,19 @@
       root.innerHTML = '<div class="dashboard-data-empty">Nenhum card disponível.</div>';
       return;
     }
-    const modules = sector.modules;
+    const modules = sector.modules.filter(function (module) {
+      return module.kind === (activeLibraryKind === 'processes' ? 'process' : 'panel');
+    });
     const moduleCards = modules.map(function (module) {
       return libraryCardMarkup(module.id, module.description, module.features, module.sector, module.tone, config, data, module, homeCards);
     }).join('');
     root.innerHTML = moduleCards
       ? '<section class="dashboard-library-sector" data-library-panel="' + escapeHtml(selectedSector) + '" data-tone="' + escapeHtml(modules[0].tone) + '">' +
         '<header><span>' + iconMarkup(modules[0].icon) + '</span><div><h3>' + escapeHtml(modules[0].sector) +
-        '</h3><small>' + modules.length + ' painéis · acesso conforme o setor</small></div></header>' +
+        '</h3><small>' + modules.length + (activeLibraryKind === 'processes' ? ' processos' : ' painéis') +
+        ' · acesso conforme o setor</small></div></header>' +
         '<div class="dashboard-library-cards">' + moduleCards + '</div></section>'
-      : '<div class="dashboard-data-empty">Nenhum card deste setor disponível.</div>';
+      : '<div class="dashboard-data-empty">Nenhum ' + (activeLibraryKind === 'processes' ? 'processo' : 'painel') + ' disponível neste setor.</div>';
   }
 
   function hydrateLibrary(root, dashboardConfig, data, homeCards, activeSector) {
@@ -2289,12 +2307,17 @@
     }).join('');
     root.innerHTML = '<div class="dashboard-library-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-library-title">' +
       '<div class="dashboard-library-header"><div><span class="dashboard-library-eyebrow">RildonX · Componentes reutilizáveis</span>' +
-      '<h2 id="dashboard-library-title">Biblioteca de Painéis</h2><p>Explore os painéis gerais e os módulos de cada setor. Os módulos setoriais respeitam as permissões do seu perfil.</p></div>' +
+      '<h2 id="dashboard-library-title">Módulos por setor</h2><p>Consulte Painéis e Indicadores ou abra Processos para cadastros, solicitações e atualizações. O acesso segue as permissões do seu perfil.</p></div>' +
       '<div class="dashboard-library-header-actions"><button type="button" class="dashboard-library-close" data-library-close aria-label="Fechar biblioteca de painéis">×</button></div></div>' +
-      '<div class="dashboard-library-tabs" role="tablist" aria-label="Categorias de painéis">' +
+      '<div class="dashboard-library-tabs" role="tablist" aria-label="Setores">' +
       '<button type="button" class="dashboard-library-tab' + (selectedSector === 'general' ? ' active' : '') +
       '" data-library-sector="general" data-tone="general" role="tab" aria-controls="dashboard-library-results" aria-selected="' + (selectedSector === 'general') + '"><span class="dashboard-library-general-icon">✦</span><span>Geral</span></button>' +
-      sectorTabs + '</div><div id="dashboard-library-results" class="dashboard-library-content" role="tabpanel"></div></div>';
+      sectorTabs + '</div><div class="dashboard-library-kinds" role="group" aria-label="Tipo de módulo">' +
+      '<button type="button" data-library-kind="panels" aria-pressed="' + (activeLibraryKind === 'panels') + '"' +
+      (activeLibraryKind === 'panels' ? ' class="active"' : '') + '>Painéis</button>' +
+      '<button type="button" data-library-kind="processes" aria-pressed="' + (activeLibraryKind === 'processes') + '"' +
+      (activeLibraryKind === 'processes' ? ' class="active"' : '') + '>Processos</button>' +
+      '</div><div id="dashboard-library-results" class="dashboard-library-content" role="tabpanel"></div></div>';
     root.dataset.activeSector = selectedSector;
     renderLibraryContent(root.querySelector('.dashboard-library-content'), dashboardConfig, data, homeCards, selectedSector);
   }
@@ -2398,6 +2421,13 @@
     });
     let activeBusinessModule = '';
     let businessOpenedFromLibrary = false;
+    let businessDetailRoute = false;
+    let businessReturnTo = '';
+    let businessReturnLibrary = false;
+    let businessReturnSector = 'general';
+    let businessReturnKind = 'panels';
+    let businessReturnScroll = 0;
+    let businessReturnLibraryScroll = 0;
     let activeLibrarySector = 'general';
     let businessSearch = '';
     let includeArchived = false;
@@ -2811,9 +2841,45 @@
 
     function openLibrary() {
       const config = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
-      activeLibrarySector = 'general';
+      const params = new URLSearchParams(window.location.search);
+      activeLibrarySector = params.get('librarySector') || 'general';
+      activeLibraryKind = params.get('libraryKind') === 'processes' ? 'processes' : 'panels';
       hydrateLibrary(libraryRoot, config, dashboardState, getStoredHomeCards(), activeLibrarySector);
       libraryRoot.classList.add('open');
+    }
+
+    function openRequestedLibrary() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('restoreLibrary') !== '1' || !libraryRoot) return;
+      openLibrary();
+      const scroll = Number(params.get('libraryScroll')) || 0;
+      const panelScroll = Number(params.get('libraryPanelScroll')) || 0;
+      window.requestAnimationFrame(function () {
+        window.scrollTo(0, scroll);
+        const panel = libraryRoot.querySelector('.dashboard-library-panel');
+        if (panel) panel.scrollTop = panelScroll;
+      });
+      ['restoreLibrary', 'librarySector', 'libraryKind', 'libraryScroll', 'libraryPanelScroll'].forEach(function (key) {
+        params.delete(key);
+      });
+      const nextUrl = new URL(window.location.href);
+      nextUrl.search = params.toString();
+      window.history.replaceState(null, '', nextUrl.pathname + nextUrl.search + nextUrl.hash);
+    }
+
+    function navigateToBusinessProcess(moduleId) {
+      const target = new URL('meu-espaco.html', window.location.href);
+      target.searchParams.set('businessCard', moduleId);
+      target.searchParams.set('returnTo', window.location.href);
+      if (libraryRoot && libraryRoot.classList.contains('open')) {
+        const panel = libraryRoot.querySelector('.dashboard-library-panel');
+        target.searchParams.set('returnLibrary', '1');
+        target.searchParams.set('returnSector', activeLibrarySector);
+        target.searchParams.set('returnKind', activeLibraryKind);
+        target.searchParams.set('returnScroll', String(window.scrollY));
+        target.searchParams.set('returnLibraryScroll', String(panel ? panel.scrollTop : 0));
+      }
+      window.location.assign(target.href);
     }
 
     function closeLibrary() {
@@ -4741,6 +4807,10 @@
     function openBusinessModule(moduleId, recordId, fromLibrary) {
       const module = BUSINESS_CARD_MODULES.find(function (item) { return item.id === moduleId; });
       if (!module) return;
+      if (module.kind === 'process' && !businessDetailRoute) {
+        navigateToBusinessProcess(moduleId);
+        return;
+      }
       businessOpenedFromLibrary = Boolean(fromLibrary);
       if (moduleId === 'it-support-tickets' && window.RildonXSupport &&
           typeof window.RildonXSupport.open === 'function') {
@@ -4801,14 +4871,30 @@
       if (!moduleId) return;
       const module = BUSINESS_CARD_MODULES.find(function (item) { return item.id === moduleId; });
       if (!module) return;
-      openBusinessModule(moduleId, params.get('record'));
-      const url = new URL(window.location.href);
-      url.searchParams.delete('businessCard');
-      url.searchParams.delete('record');
-      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      businessDetailRoute = true;
+      businessReturnTo = params.get('returnTo') || new URL('meu-espaco.html', window.location.href).href;
+      businessReturnLibrary = params.get('returnLibrary') === '1';
+      businessReturnSector = params.get('returnSector') || 'general';
+      businessReturnKind = params.get('returnKind') === 'processes' ? 'processes' : 'panels';
+      businessReturnScroll = Number(params.get('returnScroll')) || 0;
+      businessReturnLibraryScroll = Number(params.get('returnLibraryScroll')) || 0;
+      businessRoot.classList.add('is-standalone');
+      openBusinessModule(moduleId, params.get('record'), businessReturnLibrary);
     }
 
     function closeBusinessModule() {
+      if (businessDetailRoute) {
+        const returnUrl = new URL(businessReturnTo, window.location.href);
+        if (businessReturnLibrary) {
+          returnUrl.searchParams.set('restoreLibrary', '1');
+          returnUrl.searchParams.set('librarySector', businessReturnSector);
+          returnUrl.searchParams.set('libraryKind', businessReturnKind);
+          returnUrl.searchParams.set('libraryScroll', String(businessReturnScroll));
+          returnUrl.searchParams.set('libraryPanelScroll', String(businessReturnLibraryScroll));
+        }
+        window.location.assign(returnUrl.href);
+        return;
+      }
       businessRoot.classList.remove('open');
       activeBusinessModule = '';
       businessOpenedFromLibrary = false;
@@ -5534,6 +5620,24 @@
       libraryRoot.addEventListener('click', function (event) {
         if (event.target === libraryRoot || event.target.closest('[data-library-close]')) {
           closeLibrary();
+          return;
+        }
+        const kindButton = event.target.closest('[data-library-kind]');
+        if (kindButton) {
+          activeLibraryKind = kindButton.dataset.libraryKind === 'processes' ? 'processes' : 'panels';
+          libraryRoot.querySelectorAll('[data-library-kind]').forEach(function (button) {
+            const selected = button === kindButton;
+            button.classList.toggle('active', selected);
+            button.setAttribute('aria-pressed', String(selected));
+          });
+          const current = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
+          renderLibraryContent(
+            libraryRoot.querySelector('.dashboard-library-content'),
+            current,
+            dashboardState,
+            getStoredHomeCards(),
+            activeLibrarySector
+          );
           return;
         }
         const sectorTab = event.target.closest('[data-library-sector]');
@@ -6290,6 +6394,7 @@
         refreshInfrastructureAssets();
         subscribeInfrastructureAssets();
         openRequestedBusinessCard();
+        openRequestedLibrary();
       }).catch(function (error) {
         console.error('Não foi possível confirmar as permissões dos cards por setor:', error);
         dashboardState = Object.assign({}, dashboardState, {
@@ -6304,6 +6409,7 @@
       refreshInfrastructureAssets();
       subscribeInfrastructureAssets();
       openRequestedBusinessCard();
+      openRequestedLibrary();
     }
 
     window.addEventListener('rildonx:support-tickets-updated', refreshSupportTickets);
