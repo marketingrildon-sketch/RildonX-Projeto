@@ -123,6 +123,107 @@
     };
   }
 
+  function marketingCalendarViewers(user) {
+    var profiles = window.RildonXStore ? window.RildonXStore.getState().profiles || [] : [];
+    var viewers = profiles.filter(function (profile) {
+      if (!profile || profile.active === false) return false;
+      var role = String(profile.role || '').toLocaleLowerCase('pt-BR').normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      var sector = String(profile.sector || '').toLocaleLowerCase('pt-BR').normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      var identities = [profile.nickname, profile.email, profile.workEmail, profile.work_email]
+        .filter(Boolean).map(function (value) { return String(value).trim().toLocaleLowerCase('pt-BR'); });
+      var isManager = sector === 'gerencia' || /adm|gerente|gestor|diretor/.test(role) ||
+        identities.some(function (value) { return value === 'adson.ri' || value.indexOf('adson.ri@') === 0; });
+      var enabledPanels = Array.isArray(profile.enabledPanels) ? profile.enabledPanels : [];
+      return isManager || enabledPanels.indexOf('marketing-content-calendar') !== -1;
+    }).map(function (profile) { return String(profile.id); });
+    var authIdentity = user && [user.email, user.user_metadata && user.user_metadata.nickname]
+      .filter(Boolean).map(function (value) { return String(value).trim().toLocaleLowerCase('pt-BR'); }) || [];
+    if (authIdentity.some(function (value) { return value === 'adson.ri' || value.indexOf('adson.ri@') === 0; }) &&
+        user && user.id) viewers.push(String(user.id));
+    return Array.from(new Set(viewers.filter(Boolean)));
+  }
+
+  async function syncMarketingContent(record, currentUser) {
+    var item = record || {};
+    if (!item.id || item.moduleKey !== 'marketing-content-calendar') {
+      throw new Error('Não foi possível identificar o conteúdo para sincronização com o calendário.');
+    }
+    var data = item.data || {};
+    var integrations = data.integrations || {};
+    var archived = item.archived || item.status === 'Arquivo';
+    var date = !archived && integrations.calendar !== false ? String(data.publishAt || '') : '';
+    if (date && data.publishTime && /^([01]\d|2[0-3]):[0-5]\d$/.test(data.publishTime)) {
+      date += 'T' + data.publishTime + ':00';
+    }
+    var details = [
+      data.channel && 'Canal: ' + data.channel,
+      data.format && 'Formato: ' + data.format,
+      item.status && 'Etapa: ' + item.status
+    ].filter(Boolean);
+    var user = currentUser || await getUser(window.supabaseClient);
+    var viewerIds = marketingCalendarViewers(user);
+    if (viewerIds.indexOf(String(user.id)) === -1) {
+      throw new Error('Você não tem permissão para sincronizar este conteúdo com o calendário.');
+    }
+    return sync({
+      source: 'marketing-content-calendar',
+      recordId: item.id,
+      slot: 'publication',
+      visibility: 'restricted',
+      viewerIds: viewerIds,
+      title: 'Conteúdo: ' + String(item.title || 'Publicação'),
+      description: details.join(' · ') || 'Publicação planejada no Calendário de Conteúdo.',
+      date: date,
+      category: 'conteudo'
+    });
+  }
+
+  function marketingContentEventNeedsSync(record, event, user) {
+    var data = record.data || {};
+    var integrations = data.integrations || {};
+    var archived = record.archived || record.status === 'Arquivo';
+    var date = !archived && integrations.calendar !== false ? String(data.publishAt || '') : '';
+    if (date && data.publishTime && /^([01]\d|2[0-3]):[0-5]\d$/.test(data.publishTime)) {
+      date += 'T' + data.publishTime + ':00';
+    }
+    var expectedDates = eventDates(date);
+    if (expectedDates === null) return Boolean(event && !event.deletedAt);
+    if (!event || event.deletedAt) return true;
+    var viewers = marketingCalendarViewers(user).slice().sort();
+    var currentViewers = (event.viewerIds || []).map(String).sort();
+    var details = [
+      data.channel && 'Canal: ' + data.channel,
+      data.format && 'Formato: ' + data.format,
+      record.status && 'Etapa: ' + record.status
+    ].filter(Boolean);
+    return event.title !== ('Conteúdo: ' + String(record.title || 'Publicação')).slice(0, 180) ||
+      event.description !== (details.join(' · ') || 'Publicação planejada no Calendário de Conteúdo.') ||
+      event.category !== 'conteudo' || event.visibility !== 'restricted' ||
+      String(event.startsAt || '') !== expectedDates.startsAt ||
+      Boolean(event.allDay) !== expectedDates.allDay ||
+      String(event.allDayStartDate || '') !== String(expectedDates.startDate || '') ||
+      String(event.allDayEndDate || '') !== String(expectedDates.endDate || '') ||
+      JSON.stringify(currentViewers) !== JSON.stringify(viewers);
+  }
+
+  async function syncMarketingContentRecords(records) {
+    var user = await getUser(window.supabaseClient);
+    var currentEvents = window.RildonXStore ? window.RildonXStore.getState().events || [] : [];
+    var items = (records || []).filter(function (record) {
+      if (!record || marketingCalendarViewers(user).indexOf(String(user.id)) === -1) return false;
+      var event = currentEvents.find(function (item) {
+        return item && item.sourceType === 'marketing-content-calendar' &&
+          String(item.sourceRecordId) === String(record.id) && item.sourceSlot === 'publication';
+      });
+      return marketingContentEventNeedsSync(record, event, user);
+    });
+    return Promise.all(items.map(function (record) {
+      return syncMarketingContent(record, user);
+    }));
+  }
+
   async function sync(options) {
     var settings = options || {};
     var client = window.supabaseClient;
@@ -355,6 +456,20 @@
             enqueue('project:' + project.id, function () { return syncProject(project); });
           }
         });
+        var knownMarketingEvents = new Set((current.events || []).filter(function (event) {
+          return event && event.sourceType === 'marketing-content-calendar' &&
+            event.sourceSlot === 'publication' && !event.deletedAt;
+        }).map(function (event) { return String(event.sourceRecordId); }));
+        var datedMarketingRecords = (current.businessCardRecords || []).filter(function (record) {
+          return record && record.moduleKey === 'marketing-content-calendar' &&
+            (record.data && record.data.publishAt || knownMarketingEvents.has(String(record.id)));
+        });
+        syncMarketingContentRecords(datedMarketingRecords).catch(function (error) {
+          console.error('Não foi possível refletir o Calendário de Conteúdo no calendário do sistema:', error);
+          if (typeof window.showToast === 'function') {
+            window.showToast('Não foi possível atualizar as publicações no Calendário. Verifique as permissões e tente novamente.');
+          }
+        });
       }).catch(function (error) {
         console.error('Não foi possível atualizar as permissões dos eventos vinculados:', error);
         if (typeof window.showToast === 'function') {
@@ -368,6 +483,8 @@
   window.RildonXBusinessCalendarSync = {
     sync: sync,
     syncMany: syncMany,
+    syncMarketingContent: syncMarketingContent,
+    syncMarketingContentRecords: syncMarketingContentRecords,
     syncProject: syncProject,
     syncTask: syncTask,
     remove: remove

@@ -20,6 +20,24 @@
 .dashboard-page-actions>.btn svg{width:16px;height:16px;margin-right:6px;vertical-align:middle}
 .dashboard-page-actions>.dashboard-personalize-button{min-width:142px;box-shadow:0 4px 12px rgba(37, 99, 235, 0.216)}
 .dashboard-page-actions>.dashboard-personalize-button svg{margin-right:2px}
+#page-meuespaco .mini-calendar-board{padding:18px 20px}
+#page-meuespaco .mini-calendar-board .mcb-head{align-items:flex-start;gap:12px}
+#page-meuespaco .mini-calendar-board .mcb-head p{margin:5px 0 0;color:var(--text-muted);font-size:11px;line-height:1.45}
+#page-meuespaco .mini-calendar-board .mcb-nav{flex-wrap:wrap;justify-content:flex-end}
+#page-meuespaco .mini-calendar-board .mcb-nav .btn{min-height:34px;padding:7px 10px;font-size:11px;text-decoration:none}
+.marketing-content-overview-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.marketing-content-overview-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--border-soft);border-radius:8px;background:var(--card)}
+.marketing-content-overview-list li>a:first-child{display:grid;min-width:0;gap:3px;color:var(--text);text-decoration:none}
+.marketing-content-overview-list li>a:first-child b{overflow:hidden;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.marketing-content-overview-list li>a:first-child span,.marketing-content-overview-list li>a:first-child small{color:var(--text-muted);font-size:10px}
+.marketing-content-overview-list li>a:last-child{flex:0 0 auto;color:var(--blue-600);font-size:11px;font-weight:700;text-decoration:none}
+.marketing-content-overview-empty,.calendar-commemorations-empty{margin:0;padding:12px;color:var(--text-muted);font-size:12px;line-height:1.5}
+.calendar-commemoration-link{display:flex;min-width:0;align-items:center;gap:8px;color:var(--text);text-decoration:none}
+.calendar-commemoration-link b{overflow:hidden;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.calendar-commemoration-date{flex:0 0 auto;color:var(--text-muted);font-size:10px}
+.calendar-commemoration-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#f59e0b}
+.calendar-commemoration-dot[data-category="aniversario"]{background:#ec4899}
+.calendar-commemoration-dot[data-category="acao_comercial"]{background:#0891b2}
 #dashboard-grid{display:block;position:relative;margin:0 0 22px}
 .my-space-dashboard-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:6px 0 14px;padding:12px 0;border-bottom:1px solid var(--border-soft)}
 .my-space-dashboard-heading h2{margin:0;color:var(--text);font-size:16px;font-weight:800}

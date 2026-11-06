@@ -2824,11 +2824,97 @@
       return [];
     }
 
+    function renderMarketingContentOverview() {
+      const root = document.getElementById('marketing-content-overview');
+      if (!root) return;
+      if (!businessCardsVerified) {
+        root.innerHTML = '<p>Carregando conteúdos compartilhados…</p>';
+        return;
+      }
+      const module = BUSINESS_CARD_MODULES.find(function (item) { return item.id === 'marketing-content-calendar'; });
+      if (!module || !canAccessBusinessCard(module, dashboardState)) {
+        root.innerHTML = '<p class="marketing-content-overview-empty">O módulo de conteúdo está disponível apenas para pessoas autorizadas.</p>';
+        return;
+      }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const records = (dashboardState.businessCardRecords || []).filter(function (record) {
+        const date = parseCalendarDate(record && record.data && record.data.publishAt);
+        return record && record.moduleKey === 'marketing-content-calendar' &&
+          !record.archived && record.status !== 'Arquivo' && date && date >= today;
+      }).sort(function (first, second) {
+        return String(first.data.publishAt).localeCompare(String(second.data.publishAt)) ||
+          String(first.data.publishTime || '').localeCompare(String(second.data.publishTime || ''));
+      }).slice(0, 5);
+      root.innerHTML = records.length
+        ? '<ul class="marketing-content-overview-list">' + records.map(function (record) {
+          const data = record.data || {};
+          const date = parseCalendarDate(data.publishAt);
+          const calendarHref = 'calendario.html?source=marketing-content-calendar&date=' +
+            encodeURIComponent(data.publishAt);
+          const recordHref = 'meu-espaco.html?businessCard=marketing-content-calendar&record=' +
+            encodeURIComponent(record.id);
+          return '<li><a href="' + calendarHref + '"><b>' + escapeHtml(record.title) + '</b><span>' +
+            escapeHtml(date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })) +
+            (data.publishTime ? ' · ' + escapeHtml(data.publishTime) : '') + '</span><small>' +
+            escapeHtml([data.channel, data.format, record.status].filter(Boolean).join(' · ') || 'Conteúdo planejado') +
+            '</small></a><a class="marketing-content-overview-open" href="' + recordHref + '">Abrir</a></li>';
+        }).join('') + '</ul>'
+        : '<p class="marketing-content-overview-empty">Nenhuma publicação futura com data. Adicione e agende conteúdos no módulo.</p>';
+    }
+
+    function renderCommemorativeDates() {
+      const root = document.getElementById('calendar-commemorations-list');
+      if (!root) return;
+      const currentUser = getCurrentProfile(dashboardState);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dates = (dashboardState.events || []).filter(function (event) {
+        if (!event || event.deletedAt ||
+            ['feriado', 'aniversario', 'acao_comercial'].indexOf(event.category) === -1) return false;
+        if (event.visibility === 'private' &&
+            String(event.ownerId || event.createdBy || '') !== String(currentUser.id || '')) return false;
+        if (event.visibility === 'restricted' &&
+            String(event.ownerId || event.createdBy || '') !== String(currentUser.id || '') &&
+            !(event.viewerIds || []).some(function (id) { return String(id) === String(currentUser.id || ''); })) return false;
+        const value = event.allDay && event.allDayStartDate ? event.allDayStartDate : event.startsAt;
+        const date = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+          ? parseCalendarDate(value)
+          : dateValue(value);
+        if (!date) return false;
+        date.setHours(0, 0, 0, 0);
+        return date >= today;
+      }).map(function (event) {
+        const value = event.allDay && event.allDayStartDate ? event.allDayStartDate : event.startsAt;
+        const date = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+          ? parseCalendarDate(value)
+          : dateValue(value);
+        date.setHours(0, 0, 0, 0);
+        return { event: event, date: date };
+      }).sort(function (first, second) { return first.date - second.date; }).slice(0, 5);
+      root.innerHTML = dates.length
+        ? dates.map(function (item) {
+          const daysUntil = Math.round((item.date.getTime() - today.getTime()) / 86400000);
+          const when = daysUntil === 0 ? 'hoje' : daysUntil === 1 ? 'amanhã' : 'em ' + daysUntil + ' dias';
+          const dateKey = [item.date.getFullYear(), String(item.date.getMonth() + 1).padStart(2, '0'),
+            String(item.date.getDate()).padStart(2, '0')].join('-');
+          return '<div class="mini-row"><a class="calendar-commemoration-link" href="calendario.html?date=' +
+            encodeURIComponent(dateKey) + '"><span class="calendar-commemoration-dot" data-category="' +
+            escapeHtml(item.event.category) + '"></span><b>' + escapeHtml(item.event.title || 'Data comemorativa') +
+            '</b><span class="calendar-commemoration-date">' +
+            escapeHtml(item.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })) +
+            '</span></a><span class="mini-badge">' + escapeHtml(when) + '</span></div>';
+        }).join('')
+        : '<p class="calendar-commemorations-empty">Nenhuma data comemorativa futura cadastrada no Calendário.</p>';
+    }
+
     function render() {
       const current = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
       renderDashboard(dashboardRoot, current, dashboardState);
       const homeCards = getStoredHomeCards();
       renderHomeDashboard(homeDashboardRoot, homeCards, dashboardState);
+      renderMarketingContentOverview();
+      renderCommemorativeDates();
       if (libraryRoot && libraryRoot.classList.contains('open')) {
         hydrateLibrary(libraryRoot, current, dashboardState, homeCards, activeLibrarySector);
       }
@@ -4737,7 +4823,7 @@
         : '';
       const marketingToolbar = '<div class="dashboard-business-toolbar marketing-content-toolbar">' +
         '<button type="button" class="btn" data-business-create' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') +
-        '>+ Novo conteúdo</button><div class="marketing-content-view-switch" role="group" aria-label="Visualização">' +
+        '>+ Novo conteúdo</button><a class="btn secondary" href="calendario.html?source=marketing-content-calendar">Ver no Calendário</a><div class="marketing-content-view-switch" role="group" aria-label="Visualização">' +
         ['kanban', 'calendar', 'list'].map(function (view) {
           const label = { kanban: 'Kanban', calendar: 'Calendário', list: 'Lista' }[view];
           return '<button type="button" data-marketing-view="' + view + '" class="' +
@@ -4923,22 +5009,7 @@
         return;
       }
       if (module.id === 'marketing-content-calendar') {
-        if (record.data && record.data.calendarEventId) {
-          await window.RildonXBusinessCalendarSync.remove(record.data.calendarEventId);
-        }
-        await sync({
-          source: module.id,
-          recordId: record.id,
-          slot: 'publication',
-          title: 'Conteúdo: ' + record.title,
-          description: values.notes || 'Publicação planejada no Calendário de Conteúdo.',
-          date: record.status === 'Arquivo' || !values.publishAt ? '' :
-            values.publishTime && /^\d{2}:\d{2}$/.test(values.publishTime)
-              ? values.publishAt + 'T' + values.publishTime + ':00'
-              : values.publishAt,
-          category: 'conteudo',
-          location: values.channel || ''
-        });
+        await window.RildonXBusinessCalendarSync.syncMarketingContent(record);
         return;
       }
       if (module.id === 'hr-training') {

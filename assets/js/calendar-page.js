@@ -1,15 +1,21 @@
 (function () {
   'use strict';
 
+  var initialCalendarParams = new URLSearchParams(window.location.search);
+  var requestedCalendarDate = dateFromKey(initialCalendarParams.get('date'));
+  if (!requestedCalendarDate || dateKey(requestedCalendarDate) !== initialCalendarParams.get('date')) {
+    requestedCalendarDate = null;
+  }
+  var initialSelectedDate = requestedCalendarDate || new Date();
   var state = {
     view: 'month',
-    selectedDate: startOfDay(new Date()),
-    miniMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    selectedDate: startOfDay(initialSelectedDate),
+    miniMonth: new Date(initialSelectedDate.getFullYear(), initialSelectedDate.getMonth(), 1),
     hiddenCategories: new Set(),
     filters: {
       query: '',
       projectId: '',
-      sourceType: '',
+      sourceType: initialCalendarParams.get('source') || '',
       responsibleId: '',
       from: '',
       to: ''
@@ -27,7 +33,8 @@
     { id: 'tarefa', label: 'Tarefas', color: '#16a34a' },
     { id: 'projeto', label: 'Projetos', color: '#7c3aed' },
     { id: 'reuniao', label: 'Reunião', color: '#2563eb' },
-    { id: 'acao_comercial', label: 'Ação comercial', color: '#0891b2' }
+    { id: 'acao_comercial', label: 'Ação comercial', color: '#0891b2' },
+    { id: 'conteudo', label: 'Conteúdo', color: '#a855f7' }
   ];
   var categoryOptions = defaultCategories.slice();
   var calendarPreferencesKey = '';
@@ -111,9 +118,21 @@
   }
 
   function getSourceRecord(event) {
-    if (!window.RildonXStore || !event.sourceRecordId ||
-        (event.sourceType !== 'task' && event.sourceType !== 'project')) return null;
+    if (!window.RildonXStore || !event.sourceRecordId) return null;
     var records = window.RildonXStore.getState();
+    if (event.sourceType === 'marketing-content-calendar') {
+      var content = (records.businessCardRecords || []).find(function (item) {
+        return String(item.id) === String(event.sourceRecordId) &&
+          item.moduleKey === 'marketing-content-calendar' && !item.archived;
+      });
+      return content ? {
+        title: content.title || '',
+        label: 'conteúdo',
+        href: 'meu-espaco.html?businessCard=marketing-content-calendar&record=' +
+          encodeURIComponent(content.id)
+      } : null;
+    }
+    if (event.sourceType !== 'task' && event.sourceType !== 'project') return null;
     var list = event.sourceType === 'task' ? records.tasks : records.projects;
     var record = (list || []).find(function (item) {
       return String(item.id) === String(event.sourceRecordId);
@@ -121,6 +140,7 @@
     if (!record) return null;
     return {
       title: record.title || record.name || '',
+      label: event.sourceType === 'task' ? 'tarefa' : 'projeto',
       href: event.sourceType === 'task' ? 'tarefas.html' : 'projetos.html'
     };
   }
@@ -253,13 +273,16 @@
       var date = eventStartDate(event);
       var source = getSourceRecord(event);
       var sourceMarkup = source
-        ? '<a class="calendar-source-link" href="' + source.href + '?calendarSource=' +
-          encodeURIComponent(event.sourceRecordId) + '">Abrir ' +
-          (event.sourceType === 'task' ? 'tarefa' : 'projeto') +
+        ? '<a class="calendar-source-link" href="' + escapeHtml(source.href) +
+          (event.sourceType === 'marketing-content-calendar' ? '' : '?calendarSource=' +
+            encodeURIComponent(event.sourceRecordId)) + '">Abrir ' +
+          escapeHtml(source.label) +
           (source.title ? ': ' + escapeHtml(source.title) : '') + '</a>'
+        : (event.sourceType === 'hr-birthdays'
+          ? '<span>Aniversariantes</span>'
         : (event.sourceType === 'google'
           ? '<span>Google Calendar</span>'
-          : '');
+          : ''));
       return '<article class="calendar-event-card ' + getCategoryClass(event) +
         '" style="--calendar-category-color:' + escapeHtml(getCategoryColor(event.category)) + '">' +
         '<span class="calendar-event-mark" style="--calendar-category-color:' + escapeHtml(getCategoryColor(event.category)) + '" aria-hidden="true"></span><div class="calendar-event-card-content">' +
@@ -391,6 +414,14 @@
         return String(project.id) === selectedProject;
       }) ? selectedProject : '';
       state.filters.projectId = projectSelect.value;
+    }
+
+    var sourceSelect = document.getElementById('calendar-filter-source');
+    if (sourceSelect) {
+      sourceSelect.value = Array.from(sourceSelect.options).some(function (option) {
+        return option.value === state.filters.sourceType;
+      }) ? state.filters.sourceType : '';
+      state.filters.sourceType = sourceSelect.value;
     }
 
     var responsibleSelect = document.getElementById('calendar-filter-responsible');
@@ -679,12 +710,15 @@
       var date = eventStartDate(event);
       var source = getSourceRecord(event);
       var sourceMarkup = source
-        ? '<p><b>Origem:</b> <a class="calendar-source-link" href="' + source.href +
-          '?calendarSource=' + encodeURIComponent(event.sourceRecordId) + '">Abrir ' +
-          (event.sourceType === 'task' ? 'tarefa' : 'projeto') +
+        ? '<p><b>Origem:</b> <a class="calendar-source-link" href="' + escapeHtml(source.href) +
+          (event.sourceType === 'marketing-content-calendar' ? '' : '?calendarSource=' +
+            encodeURIComponent(event.sourceRecordId)) + '">Abrir ' +
+          escapeHtml(source.label) +
           (source.title ? ': ' + escapeHtml(source.title) : '') + '</a></p>'
-        : (event.sourceType === 'google' ? '<p><b>Origem:</b> Google Calendar</p>' : '');
-      var derivedEvent = event.sourceType === 'task' || event.sourceType === 'project';
+        : (event.sourceType === 'google' ? '<p><b>Origem:</b> Google Calendar</p>' :
+          event.sourceType === 'hr-birthdays' ? '<p><b>Origem:</b> Aniversariantes</p>' : '');
+      var derivedEvent = event.sourceType !== 'manual' &&
+        (Boolean(event.sourceRecordId) || event.sourceType === 'google');
       details.innerHTML = '<p><b>Data:</b> ' + escapeHtml(capitalize(fullDateFormatter.format(date))) +
         '</p><p><b>Horário:</b> ' + escapeHtml(eventTime(event) || 'Dia inteiro') +
         '</p><p><b>Categoria:</b> ' + escapeHtml(getCategoryLabel(event.category)) +
