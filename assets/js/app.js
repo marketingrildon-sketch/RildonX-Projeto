@@ -585,6 +585,25 @@ function saveMutedConversationIds(state, ids) {
   window.localStorage.setItem(key, JSON.stringify(Array.from(ids)));
 }
 
+function getPinnedConversationIds(state) {
+  var userId = state && state.user && state.user.id || 'anonymous';
+  var key = 'rildonx:pinned-conversations:' + userId;
+  try {
+    var stored = window.localStorage.getItem(key);
+    var ids = stored ? JSON.parse(stored) : [];
+    return new Set(Array.isArray(ids) ? ids.map(String).slice(0, 3) : []);
+  } catch (error) {
+    console.error('Não foi possível carregar as conversas fixadas neste dispositivo:', error);
+    return new Set();
+  }
+}
+
+function savePinnedConversationIds(state, ids) {
+  var userId = state && state.user && state.user.id || 'anonymous';
+  var key = 'rildonx:pinned-conversations:' + userId;
+  window.localStorage.setItem(key, JSON.stringify(Array.from(ids).slice(0, 3)));
+}
+
 function getMentionNotificationSettings(state) {
   var userId = state && state.user && state.user.id || 'anonymous';
   var key = 'rildonx:mention-notifications:' + userId;
@@ -657,6 +676,7 @@ function renderConversationListFromStore() {
   var catalog = getConversationCatalog(state);
   var hiddenIds = getHiddenConversationIds(state);
   var mutedIds = getMutedConversationIds(state);
+  var pinnedIds = getPinnedConversationIds(state);
   var requestedConversationId = new URLSearchParams(window.location.search).get('conversation');
   if (requestedConversationId && catalog.some(function(conversation) {
     return conversation.id === requestedConversationId;
@@ -699,15 +719,17 @@ function renderConversationListFromStore() {
       latest: items[0] || null,
       unreadCount: unreadCount,
       isMuted: mutedIds.has(String(conversation.id)),
-      isArchived: hiddenIds.has(conversation.id)
+      isPinned: pinnedIds.has(String(conversation.id))
     };
   }).sort(function(first, second) {
+    if (conversationListFilter === 'all' && first.isPinned !== second.isPinned) {
+      return first.isPinned ? -1 : 1;
+    }
     return new Date((second.latest && second.latest.sentAt) || second.conversation.updatedAt || 0) - new Date((first.latest && first.latest.sentAt) || first.conversation.updatedAt || 0);
   });
 
   var normalizedQuery = conversationListQuery.trim().toLocaleLowerCase('pt-BR');
   var filteredConversations = conversations.filter(function(item) {
-    if (conversationListFilter === 'archived' ? !item.isArchived : item.isArchived) return false;
     if (conversationListFilter === 'unread' && !item.unreadCount) return false;
     if (conversationListFilter === 'group' &&
       (item.conversation.kind === 'direct' || item.conversation.kind === 'local')) return false;
@@ -738,13 +760,13 @@ function renderConversationListFromStore() {
       : profileAvatarImageMarkup({ avatarUrl: conversation.avatarUrl });
     var classes = 'conv-item' + (isActive ? ' active' : '') +
       (item.unreadCount ? ' is-unread' : '') +
-      (item.isMuted ? ' is-muted' : '') +
-      (item.isArchived ? ' is-archived' : '');
-    var status = item.isArchived ? '<span class="conv-status">Arquivada</span>' :
-      item.isMuted ? '<span class="conv-status">Silenciada</span>' : '';
+      (item.isMuted ? ' is-muted' : '');
+    var status = item.isMuted ? '<span class="conv-status">Silenciada</span>' : '';
     return '<button class="' + classes + '" type="button" data-conversation-id="' + escapeHtml(conversation.id) + '" aria-current="' + (isActive ? 'true' : 'false') + '">' +
       '<span class="conv-avatar group">' + escapeHtml(getPostInitials(label)) + avatar + '</span>' +
-      '<span class="conv-body"><span class="top-line"><b>' + escapeHtml(label) + '</b><span class="time">' + formatTaskDate(latest ? latest.sentAt : conversation.updatedAt) + '</span></span>' +
+      '<span class="conv-body"><span class="top-line"><b>' + escapeHtml(label) +
+      (item.isPinned ? '<svg class="conversation-pin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Conversa fixada"><path d="m16 3 5 5-5 1-4 4-1 5-2-2-2-2 5-1 4-4z"/><path d="m9 15-5 5"/></svg>' : '') +
+      '</b><span class="time">' + formatTaskDate(latest ? latest.sentAt : conversation.updatedAt) + '</span></span>' +
       '<span class="preview"><span class="preview-text">' + escapeHtml(latest ? (latest.text || 'Arquivo compartilhado') : 'Nova conversa') + '</span>' +
       (item.unreadCount ? '<span class="unread" aria-label="' + item.unreadCount + ' mensagens não lidas">' + item.unreadCount + '</span>' : status ? '<span class="conv-state-marker" aria-hidden="true">•</span>' : '') +
       '</span>' + status + '</span></button>';
@@ -807,17 +829,17 @@ function bindConversationListControls() {
         var state = window.RildonXStore && window.RildonXStore.getState();
         var muted = state && getMutedConversationIds(state).has(String(activeConversationId));
         var mentionNotifications = state && getMentionNotificationConversationIds(state).has(String(activeConversationId));
-        var hidden = state && getHiddenConversationIds(state).has(activeConversationId);
+        var pinned = state && getPinnedConversationIds(state).has(String(activeConversationId));
         var muteAction = actionsMenu.querySelector('[data-conversation-action="mute"]');
         var mentionAction = actionsMenu.querySelector('[data-conversation-action="mentions"]');
-        var archiveAction = actionsMenu.querySelector('[data-conversation-action="archive"]');
+        var pinAction = actionsMenu.querySelector('[data-conversation-action="pin"]');
         if (muteAction) muteAction.textContent = muted ? 'Remover silenciamento neste dispositivo' : 'Silenciar neste dispositivo';
         if (mentionAction) mentionAction.textContent = mentionNotifications
           ? 'Desativar alertas de menções neste dispositivo'
           : 'Ativar alertas de menções neste dispositivo';
-        if (archiveAction) {
-          archiveAction.textContent = hidden ? 'Desarquivar conversa' : 'Arquivar conversa';
-          archiveAction.disabled = activeConversationId === 'local-test';
+        if (pinAction) {
+          pinAction.textContent = pinned ? 'Desafixar conversa' :
+            getPinnedConversationIds(state).size >= 3 ? 'Fixar conversa (limite: 3)' : 'Fixar conversa';
         }
       }
     });
@@ -871,37 +893,27 @@ function bindConversationListControls() {
         }
         return;
       }
-      if (action === 'archive') {
-        var syncMethod = getHiddenConversationIds(state).has(activeConversationId)
-          ? window.RildonXSync && window.RildonXSync.restoreConversationForUser
-          : window.RildonXSync && window.RildonXSync.hideConversationForUser;
-        if (typeof syncMethod !== 'function') {
-          showToast('O serviço de conversas não está disponível.');
-          return;
-        }
-        actionButton.disabled = true;
+      if (action === 'pin') {
         try {
-          await syncMethod(activeConversationId);
-          if (getHiddenConversationIds(window.RildonXStore.getState()).has(activeConversationId)) {
-            activeConversationId = 'local-test';
-            var shell = document.querySelector('.messenger-shell');
-            if (shell) shell.classList.remove('show-chat');
+          var pinnedIds = getPinnedConversationIds(state);
+          if (pinnedIds.has(String(activeConversationId))) {
+            pinnedIds.delete(String(activeConversationId));
+          } else if (pinnedIds.size >= 3) {
+            showToast('Você pode fixar até três conversas.');
+            return;
           } else {
-            conversationListFilter = 'all';
-            document.querySelectorAll('[data-conversation-filter]').forEach(function(filterButton) {
-              filterButton.setAttribute('aria-pressed', String(filterButton.dataset.conversationFilter === 'all'));
-            });
+            pinnedIds.add(String(activeConversationId));
           }
+          savePinnedConversationIds(state, pinnedIds);
+          renderConversationListFromStore();
+          renderHomeRecentConversations();
           actionsMenu.hidden = true;
           actionsButton.setAttribute('aria-expanded', 'false');
-          renderConversationListFromStore();
-          renderMessagesFromStore();
         } catch (error) {
-          console.error('Não foi possível arquivar ou restaurar a conversa:', error);
-          showToast(error.message || 'Não foi possível atualizar a conversa.');
-        } finally {
-          actionButton.disabled = false;
+          console.error('Não foi possível atualizar as conversas fixadas:', error);
+          showToast('Não foi possível fixar a conversa neste dispositivo.');
         }
+        return;
       }
     });
     actionsMenu.dataset.bound = 'true';
@@ -1894,6 +1906,7 @@ function renderHomeRecentConversations() {
   var readByConversation = new Map((state.conversationReads || []).map(function(read) {
     return [read.conversationId, read.lastReadAt ? new Date(read.lastReadAt).getTime() : null];
   }));
+  var pinnedIds = getPinnedConversationIds(state);
   var conversations = getConversationCatalog(state).map(function(conversation) {
     var messages = (messagesByConversation.get(conversation.id) || []).slice().sort(function(first, second) {
       return new Date(second.sentAt || 0) - new Date(first.sentAt || 0);
@@ -1903,8 +1916,14 @@ function renderHomeRecentConversations() {
       return Boolean(message.senderId && message.senderId !== muralCurrentUserId) &&
         (lastReadAt === undefined || lastReadAt === null || new Date(message.sentAt || 0).getTime() > lastReadAt);
     }).length : 0;
-    return { conversation: conversation, latest: messages[0] || null, unreadCount: unreadCount };
+    return {
+      conversation: conversation,
+      latest: messages[0] || null,
+      unreadCount: unreadCount,
+      isPinned: pinnedIds.has(String(conversation.id))
+    };
   }).sort(function(first, second) {
+    if (first.isPinned !== second.isPinned) return first.isPinned ? -1 : 1;
     var firstTime = first.latest ? first.latest.sentAt : first.conversation.updatedAt;
     var secondTime = second.latest ? second.latest.sentAt : second.conversation.updatedAt;
     return new Date(secondTime || 0) - new Date(firstTime || 0);
@@ -1937,7 +1956,9 @@ function renderHomeRecentConversations() {
     var sentAt = message ? message.sentAt : item.conversation.updatedAt;
     return '<div class="mini-row home-conversation-row">' +
       '<div class="left"><div class="task-avatar home-conversation-avatar">' + escapeHtml(getPostInitials(avatarName)) + conversationAvatar + '</div>' +
-      '<div class="home-conversation-copy"><b>' + escapeHtml(conversationName) + '</b>' +
+      '<div class="home-conversation-copy"><b>' + escapeHtml(conversationName) +
+      (item.isPinned ? '<svg class="conversation-pin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Conversa fixada"><path d="m16 3 5 5-5 1-4 4-1 5-2-2-2-2 5-1 4-4z"/><path d="m9 15-5 5"/></svg>' : '') +
+      '</b>' +
       '<span>' + escapeHtml(senderName + ': ' + preview) + '</span></div></div>' +
       '<div class="home-conversation-end">' +
       (item.unreadCount ? '<span class="home-conversation-unread" aria-label="' + item.unreadCount + ' mensagens não lidas">' + (item.unreadCount > 99 ? '99+' : item.unreadCount) + '</span>' : '') +

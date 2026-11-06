@@ -800,7 +800,8 @@ html[data-theme="dark"] body[data-background="image"]{background-image:linear-gr
 .conv-tabs span{font-size:12.8px;font-weight:600;color:var(--text-muted);padding:11px 0;border-bottom:2px solid transparent;}
 .conv-tabs span.active{color:var(--blue-600);border-color:var(--blue-600);font-weight:700;}
 .conv-scroll{overflow-y:auto;flex:1;}
-.conv-item{display:flex;gap:11px;padding:15px 16px;border-bottom:1px solid var(--border-soft);cursor:pointer;}
+.conv-item{display:flex;gap:11px;padding:15px 16px;border-bottom:1px solid var(--border);cursor:pointer;}
+.conv-item:last-child{border-bottom:0;}
 .conv-item.active{background:var(--blue-50);}
 .conv-avatar{width:38px;height:38px;border-radius:11px;background:var(--navy-700);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;}
 .conv-avatar.group{background:var(--blue-100);color:var(--blue-600);}
@@ -1976,7 +1977,8 @@ svg{flex-shrink:0}
 .conv-item .conv-body .time{flex-shrink:0}
 .conv-status{display:block;margin-top:3px;color:var(--text-soft);font-size:10px;text-align:right}
 .conv-state-marker{flex:0 0 auto;color:var(--text-soft);font-size:16px;line-height:12px}
-.conv-item.is-muted .conv-body,.conv-item.is-archived .conv-body{opacity:.78}
+.conv-item.is-muted .conv-body{opacity:.78}
+.conversation-pin-icon{width:12px;height:12px;flex:0 0 auto;margin-left:5px;color:var(--blue-600);vertical-align:-1px}
 .conversation-list-empty{padding:20px 14px;color:var(--text-muted);font-size:12px;line-height:1.5;text-align:center}
 .chat-head{position:sticky;top:0;z-index:3;background:var(--card)}
 .chat-back-btn{display:none;width:32px;height:32px;flex:0 0 auto;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);font-size:19px;line-height:1;cursor:pointer}
