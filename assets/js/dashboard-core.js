@@ -1030,10 +1030,19 @@
       return task && !task.isDemo && String(task.projectId || '') === String(project.id);
     });
     const completed = tasks.filter(isTaskDone).length;
+    const weight = function (task) {
+      const metadata = task && task.metadata && typeof task.metadata === 'object' && !Array.isArray(task.metadata)
+        ? task.metadata
+        : {};
+      const value = Number(metadata.progressWeight);
+      return Number.isFinite(value) && value > 0 ? value : 1;
+    };
+    const totalWeight = tasks.reduce(function (sum, task) { return sum + weight(task); }, 0);
+    const completedWeight = tasks.filter(isTaskDone).reduce(function (sum, task) { return sum + weight(task); }, 0);
     return {
       tasks: tasks,
       completed: completed,
-      progress: tasks.length ? Math.round(completed * 100 / tasks.length) : 0
+      progress: totalWeight ? Math.round(completedWeight * 100 / totalWeight) : 0
     };
   }
 

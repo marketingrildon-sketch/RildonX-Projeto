@@ -1254,7 +1254,9 @@
       '<option value="weekly"' + (recurrence.frequency === 'weekly' ? ' selected' : '') + '>Semanal</option>' +
       '<option value="monthly"' + (recurrence.frequency === 'monthly' ? ' selected' : '') + '>Mensal</option></select></label>' +
       '<label>Quem está aguardando<input name="waitingOn" value="' + escapeHtml(metadata.waitingOn || '') + '" placeholder="Pessoa ou equipe externa"></label>' +
-      '<label>Motivo do bloqueio<input name="blockedReason" value="' + escapeHtml(metadata.blockedReason || '') + '" placeholder="O que impede o avanço?"></label></div>' +
+      '<label>Motivo do bloqueio<input name="blockedReason" value="' + escapeHtml(metadata.blockedReason || '') + '" placeholder="O que impede o avanço?"></label>' +
+      (task.projectId ? '<label>Peso no progresso do projeto<input name="progressWeight" type="number" min="0.1" step="0.1" value="' + escapeHtml(metadata.progressWeight || '') +
+        '" placeholder="1"><small>Maior peso representa maior contribuição. Vazio usa peso 1.</small></label>' : '') + '</div>' +
       '<p id="task-dependency-help" class="task-detail-muted">Uma tarefa só pode ser concluída depois das dependências.</p>' +
       '<label class="task-milestone-option"><input name="isMilestone" type="checkbox"' + (metadata.isMilestone ? ' checked' : '') + '> Marco do projeto</label>' +
       '</div>' +
@@ -1684,6 +1686,13 @@
       return;
     }
     var status = String(formData.get('status') || taskStatus(task));
+    var hasProgressWeight = formData.has('progressWeight');
+    var rawProgressWeight = String(formData.get('progressWeight') || '').trim();
+    var progressWeight = rawProgressWeight ? Number(rawProgressWeight) : null;
+    if (rawProgressWeight && (!Number.isFinite(progressWeight) || progressWeight <= 0)) {
+      notify('O peso no progresso deve ser um número maior que zero.');
+      return;
+    }
     var proposedTask = Object.assign({}, task, { metadata: Object.assign({}, taskMetadata(task), { dependsOn: dependencies }) });
     if (status === 'concluida') {
       var blockers = incompleteDependencies(proposedTask, state.tasks || []);
@@ -1718,6 +1727,10 @@
       isMilestone: formData.has('isMilestone'),
       recurrence: recurrence
     });
+    if (hasProgressWeight) {
+      if (progressWeight !== null) metadata.progressWeight = progressWeight;
+      else delete metadata.progressWeight;
+    }
     window.RildonXStore.updateTask(task.id, {
       title: String(formData.get('title') || '').trim(),
       startDate: formData.get('startDate') || null,

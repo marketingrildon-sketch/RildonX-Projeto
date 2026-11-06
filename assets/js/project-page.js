@@ -9,6 +9,11 @@
   var activeFilter = 'all';
   var searchText = '';
   var projectViewMode = 'list';
+  var projectSort = 'updated';
+  var projectGroupBy = 'none';
+  var sectorFilter = '';
+  var ownerFilter = '';
+  var healthFilter = '';
   var workloadPeriod = 'week';
   var detailProjectId = null;
   var detailTab = 'overview';
@@ -19,8 +24,33 @@
   try {
     var savedProjectViewMode = localStorage.getItem('rildonx_project_view_mode');
     if (savedProjectViewMode === 'grid' || savedProjectViewMode === 'list') projectViewMode = savedProjectViewMode;
+    var savedProjectFilters = JSON.parse(localStorage.getItem('rildonx_project_filters') || '{}');
+    if (savedProjectFilters && typeof savedProjectFilters === 'object') {
+      activeFilter = ['all', 'in-progress', 'planning', 'completed', 'archived'].indexOf(savedProjectFilters.phase) !== -1
+        ? savedProjectFilters.phase : 'all';
+      searchText = savedProjectFilters.search || '';
+      projectSort = ['updated', 'endDate', 'progress', 'name'].indexOf(savedProjectFilters.sort) !== -1
+        ? savedProjectFilters.sort : 'updated';
+      projectGroupBy = ['none', 'sector', 'owner', 'phase', 'health'].indexOf(savedProjectFilters.groupBy) !== -1
+        ? savedProjectFilters.groupBy : 'none';
+      sectorFilter = savedProjectFilters.sector || '';
+      ownerFilter = savedProjectFilters.owner || '';
+      healthFilter = ['attention', 'watch', 'healthy', 'unknown'].indexOf(savedProjectFilters.health) !== -1
+        ? savedProjectFilters.health : '';
+    }
   } catch (error) {
-    console.warn('Não foi possível restaurar a visualização dos projetos:', error);
+    console.warn('Não foi possível restaurar as preferências dos projetos:', error);
+  }
+
+  function saveProjectFilters() {
+    try {
+      localStorage.setItem('rildonx_project_filters', JSON.stringify({
+        phase: activeFilter, search: searchText, sort: projectSort, groupBy: projectGroupBy,
+        sector: sectorFilter, owner: ownerFilter, health: healthFilter
+      }));
+    } catch (error) {
+      console.warn('Não foi possível salvar as preferências dos projetos:', error);
+    }
   }
 
   root.innerHTML = '<div class="project-loading">Carregando seus projetos...</div>';
@@ -97,7 +127,55 @@
   function completion(project, s) {
     var tasks = projectTasks(project.id, s);
     var completed = tasks.filter(isCompleted).length;
-    return { tasks: tasks, completed: completed, progress: tasks.length ? Math.round(completed * 100 / tasks.length) : 0 };
+    var totalWeight = tasks.reduce(function (sum, task) { return sum + taskProgressWeight(task); }, 0);
+    var completedWeight = tasks.filter(isCompleted).reduce(function (sum, task) { return sum + taskProgressWeight(task); }, 0);
+    return {
+      tasks: tasks, completed: completed, totalWeight: totalWeight,
+      progress: totalWeight ? Math.round(completedWeight * 100 / totalWeight) : 0
+    };
+  }
+
+  function taskProgressWeight(task) {
+    var metadata = task && task.metadata && typeof task.metadata === 'object' && !Array.isArray(task.metadata)
+      ? task.metadata
+      : {};
+    var weight = Number(metadata.progressWeight);
+    return Number.isFinite(weight) && weight > 0 ? weight : 1;
+  }
+
+  function projectHealth(project, s) {
+    var tasks = projectTasks(project.id, s);
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var overdueTasks = tasks.filter(function (task) {
+      return !isCompleted(task) && task.dueDate && new Date(String(task.dueDate).slice(0, 10) + 'T00:00:00') < today;
+    }).length;
+    var blockedTasks = tasks.filter(function (task) {
+      var status = String(task.status || '').toLocaleLowerCase('pt-BR');
+      var metadata = task.metadata && typeof task.metadata === 'object' ? task.metadata : {};
+      var dependencies = Array.isArray(metadata.dependsOn) ? metadata.dependsOn : [];
+      var unresolved = dependencies.some(function (id) {
+        var dependency = tasks.find(function (candidate) { return String(candidate.id) === String(id); });
+        return dependency && !isCompleted(dependency);
+      });
+      return !isCompleted(task) && (status.indexOf('bloque') >= 0 || Boolean(metadata.blockedReason) || unresolved);
+    }).length;
+    var endDate = project.endDate ? new Date(String(project.endDate).slice(0, 10) + 'T00:00:00') : null;
+    var overdueProject = endDate && !Number.isNaN(endDate.getTime()) && endDate < today &&
+      displayStatus(project, s) !== 'Concluído';
+    var lastActivity = project.updatedAt || project.createdAt;
+    var updated = lastActivity ? new Date(lastActivity) : null;
+    var daysSinceUpdate = updated && !Number.isNaN(updated.getTime())
+      ? Math.floor((today.getTime() - new Date(updated.getFullYear(), updated.getMonth(), updated.getDate()).getTime()) / 86400000)
+      : null;
+    if (overdueProject || overdueTasks || blockedTasks || daysSinceUpdate !== null && daysSinceUpdate >= 14) {
+      return { key: 'attention', label: 'Requer atenção', overdueTasks: overdueTasks, blockedTasks: blockedTasks, daysSinceUpdate: daysSinceUpdate };
+    }
+    if (endDate && endDate >= today && endDate.getTime() - today.getTime() <= 7 * 86400000 ||
+        daysSinceUpdate !== null && daysSinceUpdate >= 7) {
+      return { key: 'watch', label: 'Acompanhar', overdueTasks: 0, blockedTasks: 0, daysSinceUpdate: daysSinceUpdate };
+    }
+    return { key: updated ? 'healthy' : 'unknown', label: updated ? 'No prazo' : 'Sem dados', overdueTasks: 0, blockedTasks: 0, daysSinceUpdate: daysSinceUpdate };
   }
 
   function displayStatus(project, s) {
@@ -143,8 +221,15 @@
         (activeFilter === 'archived' && status === 'Arquivado');
       var matchesSearch = !needle || (project.name + ' ' + (project.description || '') + ' ' + (project.sector || ''))
         .toLocaleLowerCase('pt-BR').indexOf(needle) !== -1;
-      return matchesFilter && matchesSearch;
+      var health = projectHealth(project, s);
+      return matchesFilter && matchesSearch &&
+        (!sectorFilter || String(project.sector || '') === sectorFilter) &&
+        (!ownerFilter || String(project.createdBy || '') === ownerFilter) &&
+        (!healthFilter || health.key === healthFilter);
     }).sort(function (a, b) {
+      if (projectSort === 'name') return String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR');
+      if (projectSort === 'endDate') return new Date(a.endDate || '2999-12-31') - new Date(b.endDate || '2999-12-31');
+      if (projectSort === 'progress') return completion(b, s).progress - completion(a, s).progress;
       return new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0);
     });
   }
@@ -205,6 +290,7 @@
   function renderCard(project, s) {
     var calculated = completion(project, s);
     var status = displayStatus(project, s);
+    var health = projectHealth(project, s);
     var profiles = (s.profiles || []).filter(function (profile) {
       return memberIds(project).indexOf(profile.id) >= 0;
     });
@@ -229,19 +315,20 @@
       return '<article class="project-card project-card--grid" data-action="details" data-id="' + escapeHtml(project.id) + '">' +
         '<div class="project-grid-top">' + image + (actions || '<span></span>') + '</div>' +
         '<div class="project-grid-title"><h3>' + escapeHtml(project.name) + '</h3><p>' + escapeHtml(project.description || 'Sem descrição.') + '</p></div>' +
-        '<span class="project-status ' + statusClass(status) + '">' + status + '</span>' +
+        '<div class="project-card-badges"><span class="project-status ' + statusClass(status) + '">' + escapeHtml(status) + '</span><span class="project-health project-health--' + health.key + '">' + escapeHtml(health.label) + '</span></div>' +
         '<div class="project-grid-dates"><span><small>Início</small>' + escapeHtml(formatDate(project.startDate)) + '</span>' +
         '<span><small>Conclusão prevista</small>' + escapeHtml(formatDate(project.endDate)) + '</span></div>' +
-        '<div class="project-progress-row"><div class="project-progress"><span style="width:' + calculated.progress + '%"></span></div><span class="project-progress-label">' + calculated.progress + '%</span></div>' +
+        '<div class="project-progress-row"><div class="project-progress"><span style="width:' + calculated.progress + '%"></span></div><span class="project-progress-label">' + calculated.progress + '% concluído</span></div>' +
         '<div class="project-grid-footer"><span><b>' + calculated.tasks.length + '</b> tarefas · ' + calculated.completed + ' concluídas</span>' +
         '<div class="project-member-stack" aria-label="Participantes">' + members + '</div></div></article>';
     }
     return '<article class="project-card project-card--list" data-action="details" data-id="' + escapeHtml(project.id) + '">' +
       '<div class="project-list-primary">' + image + '<div class="project-title-wrap"><h3>' + escapeHtml(project.name) + '</h3>' +
       '<p class="project-description">' + escapeHtml(project.description || 'Sem descrição.') + '</p>' +
-      '<span class="project-status ' + statusClass(status) + '">' + status + '</span></div></div>' +
+      '<span class="project-status ' + statusClass(status) + '">' + escapeHtml(status) + '</span> <span class="project-health project-health--' + health.key + '">' + escapeHtml(health.label) + '</span></div></div>' +
       '<div class="project-list-date"><small>Início</small><span>' + escapeHtml(formatDate(project.startDate)) + '</span></div>' +
       '<div class="project-list-date"><small>Conclusão prevista</small><span>' + escapeHtml(formatDate(project.endDate)) + '</span></div>' +
+      '<div class="project-list-progress"><small>Progresso</small><div class="project-progress"><span style="width:' + calculated.progress + '%"></span></div><strong>' + calculated.progress + '% concluído</strong></div>' +
       '<div class="project-list-task-count"><b>' + calculated.tasks.length + '</b><span>tarefas · ' + calculated.completed + ' concluídas</span></div>' +
       '<div class="project-member-stack" aria-label="Participantes">' + members + '</div>' +
       (actions || '<span class="project-list-open" aria-hidden="true">›</span>') + '</article>';
@@ -309,6 +396,8 @@
     var projects = visibleProjects(s);
     var all = allProjects(s);
     var statuses = all.map(function (project) { return displayStatus(project, s); });
+    var attentionCount = all.filter(function (project) { return projectHealth(project, s).key === 'attention'; }).length;
+    var watchCount = all.filter(function (project) { return projectHealth(project, s).key === 'watch'; }).length;
     var counts = {
       all: all.length,
       'in-progress': statuses.filter(function (value) { return value === 'Em andamento'; }).length,
@@ -317,9 +406,26 @@
       archived: statuses.filter(function (value) { return value === 'Arquivado'; }).length
     };
     var activityItems = activities(s);
-    var content = projects.length
-      ? projects.map(function (project) { return renderCard(project, s); }).join('')
+    var content;
+    if (projects.length && projectGroupBy !== 'none') {
+      var groups = {};
+      projects.forEach(function (project) {
+        var health = projectHealth(project, s);
+        var key = projectGroupBy === 'sector' ? project.sector || 'Sem setor'
+          : projectGroupBy === 'owner' ? getOwner(project, s)
+            : projectGroupBy === 'phase' ? displayStatus(project, s) : health.label;
+        (groups[key] || (groups[key] = [])).push(project);
+      });
+      content = Object.keys(groups).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); }).map(function (label) {
+        return '<section class="project-group"><h3>' + escapeHtml(label) + '<span>' + groups[label].length + '</span></h3>' +
+          '<div class="project-list project-list--' + projectViewMode + '">' +
+          groups[label].map(function (project) { return renderCard(project, s); }).join('') + '</div></section>';
+      }).join('');
+    } else {
+      content = projects.length
+        ? projects.map(function (project) { return renderCard(project, s); }).join('')
       : '<div class="project-empty">Nenhum projeto encontrado para este filtro.</div>';
+    }
     var activityMarkup = activityItems.length
       ? activityItems.map(function (item) {
         return '<div class="project-activity-item"><span class="project-activity-dot"></span><div class="project-activity-copy">' +
@@ -328,27 +434,38 @@
       }).join('')
       : '<div class="project-empty">As atualizações dos projetos e das tarefas associadas aparecerão aqui.</div>';
 
-    var total = overallProgress(all, s);
+    var sectors = Array.from(new Set(all.map(function (project) { return project.sector || ''; }).filter(Boolean)))
+      .sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+    var owners = Array.from(new Set(all.map(function (project) { return String(project.createdBy || ''); }).filter(Boolean)));
     root.innerHTML = '<div class="project-layout"><main class="project-workspace">' +
-      '<div class="project-toolbar-top"><button type="button" class="btn" data-action="new-project">+ Novo projeto</button></div>' +
-      (counts.all ? '<div class="project-stats" role="group" aria-label="Gráfico dos projetos">' +
-      statCard('all', 'Projetos visíveis', counts.all, counts.all) + statCard('in-progress', 'Em andamento', counts['in-progress'], counts.all) +
-      statCard('planning', 'Em planejamento', counts.planning, counts.all) + statCard('completed', 'Concluídos', counts.completed, counts.all) + '</div>' : '') +
-      '<div class="project-section"><div class="project-toolbar"><div class="project-view-toggle" role="group" aria-label="Modo de visualização">' +
+      '<div class="project-executive-summary"><div class="project-toolbar-top"><div><h2>Portfólio de projetos</h2><p>' + counts.all + ' projetos visíveis · ' +
+      counts['in-progress'] + ' em andamento · ' + counts.completed + ' concluídos</p></div><button type="button" class="btn" data-action="new-project">+ Novo projeto</button></div>' +
+      '<div class="project-alerts"><button type="button" data-action="summary-filter" data-health="attention"><b>' + attentionCount + '</b> requerem atenção</button>' +
+      '<button type="button" data-action="summary-filter" data-health="watch"><b>' + watchCount + '</b> para acompanhar</button>' +
+      '<span>Saúde: prazo vencido, tarefa bloqueada/dependência pendente ou 14+ dias sem atualização; atenção próxima indica prazo em até 7 dias ou 7+ dias sem atualização. Escopo não avaliado sem baseline.</span></div></div>' +
+      '<div class="project-section project-browse"><div class="project-toolbar"><div class="project-view-toggle" role="group" aria-label="Modo de visualização">' +
       '<button type="button" class="' + (projectViewMode === 'list' ? 'active' : '') + '" data-action="view-mode" data-view-mode="list" aria-pressed="' + (projectViewMode === 'list') + '">☷ <span>Lista</span></button>' +
       '<button type="button" class="' + (projectViewMode === 'grid' ? 'active' : '') + '" data-action="view-mode" data-view-mode="grid" aria-pressed="' + (projectViewMode === 'grid') + '">▦ <span>Grade</span></button>' +
       '</div><div class="project-tabs">' +
       tab('all', 'Todos', counts.all) + tab('in-progress', 'Em andamento', counts['in-progress']) +
       tab('planning', 'Planejamento', counts.planning) + tab('completed', 'Concluídos', counts.completed) +
       tab('archived', 'Arquivados', counts.archived) + '</div>' +
-      '<input class="project-search" type="search" aria-label="Buscar projetos" placeholder="Buscar projetos..." value="' + escapeHtml(searchText) + '"></div>' +
-      '<div class="project-list project-list--' + projectViewMode + '" style="margin-top:16px">' + content + '</div></div></main>' +
+      '</div><div class="project-filters"><input class="project-search" type="search" aria-label="Buscar projetos" placeholder="Buscar projetos..." value="' + escapeHtml(searchText) + '">' +
+      '<select id="project-sector-filter" aria-label="Filtrar por setor"><option value="">Todos os setores</option>' + sectors.map(function (sector) {
+        return '<option value="' + escapeHtml(sector) + '"' + (sectorFilter === sector ? ' selected' : '') + '>' + escapeHtml(sector) + '</option>';
+      }).join('') + '</select><select id="project-owner-filter" aria-label="Filtrar por responsável"><option value="">Todos os responsáveis</option>' +
+      owners.map(function (ownerId) { return '<option value="' + escapeHtml(ownerId) + '"' + (ownerFilter === ownerId ? ' selected' : '') + '>' + escapeHtml(profileName(ownerId, s)) + '</option>'; }).join('') +
+      '</select><select id="project-health-filter" aria-label="Filtrar por saúde"><option value="">Todos os níveis de saúde</option>' +
+      '<option value="attention"' + (healthFilter === 'attention' ? ' selected' : '') + '>Requer atenção</option><option value="watch"' + (healthFilter === 'watch' ? ' selected' : '') +
+      '>Acompanhar</option><option value="healthy"' + (healthFilter === 'healthy' ? ' selected' : '') + '>No prazo</option><option value="unknown"' + (healthFilter === 'unknown' ? ' selected' : '') + '>Sem dados</option></select>' +
+      '<select id="project-sort" aria-label="Ordenar projetos"><option value="updated"' + (projectSort === 'updated' ? ' selected' : '') + '>Atualizados recentemente</option>' +
+      '<option value="endDate"' + (projectSort === 'endDate' ? ' selected' : '') + '>Prazo mais próximo</option><option value="progress"' + (projectSort === 'progress' ? ' selected' : '') +
+      '>Maior progresso</option><option value="name"' + (projectSort === 'name' ? ' selected' : '') + '>Nome</option></select><select id="project-group-by" aria-label="Agrupar portfólio por">' +
+      '<option value="none"' + (projectGroupBy === 'none' ? ' selected' : '') + '>Sem agrupamento</option><option value="sector"' + (projectGroupBy === 'sector' ? ' selected' : '') +
+      '>Agrupar por setor</option><option value="owner"' + (projectGroupBy === 'owner' ? ' selected' : '') + '>Agrupar por responsável</option><option value="phase"' + (projectGroupBy === 'phase' ? ' selected' : '') +
+      '>Agrupar por fase</option><option value="health"' + (projectGroupBy === 'health' ? ' selected' : '') + '>Agrupar por saúde</option></select></div>' +
+      '<div class="project-list project-list--' + projectViewMode + '">' + content + '</div></div></main>' +
       '<aside class="project-side-widgets">' +
-      (total.totalTasks ? '<section class="project-section project-overall-card"><div class="project-section-head"><h2>Conclusão geral</h2></div>' +
-      '<div class="project-overall-donut" style="background:conic-gradient(var(--green) 0 ' + total.percent + '%,var(--border-soft) ' + total.percent + '% 100%)"><div><b>' +
-      total.percent + '%</b><span>concluído</span></div></div><p class="project-overall-caption"><strong>' + total.completedTasks + ' de ' + total.totalTasks +
-      ' tarefas</strong><span>concluídas nos projetos ativos</span></p><div class="project-overall-footer">' + total.completedProjects + ' de ' + total.totalProjects +
-      ' projetos concluídos</div></section>' : '') +
       workloadMarkup(s) +
       '<section class="project-section project-activity-card"><div class="project-section-head"><h2>Atividades recentes</h2></div>' +
       '<div class="project-activity-list">' + activityMarkup + '</div></section></aside></div>';
@@ -400,6 +517,21 @@
           (isCompleted(task) ? 'completed' : '') + '">' + escapeHtml(task.status || 'Pendente') + '</span></div>';
       }).join('')
       : '<div class="project-empty">Ainda não há tarefas vinculadas. Associe uma tarefa a este projeto na página Tarefas.</div>';
+    var timelineList = calculated.tasks.slice().sort(function (a, b) {
+      return new Date(a.startDate || a.dueDate || '2999-12-31') - new Date(b.startDate || b.dueDate || '2999-12-31');
+    }).map(function (task) {
+      var metadata = task.metadata && typeof task.metadata === 'object' && !Array.isArray(task.metadata) ? task.metadata : {};
+      var isMilestone = metadata.isMilestone === true;
+      var dependencyNames = (Array.isArray(metadata.dependsOn) ? metadata.dependsOn : []).map(function (id) {
+        var dependency = calculated.tasks.find(function (item) { return String(item.id) === String(id); });
+        return dependency ? dependency.title : '';
+      }).filter(Boolean);
+      return '<div class="project-timeline-item"><span class="project-timeline-marker' + (isMilestone ? ' is-milestone' : '') + '"></span><div><strong>' +
+        escapeHtml(task.title || (isMilestone ? 'Marco' : 'Tarefa')) + (isMilestone ? ' <span>Marco</span>' : '') +
+        '<small>' + escapeHtml(formatDate(task.startDate || task.dueDate)) + (task.startDate && task.dueDate ? ' – ' + escapeHtml(formatDate(task.dueDate)) : '') +
+        ' · ' + escapeHtml(task.status || 'Pendente') + (dependencyNames.length ? ' · Depende de: ' + escapeHtml(dependencyNames.join(', ')) : '') +
+        '</small></strong></div></div>';
+    }).join('') || '<div class="project-empty">A linha do tempo usa as datas, marcos e dependências das tarefas vinculadas. Ainda não há tarefas para exibir.</div>';
     var files = (s.documents || []).filter(function (doc) { return String(doc.relatedProjectId || '') === String(project.id); });
     var fileList = files.length ? files.map(function (file) {
       var owner = (s.profiles || []).find(function (profile) {
@@ -418,20 +550,45 @@
         escapeHtml(item.description || 'Projeto atualizado') + ' <span>· ' + escapeHtml(item.actorName || 'Usuário') + '</span></div><time class="project-activity-time">' +
         escapeHtml(relativeDate(item.createdAt)) + '</time></div>';
     }).join('') || '<div class="project-empty">Nenhuma atividade registrada.</div>';
-    var body = detailTab === 'tasks' ? taskList : detailTab === 'files' ? fileList : detailTab === 'activity' ? activityList :
+    var registerForm = isCreator(project) ? '<form class="project-register-form" data-form="project-register" data-project-id="' + escapeHtml(project.id) + '">' +
+      '<label>Registrar decisão, risco ou mudança<select name="entryType" required><option value="Decisão">Decisão</option><option value="Risco">Risco</option><option value="Mudança">Mudança</option></select></label>' +
+      '<textarea name="description" rows="2" maxlength="500" required placeholder="Descreva o registro"></textarea><button type="submit" class="btn secondary">Adicionar ao histórico</button></form>' : '';
+    var kickoffChecks = [
+      { label: 'Responsável definido', ok: Boolean(project.createdBy) },
+      { label: 'Descrição/objetivo preenchido', ok: Boolean(String(project.description || '').trim()) },
+      { label: 'Datas de início e conclusão previstas', ok: Boolean(project.startDate && project.endDate) }
+    ];
+    var closeChecks = [
+      { label: 'Todas as tarefas vinculadas concluídas', ok: calculated.tasks.length > 0 && calculated.completed === calculated.tasks.length },
+      { label: 'Projeto marcado como concluído', ok: displayStatus(project, s) === 'Concluído' }
+    ];
+    var checklistMarkup = '<div class="project-review-checklists"><section><h3>Checklist de início</h3>' +
+      kickoffChecks.map(function (check) { return '<p><span class="' + (check.ok ? 'is-ready' : '') + '">' + (check.ok ? '✓' : '○') + '</span> ' + escapeHtml(check.label) + '</p>'; }).join('') +
+      '</section><section><h3>Checklist de encerramento</h3>' +
+      closeChecks.map(function (check) { return '<p><span class="' + (check.ok ? 'is-ready' : '') + '">' + (check.ok ? '✓' : '○') + '</span> ' + escapeHtml(check.label) + '</p>'; }).join('') +
+      '</section></div>';
+    var body = detailTab === 'tasks' ? taskList : detailTab === 'timeline' ? '<div class="project-timeline">' + timelineList + '</div>' :
+      detailTab === 'files' ? fileList : detailTab === 'activity' ? activityList + registerForm :
       '<div class="project-detail-summary"><div class="project-detail-cell"><small>Responsável</small><strong>' + escapeHtml(getOwner(project, s)) +
       '</strong></div><div class="project-detail-cell"><small>Status</small><strong>' + escapeHtml(displayStatus(project, s)) +
       '</strong></div><div class="project-detail-cell"><small>Início</small><strong>' + escapeHtml(formatDate(project.startDate)) +
       '</strong></div><div class="project-detail-cell"><small>Conclusão prevista</small><strong>' + escapeHtml(formatDate(project.endDate)) +
       '</strong></div><div class="project-detail-cell"><small>Concluído em</small><strong>' + escapeHtml(project.completedAt ? formatDate(project.completedAt) : 'Ainda não concluído') +
       '</strong></div><div class="project-detail-cell"><small>Progresso · ' + calculated.completed + ' de ' + calculated.tasks.length + ' tarefas concluídas</small>' +
-      '<div class="project-progress" style="margin-top:9px"><span style="width:' + calculated.progress + '%"></span></div></div><div class="project-detail-cell"><small>Última atualização</small><strong>' +
-      escapeHtml(relativeDate(project.updatedAt)) + '</strong></div></div><p class="project-detail-description">' + escapeHtml(project.description || 'Sem descrição.') + '</p>';
+      '<div class="project-progress" style="margin-top:9px"><span style="width:' + calculated.progress + '%"></span></div><strong>' + calculated.progress + '% concluído</strong></div><div class="project-detail-cell"><small>Última atualização</small><strong>' +
+      escapeHtml(relativeDate(project.updatedAt)) + '</strong></div><div class="project-detail-cell"><small>Saúde · critérios</small><strong>' + escapeHtml(projectHealth(project, s).label) +
+      '</strong><small>Prazo, tarefas bloqueadas e tempo desde a última atualização. Sem informação não é presumida como saudável.</small></div></div><p class="project-detail-description">' +
+      escapeHtml(project.description || 'Sem descrição.') + '</p><p class="project-formula-note">Progresso = soma dos pesos das tarefas concluídas ÷ soma dos pesos das tarefas vinculadas. O peso vem de metadata.progressWeight quando positivo; sem configuração, cada tarefa vale 1. Tarefas não são duplicadas para a linha do tempo.</p>';
+    if (detailTab === 'overview') body += checklistMarkup;
     return '<div class="project-overlay" data-overlay="detail"><section class="project-dialog" role="dialog" aria-modal="true" aria-label="' + escapeHtml(project.name) + '">' +
-      '<header class="project-dialog-head"><h2>' + escapeHtml(project.name) + '</h2><button type="button" class="project-icon-btn" data-action="close-overlay" aria-label="Fechar">' + icon('close') + '</button></header>' +
+      '<header class="project-dialog-head"><div class="project-dialog-title"><h2>' + escapeHtml(project.name) + '</h2><span class="project-status ' + statusClass(displayStatus(project, s)) + '">' +
+      escapeHtml(displayStatus(project, s)) + '</span></div><div class="project-dialog-actions">' +
+      (isCreator(project) ? '<button type="button" class="btn secondary" data-action="edit" data-id="' + escapeHtml(project.id) + '">Editar</button>' : '') +
+      '<button type="button" class="project-icon-btn" data-action="close-overlay" aria-label="Fechar">' + icon('close') + '</button></div></header>' +
       '<div class="project-dialog-body"><div class="project-detail-tabs" role="tablist" aria-label="Detalhes do projeto">' +
       detailTabButton('overview', 'Visão geral') + detailTabButton('tasks', 'Tarefas (' + calculated.tasks.length + ')') +
-      detailTabButton('activity', 'Atividade') + detailTabButton('files', 'Documentos (' + files.length + ')') + '</div>' + body + '</div>' +
+      detailTabButton('timeline', 'Marcos e linha do tempo') + detailTabButton('activity', 'Decisões e atividade') +
+      detailTabButton('files', 'Documentos (' + files.length + ')') + '</div>' + body + '</div>' +
       '<footer class="project-dialog-foot">' + (isCreator(project) ? '<button type="button" class="btn secondary" data-action="edit" data-id="' + escapeHtml(project.id) + '">Editar projeto</button>' : '') +
       '<button type="button" class="btn" data-action="close-overlay">Fechar</button></footer></section></div>';
   }
@@ -692,6 +849,15 @@
     var action = target.getAttribute('data-action');
     if (action === 'filter') {
       activeFilter = target.getAttribute('data-filter') || 'all';
+      saveProjectFilters();
+      renderPage();
+    } else if (action === 'summary-filter') {
+      activeFilter = 'all';
+      healthFilter = target.getAttribute('data-health') || '';
+      searchText = '';
+      sectorFilter = '';
+      ownerFilter = '';
+      saveProjectFilters();
       renderPage();
     } else if (action === 'view-mode') {
       var nextMode = target.getAttribute('data-view-mode');
@@ -702,6 +868,7 @@
       } catch (error) {
         console.warn('Não foi possível salvar a visualização dos projetos:', error);
       }
+      saveProjectFilters();
       renderPage();
     } else if (action === 'new-project') {
       openCompose(null);
@@ -717,6 +884,7 @@
   root.addEventListener('input', function (event) {
     if (!event.target.classList.contains('project-search')) return;
     searchText = event.target.value;
+    saveProjectFilters();
     var position = event.target.selectionStart;
     renderPage();
     var search = root.querySelector('.project-search');
@@ -727,8 +895,18 @@
   });
 
   root.addEventListener('change', function (event) {
-    if (event.target.id !== 'project-workload-period') return;
-    workloadPeriod = event.target.value === 'month' ? 'month' : 'week';
+    if (event.target.id === 'project-workload-period') {
+      workloadPeriod = event.target.value === 'month' ? 'month' : 'week';
+      renderPage();
+      return;
+    }
+    if (event.target.id === 'project-sector-filter') sectorFilter = event.target.value;
+    else if (event.target.id === 'project-owner-filter') ownerFilter = event.target.value;
+    else if (event.target.id === 'project-health-filter') healthFilter = event.target.value;
+    else if (event.target.id === 'project-sort') projectSort = event.target.value;
+    else if (event.target.id === 'project-group-by') projectGroupBy = event.target.value;
+    else return;
+    saveProjectFilters();
     renderPage();
   });
 
@@ -753,6 +931,9 @@
       renderDetail();
     } else if (action === 'close-compose') {
       closeCompose();
+    } else if (action === 'detail-tab') {
+      detailTab = target.getAttribute('data-tab') || 'overview';
+      renderDetail();
     } else if (action === 'open-file' || action === 'download-file') {
       openDocument(target.getAttribute('data-file'), action === 'download-file');
     } else if (action === 'edit') {
@@ -772,6 +953,33 @@
   });
 
   document.body.addEventListener('submit', function (event) {
+    if (event.target.matches('form[data-form="project-register"]')) {
+      event.preventDefault();
+      var registerForm = event.target;
+      var project = projectById(registerForm.getAttribute('data-project-id'));
+      var description = String(new FormData(registerForm).get('description') || '').trim();
+      var entryType = String(new FormData(registerForm).get('entryType') || '');
+      if (!project || !isCreator(project) || !description) {
+        toast('Não foi possível validar o projeto ou o registro.');
+        return;
+      }
+      var entry = {
+        id: 'log-' + Date.now() + '-' + Math.random().toString(16).slice(2),
+        type: entryType,
+        description: entryType + ': ' + description,
+        actorId: currentUserId,
+        actorName: profileName(currentUserId, state()),
+        createdAt: new Date().toISOString()
+      };
+      var updated = Object.assign({}, project, {
+        activityLog: (project.activityLog || []).concat(entry).slice(-60),
+        updatedAt: entry.createdAt
+      });
+      detailTab = 'activity';
+      store.setState({ projects: (state().projects || []).map(function (item) { return String(item.id) === String(project.id) ? updated : item; }) });
+      toast('Registro adicionado ao histórico do projeto.');
+      return;
+    }
     if (!event.target.matches('form[data-form="project"]')) return;
     event.preventDefault();
     submitProject(event.target);

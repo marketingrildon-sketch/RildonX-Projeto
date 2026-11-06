@@ -5724,6 +5724,13 @@ function initProjectActivityTracking() {
     return status === 'concluída' || status === 'concluida' || status === 'concluído' ||
       status === 'concluido' || status === 'completed' || status === 'done';
   };
+  var progressWeight = function (task) {
+    var metadata = task && task.metadata && typeof task.metadata === 'object' && !Array.isArray(task.metadata)
+      ? task.metadata
+      : {};
+    var weight = Number(metadata.progressWeight);
+    return Number.isFinite(weight) && weight > 0 ? weight : 1;
+  };
   var cleanProject = function (project) {
     var copy = Object.assign({}, project);
     delete copy.activityLog;
@@ -5824,7 +5831,9 @@ function initProjectActivityTracking() {
             return task && !task.isDemo && String(task.projectId || '') === String(project.id);
           });
           var completeCount = tasks.filter(complete).length;
-          var progress = tasks.length ? Math.round(completeCount * 100 / tasks.length) : 0;
+          var totalWeight = tasks.reduce(function (sum, task) { return sum + progressWeight(task); }, 0);
+          var completeWeight = tasks.filter(complete).reduce(function (sum, task) { return sum + progressWeight(task); }, 0);
+          var progress = totalWeight ? Math.round(completeWeight * 100 / totalWeight) : 0;
           var status = tasks.length && completeCount === tasks.length ? 'Concluído' :
             completeCount > 0 ? 'Em andamento' : 'Planejamento';
           var completedAt = status === 'Concluído' ? (project.completedAt || new Date().toISOString()) : null;
