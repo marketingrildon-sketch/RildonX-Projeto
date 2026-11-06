@@ -254,7 +254,8 @@
       '<p><b>Equipamento:</b> ' + escapeHtml(ticket.equipment || 'Não informado') + ' · <b>Prioridade:</b> ' + escapeHtml(ticket.priority) + '</p>' +
       '<p><b>Aberto em:</b> ' + escapeHtml(formatDate(ticket.created_at, true)) + '</p>' +
       '<div class="support-ticket-description"><b>Descrição do problema</b><p>' + escapeHtml(ticket.description) + '</p></div>' +
-      remoteActions + '</div>' + managerFields +
+      '<button type="button" class="btn secondary" data-support-action="create-task" data-ticket-id="' + escapeHtml(ticket.id) +
+      '">Criar tarefa a partir da solicitação</button>' + remoteActions + '</div>' + managerFields +
       '<section class="support-history-section"><div class="support-section-heading"><div><h3>Histórico do atendimento</h3><p>Atualizações e interações deste chamado</p></div></div>' +
       historyMarkup() + '<form class="support-comment-form" data-support-comment-form><label><span>' +
       (canManage ? 'Registrar observação ou resposta' : 'Enviar informação ao suporte') +
@@ -604,6 +605,24 @@
       render();
     } else if (type === 'open-ticket') {
       openTicket(action.dataset.ticketId);
+    } else if (type === 'create-task') {
+      var sourceTicket = tickets.find(function (ticket) { return String(ticket.id) === String(action.dataset.ticketId); });
+      if (!sourceTicket || typeof window.RildonXCreateTaskFromOrigin !== 'function') {
+        showError('Não foi possível carregar o serviço para converter esta solicitação.');
+        return;
+      }
+      action.disabled = true;
+      window.RildonXCreateTaskFromOrigin('request', Object.assign({}, sourceTicket, {
+        id: sourceTicket.id,
+        title: sourceTicket.category || 'Solicitação de suporte',
+        description: [sourceTicket.description, sourceTicket.requester_name ? 'Solicitante: ' + sourceTicket.requester_name : '',
+          sourceTicket.equipment ? 'Equipamento: ' + sourceTicket.equipment : ''].filter(Boolean).join('\n')
+      })).catch(function (error) {
+        console.error('Não foi possível converter a solicitação em tarefa:', error);
+        showError(error.message || 'Não foi possível criar a tarefa.');
+      }).finally(function () {
+        if (action.isConnected) action.disabled = false;
+      });
     } else if (type === 'export-csv') downloadCsv();
     else if (type === 'print-report') window.print();
     else if (type === 'notifications') enableNotifications().catch(function (error) {

@@ -75,6 +75,8 @@
     businessCardRecords: [],
     messages: [],
     posts: [],
+    postAcknowledgements: [],
+    muralLoaded: false,
     events: [],
     dashboard: {
       profile: 'colaborador',
@@ -106,6 +108,7 @@
         }
       }
       if (!Array.isArray(state.posts)) state.posts = [];
+      if (!Array.isArray(state.postAcknowledgements)) state.postAcknowledgements = [];
       if (!Array.isArray(state.businessCardRecords)) state.businessCardRecords = [];
       if (!Array.isArray(state.taskComments)) state.taskComments = [];
       var hasLocalTestData = (state.conversations || []).some(function (conversation) {
@@ -271,6 +274,7 @@
       tags: [],
       checklist: [],
       attachments: [],
+      metadata: {},
       projectId: null,
       sector: store.state.user.sector,
       position: (function () {

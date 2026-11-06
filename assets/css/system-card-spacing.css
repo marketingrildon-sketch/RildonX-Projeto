@@ -1,0 +1,7 @@
+:root{--system-card-gap:14px}
+:is(.layout-2col,.dashboard-grid,.stat-grid,.mural-posts,.home-dashboard-grid,.inicio-subrow){gap:var(--system-card-gap)!important}
+#inicio-fit{gap:var(--system-card-gap)!important}
+#inicio-fit>.inicio-cols{gap:var(--system-card-gap)!important}
+#inicio-fit .inicio-cols>.side-widgets,
+#inicio-fit>.inicio-cols>.home-sidebar,
+#inicio-fit .inicio-cols .inicio-subrow{gap:var(--system-card-gap)!important}

@@ -68,6 +68,9 @@
       startDate: row.start_date || row.startDate || null,
       checklist: Array.isArray(row.checklist) ? row.checklist : safeJsonParse(row.checklist || '[]'),
       attachments: Array.isArray(row.attachments) ? row.attachments : safeJsonParse(row.attachments || '[]'),
+      metadata: row.task_metadata && typeof row.task_metadata === 'object'
+        ? row.task_metadata
+        : safeJsonParse(row.task_metadata || '{}'),
       position: Number.isFinite(Number(row.position)) ? Number(row.position) : 0,
       isDemo: false,
       sector: row.sector || 'marketing',
@@ -209,6 +212,7 @@
       authorId: row.author_id,
       authorName: row.author_name || 'Colaborador',
       body: row.body || '',
+      assignedTo: row.assigned_to || null,
       attachments: Array.isArray(row.attachments) ? row.attachments : safeJsonParse(row.attachments || '[]'),
       createdAt: row.created_at || new Date().toISOString()
     };
@@ -227,10 +231,28 @@
       body: row.body || '',
       attachments: Array.isArray(row.attachments) ? row.attachments : [],
       metadata: row.post_metadata && typeof row.post_metadata === 'object' ? row.post_metadata : {},
+      approvalStatus: row.approval_status || 'published',
+      importance: row.importance || 'normal',
+      pinned: Boolean(row.pinned),
+      audienceSectors: Array.isArray(row.audience_sectors) ? row.audience_sectors : [],
+      expiresAt: row.expires_at || null,
+      requiresAcknowledgement: Boolean(row.requires_acknowledgement),
+      scheduledAt: row.scheduled_at || null,
+      approvalNote: row.approval_note || '',
+      approvedBy: row.approved_by || null,
+      approvedAt: row.approved_at || null,
       createdAt: row.created_at || new Date().toISOString(),
       comments: [],
       reactions: [],
       pollVotes: []
+    };
+  }
+
+  function mapPostAcknowledgementRow(row) {
+    return {
+      postId: row.post_id,
+      userId: row.user_id,
+      acknowledgedAt: row.acknowledged_at || null
     };
   }
 
@@ -420,7 +442,8 @@
         description: task.description || '',
         start_date: task.startDate || null,
         checklist: task.checklist || [],
-        attachments: task.attachments || []
+        attachments: task.attachments || [],
+        task_metadata: task.metadata || {}
       };
       if (isUuid(task.createdBy)) payload.created_by = task.createdBy;
 
@@ -514,7 +537,7 @@
     const currentUserId = currentUser ? currentUser.id : null;
     const hydrationFields = [
       'documents', 'documentFolders', 'messages', 'tasks', 'taskComments', 'projects',
-      'profiles', 'conversations', 'visibleConversationIds', 'conversationReads',
+      'profiles', 'conversations', 'visibleConversationIds', 'conversationReads', 'postAcknowledgements',
       'conversationMemberships', 'events', 'posts', 'businessCardRecords'
     ];
     const hydrationStartState = window.RildonXStore.getState();
@@ -522,7 +545,7 @@
     hydrationFields.forEach(function (key) {
       hydrationBaseline[key] = JSON.stringify(hydrationStartState[key] || []);
     });
-    const [documentsResult, documentFoldersResult, messagesResult, tasksResult, projectsResult, profilesResult, conversationsResult, postsResult, commentsResult, reactionsResult, pollVotesResult, eventsResult, membershipResult, taskCommentsResult, businessCardRecordsResult] = await Promise.all([
+    const [documentsResult, documentFoldersResult, messagesResult, tasksResult, projectsResult, profilesResult, conversationsResult, postsResult, commentsResult, reactionsResult, pollVotesResult, postAcknowledgementsResult, eventsResult, membershipResult, taskCommentsResult, businessCardRecordsResult] = await Promise.all([
       window.supabaseClient.from('documents').select('*').order('sent_at', { ascending: false }),
       window.supabaseClient.from('document_folders').select('id,name').order('name', { ascending: true }),
       window.supabaseClient.from('messages').select('*').order('sent_at', { ascending: false }),
@@ -534,6 +557,7 @@
       window.supabaseClient.from('post_comments').select('*').order('created_at', { ascending: true }),
       window.supabaseClient.from('post_reactions').select('*'),
       window.supabaseClient.from('post_poll_votes').select('*'),
+      window.supabaseClient.from('post_acknowledgements').select('post_id,user_id,acknowledged_at'),
       window.supabaseClient.from('events').select('*').order('starts_at', { ascending: true }).limit(1000),
       currentUserId
         ?         window.supabaseClient.from('conversation_members').select('conversation_id,user_id,role,last_read_at,hidden_at')
@@ -553,6 +577,7 @@
     const commentError = commentsResult.error;
     const reactionError = reactionsResult.error;
     const pollVotesError = pollVotesResult.error;
+    const postAcknowledgementsError = postAcknowledgementsResult.error;
     const eventsError = eventsResult.error;
     const membershipError = membershipResult.error;
     const taskCommentsError = taskCommentsResult.error;
@@ -569,6 +594,7 @@
     if (commentError) console.error('Erro ao carregar comentários do Mural:', commentError);
     if (reactionError) console.error('Erro ao carregar reações do Mural:', reactionError);
     if (pollVotesError) console.error('Erro ao carregar votos das enquetes:', pollVotesError);
+    if (postAcknowledgementsError) console.error('Erro ao carregar confirmações de ciência do Mural:', postAcknowledgementsError);
     if (eventsError) console.error('Erro ao carregar eventos do Supabase:', eventsError);
     if (membershipError) console.error('Erro ao carregar status de leitura das conversas:', membershipError);
     if (taskCommentsError) console.error('Erro ao carregar comentários das tarefas:', taskCommentsError);
@@ -690,15 +716,23 @@
       ).filter(function (event) {
         return event.visibility !== 'private' || event.ownerId === currentUserId;
       }),
-      posts: postError ? currentState.posts || [] : mergeRemoteWithCurrent(remotePosts, currentState.posts),
+      posts: postError
+        ? (currentState.posts || []).filter(function (post) {
+          return currentUserId && String(post.authorId) === String(currentUserId);
+        })
+        : remotePosts,
+      postAcknowledgements: postAcknowledgementsError
+        ? currentState.postAcknowledgements || []
+        : (postAcknowledgementsResult.data || []).map(mapPostAcknowledgementRow),
+      muralLoaded: true,
       businessCardRecords: businessCardRecordsError
         ? currentState.businessCardRecords || []
         : (businessCardRecordsResult.data || []).map(mapBusinessCardRow),
       businessCardRecordsLoadError: businessCardRecordsError
         ? 'Não foi possível carregar os cards setoriais. Verifique se a migração do Supabase foi aplicada e se seu perfil tem acesso ao setor.'
         : '',
-      muralLoadError: postError || commentError || reactionError
-        ? 'Não foi possível carregar todas as interações do Mural. Verifique se a migração do Mural foi aplicada no Supabase.'
+      muralLoadError: postError || commentError || reactionError || postAcknowledgementsError
+        ? 'Não foi possível carregar os dados do Mural. Aplique a migração supabase-mural-notice-workflow.sql e verifique as permissões no Supabase.'
         : ''
     };
 
@@ -754,7 +788,7 @@
       'documents', 'document_folders', 'message_attachments', 'messages', 'tasks', 'projects',
       'profiles', 'profile_private_details', 'conversations',
       'conversation_members', 'posts', 'post_comments', 'post_reactions',
-      'post_poll_votes', 'events', 'task_comments', 'business_card_records'
+      'post_poll_votes', 'post_acknowledgements', 'events', 'task_comments', 'business_card_records'
     ];
     let channel = window.supabaseClient.channel('rildonx-shared-workspace');
     tables.forEach(function (table) {

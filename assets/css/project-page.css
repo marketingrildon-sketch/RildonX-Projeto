@@ -91,12 +91,12 @@
 body[data-page="projetos"] .content{max-width:none}
 #project-page-root{min-width:0}
 #project-page-root .project-layout{display:block;min-height:100%}
-#project-page-root .project-workspace{width:calc(100% - 322px);min-width:0;display:grid;align-content:start;gap:16px}
+#project-page-root .project-workspace{width:calc(100% - 642px);min-width:0;display:grid;align-content:start;gap:16px}
 #project-page-root .project-toolbar-top{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:38px}
 #project-page-root .project-toolbar-top p{margin:0;color:var(--text-muted,#77808d);font-size:13px}
-#project-page-root .project-side-widgets{position:fixed;top:78px;right:20px;width:300px;max-height:calc(100vh - 94px);overflow-y:auto;overscroll-behavior:contain;z-index:8;display:flex;flex-direction:column;gap:14px}
+#project-page-root .project-side-widgets{position:fixed;top:78px;right:20px;width:620px;max-height:calc(100vh - 94px);overflow-y:auto;overscroll-behavior:contain;z-index:8;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:14px}
 #project-page-root .project-side-widgets .project-section{background:var(--card,#fff);border-color:var(--border-soft,#e8eaf0)}
-#project-page-root .project-overall-card{text-align:center}
+#project-page-root .project-overall-card{grid-column:1/-1;text-align:center}
 #project-page-root .project-overall-card .project-section-head{text-align:left}
 #project-page-root .project-overall-donut{display:grid;place-items:center;width:126px;height:126px;margin:16px auto 12px;border-radius:50%}
 #project-page-root .project-overall-donut>div{display:flex;flex-direction:column;align-items:center;justify-content:center;width:96px;height:96px;border-radius:50%;background:var(--card,#fff)}
@@ -110,14 +110,19 @@ body[data-page="projetos"] .content{max-width:none}
 #project-page-root .project-activity-card .project-activity-item{align-items:flex-start;flex-wrap:wrap}
 #project-page-root .project-activity-card .project-activity-time{margin-left:20px}
 #project-page-root .project-activity-card .project-empty{padding:20px 10px}
+#project-page-root .task-workload-card .project-section-head{align-items:center}
+#project-page-root .task-workload-card .project-section-head select{max-width:132px;min-height:31px;padding:5px 7px;border:1px solid var(--border-soft,#e8eaf0);border-radius:7px;background:#fff;color:var(--text-secondary,#667085);font:inherit;font-size:10px}
+#project-page-root .task-workload-card .task-workload-list{max-height:220px;overflow-y:auto}
+#project-page-root .task-workload-card>small{display:block;color:var(--text-muted,#77808d);font-size:10px;line-height:1.45}
 #project-page-root .project-stats{margin:0}
 #project-page-root .project-section{min-width:0}
 #project-page-root .project-list{grid-template-columns:repeat(2,minmax(0,1fr))}
 #project-page-root .project-card-footer{flex-wrap:wrap}
 #project-page-root .project-card-owner{flex-wrap:wrap}
-@media(max-width:1200px){
+@media(max-width:1500px){
   #project-page-root .project-workspace{width:100%}
   #project-page-root .project-side-widgets{position:static;width:auto;max-height:none;overflow:visible;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;margin-top:16px}
+  #project-page-root .project-overall-card{grid-column:1/-1}
   #project-page-root .project-activity-card .project-activity-list{max-height:340px}
 }
 @media(max-width:820px){

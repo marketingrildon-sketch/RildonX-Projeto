@@ -322,6 +322,7 @@ function getPriorityClass(priority) {
 
 function getTaskStatusKey(status) {
   var normalized = String(status || '').toLowerCase().trim();
+  if (normalized.indexOf('aguardando terceiros') >= 0 || normalized.indexOf('aguardando-terceiros') >= 0 || normalized.indexOf('waiting') >= 0) return 'aguardando';
   if (normalized.indexOf('andamento') >= 0 || normalized.indexOf('progress') >= 0) return 'andamento';
   if (normalized.indexOf('conclu') >= 0) return 'concluida';
   return 'pendente';
@@ -452,16 +453,19 @@ function renderTaskRow(task) {
     ? firstAssignee
     : findProfileById(firstAssignee, profiles) || findProfileByName(firstAssignee, profiles);
   var avatarImage = profileAvatarImageMarkup(firstAssigneeProfile);
-  var statusLabel = status === 'andamento' ? 'Em andamento' : (status === 'concluida' ? 'Concluída' : 'Pendente');
+  var statusLabel = status === 'andamento' ? 'Em andamento' :
+    status === 'aguardando' ? 'Aguardando terceiros' :
+      (status === 'concluida' ? 'Concluída' : 'Pendente');
 
-  if (status === 'andamento') {
+  if (status === 'andamento' || status === 'aguardando') {
+    var statusColor = status === 'aguardando' ? '#754b08' : 'var(--blue-600)';
     return [
       '<div class="task-row">',
-      '  <div class="stripe" style="background:var(--blue-600);"></div>',
-      '  <span class="checkbox" style="background:var(--blue-600);border-color:var(--blue-600);"></span>',
+      '  <div class="stripe" style="background:' + statusColor + ';"></div>',
+      '  <span class="checkbox" style="background:' + statusColor + ';border-color:' + statusColor + ';"></span>',
       '  <div class="task-body"><h4>' + title + '</h4><p>' + escapeHtml(task.description || assignees) + '</p>' + meta + '</div>',
       '  <div class="task-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + formatTaskDate(task.dueDate) + '</div>',
-      '  <span class="tag" style="background:var(--blue-100);color:var(--blue-600);">' + statusLabel + '</span>',
+      '  <span class="tag" style="background:' + (status === 'aguardando' ? 'var(--orange-bg)' : 'var(--blue-100)') + ';color:' + statusColor + ';">' + statusLabel + '</span>',
       '  <div class="task-avatar">' + escapeHtml(initials) + avatarImage + '</div>',
       '</div>'
     ].join('');
@@ -861,7 +865,7 @@ function renderMessagesFromStore() {
       escapeHtml(message.text) + '</div>' : '';
     var attachments = renderMessageAttachments(message, state.documents);
     return [
-      '  <div class="msg' + (isSelf ? ' self' : '') + (starredIds.has(message.id) ? ' starred' : '') + '" data-chat-message-id="' + escapeHtml(message.id) + '">',
+      '  <div class="msg' + (isSelf ? ' self' : '') + (starredIds.has(message.id) ? ' starred' : '') + '" id="message-' + escapeHtml(message.id) + '" data-chat-message-id="' + escapeHtml(message.id) + '">',
       '  <div class="conv-avatar">' + escapeHtml(initials) + profileAvatarImageMarkup(senderProfile) + '</div>',
       '  <div class="msg-content">',
       '    ' + (isSelf ? '<span class="msg-time">' + formatTaskDate(message.sentAt) + ' ✓✓</span><b>' + escapeHtml(senderName) + '</b>' : '<b>' + escapeHtml(senderName) + '</b><span class="msg-time">' + formatTaskDate(message.sentAt) + '</span>'),
@@ -1561,6 +1565,47 @@ function renderInicioTasksFromStore() {
 var muralCurrentUserId = '';
 var muralCurrentUserIsAdmin = false;
 var muralCurrentUserNameAliases = [];
+var muralCurrentView = 'updates';
+var muralPendingNavigationId = '';
+
+function getCurrentMuralProfile() {
+  if (!window.RildonXStore) return null;
+  var state = window.RildonXStore.getState();
+  return (state.profiles || []).find(function(profile) {
+    return String(profile.id) === String(muralCurrentUserId || state.user && state.user.id || '');
+  }) || null;
+}
+
+function getMuralSectorKey(value) {
+  return normalizeSearchText(String(value || '')).replace(/[^a-z0-9]/g, '');
+}
+
+function currentUserIsMuralSectorLead() {
+  var profile = getCurrentMuralProfile();
+  if (!profile) return false;
+  var role = getMuralSectorKey(profile.role);
+  var sector = getMuralSectorKey(profile.sector);
+  return /gerente|gestor|diretor|administrador|coordenador|supervisor|lider/.test(role) ||
+    /^(gerencia|gestao|diretoria)/.test(sector);
+}
+
+function canManageMuralAudience(audienceSectors) {
+  if (muralCurrentUserIsAdmin) return true;
+  var sectors = Array.isArray(audienceSectors) ? audienceSectors : [];
+  var profile = getCurrentMuralProfile();
+  var sectorKey = profile && getMuralSectorKey(profile.sector);
+  return currentUserIsMuralSectorLead() && Boolean(sectorKey) && sectors.indexOf(sectorKey) !== -1;
+}
+
+function canReviewMuralPost(post) {
+  return Boolean(post && isMuralAnnouncement(post) &&
+    (muralCurrentUserIsAdmin || post.approvalStatus === 'pending_approval' &&
+      canManageMuralAudience(post.audienceSectors)));
+}
+
+function isMuralAnnouncement(post) {
+  return Boolean(post && (post.type === 'aviso' || post.type === 'comunicado'));
+}
 
 function renderHomeRecentConversations() {
   if (!window.RildonXStore) return;
@@ -1785,8 +1830,49 @@ function setCurrentAuthenticatedUser(user) {
 
 var globalSearchBound = false;
 var notificationReadStorageKey = 'rildonx_notifications_seen_v2:';
+var muralNotificationPreferencesStorageKey = 'rildonx_mural_notification_preferences:';
 var notificationStateReady = false;
 var notificationInitializationPromise = null;
+
+function getMuralNotificationPreferencesKey() {
+  return muralNotificationPreferencesStorageKey + (muralCurrentUserId || 'guest');
+}
+
+function getMuralNotificationPreferences() {
+  var defaults = { announcements: true, updates: true, mentions: true };
+  try {
+    var stored = localStorage.getItem(getMuralNotificationPreferencesKey());
+    if (!stored) return defaults;
+    var preferences = JSON.parse(stored);
+    return {
+      announcements: preferences.announcements !== false,
+      updates: preferences.updates !== false,
+      mentions: preferences.mentions !== false
+    };
+  } catch (error) {
+    console.error('Não foi possível carregar as preferências de notificação do Mural:', error);
+    return defaults;
+  }
+}
+
+function saveMuralNotificationPreferences(preferences) {
+  try {
+    localStorage.setItem(getMuralNotificationPreferencesKey(), JSON.stringify(preferences));
+  } catch (error) {
+    console.error('Não foi possível salvar as preferências de notificação do Mural:', error);
+    showToast('Não foi possível salvar suas preferências de notificação.');
+  }
+}
+
+function filterGlobalNotifications(items) {
+  var preferences = getMuralNotificationPreferences();
+  return items.filter(function(item) {
+    if (item.category !== 'Mural' || !item.notificationKind) return true;
+    if (item.notificationKind === 'announcement') return preferences.announcements;
+    if (item.notificationKind === 'mention') return preferences.mentions;
+    return preferences.updates;
+  });
+}
 
 function normalizeSearchText(value) {
   return String(value || '').toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -1815,7 +1901,9 @@ function getGlobalSearchEntries(state) {
 
 function getTaskStatusLabel(status) {
   var key = getTaskStatusKey(status);
-  return key === 'andamento' ? 'Em andamento' : key === 'concluida' ? 'Concluída' : 'Pendente';
+  return key === 'andamento' ? 'Em andamento' :
+    key === 'aguardando' ? 'Aguardando terceiros' :
+      key === 'concluida' ? 'Concluída' : 'Pendente';
 }
 
 function renderGlobalSearchResults(input, root) {
@@ -1918,17 +2006,33 @@ function buildGlobalNotifications(state) {
     });
   }
   (state.posts || []).forEach(function(post) {
+    if (!muralPostIsCurrentlyPublished(post) ||
+        String(post.authorId) === String(muralCurrentUserId)) return;
     var author = getProfileDisplayName(findProfileById(post.authorId, profiles), post.authorName || 'Colaborador');
     var postType = post.type || 'atualizacao';
+    var isAnnouncement = postType === 'aviso' || postType === 'comunicado';
     add({
       category: 'Mural',
       title: author + ' publicou ' + getPostTypeLabel(postType).toLocaleLowerCase(),
       detail: post.title || post.body || 'Nova publicação no Mural',
       timestamp: post.createdAt,
       notificationId: 'post:' + post.id + ':' + (post.updatedAt || post.createdAt),
-      featured: ['aviso', 'comunicado'].indexOf(postType) !== -1,
-      href: 'mural.html'
+      notificationKind: isAnnouncement ? 'announcement' : 'update',
+      featured: isAnnouncement,
+      href: 'mural.html#mural-post-' + encodeURIComponent(post.id)
     });
+    if (muralCurrentUserId && Array.isArray(post.metadata && post.metadata.mentions) &&
+        post.metadata.mentions.some(function(id) { return String(id) === String(muralCurrentUserId); })) {
+      add({
+        category: 'Mural',
+        title: author + ' mencionou você',
+        detail: post.title || post.body || 'Você foi mencionado em uma publicação',
+        timestamp: post.createdAt,
+        notificationId: 'mention:' + post.id + ':' + muralCurrentUserId,
+        notificationKind: 'mention',
+        href: 'mural.html#mural-post-' + encodeURIComponent(post.id)
+      });
+    }
   });
   (state.tasks || []).forEach(function(task) {
     if (!isCurrentUserTask(task, nameAliases)) return;
@@ -2114,9 +2218,9 @@ function initializeGlobalNotificationState() {
 }
 
 function markGlobalNotificationsRead(items) {
-  var notifications = items || (window.RildonXStore
+  var notifications = filterGlobalNotifications(items || (window.RildonXStore
     ? buildGlobalNotifications(window.RildonXStore.getState())
-    : []);
+    : []));
   var readIds = getReadGlobalNotificationIds();
   notifications.forEach(function(item) { readIds.add(getGlobalNotificationId(item)); });
   saveReadGlobalNotificationIds(readIds);
@@ -2132,7 +2236,7 @@ function markGlobalNotificationsRead(items) {
 function updateGlobalNotificationBadge(items) {
   var badge = document.querySelector('#notif-btn .badge');
   if (!badge || !window.RildonXStore) return;
-  var notifications = items || buildGlobalNotifications(window.RildonXStore.getState());
+  var notifications = filterGlobalNotifications(items || buildGlobalNotifications(window.RildonXStore.getState()));
   if (!notificationStateReady) {
     badge.hidden = true;
     initializeGlobalNotificationState().then(renderGlobalNotifications);
@@ -2150,7 +2254,7 @@ function updateGlobalNotificationBadge(items) {
 
 function renderGlobalNotifications() {
   if (!window.RildonXStore) return;
-  var items = buildGlobalNotifications(window.RildonXStore.getState());
+  var items = filterGlobalNotifications(buildGlobalNotifications(window.RildonXStore.getState()));
   if (!notificationStateReady) {
     initializeGlobalNotificationState().then(renderGlobalNotifications);
     return;
@@ -2158,6 +2262,25 @@ function renderGlobalNotifications() {
   updateGlobalNotificationBadge(items);
   var root = document.getElementById('notif-dropdown');
   if (!root) return;
+  if (!root.dataset.muralPreferencesBound) {
+    root.dataset.muralPreferencesBound = 'true';
+    root.addEventListener('change', function(event) {
+      var input = event.target.closest('[data-mural-notification-preference]');
+      if (!input) return;
+      var preferences = getMuralNotificationPreferences();
+      preferences[input.dataset.muralNotificationPreference] = input.checked;
+      saveMuralNotificationPreferences(preferences);
+      renderGlobalNotifications();
+    });
+  }
+  var preferences = getMuralNotificationPreferences();
+  var preferenceMarkup = '<details class="notification-preferences"><summary>Preferências do Mural (neste dispositivo)</summary>' +
+    '<label><input type="checkbox" data-mural-notification-preference="announcements"' +
+    (preferences.announcements ? ' checked' : '') + '>Comunicados</label>' +
+    '<label><input type="checkbox" data-mural-notification-preference="updates"' +
+    (preferences.updates ? ' checked' : '') + '>Atualizações</label>' +
+    '<label><input type="checkbox" data-mural-notification-preference="mentions"' +
+    (preferences.mentions ? ' checked' : '') + '>Menções</label></details>';
   var muralHighlights = items.filter(function(item) { return item.featured && item.category === 'Mural'; }).slice(0, 3);
   var eventHighlights = items.filter(function(item) { return item.featured && item.category !== 'Mural'; })
     .sort(function(first, second) { return new Date(first.highlightAt || 0) - new Date(second.highlightAt || 0); }).slice(0, 3);
@@ -2178,12 +2301,14 @@ function renderGlobalNotifications() {
   }).join('');
   root.innerHTML = '<div class="notif-dropdown-head"><h3>Notificações</h3><span class="see-all">' +
     items.length + ' atividade' + (items.length === 1 ? '' : 's') + '</span></div>' + highlightHtml +
+    preferenceMarkup +
     '<section><h4 class="notification-section-title">Atividade recente</h4><div class="activity-list">' +
     (activityHtml || '<div class="home-widget-empty">Nenhuma atualização para exibir.</div>') + '</div></section>';
 }
 
 window.addEventListener('storage', function(event) {
-  if (event.key && event.key.indexOf(notificationReadStorageKey) === 0) {
+  if (event.key && (event.key.indexOf(notificationReadStorageKey) === 0 ||
+      event.key.indexOf(muralNotificationPreferencesStorageKey) === 0)) {
     renderGlobalNotifications();
   }
 });
@@ -2324,7 +2449,7 @@ function renderGlobalUserSummary() {
     renderHomeRecentConversations();
     renderInicioTasksFromStore();
     renderGlobalNotifications();
-    renderGlobalNotificationBadge();
+    updateGlobalNotificationBadge();
   }).catch(function(error) {
     console.error('Não foi possível carregar o perfil do usuário:', error);
   });
@@ -2909,6 +3034,10 @@ function syncSocialComposerFields(form) {
   var selectedType = type ? type.value : 'atualizacao';
   var body = form.querySelector('[name="body"]');
   if (body) body.required = selectedType !== 'enquete' && selectedType !== 'evento';
+  var title = form.querySelector('[name="title"]');
+  if (title) title.required = selectedType === 'aviso' || selectedType === 'comunicado';
+  var announcementFields = form.querySelector('[data-mural-announcement-fields]');
+  if (announcementFields) announcementFields.hidden = selectedType !== 'aviso' && selectedType !== 'comunicado';
   form.querySelectorAll('[data-composer-fields]').forEach(function(section) {
     var active = section.dataset.composerFields === selectedType;
     section.hidden = !active;
@@ -2916,13 +3045,34 @@ function syncSocialComposerFields(form) {
       input.required = active && input.type !== 'checkbox';
     });
   });
+  syncMuralComposerPermissions(form);
   updateSocialComposerSubmit(form);
+}
+
+function syncMuralComposerPermissions(form) {
+  if (!form) return;
+  var canManage = muralCurrentUserIsAdmin || currentUserIsMuralSectorLead();
+  var pin = form.querySelector('[name="pinned"]');
+  var schedule = form.querySelector('[name="scheduledAt"]');
+  if (pin) pin.disabled = !canManage;
+  if (schedule) schedule.disabled = !canManage;
+  var audienceAll = form.querySelector('[name="audienceAll"]');
+  var sectorOptions = form.querySelector('[data-mural-sector-options]');
+  if (audienceAll && sectorOptions) {
+    sectorOptions.hidden = audienceAll.checked;
+    if (!audienceAll.dataset.bound) {
+      audienceAll.dataset.bound = 'true';
+      audienceAll.addEventListener('change', function() {
+        sectorOptions.hidden = audienceAll.checked;
+      });
+    }
+  }
 }
 
 function updateSocialComposerSubmit(form) {
   if (!form) return;
   var type = form.querySelector('[data-composer-type]');
-  var submit = form.querySelector('[type="submit"]');
+  var submit = form.querySelector('#mural-post-submit') || form.querySelector('[type="submit"]');
   var body = form.querySelector('[name="body"]');
   if (!submit || !body) return;
   var selectedType = type ? type.value : 'atualizacao';
@@ -2935,7 +3085,19 @@ function updateSocialComposerSubmit(form) {
         form.elements.eventStartsAt && form.elements.eventStartsAt.value &&
         form.elements.eventEndsAt && form.elements.eventEndsAt.value)
       : false;
-  submit.disabled = !body.value.trim() && !validStructuredContent;
+  var title = form.querySelector('[name="title"]');
+  var validTitle = !title || !title.required || Boolean(title.value.trim());
+  var enabled = (Boolean(body.value.trim()) || validStructuredContent) && validTitle;
+  submit.disabled = !enabled;
+  var draftButton = form.querySelector('[data-mural-intent="draft"]');
+  if (draftButton) draftButton.disabled = !enabled;
+  if (form.dataset.editingPostId) {
+    submit.textContent = 'Salvar alterações';
+    if (draftButton) draftButton.textContent = 'Manter como rascunho';
+  } else {
+    submit.textContent = 'Publicar';
+    if (draftButton) draftButton.textContent = 'Salvar rascunho';
+  }
 }
 
 function updateSocialComposerFiles(form) {
@@ -2951,10 +3113,99 @@ function updateSocialComposerFiles(form) {
   if (display) display.textContent = names.join(' · ');
 }
 
+function refreshMuralSectorOptions(form) {
+  var root = form && form.querySelector('[data-mural-sector-options]');
+  if (!root || !window.RildonXStore) return;
+  var sectors = Array.from(new Set((window.RildonXStore.getState().profiles || [])
+    .map(function(profile) { return String(profile.sector || '').trim(); })
+    .filter(Boolean)
+    .sort(function(first, second) { return first.localeCompare(second, 'pt-BR'); })));
+  var signature = sectors.join('|');
+  if (root.dataset.sectors === signature) return;
+  root.dataset.sectors = signature;
+  root.innerHTML = sectors.map(function(sector) {
+    var key = getMuralSectorKey(sector);
+    return '<label class="composer-checkbox"><input type="checkbox" name="audienceSector" value="' +
+      escapeHtml(key) + '"><span>' + escapeHtml(sector) + '</span></label>';
+  }).join('') || '<span class="mural-no-sectors">Nenhum setor cadastrado nos perfis.</span>';
+}
+
+function refreshMuralMentionOptions(form) {
+  var picker = form && form.querySelector('[data-mural-mention-picker]');
+  if (!picker || !window.RildonXStore) return;
+  var people = (window.RildonXStore.getState().profiles || []).filter(function(profile) {
+    return profile.active !== false && String(profile.id) !== String(muralCurrentUserId);
+  }).map(function(profile) {
+    return { id: String(profile.id), name: getProfileDisplayName(profile, 'Colaborador') };
+  }).sort(function(first, second) {
+    return first.name.localeCompare(second.name, 'pt-BR');
+  });
+  var signature = people.map(function(person) { return person.id + ':' + person.name; }).join('|');
+  if (picker.dataset.people === signature) return;
+  picker.dataset.people = signature;
+  picker.innerHTML = '<option value="">Selecione uma pessoa</option>' + people.map(function(person) {
+    return '<option value="' + escapeHtml(person.id) + '">' + escapeHtml(person.name) + '</option>';
+  }).join('');
+}
+
+function renderMuralMentionChips(form) {
+  var input = form && form.querySelector('[name="mentionIds"]');
+  var root = form && form.querySelector('[data-mural-mention-chips]');
+  if (!input || !root) return;
+  var ids = Array.from(new Set(String(input.value || '').split(',').filter(Boolean)));
+  var profiles = window.RildonXStore && window.RildonXStore.getState().profiles || [];
+  root.innerHTML = ids.map(function(id) {
+    var profile = profiles.find(function(item) { return String(item.id) === id; });
+    var name = getProfileDisplayName(profile, 'Colaborador');
+    return '<span class="mural-mention-chip">@' + escapeHtml(name) +
+      '<button type="button" data-remove-mural-mention="' + escapeHtml(id) +
+      '" aria-label="Remover menção a ' + escapeHtml(name) + '">×</button></span>';
+  }).join('');
+}
+
 function bindSocialComposerControls() {
   document.querySelectorAll('.social-post-composer').forEach(function(form) {
     if (form.dataset.controlsBound) return;
     form.dataset.controlsBound = 'true';
+    refreshMuralMentionOptions(form);
+    renderMuralMentionChips(form);
+    var mentionPicker = form.querySelector('[data-mural-mention-picker]');
+    var addMentionButton = form.querySelector('[data-mural-add-mention]');
+    if (mentionPicker && addMentionButton) {
+      addMentionButton.addEventListener('click', function() {
+        var mentionId = mentionPicker.value;
+        var profiles = window.RildonXStore.getState().profiles || [];
+        var profile = profiles.find(function(item) { return String(item.id) === mentionId; });
+        if (!profile) {
+          showToast('Selecione uma pessoa válida para mencionar.');
+          return;
+        }
+        var mentionInput = form.querySelector('[name="mentionIds"]');
+        var ids = String(mentionInput && mentionInput.value || '').split(',').filter(Boolean);
+        if (ids.indexOf(mentionId) !== -1) return;
+        ids.push(mentionId);
+        if (mentionInput) mentionInput.value = ids.join(',');
+        var body = form.querySelector('[name="body"]');
+        var name = getProfileDisplayName(profile, 'Colaborador');
+        if (body) {
+          body.setRangeText('@' + name + ' ', body.selectionStart, body.selectionEnd, 'end');
+          body.dispatchEvent(new Event('input', { bubbles: true }));
+          body.focus();
+        }
+        renderMuralMentionChips(form);
+      });
+    }
+    form.addEventListener('click', function(event) {
+      var removeMention = event.target.closest('[data-remove-mural-mention]');
+      if (!removeMention) return;
+      var mentionInput = form.querySelector('[name="mentionIds"]');
+      if (mentionInput) {
+        mentionInput.value = String(mentionInput.value || '').split(',').filter(function(id) {
+          return id !== removeMention.dataset.removeMuralMention;
+        }).join(',');
+      }
+      renderMuralMentionChips(form);
+    });
     var type = form.querySelector('[data-composer-type]');
     if (type) type.addEventListener('change', function() { syncSocialComposerFields(form); });
     form.addEventListener('input', function() { updateSocialComposerSubmit(form); });
@@ -2977,14 +3228,63 @@ function bindSocialComposerControls() {
         updateSocialComposerFiles(form);
       });
     });
+    var previewButton = form.querySelector('[data-mural-preview]');
+    if (previewButton) {
+      previewButton.addEventListener('click', function() {
+        var preview = form.querySelector('[data-mural-preview-root]');
+        if (!preview) return;
+        if (!preview.hidden) {
+          preview.hidden = true;
+          preview.innerHTML = '';
+          previewButton.setAttribute('aria-expanded', 'false');
+          return;
+        }
+        var type = form.querySelector('[data-composer-type]');
+        var selectedType = type ? type.value : 'atualizacao';
+        var title = form.querySelector('[name="title"]');
+        var body = form.querySelector('[name="body"]');
+        var author = form.querySelector('.social-composer-author-name');
+        preview.innerHTML = '<div class="mural-preview-label">Pré-visualização</div><article class="card post-card">' +
+          '<div class="post-head"><div class="post-avatar">' +
+          escapeHtml(getPostInitials(author && author.textContent)) +
+          '</div><div class="post-author-block"><div class="post-author">' +
+          escapeHtml(author && author.textContent || 'Você') +
+          '</div><div class="post-time">agora</div></div><span class="post-badge ' +
+          escapeHtml(selectedType) + '">' + escapeHtml(getPostTypeLabel(selectedType)) +
+          '</span></div><div class="post-body">' +
+          (title && title.value.trim() ? '<h4>' + escapeHtml(title.value.trim()) + '</h4>' : '') +
+          '<p>' + escapeHtml(body && body.value.trim() || 'O texto da publicação aparecerá aqui.').replace(/\n/g, '<br>') +
+          '</p></div></article>';
+        preview.hidden = false;
+        previewButton.setAttribute('aria-expanded', 'true');
+      });
+    }
     syncSocialComposerFields(form);
+    refreshMuralSectorOptions(form);
     updateSocialComposerFiles(form);
   });
 }
 
-async function prepareSocialPost(form, user, profile, authorName) {
+async function prepareSocialPost(form, user, profile, authorName, existingPost) {
   var type = form.querySelector('[data-composer-type]').value;
-  var metadata = {};
+  var metadata = existingPost && existingPost.metadata
+    ? JSON.parse(JSON.stringify(existingPost.metadata))
+    : {};
+  if (type !== 'enquete') delete metadata.poll;
+  if (type !== 'evento') delete metadata.event;
+  var mentionInput = form.querySelector('[name="mentionIds"]');
+  if (mentionInput) {
+    var mentionIds = Array.from(new Set(String(mentionInput.value || '').split(',').filter(Boolean)));
+    var profiles = window.RildonXStore.getState().profiles || [];
+    var allowedMentionIds = new Set(profiles.filter(function(item) {
+      return String(item.id) !== String(user.id) && item.active !== false;
+    }).map(function(item) { return String(item.id); }));
+    if (mentionIds.some(function(id) { return !allowedMentionIds.has(id); })) {
+      throw new Error('Uma das pessoas mencionadas não está mais disponível.');
+    }
+    if (mentionIds.length) metadata.mentions = mentionIds;
+    else delete metadata.mentions;
+  }
   if (type === 'enquete') {
     var question = form.elements.pollQuestion.value.trim();
     var options = Array.prototype.map.call(form.querySelectorAll('[name="pollOption"]'), function(input) {
@@ -3017,11 +3317,61 @@ async function prepareSocialPost(form, user, profile, authorName) {
     };
   }
 
-  var attachments = [];
+  var announcement = type === 'aviso' || type === 'comunicado';
+  var audienceSectors = [];
+  var importance = 'normal';
+  var pinned = false;
+  var expiresAt = null;
+  var scheduledAt = null;
+  var requiresAcknowledgement = false;
+  var titleInput = form.querySelector('[name="title"]');
+  if (announcement) {
+    var audienceAll = form.querySelector('[name="audienceAll"]');
+    if (audienceAll && !audienceAll.checked) {
+      audienceSectors = Array.prototype.map.call(
+        form.querySelectorAll('[name="audienceSector"]:checked'),
+        function(input) { return input.value; }
+      );
+      if (!audienceSectors.length) {
+        throw new Error('Selecione pelo menos um setor ou escolha toda a empresa.');
+      }
+    }
+    importance = form.elements.importance ? form.elements.importance.value : 'normal';
+    pinned = Boolean(form.elements.pinned && form.elements.pinned.checked);
+    requiresAcknowledgement = Boolean(form.elements.requiresAcknowledgement && form.elements.requiresAcknowledgement.checked);
+    var expirationValue = form.elements.expiresAt && form.elements.expiresAt.value;
+    if (expirationValue) {
+      var expirationDate = new Date(expirationValue + 'T23:59:59');
+      if (Number.isNaN(expirationDate.getTime()) || expirationDate <= new Date()) {
+        throw new Error('A validade do comunicado deve ser uma data futura.');
+      }
+      expiresAt = expirationDate.toISOString();
+    }
+    var scheduleValue = form.elements.scheduledAt && form.elements.scheduledAt.value;
+    if (scheduleValue) {
+      if (!canManageMuralAudience(audienceSectors)) {
+        throw new Error('Somente administradores ou responsáveis pelo setor destinatário podem agendar este comunicado.');
+      }
+      var scheduleDate = new Date(scheduleValue);
+      if (Number.isNaN(scheduleDate.getTime()) || scheduleDate <= new Date()) {
+        throw new Error('O agendamento deve ser para uma data e horário futuros.');
+      }
+      scheduledAt = scheduleDate.toISOString();
+    }
+    if (pinned && !canManageMuralAudience(audienceSectors)) {
+      throw new Error('Somente administradores ou responsáveis pelo setor destinatário podem fixar este comunicado.');
+    }
+  }
+
+  var attachments = existingPost && Array.isArray(existingPost.attachments)
+    ? existingPost.attachments.slice()
+    : [];
   var photos = Array.prototype.slice.call(form.querySelector('[name="photo"]').files || []);
   var documentFiles = Array.prototype.slice.call(form.querySelector('[name="document"]').files || []);
   var allFiles = photos.concat(documentFiles);
-  if (allFiles.length > MAX_UPLOAD_FILES) throw new Error('Você pode anexar no máximo 10 arquivos por publicação.');
+  if (attachments.length + allFiles.length > MAX_UPLOAD_FILES) {
+    throw new Error('Você pode manter e adicionar no máximo 10 arquivos por publicação.');
+  }
   if (allFiles.length && !window.RildonXDocumentUpload) {
     throw new Error('O serviço de anexos não está disponível. Recarregue a página e tente novamente.');
   }
@@ -3034,6 +3384,7 @@ async function prepareSocialPost(form, user, profile, authorName) {
   }
   return {
     type: type,
+    title: titleInput && titleInput.value.trim() || '',
     authorRole: profile && profile.role || user.user_metadata && user.user_metadata.role || '',
     attachments: attachments.map(function(file) {
       return {
@@ -3045,27 +3396,49 @@ async function prepareSocialPost(form, user, profile, authorName) {
         url: file.url
       };
     }),
-    metadata: metadata
+    metadata: metadata,
+    approvalStatus: announcement ? null : 'published',
+    importance: importance,
+    pinned: pinned,
+    audienceSectors: audienceSectors,
+    expiresAt: expiresAt,
+    requiresAcknowledgement: requiresAcknowledgement,
+    scheduledAt: scheduledAt
   };
 }
 
-function addCreatedSocialPost(row, payload, authorName) {
-  window.RildonXStore.addPost({
+function addCreatedSocialPost(row, payload, authorName, existingPost) {
+  var savedPost = Object.assign({}, existingPost || {}, {
     id: row.id,
     authorId: row.author_id,
     authorName: row.author_name || authorName,
     authorRole: row.author_role || payload.authorRole,
     type: row.post_type || payload.type,
-    title: row.title || '',
+    title: row.title || payload.title || '',
     body: row.body,
     attachments: row.attachments || payload.attachments,
     metadata: row.post_metadata || payload.metadata,
-    createdAt: row.created_at,
-    comments: [],
-    reactions: [],
-    pollVotes: [],
-    pollResults: []
+    approvalStatus: row.approval_status || payload.approvalStatus || 'published',
+    importance: row.importance || payload.importance || 'normal',
+    pinned: Boolean(row.pinned || payload.pinned),
+    audienceSectors: row.audience_sectors || payload.audienceSectors || [],
+    expiresAt: row.expires_at || payload.expiresAt || null,
+    requiresAcknowledgement: Boolean(row.requires_acknowledgement || payload.requiresAcknowledgement),
+    scheduledAt: row.scheduled_at || payload.scheduledAt || null,
+    approvalNote: row.approval_note || '',
+    approvedBy: row.approved_by || null,
+    approvedAt: row.approved_at || null,
+    createdAt: row.created_at || existingPost && existingPost.createdAt,
+    comments: existingPost && existingPost.comments || [],
+    reactions: existingPost && existingPost.reactions || [],
+    pollVotes: existingPost && existingPost.pollVotes || [],
+    pollResults: existingPost && existingPost.pollResults || []
   });
+  if (existingPost) {
+    updateFeedPost(row.id, function() { return savedPost; });
+  } else {
+    window.RildonXStore.addPost(savedPost);
+  }
 }
 
 function bindQuickCreateActions() {
@@ -3115,14 +3488,25 @@ function bindQuickCreateActions() {
           user.user_metadata && (user.user_metadata.display_name || user.user_metadata.full_name) ||
           String(user.email || 'Colaborador').split('@')[0];
         var composer = await prepareSocialPost(postForm, user, profile, authorName);
+        var quickIsAnnouncement = isMuralAnnouncement({ type: composer.type });
+        var quickApprovalStatus = quickIsAnnouncement && !canManageMuralAudience(composer.audienceSectors)
+          ? 'pending_approval' : composer.scheduledAt ? 'scheduled' : 'published';
         var result = await window.supabaseClient.from('posts').insert({
           author_id: user.id,
           author_name: authorName,
           author_role: composer.authorRole || null,
           post_type: composer.type,
+          title: composer.title || null,
           post_metadata: composer.metadata,
           attachments: composer.attachments,
-          body: body
+          body: body,
+          approval_status: quickApprovalStatus,
+          importance: composer.importance,
+          pinned: composer.pinned,
+          audience_sectors: composer.audienceSectors,
+          expires_at: composer.expiresAt,
+          requires_acknowledgement: composer.requiresAcknowledgement,
+          scheduled_at: composer.scheduledAt
         }).select('*').single();
         if (result.error) throw result.error;
         addCreatedSocialPost(result.data, composer, authorName);
@@ -3131,7 +3515,8 @@ function bindQuickCreateActions() {
         syncSocialComposerFields(postForm);
         updateSocialComposerFiles(postForm);
         closeModal();
-        showToast('Publicação adicionada ao Mural.');
+        showToast(quickApprovalStatus === 'pending_approval'
+          ? 'Comunicado enviado para aprovação.' : 'Publicação adicionada ao Mural.');
       } catch (error) {
         console.error('Não foi possível publicar no Mural:', error);
         showToast(error.message || 'Não foi possível publicar. Tente novamente.');
@@ -3390,51 +3775,304 @@ function renderHomePostTypePreview(post) {
   return imagePreview;
 }
 
+function muralPostIsCurrentlyPublished(post) {
+  var status = post.approvalStatus || 'published';
+  var scheduledAt = post.scheduledAt ? new Date(post.scheduledAt).getTime() : 0;
+  var expiresAt = post.expiresAt ? new Date(post.expiresAt).getTime() : 0;
+  return (status === 'published' || status === 'scheduled' && scheduledAt <= Date.now()) &&
+    (!expiresAt || expiresAt > Date.now());
+}
+
+function getMuralAudienceLabel(post, profiles) {
+  var sectors = Array.isArray(post.audienceSectors) ? post.audienceSectors : [];
+  if (!sectors.length) return 'Toda a empresa';
+  var names = Array.from(new Set(profiles.filter(function(profile) {
+    return sectors.indexOf(getMuralSectorKey(profile.sector)) !== -1;
+  }).map(function(profile) { return profile.sector; })));
+  return names.length ? names.join(', ') : 'Setores selecionados';
+}
+
+function renderMuralPostCard(post, state) {
+  var profiles = state.profiles || [];
+  var profile = profiles.find(function(item) { return item.id === post.authorId; });
+  var authorName = getProfileDisplayName(profile, post.authorName || 'Colaborador');
+  var reactions = Array.isArray(post.reactions) ? post.reactions : [];
+  var comments = Array.isArray(post.comments) ? post.comments : [];
+  var acknowledgements = (state.postAcknowledgements || []).filter(function(item) {
+    return String(item.postId) === String(post.id);
+  });
+  var myAcknowledgement = acknowledgements.find(function(item) {
+    return String(item.userId) === String(muralCurrentUserId);
+  });
+  var acknowledgedByMe = Boolean(myAcknowledgement);
+  var announcement = isMuralAnnouncement(post);
+  var pending = post.approvalStatus === 'pending_approval';
+  var draft = post.approvalStatus === 'draft' || post.approvalStatus === 'rejected';
+  var canReview = pending && canReviewMuralPost(post);
+  var canSeeAcknowledgementDetails = muralCurrentUserIsAdmin || post.authorId === muralCurrentUserId;
+  var liked = reactions.some(function(reaction) { return reaction.userId === muralCurrentUserId; });
+  var type = post.type || 'atualizacao';
+  var statusLabel = post.approvalStatus === 'pending_approval' ? 'Aguardando aprovação' :
+    post.approvalStatus === 'rejected' ? 'Ajustes solicitados' :
+      post.approvalStatus === 'draft' ? 'Rascunho' :
+        post.approvalStatus === 'scheduled' && new Date(post.scheduledAt || 0).getTime() > Date.now()
+          ? 'Agendado' : '';
+  var commentsHtml = comments.slice(-3).map(function(comment) {
+    var commentProfile = profiles.find(function(item) { return item.id === comment.authorId; });
+    var commentAuthor = getProfileDisplayName(commentProfile, comment.authorName || 'Colaborador');
+    return '<div class="feed-comment"><div class="feed-comment-avatar">' + escapeHtml(getPostInitials(commentAuthor)) +
+      profileAvatarImageMarkup(commentProfile) + '</div><div class="feed-comment-copy"><b>' +
+      escapeHtml(commentAuthor) + '</b><span>' + escapeHtml(comment.body) +
+      '</span></div></div>';
+  }).join('');
+  var canDelete = Boolean(muralCurrentUserId && (muralCurrentUserIsAdmin || post.authorId === muralCurrentUserId));
+  var canEditDraft = String(post.authorId) === String(muralCurrentUserId) &&
+    (post.approvalStatus === 'draft' || post.approvalStatus === 'rejected');
+  var body = String(post.body || '');
+  var isLong = body.length > 520;
+  var bodyMarkup = body
+    ? '<p class="feed-post-text' + (isLong ? ' is-collapsed' : '') + '">' + escapeHtml(body).replace(/\n/g, '<br>') + '</p>' +
+      (isLong ? '<button type="button" class="feed-expand-text" data-feed-action="expand-text" aria-expanded="false">Ler mais</button>' : '')
+    : '';
+  var metaBadges = (post.pinned ? '<span class="mural-priority-tag is-pinned"><span aria-hidden="true">⌖</span> Fixado</span>' : '') +
+    (post.importance === 'urgent' ? '<span class="mural-priority-tag is-urgent"><span aria-hidden="true">!</span> Urgente</span>' :
+      post.importance === 'important' ? '<span class="mural-priority-tag is-important"><span aria-hidden="true">◆</span> Importante</span>' : '');
+  var workflowMarkup = statusLabel
+    ? '<div class="mural-workflow-status" data-status="' + escapeHtml(post.approvalStatus || '') + '">' +
+      '<span aria-hidden="true">' + (post.approvalStatus === 'rejected' ? '!' : post.approvalStatus === 'draft' ? '✎' : '◷') +
+      '</span> ' + escapeHtml(statusLabel) +
+      (post.approvalNote ? '<small>' + escapeHtml(post.approvalNote) + '</small>' : '') + '</div>'
+    : '';
+  var audienceMarkup = announcement
+    ? '<div class="mural-announcement-meta"><span><span aria-hidden="true">◎</span> ' +
+      escapeHtml(getMuralAudienceLabel(post, profiles)) + '</span>' +
+      (post.expiresAt ? '<span>Válido até ' + escapeHtml(new Date(post.expiresAt).toLocaleDateString('pt-BR')) + '</span>' : '') +
+      '</div>'
+    : '';
+  var ackMarkup = '';
+  if (announcement && post.requiresAcknowledgement && !pending && !draft &&
+      muralPostIsCurrentlyPublished(post)) {
+    if (acknowledgedByMe) {
+      ackMarkup = '<div class="mural-ack-panel"><span class="mural-ack-success">✓ Ciência confirmada</span>' +
+        (canSeeAcknowledgementDetails ? '<span>' + acknowledgements.length + ' confirmação' +
+          (acknowledgements.length === 1 ? '' : 'ões') + '</span>' : '') + '</div>';
+    } else {
+      ackMarkup = '<div class="mural-ack-panel"><button type="button" class="mural-ack-button" data-feed-action="acknowledge" data-post-id="' +
+        escapeHtml(post.id) + '">Confirmar ciência</button>' +
+        (canSeeAcknowledgementDetails ? '<span>' + acknowledgements.length + ' confirmação' +
+          (acknowledgements.length === 1 ? '' : 'ões') + '</span>' : '') + '</div>';
+    }
+    if (canSeeAcknowledgementDetails && acknowledgements.length) {
+      var acknowledgedNames = acknowledgements.map(function(item) {
+        var acknowledgedProfile = profiles.find(function(candidate) {
+          return String(candidate.id) === String(item.userId);
+        });
+        return acknowledgedProfile && (acknowledgedProfile.displayName || acknowledgedProfile.nickname) ||
+          'Colaborador';
+      });
+      ackMarkup += '<div class="mural-ack-names">Confirmaram: ' +
+        escapeHtml(acknowledgedNames.join(', ')) + '</div>';
+    }
+  }
+  var approvalActions = canReview
+    ? '<div class="mural-review-actions"><span>Revisão do comunicado</span>' +
+      '<button type="button" data-feed-action="review" data-approved="true" data-post-id="' + escapeHtml(post.id) + '">Aprovar e publicar</button>' +
+      '<button type="button" data-feed-action="review" data-approved="false" data-post-id="' + escapeHtml(post.id) + '">Solicitar ajustes</button></div>'
+    : '';
+  var commentsAndReactions = announcement || draft || pending ? '' :
+    '<div class="post-stats"><span>' + reactions.length + ' curtida' + (reactions.length === 1 ? '' : 's') +
+    '</span><span>' + comments.length + ' comentário' + (comments.length === 1 ? '' : 's') + '</span></div>' +
+    '<div class="post-foot"><button type="button" class="feed-action' + (liked ? ' liked' : '') +
+    '" data-feed-action="like" data-post-id="' + escapeHtml(post.id) + '" aria-pressed="' + String(liked) +
+    '">👍 Curtir</button><button type="button" class="feed-action" data-feed-action="focus-comment" data-post-id="' +
+    escapeHtml(post.id) + '">💬 Comentar</button></div>' +
+    (commentsHtml ? '<div class="feed-comments">' + commentsHtml + '</div>' : '') +
+    '<form class="feed-comment-form" data-post-id="' + escapeHtml(post.id) + '">' +
+    '<input name="comment" maxlength="2000" placeholder="Escreva um comentário..." aria-label="Escreva um comentário" required>' +
+    '<button type="submit" aria-label="Enviar comentário">Enviar</button></form>';
+
+  return '<article class="card post-card' + (announcement ? ' is-announcement' : '') +
+    (post.pinned ? ' is-pinned' : '') + (post.importance === 'urgent' ? ' is-urgent' : '') +
+    '" id="mural-post-' + escapeHtml(post.id) + '" data-feed-post="' + escapeHtml(post.id) + '" tabindex="-1">' +
+    (workflowMarkup ? workflowMarkup : '') +
+    '<div class="post-head"><div class="post-avatar">' + escapeHtml(getPostInitials(authorName)) +
+    (profile && profile.avatarUrl ? '<img data-profile-avatar-url="' + escapeHtml(profile.avatarUrl) +
+      '" data-profile-avatar-name="' + escapeHtml(authorName) + '" alt="" loading="lazy">' : '') +
+    '</div><div class="post-author-block"><div class="post-author">' + escapeHtml(authorName) +
+    '</div><div class="post-time">' + escapeHtml(formatPostTime(post.createdAt)) + '</div></div>' +
+    '<span class="post-badge ' + escapeHtml(type) + '">' + escapeHtml(getPostTypeLabel(type)) + '</span>' +
+    (canEditDraft ? '<button type="button" class="post-edit-btn" data-feed-action="edit-draft" data-post-id="' +
+      escapeHtml(post.id) + '" aria-label="Editar rascunho" title="Editar rascunho">Editar</button>' : '') +
+    (canDelete ? '<button type="button" class="post-delete-btn" data-feed-action="delete" data-post-id="' +
+      escapeHtml(post.id) + '" aria-label="Excluir publicação de ' + escapeHtml(authorName) +
+      '" title="Excluir publicação"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg></button>' : '') +
+    '</div>' +
+    (metaBadges ? '<div class="mural-priority-row">' + metaBadges + '</div>' : '') +
+    audienceMarkup +
+    '<div class="post-body">' + (post.title ? '<h4>' + escapeHtml(post.title) + '</h4>' : '') +
+    bodyMarkup + '</div>' + renderPostAttachments(post) + renderPostEvent(post) + renderPostPoll(post, profiles) +
+    ackMarkup + approvalActions + commentsAndReactions +
+    '<div class="mural-source-actions"><button type="button" data-feed-action="make-task" data-post-id="' +
+    escapeHtml(post.id) + '">Criar tarefa</button></div></article>';
+}
+
+function updateMuralAuthorOptions(posts, profiles) {
+  var select = document.getElementById('mural-author-filter');
+  if (!select) return;
+  var selected = select.value;
+  var authorIds = new Set(posts.map(function(post) { return String(post.authorId || ''); }));
+  var options = profiles.filter(function(profile) { return authorIds.has(String(profile.id)); })
+    .map(function(profile) {
+      return { id: String(profile.id), name: profile.displayName || profile.nickname || 'Colaborador' };
+    });
+  posts.forEach(function(post) {
+    if (!post.authorId || options.some(function(option) { return option.id === String(post.authorId); })) return;
+    options.push({ id: String(post.authorId), name: post.authorName || 'Colaborador' });
+  });
+  options.sort(function(first, second) { return first.name.localeCompare(second.name, 'pt-BR'); });
+  select.innerHTML = '<option value="">Todos os autores</option>' + options.map(function(option) {
+    return '<option value="' + escapeHtml(option.id) + '">' + escapeHtml(option.name) + '</option>';
+  }).join('');
+  if (options.some(function(option) { return option.id === selected; })) select.value = selected;
+}
+
+function renderMuralActiveFilters() {
+  var root = document.querySelector('[data-mural-active-filters]');
+  if (!root) return;
+  var filters = [
+    { id: 'mural-search', label: 'Busca' },
+    { id: 'mural-type-filter', label: 'Tipo' },
+    { id: 'mural-author-filter', label: 'Autor' },
+    { id: 'mural-date-from', label: 'De' },
+    { id: 'mural-date-to', label: 'Até' }
+  ];
+  var active = filters.map(function(filter) {
+    var input = document.getElementById(filter.id);
+    if (!input || !input.value) return null;
+    var value = input.tagName === 'SELECT'
+      ? input.options[input.selectedIndex].text : input.value;
+    return '<button type="button" data-clear-mural-filter="' + filter.id + '">' +
+      escapeHtml(filter.label + ': ' + value) + ' <span aria-hidden="true">×</span></button>';
+  }).filter(Boolean);
+  root.innerHTML = active.join('');
+  var count = document.querySelector('[data-mural-filter-count]');
+  if (count) {
+    count.textContent = String(active.length);
+    count.hidden = !active.length;
+  }
+}
+
 function renderMuralPosts() {
   var root = document.getElementById('mural-posts-root');
   if (!root || !window.RildonXStore) return;
-  var profiles = window.RildonXStore.getState().profiles || [];
   var state = window.RildonXStore.getState();
-  var posts = (state.posts || []).slice().sort(function (first, second) {
-    return new Date(second.createdAt || 0) - new Date(first.createdAt || 0);
+  var profiles = state.profiles || [];
+  var allPosts = (state.posts || []).filter(function(post) {
+    return post.authorId === muralCurrentUserId || muralCurrentUserIsAdmin ||
+      canReviewMuralPost(post) || muralPostIsCurrentlyPublished(post) &&
+      (!post.audienceSectors || !post.audienceSectors.length ||
+        post.audienceSectors.indexOf(getMuralSectorKey((getCurrentMuralProfile() || {}).sector)) !== -1);
+  });
+  if (muralPendingNavigationId && state.muralLoaded) {
+    var navigationPost = allPosts.find(function(post) {
+      return String(post.id) === String(muralPendingNavigationId);
+    });
+    if (navigationPost) {
+      muralCurrentView = isMuralAnnouncement(navigationPost) ? 'announcements' : 'updates';
+    } else {
+      muralPendingNavigationId = '';
+    }
+  }
+  updateMuralAuthorOptions(allPosts, profiles);
+  refreshMuralSectorOptions(document.getElementById('mural-post-form'));
+  refreshMuralMentionOptions(document.getElementById('mural-post-form'));
+  renderMuralMentionChips(document.getElementById('mural-post-form'));
+  syncMuralComposerPermissions(document.getElementById('mural-post-form'));
+
+  var approvalTab = document.querySelector('[data-mural-view="approvals"]');
+  if (approvalTab) approvalTab.hidden = !(muralCurrentUserIsAdmin || currentUserIsMuralSectorLead());
+  document.querySelectorAll('[data-mural-view]').forEach(function(tab) {
+    var active = tab.dataset.muralView === muralCurrentView;
+    tab.classList.toggle('is-active', active);
+    tab.setAttribute('aria-pressed', String(active));
   });
 
-  var feedWarning = state.muralLoadError
-    ? '<div class="feed-load-warning" role="status">' + escapeHtml(state.muralLoadError) + '</div>'
-    : '';
-  root.innerHTML = feedWarning + (posts.length ? posts.map(function (post) {
-    var profile = profiles.find(function (item) { return item.id === post.authorId; });
+  var visiblePosts = allPosts.filter(function(post) {
+    var announcement = isMuralAnnouncement(post);
+    if (muralCurrentView === 'updates') return !announcement && muralPostIsCurrentlyPublished(post);
+    if (muralCurrentView === 'announcements') {
+      return announcement && (muralPostIsCurrentlyPublished(post) ||
+        (post.approvalStatus === 'scheduled' &&
+          (post.authorId === muralCurrentUserId || canReviewMuralPost(post))));
+    }
+    if (muralCurrentView === 'approvals') return post.approvalStatus === 'pending_approval' && canReviewMuralPost(post);
+    return String(post.authorId) === String(muralCurrentUserId) &&
+      ['draft', 'pending_approval', 'rejected'].indexOf(post.approvalStatus) !== -1;
+  });
+  var query = (document.getElementById('mural-search') || {}).value || '';
+  query = normalizeSearchText(query.trim());
+  var typeFilter = (document.getElementById('mural-type-filter') || {}).value || '';
+  var authorFilter = (document.getElementById('mural-author-filter') || {}).value || '';
+  var dateFrom = (document.getElementById('mural-date-from') || {}).value || '';
+  var dateTo = (document.getElementById('mural-date-to') || {}).value || '';
+  visiblePosts = visiblePosts.filter(function(post) {
+    var profile = profiles.find(function(item) { return String(item.id) === String(post.authorId); });
     var authorName = getProfileDisplayName(profile, post.authorName || 'Colaborador');
-    var reactions = Array.isArray(post.reactions) ? post.reactions : [];
-    var comments = Array.isArray(post.comments) ? post.comments : [];
-    var liked = reactions.some(function (reaction) { return reaction.userId === muralCurrentUserId; });
-    var type = post.type || 'atualizacao';
-    var commentsHtml = comments.slice(-3).map(function (comment) {
-      var commentProfile = profiles.find(function (item) { return item.id === comment.authorId; });
-      var commentAuthor = getProfileDisplayName(commentProfile, comment.authorName || 'Colaborador');
-      return '<div class="feed-comment"><div class="feed-comment-avatar">' + escapeHtml(getPostInitials(commentAuthor)) + profileAvatarImageMarkup(commentProfile) + '</div><div class="feed-comment-copy"><b>' + escapeHtml(commentAuthor) + '</b><span>' + escapeHtml(comment.body) + '</span></div></div>';
-    }).join('');
-    var canDelete = muralCurrentUserId && (muralCurrentUserIsAdmin || post.authorId === muralCurrentUserId);
+    var matchesQuery = !query || normalizeSearchText([
+      post.title, post.body, authorName, getPostTypeLabel(post.type),
+      getMuralAudienceLabel(post, profiles)
+    ].join(' ')).indexOf(query) !== -1;
+    var created = new Date(post.createdAt || 0);
+    var createdDay = Number.isNaN(created.getTime()) ? '' : created.toISOString().slice(0, 10);
+    return matchesQuery &&
+      (!typeFilter || post.type === typeFilter) &&
+      (!authorFilter || String(post.authorId) === authorFilter) &&
+      (!dateFrom || createdDay >= dateFrom) &&
+      (!dateTo || createdDay <= dateTo);
+  });
+  visiblePosts.sort(function(first, second) {
+    if (muralCurrentView === 'announcements') {
+      var pinDiff = Number(Boolean(second.pinned)) - Number(Boolean(first.pinned));
+      if (pinDiff) return pinDiff;
+      var rank = { urgent: 0, important: 1, normal: 2 };
+      var importanceDiff = (rank[first.importance] == null ? 2 : rank[first.importance]) -
+        (rank[second.importance] == null ? 2 : rank[second.importance]);
+      if (importanceDiff) return importanceDiff;
+    }
+    return new Date(second.createdAt || 0) - new Date(first.createdAt || 0);
+  });
+  renderMuralActiveFilters();
 
-    return '<article class="card post-card" data-feed-post="' + escapeHtml(post.id) + '">' +
-      '<div class="post-head"><div class="post-avatar">' + escapeHtml(getPostInitials(authorName)) +
-      (profile && profile.avatarUrl ? '<img data-profile-avatar-url="' + escapeHtml(profile.avatarUrl) + '" data-profile-avatar-name="' + escapeHtml(authorName) + '" alt="" loading="lazy">' : '') + '</div>' +
-      '<div class="post-author-block"><div class="post-author">' + escapeHtml(authorName) + '</div><div class="post-time">' + escapeHtml(formatPostTime(post.createdAt)) + '</div></div>' +
-      '<span class="post-badge ' + escapeHtml(type) + '">' + escapeHtml(getPostTypeLabel(type)) + '</span>' +
-      (canDelete ? '<button type="button" class="post-delete-btn" data-feed-action="delete" data-post-id="' + escapeHtml(post.id) + '" aria-label="Excluir publicação de ' + escapeHtml(authorName) + '" title="Excluir publicação"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg></button>' : '') +
-      '</div>' +
-      '<div class="post-body">' + (post.title ? '<h4>' + escapeHtml(post.title) + '</h4>' : '') + '<p>' + escapeHtml(post.body).replace(/\n/g, '<br>') + '</p></div>' +
-      renderPostAttachments(post) + renderPostEvent(post) + renderPostPoll(post, profiles) +
-      '<div class="post-stats"><span>' + reactions.length + ' curtida' + (reactions.length === 1 ? '' : 's') + '</span><span>' + comments.length + ' comentário' + (comments.length === 1 ? '' : 's') + '</span></div>' +
-      '<div class="post-foot"><button type="button" class="feed-action' + (liked ? ' liked' : '') + '" data-feed-action="like" data-post-id="' + escapeHtml(post.id) + '" aria-pressed="' + String(liked) + '">👍 Curtir</button>' +
-      '<button type="button" class="feed-action" data-feed-action="focus-comment" data-post-id="' + escapeHtml(post.id) + '">💬 Comentar</button></div>' +
-      (commentsHtml ? '<div class="feed-comments">' + commentsHtml + '</div>' : '') +
-      '<form class="feed-comment-form" data-post-id="' + escapeHtml(post.id) + '">' +
-      '<input name="comment" maxlength="2000" placeholder="Escreva um comentário..." aria-label="Escreva um comentário" required>' +
-      '<button type="submit" aria-label="Enviar comentário">Enviar</button></form></article>';
-  }).join('') : '<div class="card feed-empty mural-empty">Ainda não há publicações. Compartilhe a primeira atualização com a equipe.</div>');
+  var feedWarning = state.muralLoadError
+    ? '<div class="feed-load-warning" role="alert">' + escapeHtml(state.muralLoadError) + '</div>'
+    : '';
+  root.setAttribute('aria-busy', String(!state.muralLoaded));
+  if (!state.muralLoaded) {
+    root.innerHTML = feedWarning + '<div class="card feed-empty mural-empty">Carregando publicações...</div>';
+  } else if (visiblePosts.length) {
+    root.innerHTML = feedWarning + visiblePosts.map(function(post) {
+      return renderMuralPostCard(post, state);
+    }).join('');
+  } else {
+    var emptyText = state.muralLoadError && !allPosts.length
+      ? 'Os dados do Mural ainda não estão disponíveis. Verifique a conexão e as permissões.'
+      : muralCurrentView === 'announcements' ? 'Não há comunicados disponíveis para este público.' :
+        muralCurrentView === 'approvals' ? 'Nenhum comunicado aguarda sua aprovação.' :
+          muralCurrentView === 'drafts' ? 'Você ainda não tem rascunhos ou comunicados enviados para aprovação.' :
+            allPosts.length ? 'Nenhuma publicação corresponde à busca ou aos filtros.' :
+              'Ainda não há atualizações. Compartilhe a primeira com a equipe.';
+    root.innerHTML = feedWarning + '<div class="card feed-empty mural-empty">' + escapeHtml(emptyText) + '</div>';
+  }
   hydrateProfileAvatarImages(root);
   hydratePostAttachments(root);
+  if (muralPendingNavigationId && state.muralLoaded) {
+    var target = document.getElementById('mural-post-' + muralPendingNavigationId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.focus({ preventScroll: true });
+    }
+    muralPendingNavigationId = '';
+  }
 }
 
 function updateFeedPost(postId, update) {
@@ -3455,16 +4093,199 @@ async function getMuralUser() {
   return result.data.user;
 }
 
+async function createTaskFromOrigin(sourceType, source) {
+  if (!window.RildonXStore || typeof window.RildonXStore.addTask !== 'function') {
+    throw new Error('O serviço de tarefas ainda está carregando.');
+  }
+  if (!source || !source.id) throw new Error('A origem da tarefa não está disponível.');
+  var store = window.RildonXStore;
+  var state = store.getState();
+  var existing = (state.tasks || []).find(function (task) {
+    return task.metadata && task.metadata.source &&
+      task.metadata.source.type === sourceType &&
+      String(task.metadata.source.id) === String(source.id);
+  });
+  if (existing) {
+    showToast('Esta origem já está vinculada à tarefa "' + (existing.title || 'Tarefa') + '".');
+    return existing;
+  }
+  var user = state.user || {};
+  if (window.supabaseClient && window.supabaseClient.auth) {
+    user = await getMuralUser();
+    setCurrentAuthenticatedUser(user);
+  }
+  var sourceTitle = source.title || source.subject || source.category ||
+    (source.ticket_number ? 'Solicitação ' + source.ticket_number : '') || 'Tarefa de acompanhamento';
+  var sourceBody = source.text || source.body || source.description || '';
+  var originAttachments = (source.attachments || []).map(function (attachment) {
+    var id = typeof attachment === 'string' ? attachment : attachment && (attachment.id || attachment.documentId);
+    var documentItem = (state.documents || []).find(function (item) { return id && String(item.id) === String(id); });
+    var item = attachment && typeof attachment === 'object' ? attachment : {};
+    return {
+      id: id || null,
+      name: item.name || item.fileName || documentItem && documentItem.name || 'Anexo da origem'
+    };
+  });
+  var sourceLabels = {
+    message: 'Mensagem de ' + (source.senderName || 'conversa'),
+    post: 'Publicação no Mural',
+    request: 'Solicitação ' + (source.ticket_number || source.category || '')
+  };
+  var sourceHref = sourceType === 'post'
+    ? 'mural.html#' + encodeURIComponent('mural-post-' + source.id)
+    : sourceType === 'message'
+      ? 'mensagens.html#' + encodeURIComponent('message-' + source.id)
+      : '';
+  var priority = String(source.priority || 'media').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (['alta', 'baixa'].indexOf(priority) === -1) priority = 'media';
+  var taskId = window.crypto && window.crypto.randomUUID
+    ? window.crypto.randomUUID()
+    : 'task-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+  var task = store.addTask({
+    id: taskId,
+    title: sourceTitle,
+    description: sourceBody,
+    status: 'pendente',
+    priority: priority,
+    dueDate: null,
+    startDate: null,
+    assignees: [user.user_metadata && (user.user_metadata.display_name || user.user_metadata.full_name) ||
+      user.name || user.email && user.email.split('@')[0] || 'Usuário'],
+    createdBy: user.id || null,
+    projectId: null,
+    checklist: [],
+    attachments: [],
+    metadata: {
+      dependsOn: [],
+      acceptanceCriteria: [],
+      isMilestone: false,
+      source: {
+        type: sourceType,
+        id: String(source.id),
+        label: sourceLabels[sourceType] || 'Conteúdo de origem',
+        title: sourceTitle,
+        href: sourceHref,
+        attachments: originAttachments
+      }
+    }
+  });
+  showToast('Tarefa criada com vínculo à origem e aos anexos.');
+  return task;
+}
+
+window.RildonXCreateTaskFromOrigin = createTaskFromOrigin;
+
+function localDateTimeInputValue(value) {
+  if (!value) return '';
+  var date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
+function populateMuralDraftForm(form, post) {
+  form.dataset.editingPostId = post.id;
+  form.elements.type.value = post.type || 'atualizacao';
+  form.elements.title.value = post.title || '';
+  form.elements.body.value = post.body || '';
+  form.elements.importance.value = post.importance || 'normal';
+  form.elements.expiresAt.value = post.expiresAt ? String(post.expiresAt).slice(0, 10) : '';
+  form.elements.requiresAcknowledgement.checked = Boolean(post.requiresAcknowledgement);
+  form.elements.pinned.checked = Boolean(post.pinned);
+  form.elements.scheduledAt.value = localDateTimeInputValue(post.scheduledAt);
+  form.elements.mentionIds.value = Array.isArray(post.metadata && post.metadata.mentions)
+    ? post.metadata.mentions.join(',')
+    : '';
+  form.elements.audienceAll.checked = !post.audienceSectors || post.audienceSectors.length === 0;
+  refreshMuralSectorOptions(form);
+  var selectedSectors = new Set(post.audienceSectors || []);
+  form.querySelectorAll('[name="audienceSector"]').forEach(function(input) {
+    input.checked = selectedSectors.has(input.value);
+  });
+
+  var metadata = post.metadata || {};
+  if (metadata.poll) {
+    form.elements.pollQuestion.value = metadata.poll.question || '';
+    form.elements.pollEndsAt.value = localDateTimeInputValue(metadata.poll.endsAt);
+    form.elements.pollHideNames.checked = Boolean(metadata.poll.hideNames);
+    var pollOptions = form.querySelectorAll('[name="pollOption"]');
+    pollOptions.forEach(function(input, index) {
+      input.value = metadata.poll.options[index] || '';
+    });
+  }
+  if (metadata.event) {
+    form.elements.eventTitle.value = metadata.event.title || '';
+    form.elements.eventStartsAt.value = localDateTimeInputValue(metadata.event.startsAt);
+    form.elements.eventEndsAt.value = localDateTimeInputValue(metadata.event.endsAt);
+  }
+
+  var existingFiles = form.querySelector('.composer-file-names');
+  if (existingFiles) {
+    existingFiles.textContent = (post.attachments || []).map(function(file) {
+      return (file.name || 'Anexo') + ' (mantido)';
+    }).join(' · ');
+  }
+  syncSocialComposerFields(form);
+  renderMuralMentionChips(form);
+  updateSocialComposerSubmit(form);
+  var disclosure = document.getElementById('mural-composer-disclosure');
+  if (disclosure) disclosure.open = true;
+  var body = form.querySelector('[name="body"]');
+  if (body) body.focus();
+}
+
 function bindMuralFeed() {
   var form = document.getElementById('mural-post-form');
   var root = document.getElementById('mural-posts-root');
   if (!form || !root || form.dataset.bound === 'true') return;
   form.dataset.bound = 'true';
+  var requestedPostId = window.location.hash.match(/^#mural-post-(.+)$/);
+  if (requestedPostId) {
+    try {
+      muralPendingNavigationId = decodeURIComponent(requestedPostId[1]);
+    } catch (error) {
+      console.error('Não foi possível interpretar o link para a publicação:', error);
+    }
+  }
+
+  document.querySelectorAll('[data-mural-view]').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      muralCurrentView = tab.dataset.muralView;
+      renderMuralPosts();
+    });
+  });
+  ['mural-search', 'mural-type-filter', 'mural-author-filter', 'mural-date-from', 'mural-date-to'].forEach(function(id) {
+    var filter = document.getElementById(id);
+    if (!filter) return;
+    filter.addEventListener(filter.type === 'search' ? 'input' : 'change', renderMuralPosts);
+  });
+  var toolbar = document.querySelector('.mural-toolbar');
+  if (toolbar) {
+    toolbar.addEventListener('click', function(event) {
+      var clearOne = event.target.closest('[data-clear-mural-filter]');
+      if (clearOne) {
+        var target = document.getElementById(clearOne.dataset.clearMuralFilter);
+        if (target) {
+          target.value = '';
+          renderMuralPosts();
+        }
+        return;
+      }
+      if (event.target.closest('[data-mural-clear-filters]')) {
+        ['mural-search', 'mural-type-filter', 'mural-author-filter', 'mural-date-from', 'mural-date-to']
+          .forEach(function(id) {
+            var input = document.getElementById(id);
+            if (input) input.value = '';
+          });
+        renderMuralPosts();
+      }
+    });
+  }
 
   form.addEventListener('submit', async function (event) {
     event.preventDefault();
     var bodyInput = document.getElementById('mural-post-body');
     var submit = document.getElementById('mural-post-submit');
+    var intent = event.submitter && event.submitter.dataset.muralIntent || 'publish';
     var body = bodyInput.value.trim();
     if (!body && form.elements.type.value === 'enquete') body = form.elements.pollQuestion.value.trim();
     if (!body && form.elements.type.value === 'evento') body = form.elements.eventTitle.value.trim();
@@ -3480,22 +4301,65 @@ function bindMuralFeed() {
       var authorName = (profile && profile.displayName) ||
         (user.user_metadata && (user.user_metadata.display_name || user.user_metadata.full_name)) ||
         String(user.email || 'Colaborador').split('@')[0];
-      var composer = await prepareSocialPost(form, user, profile, authorName);
-      var result = await window.supabaseClient.from('posts').insert({
+      var editingPostId = form.dataset.editingPostId || '';
+      var existingPost = editingPostId && (state.posts || []).find(function(post) {
+        return String(post.id) === String(editingPostId);
+      });
+      if (editingPostId && (!existingPost || String(existingPost.authorId) !== String(user.id) ||
+          (existingPost.approvalStatus !== 'draft' && existingPost.approvalStatus !== 'rejected'))) {
+        throw new Error('Este rascunho não está mais disponível para edição.');
+      }
+      var composer = await prepareSocialPost(form, user, profile, authorName, existingPost);
+      var isAnnouncement = isMuralAnnouncement({ type: composer.type });
+      var approvalStatus = intent === 'draft'
+        ? 'draft'
+        : isAnnouncement && !canManageMuralAudience(composer.audienceSectors)
+          ? 'pending_approval'
+          : composer.scheduledAt ? 'scheduled' : 'published';
+      var postData = {
         author_id: user.id,
         author_name: authorName,
         author_role: composer.authorRole || null,
         post_type: composer.type,
+        title: composer.title || null,
         post_metadata: composer.metadata,
         attachments: composer.attachments,
-        body: body
-      }).select('*').single();
+        body: body,
+        approval_status: approvalStatus,
+        importance: composer.importance,
+        pinned: composer.pinned,
+        audience_sectors: composer.audienceSectors,
+        expires_at: composer.expiresAt,
+        requires_acknowledgement: composer.requiresAcknowledgement,
+        scheduled_at: composer.scheduledAt
+      };
+      var query = window.supabaseClient.from('posts');
+      var result = editingPostId
+        ? await query.update(postData).eq('id', editingPostId).eq('author_id', user.id).select('*').single()
+        : await query.insert(postData).select('*').single();
       if (result.error) throw result.error;
-      addCreatedSocialPost(result.data, composer, authorName);
+      if (!result.data) throw new Error('A publicação não foi salva. Verifique suas permissões e tente novamente.');
+      addCreatedSocialPost(result.data, composer, authorName, existingPost);
       form.reset();
+      delete form.dataset.editingPostId;
       submit.disabled = true;
       syncSocialComposerFields(form);
       updateSocialComposerFiles(form);
+      renderMuralMentionChips(form);
+      var preview = form.querySelector('[data-mural-preview-root]');
+      if (preview) {
+        preview.hidden = true;
+        preview.innerHTML = '';
+      }
+      var disclosure = document.getElementById('mural-composer-disclosure');
+      if (disclosure) disclosure.open = false;
+      muralCurrentView = approvalStatus === 'draft' ? 'drafts' :
+        approvalStatus === 'pending_approval' ? 'approvals' :
+          isAnnouncement ? 'announcements' : 'updates';
+      showToast(approvalStatus === 'draft' ? 'Rascunho salvo.' :
+        approvalStatus === 'pending_approval' ? 'Comunicado enviado para aprovação.' :
+          approvalStatus === 'scheduled' ? 'Comunicado agendado.' : 'Publicação adicionada ao Mural.');
+      renderMuralPosts();
     } catch (error) {
       console.error('Não foi possível publicar no Mural:', error);
       showToast(error.message || 'Não foi possível publicar. Tente novamente.');
@@ -3511,12 +4375,107 @@ function bindMuralFeed() {
     var action = event.target.closest('[data-feed-action]');
     if (!action) return;
     var postId = action.dataset.postId;
+    if (action.dataset.feedAction === 'make-task') {
+      action.disabled = true;
+      try {
+        var sourcePost = (window.RildonXStore.getState().posts || []).find(function (post) {
+          return String(post.id) === String(postId);
+        });
+        await createTaskFromOrigin('post', sourcePost);
+      } catch (error) {
+        console.error('Não foi possível converter a publicação em tarefa:', error);
+        showToast(error.message || 'Não foi possível criar a tarefa.');
+      } finally {
+        if (action.isConnected) action.disabled = false;
+      }
+      return;
+    }
+    if (action.dataset.feedAction === 'expand-text') {
+      var card = action.closest('[data-feed-post]');
+      var postText = card && card.querySelector('.feed-post-text');
+      if (postText) {
+        var expanded = postText.classList.toggle('is-expanded');
+        postText.classList.toggle('is-collapsed', !expanded);
+        action.textContent = expanded ? 'Ler menos' : 'Ler mais';
+        action.setAttribute('aria-expanded', String(expanded));
+      }
+      return;
+    }
+    if (action.dataset.feedAction === 'acknowledge') {
+      action.disabled = true;
+      try {
+        var acknowledger = await getMuralUser();
+        var acknowledgementResult = await window.supabaseClient.from('post_acknowledgements').insert({
+          post_id: postId,
+          user_id: acknowledger.id
+        }).select('post_id,user_id,acknowledged_at').single();
+        if (acknowledgementResult.error) throw acknowledgementResult.error;
+        var currentAcknowledgements = window.RildonXStore.getState().postAcknowledgements || [];
+        window.RildonXStore.setState({
+          postAcknowledgements: currentAcknowledgements.concat([{
+            postId: acknowledgementResult.data.post_id,
+            userId: acknowledgementResult.data.user_id,
+            acknowledgedAt: acknowledgementResult.data.acknowledged_at
+          }])
+        });
+        showToast('Confirmação de ciência registrada.');
+      } catch (error) {
+        console.error('Não foi possível registrar a ciência do comunicado:', error);
+        showToast(error.message || 'Não foi possível registrar sua confirmação.');
+        action.disabled = false;
+      }
+      return;
+    }
+    if (action.dataset.feedAction === 'review') {
+      var approved = action.dataset.approved === 'true';
+      var reviewNote = null;
+      if (!approved) {
+        reviewNote = window.prompt('Informe o ajuste solicitado (opcional):');
+        if (reviewNote === null) return;
+      }
+      action.disabled = true;
+      try {
+        var reviewResult = await window.supabaseClient.rpc('review_mural_post', {
+          p_post_id: postId,
+          p_approved: approved,
+          p_note: reviewNote
+        });
+        if (reviewResult.error) throw reviewResult.error;
+        var reviewedRow = reviewResult.data;
+        updateFeedPost(postId, function(post) {
+          return Object.assign({}, post, {
+            approvalStatus: reviewedRow.approval_status,
+            approvalNote: reviewedRow.approval_note || '',
+            approvedBy: reviewedRow.approved_by || null,
+            approvedAt: reviewedRow.approved_at || null
+          });
+        });
+        showToast(approved ? 'Comunicado aprovado.' : 'Ajustes solicitados ao autor.');
+      } catch (error) {
+        console.error('Não foi possível revisar o comunicado:', error);
+        showToast(error.message || 'Não foi possível concluir a revisão.');
+        action.disabled = false;
+      }
+      return;
+    }
     if (action.dataset.feedAction === 'focus-comment') {
       var commentForm = Array.prototype.find.call(root.querySelectorAll('.feed-comment-form'), function (item) {
         return item.dataset.postId === postId;
       });
       var commentInput = commentForm && commentForm.querySelector('input');
       if (commentInput) commentInput.focus();
+      return;
+    }
+    if (action.dataset.feedAction === 'edit-draft') {
+      var draft = (window.RildonXStore.getState().posts || []).find(function(post) {
+        return String(post.id) === String(postId);
+      });
+      if (!draft || String(draft.authorId) !== String(muralCurrentUserId) ||
+          (draft.approvalStatus !== 'draft' && draft.approvalStatus !== 'rejected')) {
+        showToast('Este rascunho não está mais disponível para edição.');
+        return;
+      }
+      populateMuralDraftForm(form, draft);
       return;
     }
     if (action.dataset.feedAction === 'delete') {
@@ -4214,6 +5173,18 @@ function bindMessageActions() {
     var selectedMessage = (state.messages || []).find(function(item) { return String(item.id) === activeMessageActionId; });
     if (!selectedMessage) return;
     var action = actionButton.dataset.messageMenuAction;
+    if (action === 'task') {
+      actionButton.disabled = true;
+      createTaskFromOrigin('message', selectedMessage).catch(function(error) {
+        console.error('Não foi possível converter a mensagem em tarefa:', error);
+        showToast(error.message || 'Não foi possível criar a tarefa.');
+      }).finally(function() {
+        actionButton.disabled = false;
+      });
+      messageActionsModal.hidden = true;
+      activeMessageActionId = null;
+      return;
+    }
     if (['open', 'download', 'save'].indexOf(action) !== -1) {
       var attachment = (selectedMessage.attachments || [])[0];
       var attachmentId = typeof attachment === 'string' ? attachment : attachment && attachment.id;
@@ -4638,6 +5609,17 @@ function resetNovaTarefaForm() {
   if (dueDate) dueDate.value = '';
   if (startDate) startDate.value = '';
   if (description) description.value = '';
+  var template = document.getElementById('nt-template');
+  if (template) template.value = '';
+  var templateFields = document.getElementById('nt-template-fields');
+  if (templateFields) {
+    templateFields.hidden = true;
+    templateFields.innerHTML = '';
+  }
+  var recurrence = document.getElementById('nt-recurrence');
+  if (recurrence) recurrence.value = '';
+  var milestone = document.getElementById('nt-milestone');
+  if (milestone) milestone.checked = false;
   var checklist = document.getElementById('nt-checklist');
   if (checklist) checklist.innerHTML = '<div class="checklist-item"><input type="text" placeholder="Item da checklist..."><button type="button" class="rm-btn" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';
   document.querySelectorAll('#nt-people-group .people-chip').forEach(function(c){ c.classList.remove('selected'); });
@@ -4669,6 +5651,27 @@ async function submitNovaTarefa() {
   var descriptionInput = document.getElementById('nt-descricao');
   var projectInput = document.getElementById('nt-projeto');
   var collaboratorsInput = document.getElementById('nt-colaboradores');
+  var recurrenceInput = document.getElementById('nt-recurrence');
+  var milestoneInput = document.getElementById('nt-milestone');
+  var recurrenceFrequency = recurrenceInput ? recurrenceInput.value : '';
+  if (recurrenceFrequency && !prazoRaw) {
+    showToast('Defina um prazo para configurar a recorrência da tarefa.');
+    if (dueDateInput) dueDateInput.focus();
+    return;
+  }
+  var requestFields = Array.from(document.querySelectorAll('#nt-template-fields [data-request-field]')).map(function (field) {
+    return { name: field.dataset.requestFieldName || 'Campo', value: field.value.trim() };
+  }).filter(function (field) { return field.value; });
+  var acceptanceInput = document.getElementById('nt-acceptance');
+  var acceptanceCriteria = acceptanceInput
+    ? acceptanceInput.value.split(/\r?\n/).map(function (criterion) { return criterion.trim(); }).filter(Boolean)
+    : [];
+  var descriptionText = descriptionInput ? descriptionInput.value.trim() : '';
+  if (requestFields.length) {
+    descriptionText += (descriptionText ? '\n\n' : '') + requestFields.map(function (field) {
+      return field.name + ': ' + field.value;
+    }).join('\n');
+  }
   var prazoRaw = dueDateInput ? dueDateInput.value : '';
   var prazo = prazoRaw ? prazoRaw.split('-').reverse().join('/') : '—';
   var etapaBtn = document.querySelector('#nt-etapa-group .choice-btn.selected');
@@ -4701,11 +5704,30 @@ async function submitNovaTarefa() {
   var hasStore = window.RildonXStore && typeof window.RildonXStore.addTask === 'function';
   if (hasStore) {
     var currentState = window.RildonXStore.getState();
-    var status = etapa === 'Em andamento' ? 'em-andamento' : (etapa === 'Concluída' ? 'concluida' : 'pendente');
+    var status = etapa === 'Em andamento' ? 'em-andamento' :
+      etapa === 'Aguardando terceiros' ? 'aguardando-terceiros' :
+        (etapa === 'Concluída' ? 'concluida' : 'pendente');
+    var taskId = window.crypto && window.crypto.randomUUID
+      ? window.crypto.randomUUID()
+      : 'task-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+    var nextOccurrenceDate = null;
+    if (recurrenceFrequency && prazoRaw) {
+      var firstDue = new Date(prazoRaw + 'T12:00:00');
+      if (recurrenceFrequency === 'daily') firstDue.setDate(firstDue.getDate() + 1);
+      else if (recurrenceFrequency === 'weekly') firstDue.setDate(firstDue.getDate() + 7);
+      else {
+        var targetDay = firstDue.getDate();
+        firstDue.setDate(1);
+        firstDue.setMonth(firstDue.getMonth() + 1);
+        firstDue.setDate(Math.min(targetDay, new Date(firstDue.getFullYear(), firstDue.getMonth() + 1, 0).getDate()));
+      }
+      nextOccurrenceDate = [firstDue.getFullYear(), String(firstDue.getMonth() + 1).padStart(2, '0'), String(firstDue.getDate()).padStart(2, '0')].join('-');
+    }
     try {
       window.RildonXStore.addTask({
+        id: taskId,
         title: nome,
-        description: descriptionInput ? descriptionInput.value.trim() : '',
+        description: descriptionText,
         startDate: startDateInput ? startDateInput.value || null : null,
         status: status,
         createdBy: creatorId,
@@ -4714,6 +5736,20 @@ async function submitNovaTarefa() {
         dueDate: prazoRaw || null,
         assignees: people,
         checklist: checklistItems.map(function (text) { return { id: (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : 'item-' + Date.now() + '-' + Math.random().toString(16).slice(2)), text: text, completed: false }; }),
+        metadata: {
+          requestFields: requestFields,
+          acceptanceCriteria: acceptanceCriteria,
+          dependsOn: [],
+          isMilestone: Boolean(milestoneInput && milestoneInput.checked),
+          recurrence: recurrenceFrequency ? {
+            frequency: recurrenceFrequency,
+            interval: 1,
+            seriesId: taskId,
+            occurrenceDate: prazoRaw,
+            occurrenceKey: taskId + ':' + prazoRaw,
+            nextOccurrenceDate: nextOccurrenceDate
+          } : null
+        },
         tags: [],
         projectId: projectInput ? projectInput.value || null : null,
         sector: currentState.user && currentState.user.sector || 'marketing'

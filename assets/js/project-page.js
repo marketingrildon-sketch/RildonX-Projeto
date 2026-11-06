@@ -9,6 +9,7 @@
   var activeFilter = 'all';
   var searchText = '';
   var projectViewMode = 'list';
+  var workloadPeriod = 'week';
   var detailProjectId = null;
   var detailTab = 'overview';
   var composing = false;
@@ -246,6 +247,63 @@
       (actions || '<span class="project-list-open" aria-hidden="true">›</span>') + '</article>';
   }
 
+  function workloadAssignees(task, s) {
+    var assigned = (Array.isArray(task.viewerIds) ? task.viewerIds : [])
+      .filter(function (id) { return String(id) !== String(task.createdBy); })
+      .map(function (id) { return profileName(id, s); });
+    if (assigned.length) return assigned;
+    return (Array.isArray(task.assignees) ? task.assignees : []).map(function (assignee) {
+      var value = assignee && typeof assignee === 'object'
+        ? assignee.id || assignee.userId || assignee.name || assignee.displayName
+        : assignee;
+      if (!value) return '';
+      var profile = (s.profiles || []).find(function (person) {
+        return String(person.id) === String(value) ||
+          String(person.displayName || '').toLocaleLowerCase('pt-BR') === String(value).toLocaleLowerCase('pt-BR') ||
+          String(person.nickname || '').toLocaleLowerCase('pt-BR') === String(value).toLocaleLowerCase('pt-BR');
+      });
+      return profile ? profile.displayName || profile.nickname || 'Colaborador' : String(value);
+    }).filter(Boolean);
+  }
+
+  function workloadMarkup(s) {
+    var today = new Date();
+    var todayKey = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0')].join('-');
+    var end = workloadPeriod === 'month'
+      ? new Date(today.getFullYear(), today.getMonth() + 1, 0)
+      : new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7);
+    var endKey = [end.getFullYear(), String(end.getMonth() + 1).padStart(2, '0'),
+      String(end.getDate()).padStart(2, '0')].join('-');
+    var visibleIds = allProjects(s).filter(function (project) { return !project.archived; })
+      .map(function (project) { return String(project.id); });
+    var counts = {};
+    (s.tasks || []).filter(function (task) {
+      var metadata = task && task.metadata && typeof task.metadata === 'object' && !Array.isArray(task.metadata)
+        ? task.metadata
+        : {};
+      var due = task && task.dueDate ? String(task.dueDate).slice(0, 10) : '';
+      return task && !task.isDemo && !metadata.archived &&
+        !isCompleted(task) &&
+        visibleIds.indexOf(String(task.projectId || '')) !== -1 && due && due >= todayKey && due <= endKey;
+    }).forEach(function (task) {
+      var names = workloadAssignees(task, s);
+      (names.length ? names : ['Sem responsável']).forEach(function (name) {
+        counts[name] = (counts[name] || 0) + 1;
+      });
+    });
+    var names = Object.keys(counts).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+    return '<section class="project-section task-workload-card"><div class="project-section-head"><h2>Carga de trabalho</h2>' +
+      '<select id="project-workload-period" aria-label="Período da carga de trabalho">' +
+      '<option value="week"' + (workloadPeriod === 'week' ? ' selected' : '') + '>Próximos 7 dias</option>' +
+      '<option value="month"' + (workloadPeriod === 'month' ? ' selected' : '') + '>Este mês</option></select></div>' +
+      (names.length ? '<ul class="task-workload-list">' + names.map(function (name) {
+        return '<li><span>' + escapeHtml(name) + '</span><b>' + counts[name] + ' tarefa' +
+          (counts[name] === 1 ? '' : 's') + '</b></li>';
+      }).join('') + '</ul>' : '<p class="project-empty">Sem tarefas abertas com prazo neste período.</p>') +
+      '<small>Contagem de tarefas abertas por responsável, sem ranking de desempenho.</small></section>';
+  }
+
   function renderPage() {
     var s = state();
     var projects = visibleProjects(s);
@@ -291,6 +349,7 @@
       total.percent + '%</b><span>concluído</span></div></div><p class="project-overall-caption"><strong>' + total.completedTasks + ' de ' + total.totalTasks +
       ' tarefas</strong><span>concluídas nos projetos ativos</span></p><div class="project-overall-footer">' + total.completedProjects + ' de ' + total.totalProjects +
       ' projetos concluídos</div></section>' : '') +
+      workloadMarkup(s) +
       '<section class="project-section project-activity-card"><div class="project-section-head"><h2>Atividades recentes</h2></div>' +
       '<div class="project-activity-list">' + activityMarkup + '</div></section></aside></div>';
   }
@@ -667,6 +726,12 @@
     }
   });
 
+  root.addEventListener('change', function (event) {
+    if (event.target.id !== 'project-workload-period') return;
+    workloadPeriod = event.target.value === 'month' ? 'month' : 'week';
+    renderPage();
+  });
+
   document.body.addEventListener('click', function (event) {
     var target = event.target.closest('[data-action]');
     var overlay = event.target.closest('.project-overlay');
@@ -740,6 +805,18 @@
         }
         renderPage();
         renderDetail();
+        var sourceId = new URLSearchParams(window.location.search).get('calendarSource');
+        if (sourceId) {
+          Promise.resolve(syncReady).catch(function (error) {
+            console.error('A sincronização inicial dos projetos falhou:', error);
+          }).then(function () {
+            detailProjectId = sourceId;
+            renderDetail();
+            if (!document.querySelector('.project-overlay[data-overlay="detail"]')) {
+              toast('O projeto de origem não está disponível para sua conta.');
+            }
+          });
+        }
       }).catch(function (error) {
         console.error('Não foi possível identificar o usuário atual:', error);
         toast('Não foi possível confirmar sua conta. Atualize a página ou entre novamente para gerenciar projetos.');

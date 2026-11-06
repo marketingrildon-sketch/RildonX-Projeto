@@ -6,9 +6,11 @@
 <title>Mural · RildonX</title>
 <meta name="description" content="RildonX — ecossistema digital da Rildon.">
 <link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=20261017b" type="image/svg+xml">
-  <script type="module" crossorigin src="./assets/supabase-client-DL4FSV51.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/supabase-client-G6WVxBTe.css">
-  <link rel="stylesheet" href="./assets/css/styles.css?v=20261105d">
+  <script type="module" crossorigin src="./assets/supabase-client-Cf4XYirk.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/supabase-client-B-p_5ELv.css">
+  <link rel="stylesheet" crossorigin href="./assets/styles-Bffd1TfO.css">
+  <link rel="stylesheet" crossorigin href="./assets/feed-content-BboojCAG.css">
+  <link rel="stylesheet" href="./assets/css/styles.css?v=20261105l">
 </head>
 <body data-page="feed">
 <div class="app" id="app-root">
@@ -129,27 +131,66 @@
 <section class="page-view" id="page-feed" style="display:block;">
 <div class="page-head">
       <div>
-        <h1>Feed</h1>
-        <p>Acompanhe tudo o que acontece na Rildon.</p>
+        <h1>Mural</h1>
+        <p>Comunicados importantes e atualizações da equipe, cada um no seu espaço.</p>
       </div>
     </div>
 
     <div class="layout-2col">
-      <div>
+      <div class="mural-feed-column">
+        <details class="mural-composer-disclosure" id="mural-composer-disclosure">
+          <summary class="mural-composer-summary">
+            <span class="mural-compose-avatar" aria-hidden="true">+</span>
+            <span><b>Criar publicação</b><small>Compartilhe uma atualização ou envie um comunicado</small></span>
+            <span class="mural-composer-summary-action">Escrever</span>
+          </summary>
         <form class="card composer social-post-composer" id="mural-post-form">
-          <div class="social-composer-heading">Criar publicação</div>
           <div class="social-composer-content">
             <div class="social-composer-identity">
               <div class="avatar social-composer-avatar" style="border-radius:50%;">U</div>
               <div class="social-composer-author"><b class="social-composer-author-name">Usuário</b><span class="social-composer-role">Cargo</span></div>
-              <label class="composer-post-type" for="mural-post-type"><span aria-hidden="true">◉</span><span>Etiqueta</span><select id="mural-post-type" name="type" aria-label="Etiqueta da publicação" data-composer-type>
+              <label class="composer-post-type" for="mural-post-type"><span aria-hidden="true">◉</span><span>Tipo</span><select id="mural-post-type" name="type" aria-label="Tipo da publicação" data-composer-type>
                 <option value="atualizacao">Atualização</option>
+                <option value="reconhecimento">Reconhecimento</option>
+                <option value="aviso">Aviso</option>
                 <option value="comunicado">Comunicado</option>
                 <option value="enquete">Enquete</option>
                 <option value="evento">Evento</option>
               </select></label>
             </div>
+            <label class="composer-field mural-composer-title"><span>Título <small>(opcional para atualizações)</small></span><input name="title" maxlength="160" placeholder="Dê um título à publicação"></label>
             <textarea class="social-composer-message" id="mural-post-body" name="body" maxlength="5000" rows="4" placeholder="No que você está pensando?" required></textarea>
+            <section class="mural-mentions" aria-label="Menções">
+              <label for="mural-mention-picker">Mencionar pessoas</label>
+              <div class="mural-mention-picker-row">
+                <select id="mural-mention-picker" data-mural-mention-picker aria-label="Selecione alguém para mencionar">
+                  <option value="">Selecione uma pessoa</option>
+                </select>
+                <button type="button" class="btn secondary" data-mural-add-mention>Adicionar</button>
+              </div>
+              <div class="mural-mention-chips" data-mural-mention-chips aria-live="polite"></div>
+              <small>Quem for mencionado recebe uma notificação do Mural.</small>
+              <input type="hidden" name="mentionIds" value="">
+            </section>
+            <section class="mural-announcement-fields" data-mural-announcement-fields hidden aria-label="Opções do comunicado">
+              <div class="mural-announcement-heading"><span aria-hidden="true">ⓘ</span><div><b>Comunicado da equipe</b><small>Destinatários e validade serão aplicados ao publicar.</small></div></div>
+              <fieldset class="mural-audience-field">
+                <legend>Quem deve receber?</legend>
+                <label class="composer-checkbox"><input type="checkbox" name="audienceAll" checked><span>Toda a empresa</span></label>
+                <div class="mural-sector-options" data-mural-sector-options hidden></div>
+              </fieldset>
+              <div class="mural-announcement-options">
+                <label class="composer-field"><span>Importância</span><select name="importance">
+                  <option value="normal">Normal</option>
+                  <option value="important">Importante</option>
+                  <option value="urgent">Urgente</option>
+                </select></label>
+                <label class="composer-field"><span>Válido até <small>(opcional)</small></span><input name="expiresAt" type="date"></label>
+                <label class="composer-checkbox"><input name="requiresAcknowledgement" type="checkbox"><span>Solicitar confirmação de ciência</span></label>
+                <label class="composer-checkbox mural-pin-control"><input name="pinned" type="checkbox" disabled><span>Fixar no topo (administradores e responsáveis)</span></label>
+                <label class="composer-field mural-schedule-control"><span>Agendar publicação <small>(opcional)</small></span><input name="scheduledAt" type="datetime-local" disabled></label>
+              </div>
+            </section>
             <div class="composer-type-fields" data-composer-fields="enquete" hidden>
               <label class="composer-field"><span>Pergunta da enquete</span><input name="pollQuestion" maxlength="240" placeholder="Adicione sua pergunta"></label>
               <div class="composer-poll-options">
@@ -174,9 +215,44 @@
               <input class="composer-file-input" type="file" name="document" multiple hidden>
             </div>
             <div class="composer-file-names" aria-live="polite"></div>
-            <button class="btn social-composer-submit" id="mural-post-submit" type="submit" disabled>Publicar</button>
+            <div class="mural-composer-footer">
+              <button class="btn secondary" type="button" data-mural-preview>Pré-visualizar</button>
+              <span class="mural-composer-footer-spacer"></span>
+              <button class="btn secondary" type="submit" data-mural-intent="draft">Salvar rascunho</button>
+              <button class="btn social-composer-submit" id="mural-post-submit" type="submit" data-mural-intent="publish" disabled>Publicar</button>
+            </div>
+            <div class="mural-preview" data-mural-preview-root hidden aria-live="polite"></div>
           </div>
         </form>
+        </details>
+        <nav class="mural-view-tabs" aria-label="Categorias do Mural">
+          <button type="button" class="is-active" data-mural-view="updates" aria-pressed="true">Atualizações</button>
+          <button type="button" data-mural-view="announcements" aria-pressed="false">Comunicados</button>
+          <button type="button" data-mural-view="approvals" aria-pressed="false" hidden>Para aprovar</button>
+          <button type="button" data-mural-view="drafts" aria-pressed="false">Meus envios</button>
+        </nav>
+        <section class="mural-toolbar" aria-label="Pesquisar e filtrar publicações">
+          <label class="mural-search"><span aria-hidden="true">⌕</span><input id="mural-search" type="search" placeholder="Buscar publicações..." aria-label="Buscar publicações"></label>
+          <details class="mural-filter-disclosure">
+            <summary><span aria-hidden="true">☷</span> Filtros <span class="mural-filter-count" data-mural-filter-count hidden>0</span></summary>
+            <div class="mural-filter-fields">
+              <label><span>Tipo</span><select id="mural-type-filter">
+                <option value="">Todos os tipos</option>
+                <option value="aviso">Avisos</option>
+                <option value="comunicado">Comunicados</option>
+                <option value="atualizacao">Atualizações</option>
+                <option value="reconhecimento">Reconhecimentos</option>
+                <option value="enquete">Enquetes</option>
+                <option value="evento">Eventos</option>
+              </select></label>
+              <label><span>Autor</span><select id="mural-author-filter"><option value="">Todos os autores</option></select></label>
+              <label><span>De</span><input id="mural-date-from" type="date"></label>
+              <label><span>Até</span><input id="mural-date-to" type="date"></label>
+              <button type="button" class="mural-clear-filters" data-mural-clear-filters>Limpar filtros</button>
+            </div>
+          </details>
+          <div class="mural-active-filters" data-mural-active-filters aria-live="polite"></div>
+        </section>
         <div id="mural-posts-root" class="mural-posts" aria-live="polite"></div>
 
         <div class="card post-card">
@@ -475,12 +551,12 @@
 
 <script src="assets/js/supabase-config.js?v=20261007a"></script>
 <script src="assets/js/auth.js?v=20261027c"></script>
-<script src="assets/js/data-store.js?v=20261103a"></script>
-<script src="assets/js/supabase-sync.js?v=20261103a"></script>
+<script src="assets/js/data-store.js?v=20261105a"></script>
+<script src="assets/js/supabase-sync.js?v=20261105a"></script>
 <script src="assets/js/business-calendar-sync.js?v=20261028a"></script>
 <script src="assets/js/document-upload.js?v=20261020c"></script>
-<script src="assets/js/app.js?v=20261104a"></script>
+<script src="assets/js/app.js?v=20261105a"></script>
 <script src="assets/js/department-requests.js?v=20261028a"></script>
-<script src="assets/js/support-center.js?v=20261028a"></script>
+<script src="assets/js/support-center.js?v=20261105a"></script>
 </body>
 </html>

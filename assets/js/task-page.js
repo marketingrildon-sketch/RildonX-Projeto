@@ -4,19 +4,45 @@
   var statuses = [
     { id: 'pendente', label: 'Pendentes' },
     { id: 'em-andamento', label: 'Em andamento' },
+    { id: 'aguardando-terceiros', label: 'Aguardando terceiros' },
     { id: 'concluida', label: 'Concluídas' }
   ];
-  var monthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  var selectedCalendarDate = new Date();
   var currentUserId = '';
   var currentUserName = 'Usuário';
   var taskRoot;
   var detailOverlay;
+  var activeTaskView = 'kanban';
+  var activeTaskViewFilter = 'all';
+  var activeTaskFilterKeys = [];
+  var taskFilterValues = {};
+  var taskFilterTypes = [
+    { id: 'project', label: 'Projeto', icon: '▰' },
+    { id: 'status', label: 'Status', icon: '◉' },
+    { id: 'tags', label: 'Etiquetas', icon: '◇' },
+    { id: 'dueDate', label: 'Data de vencimento', icon: '▣' },
+    { id: 'priority', label: 'Prioridade', icon: '⚑' },
+    { id: 'assignee', label: 'Responsável', icon: '♙' },
+    { id: 'archived', label: 'Arquivado', icon: '▱' },
+    { id: 'commentAssigned', label: 'Comentário atribuído', icon: '▢' },
+    { id: 'createdBy', label: 'Criado por', icon: '♧' },
+    { id: 'endDate', label: 'Data de encerramento', icon: '▣' },
+    { id: 'createdDate', label: 'Data criada', icon: '▣' }
+  ];
+  var taskPreferences = { savedFilters: [], requestTemplates: [] };
+  var taskPreferencesLoaded = false;
+  var recurrenceCheckRunning = false;
 
   function escapeHtml(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character];
     });
+    try {
+      localStorage.setItem(getSavedTemplatesKey(), JSON.stringify(taskPreferences.requestTemplates));
+    } catch (error) {
+      console.error('Não foi possível salvar o modelo neste navegador:', error);
+      notify('Não foi possível salvar este modelo neste navegador.');
+      return;
+    }
   }
 
   function bindCollaboratorPicker() {
@@ -112,66 +138,98 @@
     }).filter(Boolean);
   }
 
-  function getPersonalTasks(state) {
-    if (window.RildonXIsAdmin) return getRealTasks(state);
+  function isTaskAssignedToCurrentUser(task, state) {
+    if (task.createdBy && currentUserId && String(task.createdBy) === String(currentUserId)) return true;
+    if ((task.viewerIds || []).some(function (viewerId) { return String(viewerId) === String(currentUserId); })) return true;
     var profile = (state.profiles || []).find(function (item) {
       return currentUserId && String(item.id) === String(currentUserId);
     }) || state.user || {};
     var names = [currentUserName, profile.displayName, profile.nickname, profile.name]
       .filter(Boolean).map(function (name) { return String(name).trim().toLocaleLowerCase('pt-BR'); });
-    return getRealTasks(state).filter(function (task) {
-      if (task.createdBy && currentUserId && String(task.createdBy) === String(currentUserId)) return true;
-      if ((task.viewerIds || []).some(function (viewerId) {
-        return String(viewerId) === String(currentUserId);
-      })) return true;
-      var project = (state.projects || []).find(function (item) {
-        return String(item.id) === String(task.projectId || '');
-      });
-      if (project && canViewProject(project, state)) return true;
-      return (task.assignees || []).some(function (assignee) {
-        var value = assignee && typeof assignee === 'object'
-          ? assignee.id || assignee.userId || assignee.name || assignee.displayName
-          : assignee;
-        return value && (String(value) === String(currentUserId) ||
-          names.indexOf(String(value).trim().toLocaleLowerCase('pt-BR')) !== -1);
-      });
-    });
-  }
-
-  function projectProgress(project, state) {
-    var tasks = getRealTasks(state).filter(function (task) {
-      return String(task.projectId || '') === String(project.id);
-    });
-    var completed = tasks.filter(function (task) { return taskStatus(task) === 'concluida'; }).length;
-    return {
-      progress: tasks.length ? Math.round(completed * 100 / tasks.length) : 0,
-      status: tasks.length && completed === tasks.length ? 'Concluído' : completed ? 'Em andamento' : 'Planejamento'
-    };
-  }
-
-  function canViewProject(project, state) {
-    if (!project || project.isDemo || project.archived) return false;
-    if (window.RildonXIsAdmin || project.allUsers || String(project.createdBy) === String(currentUserId)) return true;
-    var profile = (state.profiles || []).find(function (item) {
-      return currentUserId && String(item.id) === String(currentUserId);
-    }) || state.user || {};
-    var currentNames = [currentUserName, profile.displayName, profile.nickname, profile.name]
-      .filter(Boolean).map(function (name) { return String(name).trim().toLocaleLowerCase('pt-BR'); });
-    return (project.members || []).some(function (member) {
-      var value = member && typeof member === 'object'
-        ? member.id || member.userId || member.name || member.displayName
-        : member;
-      return value && (String(value) === String(currentUserId) ||
-        currentNames.indexOf(String(value).trim().toLocaleLowerCase('pt-BR')) !== -1);
+    return getTaskAssigneeNames(task, state).some(function (name) {
+      return names.indexOf(String(name).trim().toLocaleLowerCase('pt-BR')) !== -1;
     });
   }
 
   function taskStatus(task) {
     var status = String(task.status || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     if (status === 'backlog') return 'pendente';
+    if (status === 'aguardando terceiros' || status === 'aguardando-terceiros' || status === 'waiting') return 'aguardando-terceiros';
     if (status === 'concluido' || status === 'concluida' || status === 'complete' || status === 'completed') return 'concluida';
     if (status === 'em andamento' || status === 'em_andamento' || status === 'em-andamento' || status === 'in progress') return 'em-andamento';
     return 'pendente';
+  }
+
+  function taskMetadata(task) {
+    return task && task.metadata && typeof task.metadata === 'object' && !Array.isArray(task.metadata)
+      ? task.metadata
+      : {};
+  }
+
+  function taskParentId(task) {
+    return String(taskMetadata(task).parentTaskId || '');
+  }
+
+  function isTaskArchived(task) {
+    return taskMetadata(task).archived === true;
+  }
+
+  function getTaskCreatorName(task, state) {
+    var profiles = state.profiles || [];
+    var creator = profiles.find(function (profile) { return String(profile.id) === String(task.createdBy); });
+    if (creator) return creator.displayName || creator.nickname || 'Colaborador';
+    if (String(task.createdBy || '') === String(currentUserId)) return currentUserName;
+    return task.createdBy ? 'Colaborador' : '—';
+  }
+
+  function formatTaskDateRange(task) {
+    var start = task.startDate ? formatDate(task.startDate) : '—';
+    var end = task.dueDate ? formatDate(task.dueDate) : '—';
+    return start + ' – ' + end;
+  }
+
+  function getCollapsedTaskColumns() {
+    try {
+      var value = JSON.parse(localStorage.getItem('rildonx.task.collapsed-columns') || '[]');
+      return Array.isArray(value) ? value : [];
+    } catch (error) {
+      console.error('Não foi possível carregar as colunas recolhidas:', error);
+      return [];
+    }
+  }
+
+  function saveCollapsedTaskColumns(columns) {
+    try {
+      localStorage.setItem('rildonx.task.collapsed-columns', JSON.stringify(columns));
+    } catch (error) {
+      console.error('Não foi possível salvar as colunas recolhidas:', error);
+      notify('Não foi possível salvar a preferência de colunas neste navegador.');
+    }
+  }
+
+  function taskDependencies(task) {
+    var dependencies = taskMetadata(task).dependsOn;
+    return Array.isArray(dependencies) ? dependencies.map(String) : [];
+  }
+
+  function incompleteDependencies(task, tasks) {
+    return taskDependencies(task).map(function (id) {
+      return (tasks || []).find(function (candidate) { return String(candidate.id) === id; });
+    }).filter(function (dependency) {
+      return dependency && taskStatus(dependency) !== 'concluida';
+    });
+  }
+
+  function dependencyCycle(taskId, dependencyIds, tasks) {
+    var visited = new Set();
+    function reachesCurrent(id) {
+      if (id === String(taskId)) return true;
+      if (visited.has(id)) return false;
+      visited.add(id);
+      var dependency = (tasks || []).find(function (candidate) { return String(candidate.id) === id; });
+      return dependency ? taskDependencies(dependency).some(reachesCurrent) : false;
+    }
+    return dependencyIds.some(reachesCurrent);
   }
 
   function isTaskCreator(task) {
@@ -188,6 +246,28 @@
 
   function dateKey(date) {
     return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+  }
+
+  function nextRecurrenceDate(dueDate, frequency) {
+    if (!dueDate || !frequency) return null;
+    var parts = String(dueDate).slice(0, 10).split('-').map(Number);
+    if (parts.length !== 3 || parts.some(function (part) { return !Number.isFinite(part); })) return null;
+    var date = new Date(parts[0], parts[1] - 1, parts[2], 12);
+    if (frequency === 'daily') date.setDate(date.getDate() + 1);
+    else if (frequency === 'weekly') date.setDate(date.getDate() + 7);
+    else if (frequency === 'monthly') {
+      var day = date.getDate();
+      date.setDate(1);
+      date.setMonth(date.getMonth() + 1);
+      date.setDate(Math.min(day, new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()));
+    } else return null;
+    return dateKey(date);
+  }
+
+  function createTaskId() {
+    return window.crypto && window.crypto.randomUUID
+      ? window.crypto.randomUUID()
+      : 'task-' + Date.now() + '-' + Math.random().toString(16).slice(2);
   }
 
   function dateColor(task) {
@@ -232,55 +312,277 @@
   function renderTaskCard(task) {
     var state = getStoreState();
     var project = (state.projects || []).find(function (item) { return String(item.id) === String(task.projectId); });
-    var assignees = getTaskAssigneeNames(task, state);
     var title = escapeHtml(task.title || 'Tarefa sem título');
     var canMove = isTaskCreator(task);
     var checklist = Array.isArray(task.checklist) ? task.checklist : [];
     var completedChecklist = checklist.filter(function (item) { return item && item.completed === true; }).length;
     var status = taskStatus(task);
-    var progress = checklist.length
-      ? Math.round(completedChecklist * 100 / checklist.length)
-      : status === 'concluida' ? 100 : 0;
     var comments = (state.taskComments || []).filter(function (comment) {
       return String(comment.taskId) === String(task.id);
     }).length;
-    return '<article class="task-card task-card--' + dateColor(task) + '" data-task-id="' + escapeHtml(task.id) + '" tabindex="0"' +
+    var priority = String(task.priority || 'media').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    var priorityLabel = priority === 'alta' ? 'Alta' : priority === 'baixa' ? 'Baixa' : 'Média';
+    var metadata = taskMetadata(task);
+    var subtasks = getRealTasks(state).filter(function (candidate) {
+      return taskParentId(candidate) === String(task.id);
+    }).sort(function (a, b) { return Number(a.position || 0) - Number(b.position || 0); });
+    return '<article class="task-card task-card--' + status + (task.dueDate && task.dueDate < dateKey(new Date()) && status !== 'concluida' ? ' is-overdue' : '') + '" data-task-id="' + escapeHtml(task.id) + '" tabindex="0"' +
       (canMove ? ' draggable="true" aria-label="' + title + ', arrastável"' : ' aria-label="' + title + '"') +
       '><div class="task-card-heading"><div class="task-card-heading-copy"><h3>' + title + '</h3>' +
-      '<p>' + escapeHtml(project && project.name || task.description || 'Tarefa da equipe') + '</p></div>' +
+      (project ? '<p class="task-card-project">' + escapeHtml(project.name) + '</p>' : '') + '</div>' +
       '<button type="button" class="task-card-more" aria-label="Abrir detalhes da tarefa" title="Abrir detalhes">···</button></div>' +
-      '<div class="task-card-progress-label"><span>Progresso</span><strong>' + completedChecklist + '/' + checklist.length + '</strong></div>' +
-      '<div class="task-card-progress" role="progressbar" aria-label="Progresso da checklist" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + progress + '">' +
-      '<span class="task-card-progress--' + status + '" style="width:' + progress + '%"></span></div>' +
-      '<div class="task-card-footer"><span class="task-card-due task-card-due--' + dateColor(task) + '">' + escapeHtml(formatDate(task.dueDate)) + '</span>' +
-      '<span class="task-card-signals">' +
-      (comments ? '<span aria-label="' + comments + ' comentários"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-4-.99L3 21l1.99-5.5a8.4 8.4 0 0 1-.99-4A8.5 8.5 0 0 1 12.5 3h.5a8.5 8.5 0 0 1 8 8v.5Z"/></svg>' + comments + '</span>' : '') +
-      (Array.isArray(task.attachments) && task.attachments.length ? '<span aria-label="' + task.attachments.length + ' anexos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.82-2.83l8.48-8.48"/></svg>' + task.attachments.length + '</span>' : '') +
-      '</span><span class="task-card-avatars">' + renderTaskAvatars(assignees, state) +
-      (canMove ? renderCollaboratorPicker(
-        (state.profiles || []).filter(function (profile) {
-          return profile.active !== false && String(profile.id) !== String(task.createdBy);
-        }),
-        assignees,
-        'task-' + task.id
-      ) : '') + '</span>' +
-      '</div></article>';
+      '<div class="task-card-details">' +
+      '<span class="task-card-creator"><span class="task-card-meta-icon" aria-hidden="true">◉</span><span>' +
+      escapeHtml(getTaskCreatorName(task, state)) + '</span></span>' +
+      '<span class="task-card-date-range"><span class="task-card-meta-icon" aria-hidden="true">▢</span><span>' +
+      escapeHtml(formatTaskDateRange(task)) + '</span></span>' +
+      '<span class="task-card-priority task-card-priority--' + priority + '"><span aria-hidden="true">⚑</span> ' +
+      priorityLabel + '</span></div>' +
+      (isTaskArchived(task) ? '<span class="task-card-archived">Arquivada</span>' : '') +
+      (metadata.isMilestone ? '<span class="task-card-milestone">◆ Marco</span>' : '') +
+      (completedChecklist || comments || task.attachments && task.attachments.length
+        ? '<div class="task-card-secondary"><span>Detalhes adicionais</span>' +
+          (checklist.length ? '<span>' + completedChecklist + '/' + checklist.length + ' itens</span>' : '') +
+          (comments ? '<span>' + comments + ' comentários</span>' : '') +
+          (task.attachments && task.attachments.length ? '<span>' + task.attachments.length + ' anexos</span>' : '') + '</div>'
+        : '') +
+      renderTaskSubtaskPreview(subtasks) + '</article>';
+  }
+
+  function renderTaskSubtaskPreview(subtasks) {
+    if (!subtasks.length) return '';
+    return '<div class="task-card-subtasks" aria-label="' + subtasks.length + ' subtarefas">' +
+      subtasks.slice(0, 3).map(function (subtask) {
+        var state = taskStatus(subtask);
+        return '<button type="button" class="task-subtask-preview" data-open-subtask="' + escapeHtml(subtask.id) + '">' +
+          '<span class="task-subtask-dot task-subtask-dot--' + state + '" aria-hidden="true"></span>' +
+          '<span>' + escapeHtml(subtask.title || 'Subtarefa sem título') + '</span></button>';
+      }).join('') +
+      (subtasks.length > 3 ? '<span class="task-subtask-overflow">+' + (subtasks.length - 3) + '</span>' : '') +
+      '</div>';
+  }
+
+  function filterOptions(values, selected) {
+    return values.map(function (item) {
+      return '<option value="' + escapeHtml(item.value) + '"' +
+        (String(item.value) === String(selected || '') ? ' selected' : '') + '>' +
+        escapeHtml(item.label) + '</option>';
+    }).join('');
+  }
+
+  function taskFilterValuesForOptions(key, state) {
+    var tasks = getRealTasks(state);
+    if (key === 'project') {
+      return [{ value: '__all_projects__', label: 'Todos os projetos' },
+        { value: '__no_project__', label: 'Sem projeto' }].concat((state.projects || [])
+        .filter(function (project) { return project && project.isDemo !== true; })
+        .map(function (project) { return { value: project.id, label: project.name || 'Projeto' }; }));
+    }
+    if (key === 'status') return [{ value: '', label: 'Todos os status' }].concat(statuses.map(function (item) {
+      return { value: item.id, label: item.label };
+    }));
+    if (key === 'priority') return [
+      { value: '', label: 'Todas as prioridades' },
+      { value: 'alta', label: 'Alta' },
+      { value: 'media', label: 'Média' },
+      { value: 'baixa', label: 'Baixa' }
+    ];
+    if (key === 'assignee') {
+      var names = Array.from(new Set(tasks.reduce(function (all, task) {
+        return all.concat(getTaskAssigneeNames(task, state));
+      }, []))).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+      return [{ value: '', label: 'Todos os responsáveis' }].concat(names.map(function (name) {
+        return { value: name, label: name };
+      }));
+    }
+    if (key === 'tags') {
+      var tags = Array.from(new Set(tasks.reduce(function (all, task) {
+        return all.concat((Array.isArray(task.tags) ? task.tags : []).map(function (tag) {
+          return typeof tag === 'string' ? tag : tag && (tag.name || tag.label) || '';
+        }).filter(Boolean));
+      }, []))).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+      return [{ value: '', label: 'Todas as etiquetas' }].concat(tags.map(function (tag) {
+        return { value: tag, label: tag };
+      }));
+    }
+    if (key === 'archived') return [
+      { value: 'active', label: 'Não arquivadas' },
+      { value: 'archived', label: 'Arquivadas' },
+      { value: 'all', label: 'Todas' }
+    ];
+    if (key === 'commentAssigned') return [
+      { value: '', label: 'Todos' },
+      { value: 'yes', label: 'Com comentário atribuído' },
+      { value: 'no', label: 'Sem comentário atribuído' }
+    ];
+    if (key === 'createdBy') {
+      var creators = Array.from(new Set(tasks.map(function (task) { return String(task.createdBy || ''); }).filter(Boolean)));
+      return [{ value: '', label: 'Todas as pessoas' }].concat(creators.map(function (id) {
+        var task = tasks.find(function (item) { return String(item.createdBy) === id; });
+        return { value: id, label: task ? getTaskCreatorName(task, state) : 'Colaborador' };
+      }));
+    }
+    return [];
+  }
+
+  function taskFilterControl(key, state) {
+    var type = taskFilterTypes.find(function (item) { return item.id === key; });
+    if (!type) return '';
+    var value = taskFilterValues[key] || {};
+    var control = '';
+    if (key === 'dueDate' || key === 'createdDate' || key === 'endDate') {
+      var prefix = key === 'dueDate' ? 'due' : key === 'createdDate' ? 'created' : 'end';
+      control = '<div class="task-filter-date-range"><label>De<input id="task-' + prefix +
+        '-from" type="date" value="' + escapeHtml(value.from || '') + '"></label><label>Até<input id="task-' + prefix +
+        '-to" type="date" value="' + escapeHtml(value.to || '') + '"></label></div>';
+    } else {
+      var id = key === 'project' ? 'task-project-filter' : key === 'status' ? 'task-status-filter' :
+        key === 'priority' ? 'task-priority-filter' : key === 'assignee' ? 'task-assignee-filter' :
+          key === 'tags' ? 'task-tags-filter' : key === 'archived' ? 'task-archived-filter' :
+            key === 'commentAssigned' ? 'task-comment-assigned-filter' : 'task-created-by-filter';
+      var selectValue = typeof value === 'string' ? value : '';
+      var options = taskFilterValuesForOptions(key, state);
+      if (key === 'project') options.unshift({ value: '', label: 'Somente tarefas com projeto' });
+      control = '<select id="' + id + '" aria-label="' + escapeHtml(type.label) + '">' +
+        filterOptions(options, selectValue) + '</select>';
+    }
+    return '<div class="task-selected-filter" data-selected-task-filter="' + key + '"><span class="task-selected-filter-label">' +
+      '<span aria-hidden="true">' + type.icon + '</span>' + escapeHtml(type.label) + '</span>' + control +
+      '<button type="button" class="task-remove-filter" data-remove-task-filter="' + key +
+      '" aria-label="Remover filtro ' + escapeHtml(type.label) + '" title="Remover filtro">×</button></div>';
+  }
+
+  function renderActiveTaskFilters(state) {
+    var root = document.getElementById('task-selected-filters');
+    if (root) root.innerHTML = activeTaskFilterKeys.map(function (key) {
+      return taskFilterControl(key, state);
+    }).join('');
+    var optionsRoot = document.getElementById('task-filter-options');
+    if (optionsRoot) {
+      var search = document.getElementById('task-filter-search');
+      var query = search ? search.value.trim().toLocaleLowerCase('pt-BR') : '';
+      optionsRoot.innerHTML = taskFilterTypes.filter(function (type) {
+        return activeTaskFilterKeys.indexOf(type.id) === -1 &&
+          type.label.toLocaleLowerCase('pt-BR').indexOf(query) !== -1;
+      }).map(function (type) {
+        return '<button type="button" class="task-filter-option" data-add-task-filter="' + type.id + '">' +
+          '<span aria-hidden="true">' + type.icon + '</span><span>' + escapeHtml(type.label) + '</span></button>';
+      }).join('') || '<p class="task-filter-no-options">Nenhum filtro encontrado.</p>';
+    }
+  }
+
+  function filterControlValue(id) {
+    var control = document.getElementById(id);
+    return control ? control.value : '';
+  }
+
+  function readTaskFilterValues() {
+    activeTaskFilterKeys.forEach(function (key) {
+      if (key === 'dueDate' || key === 'createdDate' || key === 'endDate') {
+        var prefix = key === 'dueDate' ? 'due' : key === 'createdDate' ? 'created' : 'end';
+        taskFilterValues[key] = {
+          from: filterControlValue('task-' + prefix + '-from'),
+          to: filterControlValue('task-' + prefix + '-to')
+        };
+        return;
+      }
+      var id = key === 'project' ? 'task-project-filter' : key === 'status' ? 'task-status-filter' :
+        key === 'priority' ? 'task-priority-filter' : key === 'assignee' ? 'task-assignee-filter' :
+          key === 'tags' ? 'task-tags-filter' : key === 'archived' ? 'task-archived-filter' :
+            key === 'commentAssigned' ? 'task-comment-assigned-filter' : 'task-created-by-filter';
+      taskFilterValues[key] = filterControlValue(id);
+    });
   }
 
   function renderBoard(state) {
-    var tasks = getRealTasks(state);
-    var search = document.getElementById('global-search');
+    renderActiveTaskFilters(state);
+    var tasks = getRealTasks(state).filter(function (task) { return !taskParentId(task); });
+    var search = document.getElementById('task-search');
     var searchTerm = search ? search.value.trim().toLocaleLowerCase() : '';
-    var projectFilter = document.getElementById('task-project-filter');
-    var projectId = projectFilter ? projectFilter.value : '';
+    var projectId = activeTaskFilterKeys.indexOf('project') !== -1 ? filterControlValue('task-project-filter') : '';
+    var statusFilter = document.getElementById('task-status-filter');
+    var priorityFilter = document.getElementById('task-priority-filter');
+    var assigneeFilter = document.getElementById('task-assignee-filter');
+    var dueFromFilter = document.getElementById('task-due-from');
+    var dueToFilter = document.getElementById('task-due-to');
+    var createdFromFilter = document.getElementById('task-created-from');
+    var createdToFilter = document.getElementById('task-created-to');
+    var endFromFilter = document.getElementById('task-end-from');
+    var endToFilter = document.getElementById('task-end-to');
+    var archivedFilter = document.getElementById('task-archived-filter');
+    var tagsFilter = document.getElementById('task-tags-filter');
+    var commentAssignedFilter = document.getElementById('task-comment-assigned-filter');
+    var createdByFilter = document.getElementById('task-created-by-filter');
+    var today = dateKey(new Date());
     var filtered = tasks.filter(function (task) {
-      var matchesSearch = !searchTerm || [task.title, task.description, getTaskAssigneeNames(task, state).join(' ')]
+      var names = getTaskAssigneeNames(task, state);
+      var matchesSearch = !searchTerm || [task.title, task.description, names.join(' ')]
         .join(' ').toLocaleLowerCase().indexOf(searchTerm) !== -1;
-      return matchesSearch && (!projectId || String(task.projectId || '') === projectId);
+        var matchesProject = projectId === '__all_projects__' || projectId === '__no_project__'
+        ? projectId === '__all_projects__' || !task.projectId
+        : projectId ? String(task.projectId || '') === projectId : Boolean(task.projectId);
+      var matchesStatus = !statusFilter || !statusFilter.value || taskStatus(task) === statusFilter.value;
+      var matchesPriority = !priorityFilter || !priorityFilter.value ||
+        String(task.priority || 'media').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === priorityFilter.value;
+      var matchesAssignee = !assigneeFilter || !assigneeFilter.value || names.some(function (name) {
+        return name.toLocaleLowerCase('pt-BR') === assigneeFilter.value.toLocaleLowerCase('pt-BR');
+      });
+      var dueDate = task.dueDate ? String(task.dueDate).slice(0, 10) : '';
+      var createdDate = task.createdAt ? String(task.createdAt).slice(0, 10) : '';
+      var endDate = task.completedAt ? String(task.completedAt).slice(0, 10) : '';
+      var matchesDue = (!dueFromFilter || !dueFromFilter.value || dueDate && dueDate >= dueFromFilter.value) &&
+        (!dueToFilter || !dueToFilter.value || dueDate && dueDate <= dueToFilter.value);
+      var matchesCreated = (!createdFromFilter || !createdFromFilter.value || createdDate && createdDate >= createdFromFilter.value) &&
+        (!createdToFilter || !createdToFilter.value || createdDate && createdDate <= createdToFilter.value);
+      var matchesEnd = (!endFromFilter || !endFromFilter.value || endDate && endDate >= endFromFilter.value) &&
+        (!endToFilter || !endToFilter.value || endDate && endDate <= endToFilter.value);
+      var archivedValue = archivedFilter ? archivedFilter.value : 'active';
+      var matchesArchived = archivedValue === 'all' ||
+        (archivedValue === 'archived' ? isTaskArchived(task) : !isTaskArchived(task));
+      var taskTags = (Array.isArray(task.tags) ? task.tags : []).map(function (tag) {
+        return String(typeof tag === 'string' ? tag : tag && (tag.name || tag.label) || '');
+      });
+      var matchesTags = !tagsFilter || !tagsFilter.value || taskTags.indexOf(tagsFilter.value) !== -1;
+      var hasAssignedComment = (state.taskComments || []).some(function (comment) {
+        return String(comment.taskId) === String(task.id) &&
+          Boolean(comment.assignedTo || comment.assigned_to || comment.assignedUserId || comment.assigned_user_id);
+      });
+      var matchesCommentAssigned = !commentAssignedFilter || !commentAssignedFilter.value ||
+        (commentAssignedFilter.value === 'yes' ? hasAssignedComment : !hasAssignedComment);
+      var matchesCreator = !createdByFilter || !createdByFilter.value ||
+        String(task.createdBy || '') === createdByFilter.value;
+      var matchesView = activeTaskViewFilter === 'all' ||
+        (activeTaskViewFilter === 'mine' && isTaskAssignedToCurrentUser(task, state)) ||
+        (activeTaskViewFilter === 'today' && task.dueDate === today) ||
+        (activeTaskViewFilter === 'overdue' && task.dueDate && task.dueDate < today && taskStatus(task) !== 'concluida') ||
+        (activeTaskViewFilter === 'waiting' && taskStatus(task) === 'aguardando-terceiros');
+      return matchesSearch && matchesProject && matchesStatus && matchesPriority && matchesAssignee &&
+        matchesDue && matchesCreated && matchesEnd && matchesArchived && matchesTags &&
+        matchesCommentAssigned && matchesCreator && matchesView;
     });
+    updateTaskFilterCount();
+    updateAssigneeFilter(tasks, state);
     var board = document.getElementById('task-kanban-board');
     if (!board) return;
-    if (projectId) {
+    board.classList.toggle('is-list-view', activeTaskView === 'list');
+    board.classList.toggle('is-table-view', activeTaskView === 'table');
+    var viewToggle = document.getElementById('task-view-toggle');
+    if (viewToggle) viewToggle.querySelectorAll('[data-task-view]').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.taskView === activeTaskView));
+    });
+    if (activeTaskView === 'list') {
+      board.innerHTML = filtered.length ? '<div class="task-compact-list" role="list"><div class="task-compact-header" aria-hidden="true"><span>Tarefa</span><span>Criador</span><span>Período</span><span>Prioridade</span><span>Estado</span></div>' + filtered
+        .slice().sort(function (a, b) { return String(a.dueDate || '9999-12-31').localeCompare(String(b.dueDate || '9999-12-31')); })
+        .map(function (task) { return renderTaskListGroup(task, state); }).join('') + '</div>' :
+        '<p class="task-empty-column task-all-projects-empty">Nenhuma tarefa corresponde aos filtros.</p>';
+      return;
+    }
+    if (activeTaskView === 'table') {
+      board.innerHTML = filtered.length ? renderTaskTable(filtered, state) :
+        '<p class="task-empty-column task-all-projects-empty">Nenhuma tarefa corresponde aos filtros.</p>';
+      return;
+    }
+    if (projectId && projectId !== '__no_project__' && projectId !== '__all_projects__') {
       var selectedProject = (state.projects || []).find(function (item) {
         return String(item.id) === String(projectId);
       });
@@ -313,26 +615,479 @@
     });
     board.innerHTML = groups.length ? groups.map(function (group) {
       var groupProject = projects.find(function (project) { return String(project.id) === String(group.id); }) || { id: group.id };
-      return '<section class="task-project-task-group"><div class="task-project-task-heading"><h2>' +
-        escapeHtml(group.name) + '</h2><span>' + group.tasks.length + ' tarefas</span></div>' +
-        '<div class="task-kanban-board task-kanban-board--all-projects">' + renderKanbanColumns(group.tasks, groupProject, false) + '</div></section>';
-    }).join('') : '<p class="task-empty-column task-all-projects-empty">Nenhuma tarefa encontrada nos projetos.</p>';
+      var isCollapsed = getCollapsedTaskGroups().indexOf(String(group.id || 'no-project')) !== -1;
+      return '<section class="task-project-task-group' + (isCollapsed ? ' is-collapsed' : '') + '" data-project-group="' + escapeHtml(group.id || 'no-project') + '">' +
+        '<button type="button" class="task-project-task-heading" data-toggle-project-group aria-expanded="' + String(!isCollapsed) + '">' +
+        '<span class="task-project-group-chevron" aria-hidden="true">⌄</span><h2>' +
+        escapeHtml(group.name) + '</h2><span>' + group.tasks.length + ' tarefas</span></button>' +
+        '<div class="task-kanban-board task-kanban-board--all-projects"' + (isCollapsed ? ' hidden' : '') + '>' +
+        renderKanbanColumns(group.tasks, groupProject, false) + '</div></section>';
+    }).join('') : '<p class="task-empty-column task-all-projects-empty">Nenhuma tarefa corresponde aos filtros.</p>';
+  }
+
+  function renderTaskListItem(task, state, isSubtask) {
+    var status = taskStatus(task);
+    var statusLabel = statuses.find(function (item) { return item.id === status; });
+    var priority = String(task.priority || 'media').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    var priorityLabel = priority === 'alta' ? 'Alta' : priority === 'baixa' ? 'Baixa' : 'Média';
+    return '<button type="button" class="task-compact-row' + (isSubtask ? ' is-subtask' : '') + '" data-open-task="' + escapeHtml(task.id) + '" role="listitem">' +
+      '<strong>' + escapeHtml(task.title || 'Tarefa sem título') + '</strong><span>' + escapeHtml(getTaskCreatorName(task, state)) +
+      '</span><time>' + escapeHtml(formatTaskDateRange(task)) + '</time><span class="task-card-priority task-card-priority--' +
+      priority + '">◆ ' + priorityLabel + '</span><span class="task-card-state">● ' + escapeHtml(statusLabel && statusLabel.label || 'Pendente') +
+      '</span></button>';
+  }
+
+  function renderTaskTableRow(task, state, isSubtask) {
+    var project = (state.projects || []).find(function (item) { return String(item.id) === String(task.projectId); });
+    var status = taskStatus(task);
+    var statusLabel = statuses.find(function (item) { return item.id === status; });
+    var priority = String(task.priority || 'media').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    var priorityLabel = priority === 'alta' ? 'Alta' : priority === 'baixa' ? 'Baixa' : 'Média';
+    return '<button type="button" class="task-table-row' + (isSubtask ? ' is-subtask' : '') +
+      '" data-open-task="' + escapeHtml(task.id) + '" role="row">' +
+      '<span class="task-table-name" role="cell"><span class="task-table-status-dot task-table-status-dot--' + status +
+      '" aria-hidden="true"></span><strong>' + escapeHtml(task.title || 'Tarefa sem título') + '</strong></span>' +
+      '<span role="cell">' + escapeHtml(project && project.name || '—') + '</span>' +
+      '<span role="cell">' + escapeHtml(getTaskCreatorName(task, state)) + '</span>' +
+      '<span role="cell">' + escapeHtml(getTaskAssigneeNames(task, state).join(', ') || '—') + '</span>' +
+      '<span role="cell">' + escapeHtml(formatDate(task.dueDate)) + '</span>' +
+      '<span role="cell"><span class="task-card-priority task-card-priority--' + priority + '">⚑ ' + priorityLabel + '</span></span>' +
+      '<span role="cell"><span class="task-card-state task-card-state--' + status + '">' +
+      escapeHtml(statusLabel && statusLabel.label || 'Pendente') + '</span></span></button>';
+  }
+
+  function renderTaskTableGroup(task, state) {
+    var subtasks = getRealTasks(state).filter(function (candidate) {
+      return taskParentId(candidate) === String(task.id);
+    }).sort(function (a, b) { return Number(a.position || 0) - Number(b.position || 0); });
+    return '<div class="task-table-group">' + renderTaskTableRow(task, state, false) +
+      (subtasks.length ? '<div class="task-table-subtasks">' + subtasks.map(function (subtask) {
+        return renderTaskTableRow(subtask, state, true);
+      }).join('') + '</div>' : '') + '</div>';
+  }
+
+  function renderTaskTable(tasks, state) {
+    var sorted = tasks.slice().sort(function (a, b) {
+      return String(a.dueDate || '9999-12-31').localeCompare(String(b.dueDate || '9999-12-31'));
+    });
+    return '<div class="task-table" role="table" aria-label="Tabela de tarefas"><div class="task-table-header" role="row">' +
+      ['Tarefa', 'Projeto', 'Criador', 'Responsável', 'Vencimento', 'Prioridade', 'Status'].map(function (label) {
+        return '<span role="columnheader">' + label + '</span>';
+      }).join('') + '</div><div class="task-table-body" role="rowgroup">' +
+      sorted.map(function (task) { return renderTaskTableGroup(task, state); }).join('') + '</div></div>';
+  }
+
+  function updateTaskFilterCount() {
+    var count = document.querySelector('[data-task-filter-count]');
+    if (count) count.textContent = activeTaskFilterKeys.length ? String(activeTaskFilterKeys.length) : '';
+  }
+
+  function renderTaskListGroup(task, state) {
+    var subtasks = getRealTasks(state).filter(function (candidate) {
+      return taskParentId(candidate) === String(task.id);
+    }).sort(function (a, b) { return Number(a.position || 0) - Number(b.position || 0); });
+    return '<div class="task-list-group">' + renderTaskListItem(task, state, false) +
+      (subtasks.length ? '<div class="task-list-subtasks">' + subtasks.map(function (subtask) {
+        return renderTaskListItem(subtask, state, true);
+      }).join('') + '</div>' : '') + '</div>';
+  }
+
+  function updateAssigneeFilter(tasks, state) {
+    var select = document.getElementById('task-assignee-filter');
+    if (!select) return;
+    var selected = select.value;
+    var names = Array.from(new Set(tasks.reduce(function (all, task) {
+      return all.concat(getTaskAssigneeNames(task, state));
+    }, []))).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+    select.innerHTML = '<option value="">Todas as pessoas</option>' + names.map(function (name) {
+      return '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>';
+    }).join('');
+    select.value = selected;
+  }
+
+  function getCollapsedTaskGroups() {
+    try {
+      return JSON.parse(localStorage.getItem('rildonx.task.collapsed-projects') || '[]');
+    } catch (error) {
+      console.error('Não foi possível ler os grupos recolhidos de tarefas:', error);
+      return [];
+    }
+  }
+
+  function saveCollapsedTaskGroups(groups) {
+    try {
+      localStorage.setItem('rildonx.task.collapsed-projects', JSON.stringify(groups));
+    } catch (error) {
+      console.error('Não foi possível salvar os grupos recolhidos de tarefas:', error);
+      notify('Não foi possível salvar essa preferência neste navegador.');
+    }
+  }
+
+  function getSavedFiltersKey() {
+    return 'rildonx.task.saved-filters.' + String(currentUserId || 'guest');
+  }
+
+  function getSavedTemplatesKey() {
+    return 'rildonx.task.request-templates.' + String(currentUserId || 'guest');
+  }
+
+  function getSavedFilters() {
+    if (currentUserId && taskPreferencesLoaded) return taskPreferences.savedFilters;
+    try {
+      return JSON.parse(localStorage.getItem(getSavedFiltersKey()) || '[]');
+    } catch (error) {
+      console.error('Não foi possível ler os filtros salvos:', error);
+      return [];
+    }
+  }
+
+  function saveSavedFilters(filters) {
+    taskPreferences.savedFilters = filters;
+    try {
+      localStorage.setItem(getSavedFiltersKey(), JSON.stringify(filters));
+      renderSavedFilters();
+    } catch (error) {
+      console.error('Não foi possível salvar o filtro:', error);
+      notify('Não foi possível salvar o filtro neste navegador.');
+      return;
+    }
+    persistTaskPreferences();
+  }
+
+  function renderSavedFilters() {
+    var select = document.getElementById('task-saved-filter');
+    if (!select) return;
+    var selected = select.value;
+    select.innerHTML = '<option value="">Filtros salvos</option>' + getSavedFilters().map(function (filter, index) {
+      return '<option value="' + index + '">' + escapeHtml(filter.name) + '</option>';
+    }).join('');
+    if (selected) select.value = selected;
+  }
+
+  function getRequestTemplates() {
+    if (taskPreferencesLoaded || !currentUserId) {
+      return Array.isArray(taskPreferences.requestTemplates) ? taskPreferences.requestTemplates : [];
+    }
+    try {
+      return JSON.parse(localStorage.getItem(getSavedTemplatesKey()) || '[]');
+    } catch (error) {
+      console.error('Não foi possível ler os modelos salvos:', error);
+      return [];
+    }
+  }
+
+  function renderRequestTemplates() {
+    var select = document.getElementById('nt-template');
+    if (!select) return;
+    var selected = select.value;
+    var customTemplates = getRequestTemplates().map(function (template, index) {
+      return '<option value="custom:' + index + '">' + escapeHtml(template.name) + '</option>';
+    }).join('');
+    select.innerHTML = '<option value="">Tarefa em branco</option><option value="request">Solicitação geral</option>' +
+      '<option value="content">Conteúdo e criação</option><option value="support">Suporte interno</option>' + customTemplates;
+    select.value = selected;
+    renderTemplateFields(selected);
+  }
+
+  function templateDefinition(templateId) {
+    var builtins = {
+      request: { fields: ['Solicitante', 'Contexto', 'Resultado esperado'], criteria: ['Resultado validado por quem solicitou'] },
+      content: { fields: ['Canal', 'Público-alvo', 'Formato', 'Prazo de publicação'], criteria: ['Conteúdo revisado e aprovado', 'Arquivos finais anexados'] },
+      support: { fields: ['Sistema ou equipamento', 'Impacto', 'Passos para reproduzir'], criteria: ['Solicitante confirma a resolução'] }
+    };
+    if (builtins[templateId]) return builtins[templateId];
+    if (templateId.indexOf('custom:') === 0) return getRequestTemplates()[Number(templateId.slice(7))] || null;
+    return null;
+  }
+
+  function renderTemplateFields(templateId) {
+    var root = document.getElementById('nt-template-fields');
+    if (!root) return;
+    var template = templateDefinition(templateId);
+    if (!template) {
+      root.hidden = true;
+      root.innerHTML = '';
+      return;
+    }
+    root.hidden = false;
+    root.innerHTML = '<div class="task-request-template-fields">' + (template.fields || []).map(function (field, index) {
+      return '<label>' + escapeHtml(field) + '<input type="text" data-request-field="' + index + '" data-request-field-name="' +
+        escapeHtml(field) + '"></label>';
+    }).join('') + '<label>Critérios de aceite (um por linha)<textarea id="nt-acceptance" rows="2">' +
+      escapeHtml((template.criteria || []).join('\n')) + '</textarea></label></div>';
+  }
+
+  function persistTaskPreferences() {
+    if (!currentUserId || !window.supabaseClient || !window.supabaseClient.from) return Promise.resolve();
+    return window.supabaseClient.from('task_user_preferences').upsert({
+      user_id: currentUserId,
+      saved_filters: taskPreferences.savedFilters || [],
+      request_templates: taskPreferences.requestTemplates || []
+    }, { onConflict: 'user_id' }).then(function (result) {
+      if (result.error) throw result.error;
+    }).catch(function (error) {
+      console.error('Não foi possível sincronizar as preferências de tarefas:', error);
+      notify('As preferências ficaram salvas neste navegador, mas não foram sincronizadas com sua conta.');
+    });
+  }
+
+  async function loadTaskPreferences() {
+    if (!currentUserId || !window.supabaseClient || !window.supabaseClient.from) return;
+    try {
+      var result = await window.supabaseClient.from('task_user_preferences')
+        .select('saved_filters,request_templates').eq('user_id', currentUserId).maybeSingle();
+      if (result.error) throw result.error;
+      taskPreferences = {
+        savedFilters: result.data && Array.isArray(result.data.saved_filters) ? result.data.saved_filters : [],
+        requestTemplates: result.data && Array.isArray(result.data.request_templates) ? result.data.request_templates : []
+      };
+      if (!result.data) {
+        taskPreferences.savedFilters = JSON.parse(localStorage.getItem(getSavedFiltersKey()) || '[]');
+        taskPreferences.requestTemplates = JSON.parse(localStorage.getItem(getSavedTemplatesKey()) || '[]');
+      }
+      taskPreferencesLoaded = true;
+      localStorage.setItem(getSavedFiltersKey(), JSON.stringify(taskPreferences.savedFilters));
+      localStorage.setItem(getSavedTemplatesKey(), JSON.stringify(taskPreferences.requestTemplates));
+      renderSavedFilters();
+      renderRequestTemplates();
+      if (!result.data && (taskPreferences.savedFilters.length || taskPreferences.requestTemplates.length)) {
+        persistTaskPreferences();
+      }
+    } catch (error) {
+      console.error('Não foi possível carregar as preferências de tarefas:', error);
+      notify('Não foi possível sincronizar suas preferências. As cópias locais continuam disponíveis.');
+    }
+  }
+
+  function saveCurrentTemplate() {
+    var select = document.getElementById('nt-template');
+    var current = select && templateDefinition(select.value);
+    var fields = current ? current.fields.slice() : [];
+    var acceptance = document.getElementById('nt-acceptance');
+    var criteria = acceptance ? acceptance.value.split(/\r?\n/).map(function (item) { return item.trim(); }).filter(Boolean) : [];
+    if (!fields.length) {
+      notify('Escolha um modelo de solicitação antes de salvá-lo como modelo.');
+      return;
+    }
+    var name = window.prompt('Nome para este modelo:');
+    if (!name || !name.trim()) return;
+    taskPreferences.requestTemplates = getRequestTemplates().concat({
+      name: name.trim(),
+      fields: fields,
+      criteria: criteria
+    });
+    renderRequestTemplates();
+    persistTaskPreferences();
+    notify('Modelo de solicitação salvo.');
+  }
+
+  function mapRecurringTaskRow(row) {
+    var metadata = row.task_metadata || row.metadata || {};
+    if (typeof metadata === 'string') {
+      try {
+        metadata = JSON.parse(metadata);
+      } catch (error) {
+        console.error('Os metadados da ocorrência recorrente são inválidos:', error);
+        metadata = {};
+      }
+    }
+    return {
+      id: row.id,
+      title: row.title || 'Tarefa sem título',
+      status: row.status || 'pendente',
+      priority: row.priority || 'media',
+      dueDate: row.due_date || null,
+      assignees: Array.isArray(row.assignees) ? row.assignees : [],
+      viewerIds: Array.isArray(row.viewer_ids) ? row.viewer_ids : [],
+      createdBy: row.created_by || null,
+      completedAt: row.completed_at || null,
+      projectId: row.project_id || null,
+      description: row.description || '',
+      startDate: row.start_date || null,
+      checklist: Array.isArray(row.checklist) ? row.checklist : [],
+      attachments: Array.isArray(row.attachments) ? row.attachments : [],
+      position: Number(row.position) || 0,
+      sector: row.sector || 'marketing',
+      tags: Array.isArray(row.tags) ? row.tags : [],
+      metadata: metadata,
+      createdAt: row.created_at || null,
+      updatedAt: row.updated_at || row.created_at || null,
+      isDemo: false
+    };
+  }
+
+  async function materializeDueRecurringTasks() {
+    if (recurrenceCheckRunning || !window.RildonXStore) return;
+    recurrenceCheckRunning = true;
+    var createdCount = 0;
+    try {
+      var candidates = getRealTasks(getStoreState()).filter(function (task) {
+        var recurrence = taskMetadata(task).recurrence;
+        return isTaskCreator(task) && recurrence && recurrence.frequency &&
+          recurrence.nextOccurrenceDate && recurrence.nextOccurrenceDate <= dateKey(new Date());
+      });
+      for (var candidateIndex = 0; candidateIndex < candidates.length; candidateIndex += 1) {
+        var current = candidates[candidateIndex];
+        var iterations = 0;
+        while (iterations < 100) {
+          var metadata = taskMetadata(current);
+          var recurrence = metadata.recurrence;
+          var occurrenceDate = recurrence && recurrence.nextOccurrenceDate;
+          if (!occurrenceDate || occurrenceDate > dateKey(new Date())) break;
+          var nextDate = nextRecurrenceDate(occurrenceDate, recurrence.frequency);
+          if (!nextDate) throw new Error('A frequência desta tarefa recorrente não é válida.');
+          if (window.supabaseClient && window.supabaseClient.rpc &&
+              /^[0-9a-f-]{36}$/i.test(String(current.id))) {
+            var result = await window.supabaseClient.rpc('rildonx_generate_recurring_task', {
+              p_task_id: current.id
+            });
+            if (result.error) throw result.error;
+            var row = Array.isArray(result.data) ? result.data[0] : result.data;
+            if (!row) break;
+            current = mapRecurringTaskRow(row);
+            var currentTasks = getStoreState().tasks || [];
+            if (!currentTasks.some(function (item) { return String(item.id) === String(current.id); })) {
+              window.RildonXStore.setState({ tasks: currentTasks.concat(current) });
+            } else {
+              window.RildonXStore.updateTask(current.id, current);
+            }
+          } else {
+            var nextMetadata = Object.assign({}, metadata, {
+              recurrence: Object.assign({}, recurrence, {
+                occurrenceDate: occurrenceDate,
+                occurrenceKey: String(recurrence.seriesId || current.id) + ':' + occurrenceDate,
+                nextOccurrenceDate: nextDate
+              })
+            });
+            var occurrenceKey = nextMetadata.recurrence.occurrenceKey;
+            var existing = getRealTasks(getStoreState()).find(function (item) {
+              return taskMetadata(item).recurrence && taskMetadata(item).recurrence.occurrenceKey === occurrenceKey;
+            });
+            if (existing) {
+              current = existing;
+              break;
+            }
+            window.RildonXStore.updateTask(current.id, {
+              metadata: Object.assign({}, metadata, {
+                recurrence: Object.assign({}, recurrence, { nextOccurrenceDate: nextDate })
+              })
+            });
+            current = window.RildonXStore.addTask(Object.assign({}, current, {
+              id: createTaskId(),
+              status: 'pendente',
+              dueDate: occurrenceDate,
+              completedAt: null,
+              position: 0,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              metadata: nextMetadata
+            }));
+          }
+          createdCount += 1;
+          iterations += 1;
+        }
+        if (iterations === 100 && taskMetadata(current).recurrence.nextOccurrenceDate <= dateKey(new Date())) {
+          notify('Há mais de 100 ocorrências atrasadas nesta série. O restante será gerado na próxima abertura.');
+        }
+      }
+      if (createdCount) notify(createdCount + ' ocorrência' + (createdCount === 1 ? '' : 's') + ' recorrente' +
+        (createdCount === 1 ? ' criada.' : 's criadas.'));
+    } catch (error) {
+      console.error('Não foi possível gerar uma ocorrência recorrente:', error);
+      notify(error.message || 'Não foi possível gerar as ocorrências recorrentes.');
+    } finally {
+      recurrenceCheckRunning = false;
+    }
+  }
+
+  function captureTaskFilters() {
+    readTaskFilterValues();
+    return {
+      activeTypes: activeTaskFilterKeys.slice(),
+      values: Object.assign({}, taskFilterValues),
+      project: taskFilterValues.project || '',
+      status: taskFilterValues.status || '',
+      priority: taskFilterValues.priority || '',
+      assignee: taskFilterValues.assignee || '',
+      dueFrom: taskFilterValues.dueDate && taskFilterValues.dueDate.from || '',
+      dueTo: taskFilterValues.dueDate && taskFilterValues.dueDate.to || '',
+      createdFrom: taskFilterValues.createdDate && taskFilterValues.createdDate.from || '',
+      createdTo: taskFilterValues.createdDate && taskFilterValues.createdDate.to || '',
+      archived: taskFilterValues.archived || 'active',
+      search: document.getElementById('task-search').value,
+      view: activeTaskViewFilter
+    };
+  }
+
+  function applyTaskFilters(filters) {
+    taskFilterValues = filters.values && typeof filters.values === 'object'
+      ? Object.assign({}, filters.values)
+      : {
+        project: filters.project || '',
+        status: filters.status || '',
+        priority: filters.priority || '',
+        assignee: filters.assignee || '',
+        dueDate: { from: filters.dueFrom || '', to: filters.dueTo || '' },
+        createdDate: { from: filters.createdFrom || '', to: filters.createdTo || '' },
+        archived: filters.archived || 'active'
+      };
+    activeTaskFilterKeys = Array.isArray(filters.activeTypes) ? filters.activeTypes.slice() : [];
+    if (!Array.isArray(filters.activeTypes)) {
+      if (filters.project || filters.project === '__no_project__') activeTaskFilterKeys.push('project');
+      if (filters.status) activeTaskFilterKeys.push('status');
+      if (filters.priority) activeTaskFilterKeys.push('priority');
+      if (filters.assignee) activeTaskFilterKeys.push('assignee');
+      if (filters.dueFrom || filters.dueTo || filters.due) {
+        activeTaskFilterKeys.push('dueDate');
+        taskFilterValues.dueDate = { from: filters.dueFrom || '', to: filters.dueTo || filters.due || '' };
+      }
+      if (filters.createdFrom || filters.createdTo) activeTaskFilterKeys.push('createdDate');
+      if (filters.archived && filters.archived !== 'active') activeTaskFilterKeys.push('archived');
+    }
+    document.getElementById('task-search').value = filters.search || '';
+    activeTaskViewFilter = filters.view || 'all';
+    renderActiveTaskFilters(getStoreState());
+    updateTaskViewButtons();
+    renderBoard(getStoreState());
+  }
+
+  function updateTaskViewButtons() {
+    var group = document.getElementById('task-quick-views');
+    if (group) group.querySelectorAll('[data-task-quick-view]').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.taskQuickView === activeTaskViewFilter));
+    });
+  }
+
+  function bindRequestTemplateControls() {
+    document.addEventListener('change', function (event) {
+      if (event.target.id === 'nt-template') renderTemplateFields(event.target.value);
+    });
+    document.addEventListener('click', function (event) {
+      if (event.target.closest('[data-save-task-template]')) saveCurrentTemplate();
+    });
   }
 
   function renderKanbanColumns(tasks, project, includeBacklog) {
     var backlog = includeBacklog && project ? renderProjectBacklog(project) : '';
+    var collapsedColumns = getCollapsedTaskColumns();
     return backlog + statuses.map(function (column) {
       var cards = tasks.filter(function (task) { return taskStatus(task) === column.id; })
         .sort(function (a, b) {
           var positionDiff = Number(a.position || 0) - Number(b.position || 0);
           return positionDiff || new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
         });
-      return '<section class="task-kanban-column" data-task-status="' + column.id + '">' +
-        '<header><div class="task-kanban-column-title"><h2>' + column.label + '</h2><span>' + cards.length + '</span></div>' +
-        '<button type="button" class="task-add-card-button" data-add-task-stage="' + column.id + '"' +
+      var columnKey = String(project && project.id || 'no-project') + ':' + column.id;
+      var isCollapsed = collapsedColumns.indexOf(columnKey) !== -1;
+      return '<section class="task-kanban-column task-kanban-column--' + column.id + (isCollapsed ? ' is-collapsed' : '') +
+        '" data-task-status="' + column.id + '" data-task-column-key="' + escapeHtml(columnKey) + '">' +
+        '<header><div class="task-kanban-column-title"><span class="task-column-status-dot" aria-hidden="true"></span><h2>' + column.label + '</h2><span>' + cards.length + '</span></div>' +
+        '<div class="task-kanban-column-actions"><button type="button" class="task-add-card-button" data-add-task-stage="' + column.id + '"' +
         (project && project.id ? ' data-project-id="' + escapeHtml(project.id) + '"' : '') +
-        '><span aria-hidden="true">+</span> Adicionar tarefa</button></header>' +
-        '<div class="task-kanban-dropzone" data-task-dropzone="' + column.id + '">' +
+        ' aria-label="Adicionar tarefa em ' + column.label + '" title="Adicionar tarefa"><span aria-hidden="true">+</span></button>' +
+        '<button type="button" class="task-column-collapse" data-toggle-task-column aria-expanded="' + String(!isCollapsed) +
+        '" aria-label="' + (isCollapsed ? 'Expandir coluna ' : 'Recolher coluna ') + column.label + '" title="' +
+        (isCollapsed ? 'Expandir coluna' : 'Recolher coluna') + '"><span aria-hidden="true">⌄</span></button></div></header>' +
+        '<div class="task-kanban-dropzone" data-task-dropzone="' + column.id + '"' + (isCollapsed ? ' hidden' : '') + '>' +
         (cards.length ? cards.map(renderTaskCard).join('') : '<p class="task-empty-column">Nenhuma tarefa</p>') +
         '</div></section>';
     }).join('');
@@ -355,114 +1110,13 @@
       '</section>';
   }
 
-  function renderProductivity(state) {
-    var tasks = getPersonalTasks(state);
-    var done = tasks.filter(function (task) { return taskStatus(task) === 'concluida'; }).length;
-    var total = tasks.length;
-    var percentage = total ? Math.round((done / total) * 100) : 0;
-    var donut = document.getElementById('task-productivity-donut');
-    var percentLabel = document.getElementById('task-productivity-percent');
-    var summary = document.getElementById('task-productivity-summary');
-    if (donut) donut.style.background = 'conic-gradient(var(--green) 0 ' + percentage + '%, var(--border-soft) ' + percentage + '% 100%)';
-    if (percentLabel) percentLabel.textContent = percentage + '%';
-    if (summary) summary.textContent = total ? done + ' de ' + total + ' tarefas concluídas' : 'Nenhuma tarefa atribuída ou criada por você';
-  }
-
-  function eventStartDate(event) {
-    if (event.allDay && event.allDayStartDate) return String(event.allDayStartDate).slice(0, 10);
-    return event.startsAt ? String(event.startsAt).slice(0, 10) : '';
-  }
-
-  function eventCoversDate(event, key) {
-    var start = eventStartDate(event);
-    if (!start) return false;
-    if (event.allDay && event.allDayEndDate) {
-      return key >= start && key < String(event.allDayEndDate).slice(0, 10);
-    }
-    var parts = key.split('-').map(Number);
-    var dayStart = new Date(parts[0], parts[1] - 1, parts[2]);
-    var nextDay = new Date(dayStart);
-    nextDay.setDate(nextDay.getDate() + 1);
-    var startTime = event.startsAt ? new Date(event.startsAt) : null;
-    var endTime = event.endsAt ? new Date(event.endsAt) : startTime;
-    if (!startTime || Number.isNaN(startTime.getTime())) return false;
-    if (!endTime || Number.isNaN(endTime.getTime())) return startTime >= dayStart && startTime < nextDay;
-    return startTime < nextDay && endTime > dayStart;
-  }
-
-  function getVisibleEvents(state) {
-    return (state.events || []).filter(function (event) {
-      return !event.deletedAt && (event.visibility !== 'private' || event.ownerId === currentUserId);
-    });
-  }
-
-  function renderCalendar(state) {
-    var calendar = document.getElementById('task-calendar');
-    if (!calendar) return;
-    monthCursor = new Date(selectedCalendarDate.getFullYear(), selectedCalendarDate.getMonth(), 1);
-    var monthName = monthCursor.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    var firstDay = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
-    var start = new Date(firstDay);
-    start.setDate(start.getDate() - start.getDay());
-    var events = getVisibleEvents(state);
-    var dateCells = [];
-    for (var i = 0; i < 42; i += 1) {
-      var date = new Date(start);
-      date.setDate(start.getDate() + i);
-      var iso = dateKey(date);
-      var isCurrentMonth = date.getMonth() === monthCursor.getMonth();
-      var isToday = iso === dateKey(new Date());
-      var hasEvent = events.some(function (event) { return eventCoversDate(event, iso); });
-      dateCells.push('<button type="button" class="task-calendar-day' + (isCurrentMonth ? '' : ' is-muted') +
-        (isToday ? ' is-today' : '') + (hasEvent ? ' has-event' : '') +
-        (iso === dateKey(selectedCalendarDate) ? ' is-selected' : '') +
-        '" data-calendar-date="' + iso + '" aria-label="' + date.toLocaleDateString('pt-BR') + '">' + date.getDate() + '</button>');
-    }
-    var selectedIso = dateKey(selectedCalendarDate);
-    var selectedEvents = events.filter(function (event) { return eventCoversDate(event, selectedIso); })
-      .sort(function (a, b) { return String(a.startsAt || '').localeCompare(String(b.startsAt || '')); });
-    calendar.innerHTML = '<div class="task-calendar-heading"><button type="button" data-calendar-step="-1" aria-label="Mês anterior">‹</button>' +
-      '<h3>' + escapeHtml(monthName) + '</h3><button type="button" data-calendar-step="1" aria-label="Próximo mês">›</button></div>' +
-      '<div class="task-calendar-grid"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>' +
-      dateCells.join('') + '</div><div class="task-calendar-events">' +
-      (selectedEvents.length ? selectedEvents.map(function (event) {
-        var time = event.allDay ? 'Dia inteiro' : event.startsAt ? new Date(event.startsAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-        return '<a href="calendario.html" class="task-calendar-event"><b>' + escapeHtml(event.title) + '</b><span>' +
-          escapeHtml([time, event.location].filter(Boolean).join(' · ') || 'Evento RildonX') + '</span></a>';
-      }).join('') : '<p class="task-calendar-empty">Nenhum evento neste dia.</p>') +
-      '</div><a href="calendario.html" class="task-widget-link">Abrir Calendário</a>';
-  }
-
-  function renderProjectAgenda(state) {
-    var root = document.getElementById('task-project-agenda');
-    if (!root) return;
-    var projects = (state.projects || []).filter(function (project) { return canViewProject(project, state); })
-      .sort(function (a, b) { return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0); }).slice(0, 5);
-    var events = getVisibleEvents(state).filter(function (event) { return event.projectId; })
-      .sort(function (a, b) { return String(a.startsAt || '').localeCompare(String(b.startsAt || '')); });
-    if (!projects.length) {
-      root.innerHTML = '<p class="task-widget-empty">Nenhum projeto compartilhado disponível.</p>';
-      return;
-    }
-    root.innerHTML = projects.map(function (project) {
-      var projectEvent = events.find(function (event) { return String(event.projectId) === String(project.id); });
-      var progress = projectProgress(project, state);
-      return '<a class="task-project-agenda-item" href="projetos.html"><span class="task-project-dot"></span><span class="task-project-agenda-copy"><b>' +
-        escapeHtml(project.name) + '</b><small>' +
-        (projectEvent ? escapeHtml(formatDate(eventStartDate(projectEvent)) + ' · ' + projectEvent.title) :
-          escapeHtml(progress.status + ' · atualizado ' + formatDate(project.updatedAt))) +
-        '</small><span class="task-project-progress" role="img" aria-label="Progresso ' + progress.progress + '%"><i style="width:' +
-        Math.max(0, Math.min(100, progress.progress)) + '%"></i></span></span></a>';
-    }).join('') + '<a href="projetos.html" class="task-widget-link">Ver projetos</a>';
-  }
-
   function renderProjectFilters(state) {
     var filter = document.getElementById('task-project-filter');
     var createSelect = document.getElementById('nt-projeto');
     var projects = (state.projects || []).filter(function (project) { return project && project.isDemo !== true; });
     if (filter) {
       var selected = filter.value;
-      filter.innerHTML = '<option value="">Todos os projetos</option>' + projects.map(function (project) {
+      filter.innerHTML = '<option value="">Todos os projetos</option><option value="__no_project__">Sem projeto</option>' + projects.map(function (project) {
         return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.name) + '</option>';
       }).join('');
       filter.value = selected;
@@ -512,9 +1166,6 @@
     if (!taskRoot) return;
     renderProjectFilters(state);
     renderBoard(state);
-    renderProductivity(state);
-    renderCalendar(state);
-    renderProjectAgenda(state);
   }
 
   function renderTaskDetails(taskId) {
@@ -533,6 +1184,18 @@
     var creator = profiles.find(function (profile) { return String(profile.id) === String(task.createdBy); });
     var creatorName = creator && (creator.displayName || creator.nickname) || (String(task.createdBy) === currentUserId ? currentUserName : 'Colaborador');
     var assignees = getTaskAssigneeNames(task, state);
+    var metadata = taskMetadata(task);
+    var acceptedCriteria = Array.isArray(metadata.acceptanceCriteria) ? metadata.acceptanceCriteria.join('\n') : '';
+    var dependencyIds = taskDependencies(task);
+    var subtasks = getRealTasks(state).filter(function (candidate) {
+      return taskParentId(candidate) === String(task.id);
+    }).sort(function (a, b) { return Number(a.position || 0) - Number(b.position || 0); });
+    var dependencies = (state.tasks || []).filter(function (candidate) {
+      return String(candidate.id) !== String(task.id) && candidate.isDemo !== true;
+    });
+    var recurrence = metadata.recurrence && typeof metadata.recurrence === 'object' ? metadata.recurrence : {};
+    var source = metadata.source && typeof metadata.source === 'object' ? metadata.source : null;
+    var sourceAttachments = source && Array.isArray(source.attachments) ? source.attachments : [];
     var comments = (state.taskComments || []).filter(function (comment) { return String(comment.taskId) === String(task.id); })
       .sort(function (a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
     var availableCollaborators = profiles.filter(function (profile) {
@@ -547,10 +1210,56 @@
         ? renderCollaboratorPicker(availableCollaborators, assignees, 'task-' + task.id)
         : '<b>' + escapeHtml(assignees.length ? assignees.join(', ') : 'Nenhum') + '</b>') +
       '</span></div>' +
-      '<form class="task-detail-form"><div class="task-detail-fields"><label>Título<input name="title" value="' + escapeHtml(task.title) + '" required></label>' +
+      '<form class="task-detail-form"><div class="task-detail-fields task-detail-primary-fields"><label>Título<input name="title" value="' + escapeHtml(task.title) + '" required></label>' +
       '<label>Início<input name="startDate" type="date" value="' + escapeHtml(task.startDate || '') + '"></label>' +
-      '<label>Prazo<input name="dueDate" type="date" value="' + escapeHtml(task.dueDate || '') + '"></label></div>' +
+      '<label>Prazo<input name="dueDate" type="date" value="' + escapeHtml(task.dueDate || '') + '"></label>' +
+      '<label>Prioridade<select name="priority"><option value="baixa"' + (String(task.priority).toLowerCase() === 'baixa' ? ' selected' : '') + '>Baixa</option>' +
+      '<option value="media"' + (!task.priority || ['media', 'média'].indexOf(String(task.priority).toLowerCase()) !== -1 ? ' selected' : '') + '>Média</option>' +
+      '<option value="alta"' + (String(task.priority).toLowerCase() === 'alta' ? ' selected' : '') + '>Alta</option></select></label>' +
+      '<label>Estado<select name="status">' + statuses.map(function (status) {
+        return '<option value="' + status.id + '"' + (taskStatus(task) === status.id ? ' selected' : '') + '>' + status.label + '</option>';
+      }).join('') + '</select></label></div>' +
       '<label class="task-detail-description">Descrição<textarea name="description" rows="3">' + escapeHtml(task.description || '') + '</textarea></label>' +
+      '<div class="task-detail-section task-subtasks-section"><div class="task-detail-section-head"><h3>Subtarefas <span class="task-subtask-count">' +
+      subtasks.length + '</span></h3>' +
+      (isTaskCreator(task) && !taskParentId(task) ? '<div class="task-subtask-create"><input type="text" data-subtask-title maxlength="160" placeholder="Nome da subtarefa" aria-label="Nome da subtarefa">' +
+        '<button type="button" class="task-subtask-add" data-create-subtask aria-label="Adicionar subtarefa" title="Adicionar subtarefa">+</button></div>' : '') +
+      '</div>' +
+      (subtasks.length ? '<div class="task-detail-subtask-list">' + subtasks.map(function (subtask) {
+        var subtaskStatus = taskStatus(subtask);
+        var subtaskStatusLabel = statuses.find(function (item) { return item.id === subtaskStatus; });
+        return '<button type="button" class="task-detail-subtask" data-open-subtask="' + escapeHtml(subtask.id) + '">' +
+          '<span class="task-subtask-dot task-subtask-dot--' + subtaskStatus + '" aria-hidden="true"></span>' +
+          '<span class="task-detail-subtask-title">' + escapeHtml(subtask.title || 'Subtarefa sem título') + '</span>' +
+          '<span class="task-detail-subtask-state">' + escapeHtml(subtaskStatusLabel && subtaskStatusLabel.label || 'Pendente') + '</span></button>';
+      }).join('') + '</div>' : '<p class="task-detail-muted">Divida esta tarefa em etapas menores.</p>') + '</div>' +
+      (source ? '<div class="task-detail-section task-origin-section"><h3>Origem</h3>' +
+        (source.href ? '<a href="' + escapeHtml(source.href) + '" target="_blank" rel="noopener noreferrer">' : '<span>') +
+        escapeHtml(source.label || source.title || 'Conteúdo convertido em tarefa') +
+        (source.href ? '</a>' : '</span>') +
+        (sourceAttachments.length ? '<ul>' + sourceAttachments.map(function (file) {
+          var fileId = file && typeof file === 'object' ? file.id || file.documentId : file;
+          var fileName = file && typeof file === 'object' ? file.name || file.fileName : 'Anexo da origem';
+          return '<li>' + (fileId
+            ? '<button type="button" data-open-origin-attachment="' + escapeHtml(fileId) + '">' + escapeHtml(fileName) + '</button>'
+            : escapeHtml(fileName)) + '</li>';
+        }).join('') + '</ul>' : '') + '</div>' : '') +
+      '<div class="task-detail-section"><h3>Planejamento</h3><div class="task-detail-fields task-workflow-detail-fields">' +
+      '<label>Dependências<select name="dependsOn" multiple aria-describedby="task-dependency-help">' +
+      dependencies.map(function (candidate) {
+        return '<option value="' + escapeHtml(candidate.id) + '"' + (dependencyIds.indexOf(String(candidate.id)) !== -1 ? ' selected' : '') + '>' +
+          escapeHtml(candidate.title || 'Tarefa sem título') + '</option>';
+      }).join('') + '</select></label><label>Recorrência<select name="recurrence"><option value="">Não se repete</option>' +
+      '<option value="daily"' + (recurrence.frequency === 'daily' ? ' selected' : '') + '>Diária</option>' +
+      '<option value="weekly"' + (recurrence.frequency === 'weekly' ? ' selected' : '') + '>Semanal</option>' +
+      '<option value="monthly"' + (recurrence.frequency === 'monthly' ? ' selected' : '') + '>Mensal</option></select></label>' +
+      '<label>Quem está aguardando<input name="waitingOn" value="' + escapeHtml(metadata.waitingOn || '') + '" placeholder="Pessoa ou equipe externa"></label>' +
+      '<label>Motivo do bloqueio<input name="blockedReason" value="' + escapeHtml(metadata.blockedReason || '') + '" placeholder="O que impede o avanço?"></label></div>' +
+      '<p id="task-dependency-help" class="task-detail-muted">Uma tarefa só pode ser concluída depois das dependências.</p>' +
+      '<label class="task-milestone-option"><input name="isMilestone" type="checkbox"' + (metadata.isMilestone ? ' checked' : '') + '> Marco do projeto</label>' +
+      '</div>' +
+      '<div class="task-detail-section"><h3>Critérios de aceite</h3><textarea name="acceptanceCriteria" rows="3" placeholder="Um critério por linha">' +
+      escapeHtml(acceptedCriteria) + '</textarea></div>' +
       '<div class="task-detail-section"><h3>Checklist</h3><div class="task-detail-checklist">' +
       (checklist.length ? checklist.map(function (item, index) {
         return '<label><input type="checkbox" data-checklist-index="' + index + '"' + (item.completed ? ' checked' : '') +
@@ -566,7 +1275,9 @@
           escapeHtml(file.name || 'Arquivo') + '</button><span>' + escapeHtml(file.sizeLabel || '') + '</span></div>' +
           '<section class="task-media-comments" aria-label="Comentários em ' + escapeHtml(file.name || 'arquivo') + '">' +
           '<h4>Comentários neste arquivo</h4><div class="task-comment-list">' +
-          (fileComments.length ? fileComments.map(renderTaskComment).join('') : '<p class="task-detail-muted">Ainda não há comentários neste arquivo.</p>') +
+          (fileComments.length ? fileComments.map(function (comment) {
+            return renderTaskComment(comment, state, task);
+          }).join('') : '<p class="task-detail-muted">Ainda não há comentários neste arquivo.</p>') +
           '</div>' +
           (file.id ? '<div class="task-comment-form"><textarea data-comment-body rows="2" maxlength="2000" placeholder="Comente este arquivo..."></textarea>' +
             '<button type="button" class="btn" data-submit-comment="' + escapeHtml(file.id) + '">Comentar</button></div>' :
@@ -576,15 +1287,37 @@
       '</div>' +
       '<footer class="task-detail-footer">' +
       (isTaskCreator(task) ? '<button type="button" class="btn outline-red" data-delete-task>Excluir tarefa</button>' : '') +
+      (isTaskCreator(task) ? '<button type="button" class="btn secondary" data-toggle-task-archive>' +
+        (isTaskArchived(task) ? 'Restaurar tarefa' : 'Arquivar tarefa') + '</button>' : '') +
       '<button type="button" class="btn secondary" data-close-task>Fechar</button>' +
       '<button type="submit" class="btn">Salvar alterações</button></footer></form></div>';
   }
 
-  function renderTaskComment(comment) {
+  function renderTaskComment(comment, state, task) {
     var createdAt = new Date(comment.createdAt);
     var dateLabel = Number.isNaN(createdAt.getTime()) ? '' : createdAt.toLocaleString('pt-BR');
-    return '<article class="task-comment"><b>' + escapeHtml(comment.authorName || 'Colaborador') + '</b><time>' +
-      escapeHtml(dateLabel) + '</time><p>' + escapeHtml(comment.body) + '</p></article>';
+    var profiles = state.profiles || [];
+    var canAssign = String(task.createdBy) === String(currentUserId) ||
+      String(comment.authorId) === String(currentUserId);
+    var assignedTo = comment.assignedTo || comment.assigned_to || comment.assignedUserId || comment.assigned_user_id || '';
+    var assignedProfile = profiles.find(function (profile) {
+      return profile.active !== false && String(profile.id) === String(assignedTo);
+    });
+    var options = '<option value="">Sem responsável</option>' + profiles.filter(function (profile) {
+      return profile.active !== false;
+    }).map(function (profile) {
+      var name = profile.displayName || profile.nickname || profile.id;
+      return '<option value="' + escapeHtml(profile.id) + '"' +
+        (String(profile.id) === String(assignedTo) ? ' selected' : '') + '>' + escapeHtml(name) + '</option>';
+    }).join('');
+    if (assignedTo && !assignedProfile) {
+      options += '<option value="' + escapeHtml(assignedTo) + '" selected>Usuário atribuído</option>';
+    }
+    return '<article class="task-comment"><div class="task-comment-heading"><b>' +
+      escapeHtml(comment.authorName || 'Colaborador') + '</b><time>' + escapeHtml(dateLabel) + '</time></div>' +
+      '<p>' + escapeHtml(comment.body) + '</p><label class="task-comment-assignee">Atribuir comentário' +
+      '<select data-comment-assignee data-comment-id="' + escapeHtml(comment.id) + '"' +
+      (canAssign ? '' : ' disabled') + '>' + options + '</select></label></article>';
   }
 
   async function syncTaskDocumentViewers(task, assigneeNames) {
@@ -670,6 +1403,7 @@
         authorId: row.author_id,
         authorName: profile && (profile.displayName || profile.nickname) || 'Colaborador',
         body: row.body || '',
+        assignedTo: row.assigned_to || null,
         attachments: Array.isArray(row.attachments) ? row.attachments : [],
         createdAt: row.created_at
       };
@@ -682,6 +1416,45 @@
   }
 
   async function handleDetailChange(event) {
+    var assigneeSelect = event.target.closest('[data-comment-assignee]');
+    if (assigneeSelect) {
+      var state = getStoreState();
+      var comment = (state.taskComments || []).find(function (item) {
+        return String(item.id) === String(assigneeSelect.dataset.commentId);
+      });
+      var task = (state.tasks || []).find(function (item) {
+        return String(item.id) === String(detailOverlay.dataset.taskId);
+      });
+      if (!comment || !task ||
+          (String(task.createdBy) !== String(currentUserId) && String(comment.authorId) !== String(currentUserId))) return;
+      var assignedTo = assigneeSelect.value || null;
+      try {
+        if (/^[0-9a-f-]{36}$/i.test(String(comment.id))) {
+          if (!window.supabaseClient || typeof window.supabaseClient.rpc !== 'function') {
+            throw new Error('O serviço de atribuição de comentários não está disponível.');
+          }
+          var assignmentResult = await window.supabaseClient.rpc('rildonx_assign_task_comment', {
+            p_comment_id: comment.id,
+            p_assigned_to: assignedTo
+          });
+          if (assignmentResult.error) throw assignmentResult.error;
+        }
+        window.RildonXStore.setState({
+          taskComments: (state.taskComments || []).map(function (item) {
+            return String(item.id) === String(comment.id)
+              ? Object.assign({}, item, { assignedTo: assignedTo })
+              : item;
+          })
+        });
+        renderTaskDetails(task.id);
+        notify(assignedTo ? 'Comentário atribuído.' : 'Atribuição removida.');
+      } catch (error) {
+        console.error('Não foi possível atribuir o comentário:', error);
+        notify(error.message || 'Não foi possível atribuir o comentário. Aplique a migração SQL de tarefas.');
+        renderTaskDetails(task.id);
+      }
+      return;
+    }
     var index = event.target.dataset.checklistIndex;
     if (index === undefined) return;
     var task = (getStoreState().tasks || []).find(function (item) { return String(item.id) === detailOverlay.dataset.taskId; });
@@ -693,8 +1466,70 @@
   }
 
   async function handleDetailClick(event) {
+    if (event.target.closest('[data-toggle-task-archive]')) {
+      var archiveTask = (getStoreState().tasks || []).find(function (item) {
+        return String(item.id) === String(detailOverlay.dataset.taskId);
+      });
+      if (!archiveTask || !isTaskCreator(archiveTask)) {
+        notify('Somente o criador pode arquivar ou restaurar esta tarefa.');
+        return;
+      }
+      var nextArchived = !isTaskArchived(archiveTask);
+      window.RildonXStore.updateTask(archiveTask.id, {
+        metadata: Object.assign({}, taskMetadata(archiveTask), { archived: nextArchived })
+      });
+      if (detailOverlay) {
+        detailOverlay.remove();
+        detailOverlay = null;
+      }
+      notify(nextArchived ? 'Tarefa arquivada.' : 'Tarefa restaurada.');
+      return;
+    }
     if (event.target.closest('[data-delete-task]')) {
       await deleteTaskFromDetails();
+      return;
+    }
+    var createSubtaskButton = event.target.closest('[data-create-subtask]');
+    if (createSubtaskButton) {
+      var parentTask = (getStoreState().tasks || []).find(function (item) {
+        return String(item.id) === String(detailOverlay.dataset.taskId);
+      });
+      var subtaskInput = detailOverlay.querySelector('[data-subtask-title]');
+      var subtaskTitle = subtaskInput ? subtaskInput.value.trim() : '';
+      if (!parentTask || !subtaskTitle || !isTaskCreator(parentTask)) {
+        if (subtaskInput && !subtaskTitle) subtaskInput.focus();
+        return;
+      }
+      var state = getStoreState();
+      try {
+        window.RildonXStore.addTask({
+          id: createTaskId(),
+          title: subtaskTitle,
+          status: 'pendente',
+          priority: parentTask.priority || 'media',
+          dueDate: null,
+          startDate: null,
+          description: '',
+          assignees: Array.isArray(parentTask.assignees) ? parentTask.assignees.slice() : [],
+          viewerIds: Array.isArray(parentTask.viewerIds) ? parentTask.viewerIds.slice() : [],
+          createdBy: currentUserId || state.user && state.user.id || parentTask.createdBy || null,
+          projectId: parentTask.projectId || null,
+          sector: parentTask.sector || state.user && state.user.sector,
+          checklist: [],
+          attachments: [],
+          metadata: { parentTaskId: String(parentTask.id) }
+        });
+        renderTaskDetails(parentTask.id);
+        notify('Subtarefa adicionada.');
+      } catch (error) {
+        console.error('Não foi possível adicionar a subtarefa:', error);
+        notify(error.message || 'Não foi possível adicionar a subtarefa.');
+      }
+      return;
+    }
+    var subtaskButton = event.target.closest('[data-open-subtask]');
+    if (subtaskButton) {
+      openTaskDetails(subtaskButton.dataset.openSubtask);
       return;
     }
     var commentButton = event.target.closest('[data-submit-comment]');
@@ -707,6 +1542,27 @@
       return;
     }
     var button = event.target.closest('[data-open-attachment]');
+    var originAttachmentButton = event.target.closest('[data-open-origin-attachment]');
+    if (originAttachmentButton) {
+      var sourceDocument = (getStoreState().documents || []).find(function (documentItem) {
+        return String(documentItem.id) === String(originAttachmentButton.dataset.openOriginAttachment);
+      });
+      if (!sourceDocument) {
+        notify('O anexo original não está disponível.');
+        return;
+      }
+      try {
+        var sourceUrl = window.RildonXDocumentUpload
+          ? await window.RildonXDocumentUpload.getViewUrl(sourceDocument)
+          : sourceDocument.url;
+        if (!sourceUrl) throw new Error('O anexo original não possui um endereço disponível.');
+        window.open(sourceUrl, '_blank', 'noopener');
+      } catch (error) {
+        console.error('Não foi possível abrir o anexo original:', error);
+        notify(error.message || 'Não foi possível abrir o anexo original.');
+      }
+      return;
+    }
     if (!button) return;
     var task = (getStoreState().tasks || []).find(function (item) { return String(item.id) === detailOverlay.dataset.taskId; });
     var file = task && (task.attachments || [])[Number(button.dataset.openAttachment)];
@@ -725,6 +1581,12 @@
     var task = (getStoreState().tasks || []).find(function (item) { return String(item.id) === String(taskId); });
     if (!task || !isTaskCreator(task)) {
       notify('Somente o criador pode excluir esta tarefa.');
+      return;
+    }
+    if (getRealTasks(getStoreState()).some(function (candidate) {
+      return taskParentId(candidate) === String(task.id);
+    })) {
+      notify('Remova as subtarefas antes de excluir esta tarefa.');
       return;
     }
     if (!window.confirm('Deseja excluir esta tarefa? Essa ação não pode ser desfeita.')) return;
@@ -815,11 +1677,55 @@
     var task = (getStoreState().tasks || []).find(function (item) { return String(item.id) === detailOverlay.dataset.taskId; });
     if (!task) return;
     var formData = new FormData(event.target);
+    var dependencies = formData.getAll('dependsOn').map(String);
+    var state = getStoreState();
+    if (dependencyCycle(task.id, dependencies, state.tasks || [])) {
+      notify('Essa dependência criaria um ciclo entre tarefas.');
+      return;
+    }
+    var status = String(formData.get('status') || taskStatus(task));
+    var proposedTask = Object.assign({}, task, { metadata: Object.assign({}, taskMetadata(task), { dependsOn: dependencies }) });
+    if (status === 'concluida') {
+      var blockers = incompleteDependencies(proposedTask, state.tasks || []);
+      if (blockers.length) {
+        notify('Conclua primeiro: ' + blockers.map(function (item) { return item.title || 'Tarefa sem título'; }).join(', ') + '.');
+        return;
+      }
+    }
+    var previousMetadata = taskMetadata(task);
+    var nextFrequency = String(formData.get('recurrence') || '');
+    var dueDate = formData.get('dueDate') || null;
+    if (nextFrequency && !dueDate) {
+      notify('Defina um prazo para configurar a recorrência da tarefa.');
+      return;
+    }
+    var recurrence = nextFrequency ? {
+      frequency: nextFrequency,
+      interval: 1,
+      seriesId: previousMetadata.recurrence && previousMetadata.recurrence.seriesId || String(task.id),
+      occurrenceDate: previousMetadata.recurrence && previousMetadata.recurrence.occurrenceDate || dueDate,
+      occurrenceKey: previousMetadata.recurrence && previousMetadata.recurrence.occurrenceKey || String(task.id) + ':' + dueDate,
+      nextOccurrenceDate: previousMetadata.recurrence && previousMetadata.recurrence.frequency === nextFrequency &&
+        task.dueDate === dueDate ? previousMetadata.recurrence.nextOccurrenceDate : nextRecurrenceDate(dueDate, nextFrequency)
+    } : null;
+    var acceptanceCriteria = String(formData.get('acceptanceCriteria') || '').split(/\r?\n/)
+      .map(function (criterion) { return criterion.trim(); }).filter(Boolean);
+    var metadata = Object.assign({}, previousMetadata, {
+      dependsOn: dependencies,
+      acceptanceCriteria: acceptanceCriteria,
+      waitingOn: String(formData.get('waitingOn') || '').trim(),
+      blockedReason: String(formData.get('blockedReason') || '').trim(),
+      isMilestone: formData.has('isMilestone'),
+      recurrence: recurrence
+    });
     window.RildonXStore.updateTask(task.id, {
       title: String(formData.get('title') || '').trim(),
       startDate: formData.get('startDate') || null,
-      dueDate: formData.get('dueDate') || null,
-      description: String(formData.get('description') || '').trim()
+      dueDate: dueDate,
+      description: String(formData.get('description') || '').trim(),
+      priority: String(formData.get('priority') || 'media'),
+      status: status,
+      metadata: metadata
     });
     renderTaskDetails(task.id);
     notify('Tarefa atualizada.');
@@ -905,6 +1811,13 @@
     var state = getStoreState();
     var task = (state.tasks || []).find(function (item) { return String(item.id) === String(taskId); });
     if (!task || !isTaskCreator(task)) return;
+    if (status === 'concluida') {
+      var blockers = incompleteDependencies(task, state.tasks || []);
+      if (blockers.length) {
+        notify('Conclua primeiro: ' + blockers.map(function (item) { return item.title || 'Tarefa sem título'; }).join(', ') + '.');
+        return;
+      }
+    }
     var target = (state.tasks || []).filter(function (item) {
       return item.id !== task.id && item.isDemo !== true && taskStatus(item) === status;
     }).sort(function (a, b) { return Number(a.position || 0) - Number(b.position || 0); });
@@ -932,21 +1845,55 @@
     if (!taskRoot || taskRoot.dataset.bound === 'true') return;
     taskRoot.dataset.bound = 'true';
     taskRoot.addEventListener('input', function (event) {
-      if (event.target.id === 'global-search') renderBoard(getStoreState());
+      if (event.target.id === 'task-search') renderBoard(getStoreState());
+      if (event.target.id === 'task-filter-search') renderActiveTaskFilters(getStoreState());
     });
     taskRoot.addEventListener('change', function (event) {
-      if (event.target.id === 'task-project-filter') renderBoard(getStoreState());
+      if (event.target.matches('#task-project-filter,#task-status-filter,#task-priority-filter,#task-assignee-filter,#task-due-from,#task-due-to,#task-created-from,#task-created-to,#task-end-from,#task-end-to,#task-archived-filter,#task-tags-filter,#task-comment-assigned-filter,#task-created-by-filter')) {
+        readTaskFilterValues();
+        renderBoard(getStoreState());
+      }
+      if (event.target.id === 'task-saved-filter' && event.target.value !== '') {
+        var savedFilters = getSavedFilters();
+        var savedFilter = savedFilters[Number(event.target.value)];
+        if (savedFilter) applyTaskFilters(savedFilter.filters);
+        event.target.value = '';
+      }
       if (event.target.matches('[data-backlog-toggle]')) {
         updateBacklogItem(Number(event.target.dataset.backlogToggle), { completed: event.target.checked });
-      }
-      if (event.target.matches('[data-calendar-date]')) {
-        selectedCalendarDate = new Date(event.target.dataset.calendarDate + 'T12:00:00');
-        monthCursor = new Date(selectedCalendarDate.getFullYear(), selectedCalendarDate.getMonth(), 1);
-        renderCalendar(getStoreState());
       }
     });
     taskRoot.addEventListener('click', function (event) {
       if (event.target.closest('[data-collaborator-picker]')) return;
+      var filterMenu = document.getElementById('task-filter-menu');
+      if (filterMenu && !event.target.closest('#task-filter-menu')) filterMenu.open = false;
+      var addFilter = event.target.closest('[data-add-task-filter]');
+      if (addFilter) {
+        var filterKey = addFilter.dataset.addTaskFilter;
+        if (activeTaskFilterKeys.indexOf(filterKey) === -1) {
+          activeTaskFilterKeys.push(filterKey);
+          taskFilterValues[filterKey] = filterKey === 'dueDate' || filterKey === 'createdDate' || filterKey === 'endDate'
+            ? { from: '', to: '' }
+            : filterKey === 'archived' ? 'active' : '';
+        }
+        if (filterMenu) filterMenu.open = false;
+        var filterSearch = document.getElementById('task-filter-search');
+        if (filterSearch) filterSearch.value = '';
+        renderActiveTaskFilters(getStoreState());
+        updateTaskFilterCount();
+        renderBoard(getStoreState());
+        return;
+      }
+      var removeFilter = event.target.closest('[data-remove-task-filter]');
+      if (removeFilter) {
+        var removedFilterKey = removeFilter.dataset.removeTaskFilter;
+        activeTaskFilterKeys = activeTaskFilterKeys.filter(function (key) { return key !== removedFilterKey; });
+        delete taskFilterValues[removedFilterKey];
+        renderActiveTaskFilters(getStoreState());
+        updateTaskFilterCount();
+        renderBoard(getStoreState());
+        return;
+      }
       var addBacklogButton = event.target.closest('[data-add-backlog]');
       if (addBacklogButton) {
         var form = addBacklogButton.closest('.task-backlog-column').querySelector('[data-backlog-form]');
@@ -960,7 +1907,8 @@
         if (typeof window.openModal !== 'function') return;
         window.openModal('modal-nova-tarefa');
         var stage = addTaskButton.dataset.addTaskStage;
-        var stageLabel = stage === 'em-andamento' ? 'Em andamento' : stage === 'concluida' ? 'Concluída' : 'Pendente';
+        var stageLabels = { 'em-andamento': 'Em andamento', 'aguardando-terceiros': 'Aguardando terceiros', concluida: 'Concluída' };
+        var stageLabel = stageLabels[stage] || 'Pendente';
         document.querySelectorAll('#nt-etapa-group .choice-btn').forEach(function (button) {
           button.classList.toggle('selected', button.dataset.etapa === stageLabel);
         });
@@ -970,27 +1918,95 @@
         if (titleInput) titleInput.focus();
         return;
       }
+      var groupToggle = event.target.closest('[data-toggle-project-group]');
+      if (groupToggle) {
+        var group = groupToggle.closest('[data-project-group]');
+        var groupBoard = group && group.querySelector('.task-kanban-board');
+        if (group && groupBoard) {
+          var collapsed = !groupBoard.hidden;
+          groupBoard.hidden = collapsed;
+          group.classList.toggle('is-collapsed', collapsed);
+          groupToggle.setAttribute('aria-expanded', String(!collapsed));
+          var groups = getCollapsedTaskGroups().filter(function (id) { return id !== group.dataset.projectGroup; });
+          if (collapsed) groups.push(group.dataset.projectGroup);
+          saveCollapsedTaskGroups(groups);
+        }
+        return;
+      }
+      var columnToggle = event.target.closest('[data-toggle-task-column]');
+      if (columnToggle) {
+        var column = columnToggle.closest('.task-kanban-column');
+        var dropzone = column && column.querySelector('[data-task-dropzone]');
+        if (column && dropzone) {
+          var isCollapsed = !dropzone.hidden;
+          dropzone.hidden = isCollapsed;
+          column.classList.toggle('is-collapsed', isCollapsed);
+          columnToggle.setAttribute('aria-expanded', String(!isCollapsed));
+          columnToggle.setAttribute('aria-label', (isCollapsed ? 'Expandir coluna ' : 'Recolher coluna ') +
+            (statuses.find(function (item) { return item.id === column.dataset.taskStatus; }) || {}).label);
+          columnToggle.title = isCollapsed ? 'Expandir coluna' : 'Recolher coluna';
+          var collapsedColumns = getCollapsedTaskColumns().filter(function (id) {
+            return id !== column.dataset.taskColumnKey;
+          });
+          if (isCollapsed) collapsedColumns.push(column.dataset.taskColumnKey);
+          saveCollapsedTaskColumns(collapsedColumns);
+        }
+        return;
+      }
+      var quickView = event.target.closest('[data-task-quick-view]');
+      if (quickView) {
+        activeTaskViewFilter = quickView.dataset.taskQuickView;
+        updateTaskViewButtons();
+        renderBoard(getStoreState());
+        return;
+      }
+      var boardView = event.target.closest('[data-task-view]');
+      if (boardView) {
+        activeTaskView = boardView.dataset.taskView;
+        renderBoard(getStoreState());
+        return;
+      }
+      if (event.target.closest('[data-save-task-filter]')) {
+        var filterName = window.prompt('Nome para este filtro:');
+        if (!filterName || !filterName.trim()) return;
+        var saved = getSavedFilters();
+        saved.push({ name: filterName.trim(), filters: captureTaskFilters() });
+        saveSavedFilters(saved);
+        notify('Filtro salvo para sua conta neste navegador.');
+        return;
+      }
+      if (event.target.closest('[data-delete-task-filter]')) {
+        var currentSaved = document.getElementById('task-saved-filter');
+        if (!currentSaved || currentSaved.value === '') {
+          notify('Selecione um filtro salvo para removê-lo.');
+          return;
+        }
+        var filters = getSavedFilters();
+        filters.splice(Number(currentSaved.value), 1);
+        saveSavedFilters(filters);
+        notify('Filtro salvo removido.');
+        return;
+      }
+      if (event.target.closest('[data-clear-task-filters]')) {
+        applyTaskFilters({});
+        return;
+      }
       var removeBacklogButton = event.target.closest('[data-backlog-remove]');
       if (removeBacklogButton) {
         removeBacklogItem(Number(removeBacklogButton.dataset.backlogRemove));
         return;
       }
-      var monthStep = event.target.closest('[data-calendar-step]');
-      if (monthStep) {
-        var nextMonth = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + Number(monthStep.dataset.calendarStep), 1);
-        var targetDay = Math.min(selectedCalendarDate.getDate(), new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate());
-        selectedCalendarDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), targetDay);
-        renderCalendar(getStoreState());
+      var taskButton = event.target.closest('[data-open-task]');
+      if (taskButton) {
+        openTaskDetails(taskButton.dataset.openTask);
         return;
       }
-      var calendarDay = event.target.closest('[data-calendar-date]');
-      if (calendarDay) {
-        selectedCalendarDate = new Date(calendarDay.dataset.calendarDate + 'T12:00:00');
-        monthCursor = new Date(selectedCalendarDate.getFullYear(), selectedCalendarDate.getMonth(), 1);
-        renderCalendar(getStoreState());
+      var boardSubtask = event.target.closest('[data-open-subtask]');
+      if (boardSubtask) {
+        openTaskDetails(boardSubtask.dataset.openSubtask);
         return;
       }
-      var card = event.target.closest('.task-card');
+      var card = event.target.closest('.task-card,.task-compact-row');
       if (card) openTaskDetails(card.dataset.taskId);
     });
     taskRoot.addEventListener('keydown', function (event) {
@@ -1006,10 +2022,12 @@
         }
         return;
       }
-      var card = event.target.closest('.task-card');
-      if (card && (event.key === 'Enter' || event.key === ' ')) {
+      var card = event.target.closest('.task-card,.task-compact-row,.task-table-row');
+      if (card && (card === event.target || card.classList.contains('task-card') &&
+          !event.target.closest('button,a,input,select,textarea')) &&
+          (event.key === 'Enter' || event.key === ' ')) {
         event.preventDefault();
-        openTaskDetails(card.dataset.taskId);
+        openTaskDetails(card.dataset.taskId || card.dataset.openTask);
       }
     });
     taskRoot.addEventListener('dragstart', function (event) {
@@ -1132,28 +2150,51 @@
     if (document.body.dataset.page !== 'tarefas' || !window.RildonXStore) return;
     var layout = document.querySelector('#page-tarefas .layout-2col');
     if (!layout) return;
-    layout.innerHTML = '<div class="task-workspace"><div class="task-main"><div class="task-board-toolbar">' +
-      '<div><h2>Quadro de tarefas</h2><p>Arraste cartões entre etapas para atualizar o andamento.</p></div>' +
-      '<div class="task-board-filters"><select id="task-project-filter" aria-label="Filtrar por projeto"><option value="">Todos os projetos</option></select>' +
+    layout.innerHTML = '<div class="task-workspace"><div class="task-main">' +
+      '<div class="task-view-row"><nav class="task-view-toggle" id="task-view-toggle" aria-label="Visualização das tarefas">' +
+      '<button type="button" data-task-view="list" aria-pressed="false"><span aria-hidden="true">☷</span> Lista</button>' +
+      '<button type="button" data-task-view="kanban" aria-pressed="true"><span aria-hidden="true">▦</span> Quadro</button>' +
+      '<button type="button" data-task-view="table" aria-pressed="false"><span aria-hidden="true">▤</span> Tabela</button></nav>' +
+      '<div class="task-view-actions-right"><details class="task-filter-picker" id="task-filter-menu"><summary><span>Selecionar filtro</span><span class="task-filter-count" data-task-filter-count></span><span class="task-filter-picker-chevron" aria-hidden="true">⌃</span></summary>' +
+      '<div class="task-filter-dropdown"><label class="task-filter-search"><span aria-hidden="true">⌕</span><input id="task-filter-search" type="search" placeholder="Pesquisar..." aria-label="Pesquisar filtros"></label>' +
+      '<div class="task-filter-options" id="task-filter-options" role="listbox" aria-label="Filtros disponíveis"></div>' +
+      '<div class="task-saved-filter-controls"><select id="task-saved-filter" aria-label="Filtros salvos"><option value="">Filtros salvos</option></select>' +
+      '<button type="button" data-save-task-filter>Salvar filtro</button><button type="button" data-delete-task-filter aria-label="Excluir filtro selecionado">Excluir</button></div>' +
+      '<button type="button" class="task-clear-filters" data-clear-task-filters>Limpar filtros</button></div></details>' +
       '<button type="button" class="btn task-new-task-button" onclick="openModal(\'modal-nova-tarefa\')">' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova tarefa</button></div></div>' +
+      '<div class="task-selected-filters" id="task-selected-filters" aria-live="polite"></div>' +
+      '<div class="task-filter-toolbar"><label class="task-local-search"><span aria-hidden="true">⌕</span><input id="task-search" type="search" placeholder="Buscar tarefas" aria-label="Buscar tarefas"></label>' +
+      '</div>' +
+      '<nav class="task-quick-views" id="task-quick-views" aria-label="Visões rápidas">' +
+      '<button type="button" data-task-quick-view="mine" aria-pressed="false">Minhas tarefas</button>' +
+      '<button type="button" data-task-quick-view="today" aria-pressed="false">Hoje</button>' +
+      '<button type="button" data-task-quick-view="overdue" aria-pressed="false">Atrasadas</button>' +
+      '<button type="button" data-task-quick-view="waiting" aria-pressed="false">Aguardando terceiros</button>' +
+      '<button type="button" data-task-quick-view="all" aria-pressed="true">Todas</button></nav>' +
       '<div class="task-board-viewport" aria-label="Quadro de tarefas">' +
-      '<div id="task-kanban-board" class="task-board-content"></div></div></div>' +
-      '<aside class="task-side-widgets"><section class="card card-pad task-productivity-card"><h2>Minha produtividade</h2>' +
-      '<div class="task-productivity-donut" id="task-productivity-donut"><div><b id="task-productivity-percent">0%</b></div></div>' +
-      '<p id="task-productivity-summary"></p><small>Meta fixa: 70%</small></section>' +
-      '<section class="mini-cal task-calendar-widget"><h2>Calendário RildonX</h2><div id="task-calendar"></div></section>' +
-      '<section class="card task-project-widget"><div class="card-head"><h2>Projetos · agenda</h2></div><div class="task-project-agenda" id="task-project-agenda"></div></section></aside></div>';
+      '<div id="task-kanban-board" class="task-board-content"></div></div></div></div>';
     taskRoot = layout;
     bindBoard();
     bindCollaboratorPicker();
+    bindRequestTemplateControls();
+    renderSavedFilters();
+    renderRequestTemplates();
     render(getStoreState());
-    initIdentity().then(function () { render(getStoreState()); });
-    window.RildonXStore.subscribe(function (state) { render(state); });
-    var search = document.getElementById('global-search');
-    if (search) search.addEventListener('input', function () {
-      renderBoard(getStoreState());
+    initIdentity().then(async function () {
+      render(getStoreState());
+      await loadTaskPreferences();
+      await materializeDueRecurringTasks();
+      var sourceId = new URLSearchParams(window.location.search).get('calendarSource');
+      if (sourceId) {
+        var sourceTask = (getStoreState().tasks || []).find(function (task) {
+          return String(task.id) === sourceId;
+        });
+        if (sourceTask) openTaskDetails(sourceId);
+        else notify('A tarefa de origem não está disponível para sua conta.');
+      }
     });
+    window.RildonXStore.subscribe(function (state) { render(state); });
   }
 
   window.addEventListener('DOMContentLoaded', init);
