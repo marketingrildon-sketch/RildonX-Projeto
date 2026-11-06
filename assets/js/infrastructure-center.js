@@ -20,7 +20,9 @@
   var maintenanceTypes = ['Preventiva', 'Corretiva', 'Inspeção'];
   var style = document.createElement('link');
   style.rel = 'stylesheet';
-  style.href = new URL('assets/css/infrastructure-center.css?v=20261022c', document.baseURI).href;
+  var styleUrl = new URL('assets/css/infrastructure-center.css', document.baseURI);
+  if (window.RildonXBuildVersion) styleUrl.searchParams.set('v', window.RildonXBuildVersion);
+  style.href = styleUrl.href;
   document.head.appendChild(style);
 
   function escape(value) {

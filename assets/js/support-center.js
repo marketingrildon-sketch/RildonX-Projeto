@@ -26,7 +26,9 @@
 
   var stylesheet = document.createElement('link');
   stylesheet.rel = 'stylesheet';
-  stylesheet.href = new URL('assets/css/support-center.css?v=20261022f', document.baseURI).href;
+  var stylesheetUrl = new URL('assets/css/support-center.css', document.baseURI);
+  if (window.RildonXBuildVersion) stylesheetUrl.searchParams.set('v', window.RildonXBuildVersion);
+  stylesheet.href = stylesheetUrl.href;
   document.head.appendChild(stylesheet);
 
   function escapeHtml(value) {
