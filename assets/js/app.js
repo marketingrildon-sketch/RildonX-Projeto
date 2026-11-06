@@ -563,6 +563,64 @@ var activePersonProfileId = null;
 var pendingForwardMessageId = null;
 var replyToMessageId = null;
 var lastImagePreviewFailureToastAt = 0;
+var conversationListQuery = '';
+var conversationListFilter = 'all';
+
+function getMutedConversationIds(state) {
+  var userId = state && state.user && state.user.id || 'anonymous';
+  var key = 'rildonx:muted-conversations:' + userId;
+  try {
+    var stored = window.localStorage.getItem(key);
+    var ids = stored ? JSON.parse(stored) : [];
+    return new Set(Array.isArray(ids) ? ids.map(String) : []);
+  } catch (error) {
+    console.error('Não foi possível carregar as conversas silenciadas neste dispositivo:', error);
+    return new Set();
+  }
+}
+
+function saveMutedConversationIds(state, ids) {
+  var userId = state && state.user && state.user.id || 'anonymous';
+  var key = 'rildonx:muted-conversations:' + userId;
+  window.localStorage.setItem(key, JSON.stringify(Array.from(ids)));
+}
+
+function getMentionNotificationSettings(state) {
+  var userId = state && state.user && state.user.id || 'anonymous';
+  var key = 'rildonx:mention-notifications:' + userId;
+  try {
+    var stored = window.localStorage.getItem(key);
+    var settings = stored ? JSON.parse(stored) : {};
+    return settings && typeof settings === 'object' && !Array.isArray(settings) ? settings : {};
+  } catch (error) {
+    console.error('Não foi possível carregar as preferências de menções neste dispositivo:', error);
+    return {};
+  }
+}
+
+function getMentionNotificationConversationIds(state) {
+  return new Set(Object.keys(getMentionNotificationSettings(state)));
+}
+
+function saveMentionNotificationSettings(state, settings) {
+  var userId = state && state.user && state.user.id || 'anonymous';
+  var key = 'rildonx:mention-notifications:' + userId;
+  window.localStorage.setItem(key, JSON.stringify(settings));
+}
+
+function messageMentionsCurrentUser(message, state) {
+  if (!message || !state || !state.user || !state.user.id) return false;
+  var aliases = (state.profiles || []).filter(function(profile) {
+    return String(profile.id) === String(state.user.id);
+  }).reduce(function(names, profile) {
+    return names.concat([profile.displayName, profile.nickname]);
+  }, []);
+  aliases.push(state.user.name);
+  var normalizedMessage = normalizeSearchText(message.text || '');
+  return aliases.filter(Boolean).some(function(name) {
+    return normalizedMessage.indexOf('@' + normalizeSearchText(name).trim()) !== -1;
+  });
+}
 
 function getConversationCatalog(state) {
   var localConversation = (Array.isArray(state.conversations) ? state.conversations : []).find(function(conversation) {
@@ -575,6 +633,7 @@ function getConversationCatalog(state) {
     description: 'Conversa local para testes.'
   };
   var visibleIds = new Set(state.visibleConversationIds || []);
+  getHiddenConversationIds(state).forEach(function(id) { visibleIds.add(id); });
   return [local].concat((Array.isArray(state.conversations) ? state.conversations : []).filter(function(conversation) {
     return conversation.id !== 'local-test' && visibleIds.has(conversation.id);
   }));
@@ -596,14 +655,20 @@ function renderConversationListFromStore() {
 
   var state = window.RildonXStore.getState();
   var catalog = getConversationCatalog(state);
+  var hiddenIds = getHiddenConversationIds(state);
+  var mutedIds = getMutedConversationIds(state);
   var requestedConversationId = new URLSearchParams(window.location.search).get('conversation');
   if (requestedConversationId && catalog.some(function(conversation) {
     return conversation.id === requestedConversationId;
   })) {
     activeConversationId = requestedConversationId;
-    window.history.replaceState(null, '', window.location.pathname);
+    var shell = document.querySelector('.messenger-shell');
+    if (shell) shell.classList.add('show-chat');
+    markConversationAsRead(requestedConversationId);
+    window.history.replaceState(null, '', window.location.pathname + window.location.hash);
   }
   var visibleIds = new Set(state.visibleConversationIds || []);
+  hiddenIds.forEach(function(id) { visibleIds.add(id); });
   var messages = (state.messages || []).filter(function(message) {
     return message.conversationId === 'local-test' && message.localOnly === true ||
       visibleIds.has(message.conversationId);
@@ -619,37 +684,241 @@ function renderConversationListFromStore() {
     var items = (groups[conversation.id] || []).slice().sort(function(first, second) {
       return new Date(second.sentAt || 0) - new Date(first.sentAt || 0);
     });
-    return { conversation: conversation, latest: items[0] || null, count: items.length };
+    var readRecord = (state.conversationReads || []).find(function(read) {
+      return read.conversationId === conversation.id &&
+        (!read.userId || !state.user || !state.user.id || String(read.userId) === String(state.user.id));
+    });
+    var lastReadAt = readRecord && readRecord.lastReadAt ? new Date(readRecord.lastReadAt).getTime() : null;
+    var unreadCount = items.filter(function(message) {
+      var isIncoming = !state.user || !state.user.id || String(message.senderId) !== String(state.user.id);
+      var sentAt = new Date(message.sentAt || 0).getTime();
+      return isIncoming && (lastReadAt === null || sentAt > lastReadAt);
+    }).length;
+    return {
+      conversation: conversation,
+      latest: items[0] || null,
+      unreadCount: unreadCount,
+      isMuted: mutedIds.has(String(conversation.id)),
+      isArchived: hiddenIds.has(conversation.id)
+    };
   }).sort(function(first, second) {
     return new Date((second.latest && second.latest.sentAt) || second.conversation.updatedAt || 0) - new Date((first.latest && first.latest.sentAt) || first.conversation.updatedAt || 0);
   });
 
-  root.innerHTML = conversations.length ? conversations.map(function(conversation, index) {
-    var latest = conversation.latest;
-    var otherProfile = getConversationOtherProfile(conversation.conversation, state);
-    var label = getProfileDisplayName(otherProfile, conversation.conversation.name || conversation.conversation.id);
-    var isActive = activeConversationId === conversation.conversation.id || (!activeConversationId && index === 0);
-    var avatar = conversation.conversation.kind === 'direct'
+  var normalizedQuery = conversationListQuery.trim().toLocaleLowerCase('pt-BR');
+  var filteredConversations = conversations.filter(function(item) {
+    if (conversationListFilter === 'archived' ? !item.isArchived : item.isArchived) return false;
+    if (conversationListFilter === 'unread' && !item.unreadCount) return false;
+    if (conversationListFilter === 'group' &&
+      (item.conversation.kind === 'direct' || item.conversation.kind === 'local')) return false;
+    if (conversationListFilter === 'muted' && !item.isMuted) return false;
+    if (!normalizedQuery) return true;
+    var otherProfile = getConversationOtherProfile(item.conversation, state);
+    var label = getProfileDisplayName(otherProfile, item.conversation.name || item.conversation.id);
+    var messageText = (groups[item.conversation.id] || []).map(function(message) {
+      var attachments = (message.attachments || []).map(function(attachment) {
+        var id = typeof attachment === 'string' ? attachment : attachment && attachment.id;
+        var documentItem = (state.documents || []).find(function(doc) { return id && String(doc.id) === String(id); });
+        return documentItem && documentItem.name || attachment && attachment.name || '';
+      }).join(' ');
+      return String(message.text || '') + ' ' + attachments;
+    }).join(' ');
+    return [label, item.conversation.name, item.conversation.description, messageText]
+      .join(' ').toLocaleLowerCase('pt-BR').indexOf(normalizedQuery) !== -1;
+  });
+
+  root.innerHTML = filteredConversations.length ? filteredConversations.map(function(item) {
+    var conversation = item.conversation;
+    var latest = item.latest;
+    var otherProfile = getConversationOtherProfile(conversation, state);
+    var label = getProfileDisplayName(otherProfile, conversation.name || conversation.id);
+    var isActive = activeConversationId === conversation.id;
+    var avatar = conversation.kind === 'direct'
       ? profileAvatarImageMarkup(otherProfile)
-      : profileAvatarImageMarkup({ avatarUrl: conversation.conversation.avatarUrl });
-    return '<div class="conv-item' + (isActive ? ' active' : '') + '" data-conversation-id="' + escapeHtml(conversation.conversation.id) + '">' +
-      '<div class="conv-avatar group">' + escapeHtml(getPostInitials(label)) + avatar + '</div>' +
-      '<div class="conv-body"><div class="top-line"><b>' + escapeHtml(label) + '</b><span class="time">' + formatTaskDate(latest ? latest.sentAt : conversation.conversation.updatedAt) + '</span></div>' +
-      '<div class="preview"><p>' + escapeHtml(latest ? (latest.text || 'Arquivo compartilhado') : 'Nova conversa') + '</p>' + (conversation.count ? '<span class="unread">' + conversation.count + '</span>' : '') + '</div></div></div>';
-  }).join('') : '<div class="conv-item"><div class="conv-body"><div class="top-line"><b>Teste local</b></div><div class="preview"><p>Envie a primeira mensagem.</p></div></div></div>';
+      : profileAvatarImageMarkup({ avatarUrl: conversation.avatarUrl });
+    var classes = 'conv-item' + (isActive ? ' active' : '') +
+      (item.unreadCount ? ' is-unread' : '') +
+      (item.isMuted ? ' is-muted' : '') +
+      (item.isArchived ? ' is-archived' : '');
+    var status = item.isArchived ? '<span class="conv-status">Arquivada</span>' :
+      item.isMuted ? '<span class="conv-status">Silenciada</span>' : '';
+    return '<button class="' + classes + '" type="button" data-conversation-id="' + escapeHtml(conversation.id) + '" aria-current="' + (isActive ? 'true' : 'false') + '">' +
+      '<span class="conv-avatar group">' + escapeHtml(getPostInitials(label)) + avatar + '</span>' +
+      '<span class="conv-body"><span class="top-line"><b>' + escapeHtml(label) + '</b><span class="time">' + formatTaskDate(latest ? latest.sentAt : conversation.updatedAt) + '</span></span>' +
+      '<span class="preview"><span class="preview-text">' + escapeHtml(latest ? (latest.text || 'Arquivo compartilhado') : 'Nova conversa') + '</span>' +
+      (item.unreadCount ? '<span class="unread" aria-label="' + item.unreadCount + ' mensagens não lidas">' + item.unreadCount + '</span>' : status ? '<span class="conv-state-marker" aria-hidden="true">•</span>' : '') +
+      '</span>' + status + '</span></button>';
+  }).join('') : '<div class="conversation-list-empty">' +
+    (conversations.length ? 'Nenhuma conversa corresponde à busca ou ao filtro.' : 'Suas conversas aparecerão aqui.') +
+    '</div>';
   hydrateProfileAvatarImages(root);
 
   root.querySelectorAll('[data-conversation-id]').forEach(function(item) {
     item.addEventListener('click', function() {
       activeConversationId = item.dataset.conversationId;
+      var shell = document.querySelector('.messenger-shell');
+      if (shell) shell.classList.add('show-chat');
+      markConversationAsRead(activeConversationId);
       renderConversationListFromStore();
       renderMessagesFromStore();
     });
   });
 }
 
+function bindConversationListControls() {
+  var search = document.getElementById('conversation-list-search');
+  var filters = document.querySelector('.conv-filters');
+  var backButton = document.getElementById('chat-back-btn');
+  var actionsButton = document.getElementById('conversation-actions-btn');
+  var actionsMenu = document.getElementById('conversation-actions-menu');
+  if (search && search.dataset.bound !== 'true') {
+    search.addEventListener('input', function() {
+      conversationListQuery = search.value;
+      renderConversationListFromStore();
+    });
+    search.dataset.bound = 'true';
+  }
+  if (filters && filters.dataset.bound !== 'true') {
+    filters.addEventListener('click', function(event) {
+      var button = event.target.closest('[data-conversation-filter]');
+      if (!button) return;
+      conversationListFilter = button.dataset.conversationFilter;
+      filters.querySelectorAll('[data-conversation-filter]').forEach(function(filterButton) {
+        filterButton.setAttribute('aria-pressed', String(filterButton === button));
+      });
+      renderConversationListFromStore();
+    });
+    filters.dataset.bound = 'true';
+  }
+  if (backButton && backButton.dataset.bound !== 'true') {
+    backButton.addEventListener('click', function() {
+      var shell = document.querySelector('.messenger-shell');
+      if (shell) shell.classList.remove('show-chat');
+      var searchInput = document.getElementById('conversation-list-search');
+      if (searchInput) searchInput.focus();
+    });
+    backButton.dataset.bound = 'true';
+  }
+  if (actionsButton && actionsMenu && actionsButton.dataset.bound !== 'true') {
+    actionsButton.addEventListener('click', function() {
+      actionsMenu.hidden = !actionsMenu.hidden;
+      actionsButton.setAttribute('aria-expanded', String(!actionsMenu.hidden));
+      if (!actionsMenu.hidden) {
+        var state = window.RildonXStore && window.RildonXStore.getState();
+        var muted = state && getMutedConversationIds(state).has(String(activeConversationId));
+        var mentionNotifications = state && getMentionNotificationConversationIds(state).has(String(activeConversationId));
+        var hidden = state && getHiddenConversationIds(state).has(activeConversationId);
+        var muteAction = actionsMenu.querySelector('[data-conversation-action="mute"]');
+        var mentionAction = actionsMenu.querySelector('[data-conversation-action="mentions"]');
+        var archiveAction = actionsMenu.querySelector('[data-conversation-action="archive"]');
+        if (muteAction) muteAction.textContent = muted ? 'Remover silenciamento neste dispositivo' : 'Silenciar neste dispositivo';
+        if (mentionAction) mentionAction.textContent = mentionNotifications
+          ? 'Desativar alertas de menções neste dispositivo'
+          : 'Ativar alertas de menções neste dispositivo';
+        if (archiveAction) {
+          archiveAction.textContent = hidden ? 'Desarquivar conversa' : 'Arquivar conversa';
+          archiveAction.disabled = activeConversationId === 'local-test';
+        }
+      }
+    });
+    actionsButton.dataset.bound = 'true';
+  }
+  if (actionsMenu && actionsMenu.dataset.bound !== 'true') {
+    actionsMenu.addEventListener('click', async function(event) {
+      var actionButton = event.target.closest('[data-conversation-action]');
+      if (!actionButton || !window.RildonXStore) return;
+      var action = actionButton.dataset.conversationAction;
+      var state = window.RildonXStore.getState();
+      if (action === 'details') {
+        actionsMenu.hidden = true;
+        actionsButton.setAttribute('aria-expanded', 'false');
+        var detailsPanel = document.getElementById('conversation-details-panel');
+        var detailsCloseButton = document.getElementById('details-close-btn');
+        if (detailsPanel) detailsPanel.hidden = false;
+        if (detailsCloseButton) detailsCloseButton.focus();
+        return;
+      }
+      if (action === 'mute') {
+        try {
+          var mutedIds = getMutedConversationIds(state);
+          if (mutedIds.has(String(activeConversationId))) mutedIds.delete(String(activeConversationId));
+          else mutedIds.add(String(activeConversationId));
+          saveMutedConversationIds(state, mutedIds);
+          renderConversationListFromStore();
+          actionsMenu.hidden = true;
+          actionsButton.setAttribute('aria-expanded', 'false');
+        } catch (error) {
+          console.error('Não foi possível atualizar o silenciamento da conversa:', error);
+          showToast('Não foi possível atualizar o silenciamento neste dispositivo.');
+        }
+        return;
+      }
+      if (action === 'mentions') {
+        try {
+          var mentionSettings = getMentionNotificationSettings(state);
+          if (Object.prototype.hasOwnProperty.call(mentionSettings, String(activeConversationId))) {
+            delete mentionSettings[String(activeConversationId)];
+          } else {
+            mentionSettings[String(activeConversationId)] = new Date().toISOString();
+          }
+          saveMentionNotificationSettings(state, mentionSettings);
+          renderGlobalNotifications();
+          actionsMenu.hidden = true;
+          actionsButton.setAttribute('aria-expanded', 'false');
+        } catch (error) {
+          console.error('Não foi possível atualizar as preferências de menções:', error);
+          showToast('Não foi possível atualizar os alertas de menções neste dispositivo.');
+        }
+        return;
+      }
+      if (action === 'archive') {
+        var syncMethod = getHiddenConversationIds(state).has(activeConversationId)
+          ? window.RildonXSync && window.RildonXSync.restoreConversationForUser
+          : window.RildonXSync && window.RildonXSync.hideConversationForUser;
+        if (typeof syncMethod !== 'function') {
+          showToast('O serviço de conversas não está disponível.');
+          return;
+        }
+        actionButton.disabled = true;
+        try {
+          await syncMethod(activeConversationId);
+          if (getHiddenConversationIds(window.RildonXStore.getState()).has(activeConversationId)) {
+            activeConversationId = 'local-test';
+            var shell = document.querySelector('.messenger-shell');
+            if (shell) shell.classList.remove('show-chat');
+          } else {
+            conversationListFilter = 'all';
+            document.querySelectorAll('[data-conversation-filter]').forEach(function(filterButton) {
+              filterButton.setAttribute('aria-pressed', String(filterButton.dataset.conversationFilter === 'all'));
+            });
+          }
+          actionsMenu.hidden = true;
+          actionsButton.setAttribute('aria-expanded', 'false');
+          renderConversationListFromStore();
+          renderMessagesFromStore();
+        } catch (error) {
+          console.error('Não foi possível arquivar ou restaurar a conversa:', error);
+          showToast(error.message || 'Não foi possível atualizar a conversa.');
+        } finally {
+          actionButton.disabled = false;
+        }
+      }
+    });
+    actionsMenu.dataset.bound = 'true';
+  }
+  if (actionsMenu && document.documentElement.dataset.conversationMenuDismissBound !== 'true') {
+    document.addEventListener('click', function(event) {
+      if (event.target.closest('.conversation-actions')) return;
+      actionsMenu.hidden = true;
+      if (actionsButton) actionsButton.setAttribute('aria-expanded', 'false');
+    });
+    document.documentElement.dataset.conversationMenuDismissBound = 'true';
+  }
+}
+
 function markConversationAsRead(conversationId) {
-  if (!window.RildonXSync || typeof window.RildonXSync.markConversationRead !== 'function') return;
+  if (!conversationId || conversationId === 'local-test' ||
+    !window.RildonXSync || typeof window.RildonXSync.markConversationRead !== 'function') return;
   window.RildonXSync.markConversationRead(conversationId).catch(function(error) {
     console.error('Não foi possível atualizar a leitura da conversa:', error);
   });
@@ -737,19 +1006,14 @@ function renderNewConversationUsers() {
 function bindConversationDetails() {
   var chatPanel = document.querySelector('.chat-panel');
   var panel = document.getElementById('conversation-details-panel');
-  var openButton = document.getElementById('details-toggle-btn');
   var closeButton = document.getElementById('details-close-btn');
-  var titleButton = document.getElementById('active-conversation-name');
-  if (!chatPanel || !panel || !openButton || !closeButton || chatPanel.dataset.detailsBound === 'true') return;
+  if (!chatPanel || !panel || !closeButton || chatPanel.dataset.detailsBound === 'true') return;
 
   function setDetailsVisible(visible) {
     panel.hidden = !visible;
-    openButton.setAttribute('aria-expanded', String(visible));
   }
 
-  openButton.addEventListener('click', function() { setDetailsVisible(true); });
   closeButton.addEventListener('click', function() { setDetailsVisible(false); });
-  if (titleButton) titleButton.addEventListener('click', function() { setDetailsVisible(true); });
   chatPanel.addEventListener('click', function(event) {
     if (event.target === chatPanel) setDetailsVisible(false);
   });
@@ -878,6 +1142,13 @@ function renderMessagesFromStore() {
   })).join('') : '<div class="conversation-details-empty">Nenhuma conversa selecionada.</div>';
   hydrateProfileAvatarImages(chatRoot);
   hydrateMessageImagePreviews(state.documents || []);
+  if (window.location.hash.indexOf('#message-') === 0) {
+    var linkedMessage = document.getElementById(window.location.hash.slice(1));
+    if (linkedMessage) {
+      linkedMessage.scrollIntoView({ block: 'center' });
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }
 
   var activeConversation = catalog.find(function(conversation) { return conversation.id === activeConversationId; });
   var titleRoot = document.getElementById('active-conversation-name');
@@ -973,7 +1244,7 @@ function renderPeopleCard(state) {
   var profiles = (state.profiles || []).filter(function(profile) {
     return profile.active !== false && profile.id !== currentUserId;
   });
-  var visibleProfiles = profiles.slice(0, 5);
+  var visibleProfiles = profiles.slice(0, 8);
   root.innerHTML = visibleProfiles.length ? visibleProfiles.map(function(profile) {
     var name = profile.displayName || profile.nickname || 'Usuário';
     var initials = name.split(/\s+/).map(function(part) { return part.charAt(0); }).join('').slice(0, 2).toUpperCase();
@@ -1637,7 +1908,7 @@ function renderHomeRecentConversations() {
     var firstTime = first.latest ? first.latest.sentAt : first.conversation.updatedAt;
     var secondTime = second.latest ? second.latest.sentAt : second.conversation.updatedAt;
     return new Date(secondTime || 0) - new Date(firstTime || 0);
-  }).slice(0, 3);
+  }).slice(0, 5);
 
   root.innerHTML = conversations.length ? conversations.map(function(item) {
     var message = item.latest;
@@ -1672,6 +1943,33 @@ function renderHomeRecentConversations() {
       (item.unreadCount ? '<span class="home-conversation-unread" aria-label="' + item.unreadCount + ' mensagens não lidas">' + (item.unreadCount > 99 ? '99+' : item.unreadCount) + '</span>' : '') +
       '<span class="home-conversation-time">' + escapeHtml(formatPostTime(sentAt)) + '</span></div></div>';
   }).join('') : '<div class="home-widget-empty">Nenhuma conversa recente.</div>';
+  hydrateProfileAvatarImages(root);
+}
+
+function renderHomePeopleFromStore() {
+  if (!window.RildonXStore) return;
+  var root = document.getElementById('inicio-people-list');
+  if (!root) return;
+
+  var state = window.RildonXStore.getState();
+  var currentUserId = muralCurrentUserId || state.user && state.user.id;
+  var profiles = (state.profiles || []).filter(function(profile) {
+    return profile.active !== false && String(profile.id) !== String(currentUserId || '');
+  }).sort(function(first, second) {
+    var firstName = first.displayName || first.nickname || '';
+    var secondName = second.displayName || second.nickname || '';
+    return firstName.localeCompare(secondName, 'pt-BR');
+  }).slice(0, 4);
+
+  root.innerHTML = profiles.length ? profiles.map(function(profile) {
+    var name = profile.displayName || profile.nickname || 'Usuário';
+    var initials = getPostInitials(name);
+    var subtitle = [profile.sector, profile.role].filter(Boolean).join(' · ') || 'Colaborador';
+    return '<div class="home-person-row"><span class="conv-avatar home-person-avatar">' +
+      escapeHtml(initials) + profileAvatarImageMarkup(profile) + '</span>' +
+      '<span class="home-person-copy"><b>' + escapeHtml(name) + '</b><span>' +
+      escapeHtml(subtitle) + '</span></span></div>';
+  }).join('') : '<div class="home-widget-empty">Nenhuma pessoa disponível.</div>';
   hydrateProfileAvatarImages(root);
 }
 
@@ -2048,12 +2346,27 @@ function buildGlobalNotifications(state) {
       addDeadline(project.name || 'Projeto', 'Projeto', project.endDate, project.createdAt, 'projetos.html', 'Prazo', false, project.id);
     }
   });
+  var mutedConversationIds = getMutedConversationIds(state);
+  var mentionNotificationSettings = getMentionNotificationSettings(state);
   (state.messages || []).forEach(function(message) {
     if (muralCurrentUserId && message.senderId === muralCurrentUserId) return;
+    var conversationId = String(message.conversationId || 'local-test');
+    if (mutedConversationIds.has(conversationId) ||
+      !Object.prototype.hasOwnProperty.call(mentionNotificationSettings, conversationId) ||
+      !messageMentionsCurrentUser(message, state)) return;
+    var enabledAt = new Date(mentionNotificationSettings[conversationId]).getTime();
+    if (Number.isFinite(enabledAt) && new Date(message.sentAt || 0).getTime() <= enabledAt) return;
     var lastReadAt = readByConversation.get(message.conversationId || 'local-test');
     if (lastReadAt && new Date(message.sentAt || 0).getTime() <= lastReadAt) return;
     var senderProfile = findProfileById(message.senderId, state.profiles);
-    add({ category: 'Mensagem', title: getProfileDisplayName(senderProfile, message.senderName || 'Nova mensagem'), detail: message.text || 'Compartilhou um arquivo', timestamp: message.sentAt, notificationId: 'message:' + message.id, href: 'mensagens.html' });
+    add({
+      category: 'Menção',
+      title: getProfileDisplayName(senderProfile, message.senderName || 'Nova mensagem') + ' mencionou você',
+      detail: message.text || 'Compartilhou um arquivo',
+      timestamp: message.sentAt,
+      notificationId: 'message-mention:' + message.id,
+      href: 'mensagens.html?conversation=' + encodeURIComponent(conversationId) + '#message-' + encodeURIComponent(message.id)
+    });
   });
   (state.documents || []).forEach(function(item) {
     add({ category: 'Documento', title: 'Novo arquivo: ' + (item.name || 'Documento'), detail: item.folder || 'Equipe', timestamp: item.sentAt, notificationId: 'document:' + item.id, href: 'documentos.html' });
@@ -4134,7 +4447,7 @@ async function createTaskFromOrigin(sourceType, source) {
   var sourceHref = sourceType === 'post'
     ? 'mural.html#' + encodeURIComponent('mural-post-' + source.id)
     : sourceType === 'message'
-      ? 'mensagens.html#' + encodeURIComponent('message-' + source.id)
+      ? 'mensagens.html?conversation=' + encodeURIComponent(source.conversationId || '') + '#' + encodeURIComponent('message-' + source.id)
       : '';
   var priority = String(source.priority || 'media').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   if (['alta', 'baixa'].indexOf(priority) === -1) priority = 'media';
@@ -4165,7 +4478,16 @@ async function createTaskFromOrigin(sourceType, source) {
         label: sourceLabels[sourceType] || 'Conteúdo de origem',
         title: sourceTitle,
         href: sourceHref,
-        attachments: originAttachments
+        attachments: originAttachments,
+        authorId: source.senderId || source.authorId || null,
+        authorName: source.senderName || source.authorName || null,
+        createdAt: source.sentAt || source.createdAt || null,
+        conversationId: source.conversationId || null,
+        conversationName: sourceType === 'message'
+          ? ((state.conversations || []).find(function(conversation) {
+            return String(conversation.id) === String(source.conversationId);
+          }) || {}).name || null
+          : null
       }
     }
   });
@@ -4641,6 +4963,7 @@ function refreshStoreDrivenUi() {
   renderMessagesFromStore();
   renderInicioTasksFromStore();
   renderHomeRecentConversations();
+  renderHomePeopleFromStore();
   renderHomeRecentDocuments();
   renderHomeUpcomingEvents();
   renderHomeFeedPreview();
@@ -4782,7 +5105,8 @@ function bindMessageComposer() {
           sender_name: senderName,
           text: messageText,
           sent_at: sentAt,
-          attachments: attachmentIds
+          attachments: attachmentIds,
+          reply_to_id: replyToMessageId || null
         }).select('*').single();
         if (remoteMessage.error) throw remoteMessage.error;
         messageId = remoteMessage.data.id;
@@ -4966,17 +5290,28 @@ function renderChatSearchResults(query) {
     resultsRoot.innerHTML = '<p>Digite um texto para buscar nesta conversa.</p>';
     return;
   }
-  var messages = (window.RildonXStore.getState().messages || []).filter(function(message) {
-    return message.conversationId === activeConversationId &&
-      (activeConversationId !== 'local-test' || message.localOnly === true) &&
-      String(message.text || '').toLocaleLowerCase('pt-BR').indexOf(search) !== -1;
+  var state = window.RildonXStore.getState();
+  var messages = (state.messages || []).filter(function(message) {
+    if (message.conversationId !== activeConversationId ||
+      (activeConversationId === 'local-test' && message.localOnly !== true)) return false;
+    var attachmentNames = (message.attachments || []).map(function(attachment) {
+      var id = typeof attachment === 'string' ? attachment : attachment && attachment.id;
+      var documentItem = (state.documents || []).find(function(item) { return id && String(item.id) === String(id); });
+      return documentItem && documentItem.name || attachment && attachment.name || '';
+    }).join(' ');
+    return (String(message.text || '') + ' ' + attachmentNames).toLocaleLowerCase('pt-BR').indexOf(search) !== -1;
   }).slice().sort(function(first, second) {
     return new Date(second.sentAt || 0) - new Date(first.sentAt || 0);
   });
   resultsRoot.innerHTML = '<p class="chat-search-count">' + messages.length +
     (messages.length === 1 ? ' resultado' : ' resultados') + '</p>' +
     (messages.length ? messages.map(function(message) {
-      var snippet = String(message.text || '').trim();
+      var attachmentNames = (message.attachments || []).map(function(attachment) {
+        var id = typeof attachment === 'string' ? attachment : attachment && attachment.id;
+        var documentItem = (state.documents || []).find(function(item) { return id && String(item.id) === String(id); });
+        return documentItem && documentItem.name || attachment && attachment.name || '';
+      }).filter(Boolean).join(', ');
+      var snippet = String(message.text || attachmentNames || 'Arquivo compartilhado').trim();
       if (snippet.length > 120) snippet = snippet.slice(0, 117) + '...';
       return '<button type="button" class="chat-search-result" data-chat-search-result="' +
           escapeHtml(message.id) + '"><b>' + escapeHtml(getProfileDisplayName(
@@ -5512,6 +5847,7 @@ document.addEventListener('DOMContentLoaded', function () {
   bindQuickCreateActions();
   bindMessageComposer();
   bindMessageActions();
+  bindConversationListControls();
   bindConversationDetails();
   bindNewConversationMenu();
   bindMuralFeed();

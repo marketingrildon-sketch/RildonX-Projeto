@@ -48,7 +48,8 @@
       senderName: row.sender_name || row.senderName || 'Usuário',
       text: row.text || '',
       sentAt: row.sent_at || row.sentAt || null,
-      attachments: Array.isArray(row.attachments) ? row.attachments : safeJsonParse(row.attachments || '[]')
+      attachments: Array.isArray(row.attachments) ? row.attachments : safeJsonParse(row.attachments || '[]'),
+      replyToId: row.reply_to_id || row.replyToId || null
     };
   }
 
@@ -877,6 +878,45 @@
     });
   }
 
+  async function restoreConversationForUser(conversationId) {
+    await syncReady;
+    if (!conversationId || !getSupabaseEnabled() || !window.RildonXStore) {
+      throw new Error('O serviço de conversas não está disponível.');
+    }
+    const userResult = await window.supabaseClient.auth.getUser();
+    if (userResult.error) throw userResult.error;
+    const user = userResult.data && userResult.data.user;
+    if (!user) throw new Error('Sua sessão expirou. Entre novamente.');
+    await ensureConversationRecord(conversationId, user.id);
+
+    const result = await window.supabaseClient.from('conversation_members')
+      .update({ hidden_at: null })
+      .eq('conversation_id', conversationId)
+      .eq('user_id', user.id)
+      .select('conversation_id');
+    if (result.error) throw result.error;
+    if (!result.data || !result.data.length) {
+      throw new Error('Não foi possível localizar sua participação nesta conversa.');
+    }
+
+    const state = window.RildonXStore.getState();
+    const reads = (state.conversationReads || []).filter(function(item) {
+      return !(item.conversationId === conversationId && item.userId === user.id);
+    });
+    reads.push({ conversationId: conversationId, userId: user.id, hiddenAt: null });
+    const memberships = (state.conversationMemberships || []).filter(function(item) {
+      return !(item.conversationId === conversationId && item.userId === user.id);
+    });
+    memberships.push({ conversationId: conversationId, userId: user.id, hiddenAt: null });
+    const visibleIds = new Set(state.visibleConversationIds || []);
+    visibleIds.add(conversationId);
+    window.RildonXStore.setState({
+      conversationReads: reads,
+      conversationMemberships: memberships,
+      visibleConversationIds: Array.from(visibleIds)
+    });
+  }
+
   async function ensureConversationRecord(conversationId, userId) {
     const state = window.RildonXStore.getState();
     const conversation = (state.conversations || []).find(function(item) {
@@ -997,6 +1037,7 @@
     refreshBusinessCardRecordsFromSupabase: refreshBusinessCardRecordsFromSupabase,
     createBusinessCardRecord: createBusinessCardRecord,
     markConversationRead: markConversationRead,
-    hideConversationForUser: hideConversationForUser
+    hideConversationForUser: hideConversationForUser,
+    restoreConversationForUser: restoreConversationForUser
   };
 })();
