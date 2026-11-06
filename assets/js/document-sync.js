@@ -6,8 +6,22 @@
   var documentViewMode = 'list';
   var currentFolderPage = 1;
   var FOLDER_PAGE_SIZE = 10;
+  var MAX_CUSTOM_FOLDERS = 15;
   var selectedFolderName = '';
-  var DEFAULT_FOLDERS = ['Equipe', 'Comercial', 'Financeiro', 'Diretoria', 'Pessoal', 'Mensagens'];
+  var documentFilters = {
+    search: '',
+    type: '',
+    owner: '',
+    project: '',
+    sector: '',
+    dateFrom: '',
+    dateTo: '',
+    sort: 'recent',
+    favoritesOnly: false
+  };
+  var favoriteDocumentIds = new Set();
+  var documentPreferencesLoadedFor = '';
+  var DEFAULT_FOLDERS = ['Pessoal', 'Equipe'];
   var folderNameInput;
   var currentUserId = null;
   var storageRefreshTimer = null;
@@ -58,6 +72,115 @@
     };
   }
 
+  function getDocumentType(documentItem) {
+    var presentation = getFilePresentation(documentItem);
+    var extension = presentation.extension;
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'heic', 'heif', 'avif'].indexOf(extension) !== -1) return 'Imagem';
+    if (['mp4', 'm4v', 'mov', 'avi', 'mkv', 'webm', 'mpeg', 'mpg', '3gp'].indexOf(extension) !== -1) return 'Vídeo';
+    if (['pdf'].indexOf(extension) !== -1) return 'PDF';
+    if (['doc', 'docx', 'odt', 'rtf', 'txt'].indexOf(extension) !== -1) return 'Documento';
+    if (['xls', 'xlsx', 'csv', 'ods'].indexOf(extension) !== -1) return 'Planilha';
+    if (['ppt', 'pptx', 'odp'].indexOf(extension) !== -1) return 'Apresentação';
+    if (['zip', 'rar', '7z', 'gz'].indexOf(extension) !== -1) return 'Compactado';
+    return 'Outro';
+  }
+
+  function getDocumentProject(documentItem, state) {
+    var task = documentItem.relatedTaskId && (state.tasks || []).find(function (item) {
+      return String(item.id) === String(documentItem.relatedTaskId);
+    });
+    var projectId = documentItem.relatedProjectId || task && task.projectId;
+    var project = projectId && (state.projects || []).find(function (item) {
+      return String(item.id) === String(projectId);
+    });
+    return { task: task || null, project: project || null };
+  }
+
+  function getDocumentOrigin(documentItem, state) {
+    var source = getDocumentProject(documentItem, state);
+    if (source.task) {
+      return {
+        label: source.task.title || 'Tarefa',
+        href: 'tarefas.html?calendarSource=' + encodeURIComponent(source.task.id),
+        type: 'Tarefa'
+      };
+    }
+    if (source.project) {
+      return {
+        label: source.project.name || 'Projeto',
+        href: 'projetos.html?calendarSource=' + encodeURIComponent(source.project.id),
+        type: 'Projeto'
+      };
+    }
+    if (documentItem.messageId || String(documentItem.folder || '').toLocaleLowerCase('pt-BR') === 'mensagens') {
+      return { label: 'Mensagens', href: 'mensagens.html', type: 'Mensagem' };
+    }
+    return { label: documentItem.folder || 'Upload direto', href: '', type: 'Pasta' };
+  }
+
+  function getDocumentSector(documentItem, state) {
+    var source = getDocumentProject(documentItem, state);
+    var profile = getProfileById(documentItem.ownerId) || getSenderProfile(documentItem);
+    return source.project && source.project.sector ||
+      profile && (profile.sector || profile.department || profile.area) || '';
+  }
+
+  function getDocumentPermission(documentItem) {
+    var viewers = Array.isArray(documentItem.viewerIds) ? documentItem.viewerIds.length : 0;
+    return viewers ? 'Compartilhado com ' + viewers + ' pessoa' + (viewers === 1 ? '' : 's') : 'Acesso restrito';
+  }
+
+  function documentPreferenceKey() {
+    return 'rildonx_document_preferences_' + (currentUserId || 'guest');
+  }
+
+  function loadDocumentPreferences() {
+    var key = currentUserId || 'guest';
+    if (documentPreferencesLoadedFor === key) return;
+    documentPreferencesLoadedFor = key;
+    try {
+      var saved = JSON.parse(localStorage.getItem(documentPreferenceKey()) || '{}');
+      if (!saved || typeof saved !== 'object') return;
+      documentFilters.search = saved.search || '';
+      documentFilters.type = saved.type || '';
+      documentFilters.owner = saved.owner || '';
+      documentFilters.project = saved.project || '';
+      documentFilters.sector = saved.sector || '';
+      documentFilters.dateFrom = saved.dateFrom || '';
+      documentFilters.dateTo = saved.dateTo || '';
+      documentFilters.sort = ['recent', 'oldest', 'name', 'type', 'size'].indexOf(saved.sort) !== -1 ? saved.sort : 'recent';
+      documentFilters.favoritesOnly = saved.favoritesOnly === true;
+      selectedFolderName = saved.folder || '';
+      favoriteDocumentIds = new Set(Array.isArray(saved.favorites) ? saved.favorites.map(String) : []);
+      var search = document.querySelector('[data-documents-search]');
+      if (search) search.value = documentFilters.search;
+    } catch (error) {
+      console.warn('Não foi possível restaurar as preferências dos documentos:', error);
+    }
+  }
+
+  function saveDocumentPreferences() {
+    try {
+      var saved = {
+        search: String((document.querySelector('[data-documents-search]') || {}).value || ''),
+        type: documentFilters.type,
+        owner: documentFilters.owner,
+        project: documentFilters.project,
+        sector: documentFilters.sector,
+        dateFrom: documentFilters.dateFrom,
+        dateTo: documentFilters.dateTo,
+        sort: documentFilters.sort,
+        favoritesOnly: documentFilters.favoritesOnly,
+        folder: selectedFolderName,
+        favorites: Array.from(favoriteDocumentIds)
+      };
+      localStorage.setItem(documentPreferenceKey(), JSON.stringify(saved));
+    } catch (error) {
+      console.warn('Não foi possível salvar as preferências dos documentos:', error);
+      showDocumentActionError('As preferências não puderam ser salvas neste navegador.');
+    }
+  }
+
   function formatDateTime(value) {
     var date = new Date(value);
     if (!value || Number.isNaN(date.getTime())) return 'Data indisponível';
@@ -83,7 +206,7 @@
 
   function isDocumentVisible(documentItem, messageAttachmentIds) {
     var folder = String(documentItem.folder || '').trim().toLocaleLowerCase('pt-BR');
-    if (folder === 'mural') return false;
+    if (folder === 'mural' || isMedicalDocument(documentItem)) return false;
 
     var isMessageDocument = Boolean(documentItem.messageId) ||
       messageAttachmentIds.has(String(documentItem.id)) ||
@@ -92,7 +215,7 @@
       return folder === 'mensagens';
     }
 
-    return !documentItem.relatedTaskId && !documentItem.relatedProjectId;
+    return true;
   }
 
   function getDocuments() {
@@ -112,9 +235,6 @@
     (state.documentFolders || []).forEach(function (folder) {
       folderNames.push(typeof folder === 'string' ? folder : folder && folder.name);
     });
-    getDocuments().forEach(function (documentItem) {
-      folderNames.push(documentItem.folder || 'Equipe');
-    });
 
     var seen = new Set();
     return folderNames.filter(function (folder) {
@@ -124,6 +244,19 @@
       seen.add(normalized);
       return true;
     });
+  }
+
+  function getCustomFolderCount(folders) {
+    var names = new Set();
+    (folders || []).forEach(function (folder) {
+      var name = String(typeof folder === 'string' ? folder : folder && folder.name || '').trim();
+      var normalized = name.toLocaleLowerCase('pt-BR');
+      var isDefault = DEFAULT_FOLDERS.some(function (defaultFolder) {
+        return defaultFolder.toLocaleLowerCase('pt-BR') === normalized;
+      });
+      if (name && !isDefault) names.add(normalized);
+    });
+    return names.size;
   }
 
   function folderCounts() {
@@ -184,28 +317,56 @@
       '</span>';
   }
 
+  function renderFavoriteButton(documentItem) {
+    var favorite = favoriteDocumentIds.has(String(documentItem.id));
+    return '<button class="document-favorite-btn' + (favorite ? ' active' : '') + '" type="button" data-document-favorite="' +
+      escapeHtml(documentItem.id) + '" aria-pressed="' + favorite + '" aria-label="' + (favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos') +
+      '" title="' + (favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos') + '">' + (favorite ? '★' : '☆') + '</button>';
+  }
+
+  function renderDocumentMoreActions(documentItem) {
+    var id = escapeHtml(documentItem.id);
+    var actions = [];
+    if (!isMedicalDocument(documentItem) && (window.RildonXIsAdmin || documentItem.ownerId && documentItem.ownerId === currentUserId)) {
+      actions.push('<button type="button" data-document-action="share" data-document-id="' + id + '">Gerenciar acessos</button>');
+    }
+    if (!isMedicalDocument(documentItem) && window.RildonXDocumentUpload &&
+        window.RildonXDocumentUpload.canRemoveDocument(documentItem, currentUserId)) {
+      actions.push('<button type="button" class="is-destructive" data-document-action="remove" data-document-id="' + id + '">Remover arquivo</button>');
+    }
+    return actions.length ? '<details class="document-action-menu"><summary aria-label="Mais ações do documento">•••</summary><div>' +
+      actions.join('') + '</div></details>' : '';
+  }
+
+  function renderDocumentOrigin(documentItem, state) {
+    var origin = getDocumentOrigin(documentItem, state);
+    var label = '<span class="document-origin-kind">' + escapeHtml(origin.type) + '</span> ' + escapeHtml(origin.label);
+    return origin.href
+      ? '<a class="document-origin-link" href="' + escapeHtml(origin.href) + '" aria-label="Abrir origem: ' + escapeHtml(origin.label) + '">' + label + '</a>'
+      : '<span class="document-origin-link">' + label + '</span>';
+  }
+
   function renderDocumentRow(documentItem) {
     var file = getFilePresentation(documentItem);
     var id = escapeHtml(documentItem.id);
+    var state = window.RildonXStore.getState();
     var profile = getProfileById(documentItem.ownerId) || getSenderProfile(documentItem);
     var name = escapeHtml(documentItem.name || 'Arquivo sem nome');
     return [
       '<div class="doc-table-row" data-document-id="' + id + '">',
       '<div class="name-cell">',
       '    <div class="doc-icon ' + file.extension + '">' + file.label + '</div>',
-      '    <div class="document-name-details"><button class="document-title-link" type="button" data-document-action="open" data-document-id="' + id + '" title="Abrir ' + name + '"><b>' + name + '</b></button>' + renderDocumentPeople(documentItem, profile) + '</div>',
+      '    <div class="document-name-details"><button class="document-title-link" type="button" data-document-action="open" data-document-id="' + id + '" title="Abrir ' + name + '"><b>' + name + '</b></button><span class="document-row-meta">' +
+      escapeHtml(documentItem.sizeLabel || '0 KB') + ' · ' + escapeHtml(getDocumentPermission(documentItem)) + '</span></div>',
       '  </div>',
-      '  <div class="date-cell">' + escapeHtml(formatDateTime(documentItem.sentAt)) + '</div>',
-      '  <div class="size-cell">' + escapeHtml(documentItem.sizeLabel || '0 KB') + '</div>',
+      '  <div class="date-cell"><span class="document-column-label">Modificado</span>' + escapeHtml(formatDateTime(documentItem.sentAt)) + '</div>',
+      '  <div class="document-owner-cell"><span class="document-column-label">Responsável</span>' + escapeHtml(profile && (profile.displayName || profile.nickname) || documentItem.senderName || 'Usuário') + '</div>',
+      '  <div class="document-origin-cell"><span class="document-column-label">Origem</span>' + renderDocumentOrigin(documentItem, state) + '</div>',
       '  <div class="document-row-actions">',
-      '    <button class="document-download-btn" type="button" data-document-action="download" data-document-id="' + id + '" title="Baixar documento" aria-label="Baixar ' + escapeHtml(documentItem.name || 'documento') + '">↓</button>',
-      (!isMedicalDocument(documentItem) && window.RildonXDocumentUpload &&
-        window.RildonXDocumentUpload.canRemoveDocument(documentItem, currentUserId)
-        ? '    <button class="document-delete-btn" type="button" data-document-action="remove" data-document-id="' + id + '" title="Remover arquivo" aria-label="Remover ' + escapeHtml(documentItem.name || 'documento') + '">×</button>'
-        : ''),
-      (!isMedicalDocument(documentItem) && (window.RildonXIsAdmin || documentItem.ownerId && documentItem.ownerId === currentUserId)
-        ? '    <button class="document-share-btn" type="button" data-document-action="share" data-document-id="' + id + '" title="Adicionar ou remover usuários" aria-label="Gerenciar quem pode acessar ' + escapeHtml(documentItem.name || 'documento') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M19 8v6m-3-3h6"/></svg></button>'
-        : ''),
+      renderFavoriteButton(documentItem),
+      '    <button class="document-action-text" type="button" data-document-action="open" data-document-id="' + id + '">Abrir</button>',
+      '    <button class="document-action-text" type="button" data-document-action="download" data-document-id="' + id + '">Baixar</button>',
+      renderDocumentMoreActions(documentItem),
       '  </div>',
       '</div>'
     ].join('');
@@ -214,36 +375,20 @@
   function renderDocumentCard(documentItem) {
     var file = getFilePresentation(documentItem);
     var id = escapeHtml(documentItem.id);
+    var state = window.RildonXStore.getState();
     var profile = getProfileById(documentItem.ownerId) || getSenderProfile(documentItem);
     var name = escapeHtml(documentItem.name || 'Arquivo sem nome');
-    var actions = [
-      '<button class="document-download-btn" type="button" data-document-action="open" data-document-id="' + id + '" title="Abrir documento" aria-label="Abrir ' + name + '">↗</button>',
-      '<button class="document-download-btn" type="button" data-document-action="download" data-document-id="' + id + '" title="Baixar documento" aria-label="Baixar ' + name + '">↓</button>'
-    ];
-    if (!isMedicalDocument(documentItem) && window.RildonXDocumentUpload &&
-        window.RildonXDocumentUpload.canRemoveDocument(documentItem, currentUserId)) {
-      actions.push('<button class="document-delete-btn" type="button" data-document-action="remove" data-document-id="' + id + '" title="Remover arquivo" aria-label="Remover ' + name + '">×</button>');
-    }
-    if (!isMedicalDocument(documentItem) && (window.RildonXIsAdmin || documentItem.ownerId && documentItem.ownerId === currentUserId)) {
-      actions.push('<button class="document-share-btn" type="button" data-document-action="share" data-document-id="' + id + '" title="Gerenciar compartilhamento" aria-label="Gerenciar quem pode acessar ' + name + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M19 8v6m-3-3h6"/></svg></button>');
-    }
     return '<article class="document-grid-card" data-document-id="' + id + '">' +
-      '<div class="document-grid-card-actions">' + actions.join('') + '</div>' +
+      '<div class="document-grid-card-actions">' + renderFavoriteButton(documentItem) + renderDocumentMoreActions(documentItem) + '</div>' +
       '<button class="document-grid-open" type="button" data-document-action="open" data-document-id="' + id + '" aria-label="Abrir ' + name + '">' +
       '<span class="doc-icon ' + escapeHtml(file.extension) + '">' + escapeHtml(file.label) + '</span>' +
       '<strong title="' + name + '">' + name + '</strong></button>' +
-      '<span class="document-grid-size">' + escapeHtml(documentItem.sizeLabel || '0 KB') + '</span>' +
-      '<span class="document-grid-folder">' + escapeHtml(documentItem.folder || 'Sem pasta') + '</span>' +
-      '<div class="document-grid-people">' + renderDocumentPeople(documentItem, profile) + '</div></article>';
-  }
-
-  function renderDocumentViewToggle() {
-    return '<div class="document-view-toolbar"><div class="document-view-toggle" role="group" aria-label="Modo de visualização">' +
-      '<button type="button" data-document-view="list" class="' + (documentViewMode === 'list' ? 'active' : '') +
-      '" aria-pressed="' + (documentViewMode === 'list') + '"><span aria-hidden="true">☷</span> Lista</button>' +
-      '<button type="button" data-document-view="grid" class="' + (documentViewMode === 'grid' ? 'active' : '') +
-      '" aria-pressed="' + (documentViewMode === 'grid') + '"><span aria-hidden="true">▦</span> Grade</button>' +
-      '</div></div>';
+      '<div class="document-grid-meta"><span>' + escapeHtml(getDocumentType(documentItem)) + ' · ' + escapeHtml(documentItem.sizeLabel || '0 KB') + '</span>' +
+      '<span>' + escapeHtml(profile && (profile.displayName || profile.nickname) || documentItem.senderName || 'Usuário') + ' · ' + escapeHtml(formatDateTime(documentItem.sentAt)) + '</span></div>' +
+      '<div class="document-grid-origin">' + renderDocumentOrigin(documentItem, state) + '</div>' +
+      '<span class="document-grid-permission">' + escapeHtml(getDocumentPermission(documentItem)) + '</span>' +
+      '<div class="document-grid-primary-actions"><button type="button" data-document-action="open" data-document-id="' + id + '">Abrir</button>' +
+      '<button type="button" data-document-action="download" data-document-id="' + id + '">Baixar</button></div></article>';
   }
 
   function renderPagination(total, pageCount) {
@@ -279,26 +424,121 @@
     });
   }
 
+  function setDocumentFilterOptions(name, label, values, selected) {
+    var select = document.querySelector('[data-documents-filter="' + name + '"]');
+    if (!select) return;
+    var options = ['<option value="">' + escapeHtml(label) + '</option>'];
+    values.forEach(function (item) {
+      if (!item || !item.value || !item.label) return;
+      options.push('<option value="' + escapeHtml(item.value) + '"' +
+        (String(item.value) === String(selected || '') ? ' selected' : '') + '>' + escapeHtml(item.label) + '</option>');
+    });
+    select.innerHTML = options.join('');
+  }
+
+  function updateDocumentFilterOptions(documents) {
+    var state = window.RildonXStore.getState();
+    var unique = function (key, labeler) {
+      var seen = new Set();
+      return documents.map(function (item) {
+        var value = String(key(item) || '');
+        if (!value || seen.has(value)) return null;
+        seen.add(value);
+        return { value: value, label: labeler(item, value) };
+      }).filter(Boolean).sort(function (a, b) { return a.label.localeCompare(b.label, 'pt-BR'); });
+    };
+    var types = unique(getDocumentType, function (item) { return getDocumentType(item); });
+    var folders = unique(function (item) { return item.folder || 'Equipe'; }, function (item, value) { return value; });
+    var owners = unique(function (item) { return item.ownerId || item.senderName; }, function (item) {
+      var profile = getProfileById(item.ownerId) || getSenderProfile(item);
+      return profile && (profile.displayName || profile.nickname) || item.senderName || 'Usuário';
+    });
+    var projects = unique(function (item) {
+      var source = getDocumentProject(item, state);
+      return source.project && source.project.id;
+    }, function (item) {
+      var source = getDocumentProject(item, state);
+      return source.project && source.project.name || 'Projeto';
+    });
+    var sectors = unique(function (item) { return getDocumentSector(item, state); }, function (item) {
+      return getDocumentSector(item, state);
+    });
+    setDocumentFilterOptions('type', 'Todos os tipos', types, documentFilters.type);
+    setDocumentFilterOptions('folder', 'Todas as pastas', folders, selectedFolderName);
+    setDocumentFilterOptions('owner', 'Todos os responsáveis', owners, documentFilters.owner);
+    setDocumentFilterOptions('project', 'Todos os projetos', projects, documentFilters.project);
+    setDocumentFilterOptions('sector', 'Todos os setores', sectors, documentFilters.sector);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-documents-filter]'), function (control) {
+      var key = control.dataset.documentsFilter;
+      if (key === 'dateFrom' || key === 'dateTo') control.value = documentFilters[key] || '';
+      else if (key === 'sort') control.value = documentFilters.sort || 'recent';
+    });
+    var favoritesButton = document.querySelector('[data-document-favorites]');
+    if (favoritesButton) {
+      favoritesButton.classList.toggle('active', documentFilters.favoritesOnly);
+      favoritesButton.setAttribute('aria-pressed', String(documentFilters.favoritesOnly));
+      favoritesButton.textContent = documentFilters.favoritesOnly ? '★ Favoritos ativos' : '☆ Favoritos';
+    }
+    document.querySelectorAll('[data-document-view]').forEach(function (button) {
+      var active = button.dataset.documentView === documentViewMode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  }
+
   function renderDocumentList() {
     var root = document.getElementById('documents-live-root');
     if (!root || !window.RildonXStore) return;
 
-    var query = String(document.querySelector('[data-documents-search]')?.value || '').trim().toLocaleLowerCase('pt-BR');
-    var selectedFolder = selectedFolderName;
-    var documents = getDocuments().filter(function (documentItem) {
-      var searchable = [documentItem.name, documentItem.senderName, documentItem.folder].join(' ').toLocaleLowerCase('pt-BR');
-      return (!query || searchable.includes(query)) && (!selectedFolder || documentItem.folder === selectedFolder);
+    var state = window.RildonXStore.getState();
+    loadDocumentPreferences();
+    var queryInput = document.querySelector('[data-documents-search]');
+    var query = String(queryInput && queryInput.value || '').trim().toLocaleLowerCase('pt-BR');
+    var allDocuments = getDocuments();
+    updateDocumentFilterOptions(allDocuments);
+    var documents = allDocuments.filter(function (documentItem) {
+      var source = getDocumentProject(documentItem, state);
+      var origin = getDocumentOrigin(documentItem, state);
+      var profile = getProfileById(documentItem.ownerId) || getSenderProfile(documentItem);
+      var ownerValue = documentItem.ownerId || documentItem.senderName || '';
+      var sector = getDocumentSector(documentItem, state);
+      var date = String(documentItem.sentAt || '').slice(0, 10);
+      var searchable = [
+        documentItem.name, documentItem.senderName, documentItem.folder, documentItem.fileType,
+        profile && (profile.displayName || profile.nickname), sector, source.task && source.task.title,
+        source.project && source.project.name, origin.type, origin.label
+      ].join(' ').toLocaleLowerCase('pt-BR');
+      return (!query || searchable.indexOf(query) !== -1) &&
+        (!selectedFolderName || String(documentItem.folder || 'Equipe') === selectedFolderName) &&
+        (!documentFilters.type || getDocumentType(documentItem) === documentFilters.type) &&
+        (!documentFilters.owner || String(ownerValue) === String(documentFilters.owner)) &&
+        (!documentFilters.project || source.project && String(source.project.id) === String(documentFilters.project)) &&
+        (!documentFilters.sector || String(sector) === String(documentFilters.sector)) &&
+        (!documentFilters.dateFrom || date && date >= documentFilters.dateFrom) &&
+        (!documentFilters.dateTo || date && date <= documentFilters.dateTo) &&
+        (!documentFilters.favoritesOnly || favoriteDocumentIds.has(String(documentItem.id)));
+    });
+    documents.sort(function (a, b) {
+      if (documentFilters.sort === 'name') return String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR');
+      if (documentFilters.sort === 'type') return getDocumentType(a).localeCompare(getDocumentType(b), 'pt-BR');
+      if (documentFilters.sort === 'size') return Number(b.size || 0) - Number(a.size || 0);
+      var dateDifference = new Date(a.sentAt || 0) - new Date(b.sentAt || 0);
+      return documentFilters.sort === 'oldest' ? dateDifference : -dateDifference;
     });
     var pageCount = Math.ceil(documents.length / PAGE_SIZE);
     currentPage = Math.min(currentPage, Math.max(pageCount, 1));
     var pageDocuments = documents.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-    var emptyState = '<div class="document-empty-state"><div class="doc-icon file">ARQ</div><b>Nenhum documento encontrado</b><span>Ajuste a busca ou selecione outra pasta.</span></div>';
+    var emptyState = '<div class="document-empty-state"><div class="doc-icon file">ARQ</div><b>' +
+      (allDocuments.length ? 'Nenhum documento corresponde aos filtros' : 'Sua biblioteca está pronta para começar') +
+      '</b><span>' + (allDocuments.length ? 'Limpe ou ajuste os filtros para ver os arquivos.' : 'Envie um arquivo ou salve um anexo de Mensagens sem criar uma cópia.') +
+      '</span>' + (allDocuments.length ? '<button type="button" class="document-clear-filters" data-document-clear-filters>Limpar filtros</button>' : '') + '</div>';
     var content = documentViewMode === 'grid'
       ? '<div class="document-grid">' + (pageDocuments.map(renderDocumentCard).join('') || emptyState) + '</div>'
-      : '<div class="doc-table-head"><span>Nome</span><span>Modificado</span><span>Tamanho</span><span>Ações</span></div>' +
+      : '<div class="doc-table-head"><span>Nome</span><span>Modificado</span><span>Responsável</span><span>Origem</span><span>Ações</span></div>' +
         (pageDocuments.map(renderDocumentRow).join('') || emptyState);
-    root.innerHTML = renderDocumentViewToggle() + content +
+    root.innerHTML = '<div class="document-library-heading"><h2>' + (selectedFolderName ? escapeHtml(selectedFolderName) : 'Biblioteca') +
+      '</h2><span>' + documents.length + ' arquivo' + (documents.length === 1 ? '' : 's') + '</span></div>' + content +
       '<div class="pagination"><div class="page-btns"></div><div class="count"></div></div>';
     renderPagination(documents.length, pageCount);
     if (window.RildonXAvatar) window.RildonXAvatar.hydrate(root);
@@ -368,31 +608,21 @@
     return result.data.signedUrl;
   }
 
-  function renderRecentDocuments() {
-    var root = document.getElementById('recent-documents-live-root');
-    if (!root || !window.RildonXStore) return;
-
-    var recent = getDocuments().slice(0, 4);
-    root.innerHTML = recent.length ? recent.map(function (documentItem) {
-      var file = getFilePresentation(documentItem);
-      var id = escapeHtml(documentItem.id);
-      var name = escapeHtml(documentItem.name || 'Arquivo sem nome');
-      return [
-        '<div class="doc-row">',
-        '<div class="doc-icon ' + file.extension + '">' + file.label + '</div>',
-        '<div class="doc-info"><b>' + name + '</b><span>' + escapeHtml(documentItem.folder || 'Equipe') + ' · ' + escapeHtml(formatDateTime(documentItem.sentAt)) + '</span></div>',
-        '<button class="document-open-btn" type="button" data-document-action="open" data-document-id="' + id + '" title="Abrir documento" aria-label="Abrir ' + name + '">↗</button>',
-        '</div>'
-      ].join('');
-    }).join('') : '<div class="doc-row"><div class="doc-info"><b>Nenhum documento recente</b><span>Arquivos de Mensagens aparecem aqui quando você os salva.</span></div></div>';
-  }
-
   function renderFolderCounts() {
     var counts = folderCounts();
     var folders = getAllFolders();
     var list = document.getElementById('document-folder-list');
     var pagination = document.getElementById('document-folder-pagination');
     if (!list || !pagination) return;
+
+    var createButton = document.getElementById('document-create-folder-btn');
+    var customFolderCount = getCustomFolderCount(window.RildonXStore.getState().documentFolders);
+    var folderLimitReached = customFolderCount >= MAX_CUSTOM_FOLDERS;
+    if (createButton) {
+      createButton.disabled = folderLimitReached;
+      createButton.textContent = folderLimitReached ? 'Limite atingido' : 'Nova pasta';
+      createButton.title = 'Pastas personalizadas: ' + customFolderCount + ' de ' + MAX_CUSTOM_FOLDERS;
+    }
 
     var selectedFolder = selectedFolderName;
     var pageCount = Math.ceil(folders.length / FOLDER_PAGE_SIZE);
@@ -486,6 +716,7 @@
         }
         var currentUser = userResult.data.user;
         currentUserId = currentUser.id;
+        loadDocumentPreferences();
         var appMetadata = currentUser.app_metadata || {};
         var adminRole = String(appMetadata.role || '').trim().toLowerCase();
         var loginName = String(currentUser.email || '').split('@')[0].trim().toLowerCase();
@@ -534,6 +765,9 @@
       button.classList.toggle('active', active);
       button.setAttribute('aria-pressed', String(active));
     });
+    var folderFilter = document.querySelector('[data-documents-filter="folder"]');
+    if (folderFilter) folderFilter.value = selectedFolderName;
+    saveDocumentPreferences();
     currentPage = 1;
     renderDocumentList();
   }
@@ -638,11 +872,26 @@
       if (!client || typeof client.from !== 'function') {
         throw new Error('O serviço de pastas não está disponível. Recarregue a página e tente novamente.');
       }
+      var existingResult = await client.from('document_folders').select('id,name');
+      if (existingResult.error) throw existingResult.error;
+      var existingFolders = existingResult.data || [];
+      if (getCustomFolderCount(existingFolders) >= MAX_CUSTOM_FOLDERS) {
+        window.RildonXStore.setState({ documentFolders: existingFolders });
+        renderFolderCounts();
+        showDocumentActionError('Você já atingiu o limite de 15 pastas personalizadas.');
+        return;
+      }
+      if (existingFolders.some(function (folder) {
+        return String(folder.name || '').trim().toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR');
+      })) {
+        showDocumentActionError('Já existe uma pasta com esse nome.');
+        folderNameInput.focus();
+        return;
+      }
       var result = await client.from('document_folders').insert({ name: name }).select('id,name').single();
       if (result.error) throw result.error;
-      var state = window.RildonXStore.getState();
       window.RildonXStore.setState({
-        documentFolders: (state.documentFolders || []).concat([{ id: result.data.id, name: result.data.name }])
+        documentFolders: existingFolders.concat([{ id: result.data.id, name: result.data.name }])
       });
       currentFolderPage = Math.ceil(getAllFolders().length / FOLDER_PAGE_SIZE);
       renderFolderCounts();
@@ -707,6 +956,7 @@
     var title = document.getElementById('document-share-title');
     var caption = document.getElementById('document-share-caption');
     var submit = document.getElementById('document-share-submit');
+    var progress = document.getElementById('document-upload-progress');
     if (!modal || !usersRoot || !title || !caption || !submit || !window.RildonXStore) {
       showDocumentActionError('A seleção de visualizadores não está disponível. Atualize a página.');
       var uploadButton = document.getElementById('document-upload-btn');
@@ -719,10 +969,14 @@
     });
     var selectedIds = mode === 'share' && value && Array.isArray(value.viewerIds) ? value.viewerIds.slice() : [];
     documentShareContext = { mode: mode, value: value, selectedViewerIds: selectedIds };
+    if (progress) {
+      progress.hidden = mode !== 'upload';
+      progress.innerHTML = '';
+    }
     title.textContent = mode === 'upload' ? 'Enviar para Documentos' : 'Visualizadores do arquivo';
     caption.textContent = mode === 'upload'
       ? 'Escolha quem poderá abrir ' + (Array.isArray(value) && value.length > 1 ? 'estes ' + value.length + ' arquivos' : 'este arquivo') +
-        ' além de você. Sem seleção, somente você terá acesso.'
+        ' além de você. Sem seleção, somente você terá acesso. Os links de acesso expiram e podem ser renovados pela aplicação.'
       : (value.name || 'Arquivo') + ' · Você pode adicionar ou remover pessoas com acesso.';
     submit.textContent = mode === 'upload'
       ? 'Enviar ' + (Array.isArray(value) && value.length > 1 ? value.length + ' arquivos' : 'arquivo')
@@ -747,6 +1001,8 @@
     var modal = document.getElementById('document-share-modal');
     if (modal) modal.hidden = true;
     documentShareContext = null;
+    var submit = document.getElementById('document-share-submit');
+    if (submit) submit.disabled = false;
     var uploadButton = document.getElementById('document-upload-btn');
     if (uploadButton) uploadButton.disabled = false;
   }
@@ -779,7 +1035,8 @@
       toggle.textContent = selected ? '−' : '+';
     });
     modal.addEventListener('click', function (event) {
-      if (event.target === modal) closeDocumentShareModal();
+      var submitButton = document.getElementById('document-share-submit');
+      if (event.target === modal && submitButton && !submitButton.disabled) closeDocumentShareModal();
     });
     form.addEventListener('submit', async function (event) {
       event.preventDefault();
@@ -787,6 +1044,8 @@
       var context = documentShareContext;
       var viewerIds = documentShareContext.selectedViewerIds.slice();
       submit.disabled = true;
+      cancel.disabled = true;
+      close.disabled = true;
       try {
         if (context.mode === 'upload') {
           var activeFolder = document.querySelector('.document-folder-name.active');
@@ -794,23 +1053,51 @@
           var files = Array.isArray(context.value) ? context.value : [context.value];
           var failures = [];
           var uploadedCount = 0;
+          var progressItems = files.map(function (file) {
+            return { name: file.name, state: 'Aguardando envio', error: '' };
+          });
+          var progressRoot = document.getElementById('document-upload-progress');
+          var renderUploadProgress = function (activeIndex) {
+            if (!progressRoot) return;
+            progressRoot.hidden = false;
+            progressRoot.innerHTML = '<div class="document-upload-progress-head"><strong>Envio de arquivos</strong><span>' +
+              uploadedCount + ' de ' + files.length + ' concluído(s)</span></div><progress max="' + files.length +
+              '" value="' + uploadedCount + '" aria-label="Progresso do envio"></progress><ul>' + progressItems.map(function (item, itemIndex) {
+              return '<li class="' + (item.state === 'Falha' ? 'is-error' : item.state === 'Enviado' ? 'is-done' : itemIndex === activeIndex ? 'is-uploading' : '') +
+                '"><span>' + escapeHtml(item.name) + '</span><b>' + escapeHtml(item.error || item.state) + '</b></li>';
+            }).join('') + '</ul>';
+          };
           for (var index = 0; index < files.length; index += 1) {
+            progressItems[index].state = 'Enviando';
+            renderUploadProgress(index);
             try {
               var uploaded = await window.RildonXDocumentUpload.upload(files[index], {
-                folder: activeFolder ? activeFolder.dataset.folderSelect : 'Equipe',
+                folder: selectedFolderName || activeFolder && activeFolder.dataset.folderSelect || 'Equipe',
                 senderName: state.user && state.user.name || 'Usuário',
                 viewerIds: viewerIds
               });
               window.RildonXStore.addDocument(uploaded);
               uploadedCount += 1;
+              progressItems[index].state = 'Enviado';
+              context.value = files.filter(function (file, fileIndex) { return fileIndex !== index; });
             } catch (uploadError) {
               console.error('Não foi possível enviar "' + files[index].name + '" para Documentos:', uploadError);
-              failures.push(files[index].name + ': ' + (uploadError && uploadError.message || 'falha no envio'));
+              failures.push({ file: files[index], index: index, message: uploadError && uploadError.message || 'Falha no envio' });
+              progressItems[index].state = 'Falha';
+              progressItems[index].error = uploadError && uploadError.message || 'Falha no envio';
             }
+            renderUploadProgress(index);
           }
-          if (!uploadedCount) throw new Error(failures.join(' · ') || 'Nenhum arquivo foi enviado.');
-          showDocumentActionError(uploadedCount + ' arquivo(s) enviado(s) para Documentos.' +
-            (failures.length ? ' Falhas: ' + failures.join(' · ') : ''));
+          context.value = failures.map(function (item) { return item.file; });
+          if (failures.length) {
+            caption.textContent = uploadedCount + ' arquivo(s) enviado(s). ' + failures.length +
+              ' falhou/falharam; tente novamente apenas os arquivos indicados.';
+            submit.textContent = 'Tentar novamente (' + failures.length + ')';
+            if (!uploadedCount) showDocumentActionError('Nenhum arquivo foi enviado. Corrija ou tente novamente pelos itens com erro.');
+          } else {
+            showDocumentActionError(uploadedCount + ' arquivo(s) enviado(s) para Documentos.');
+            closeDocumentShareModal();
+          }
         } else {
           var client = window.supabaseClient;
           if (!client || typeof client.from !== 'function') throw new Error('O serviço de documentos não está disponível.');
@@ -830,13 +1117,15 @@
           });
           showDocumentActionError('Acesso ao arquivo atualizado.');
         }
-        closeDocumentShareModal();
+        if (context.mode !== 'upload') closeDocumentShareModal();
       } catch (error) {
         console.error('Não foi possível atualizar o arquivo ou seus visualizadores:', error);
         var detail = error && error.message ? ' (' + error.message + ')' : '';
         showDocumentActionError('Não foi possível concluir a operação.' + detail);
       } finally {
         submit.disabled = false;
+        cancel.disabled = false;
+        close.disabled = false;
       }
     });
     form.dataset.bound = 'true';
@@ -1026,6 +1315,32 @@
   }
 
   function handleDocumentViewControls(event) {
+    var favoriteButton = event.target.closest('[data-document-favorite]');
+    if (favoriteButton) {
+      var favoriteId = String(favoriteButton.dataset.documentFavorite);
+      if (favoriteDocumentIds.has(favoriteId)) favoriteDocumentIds.delete(favoriteId);
+      else favoriteDocumentIds.add(favoriteId);
+      saveDocumentPreferences();
+      currentPage = 1;
+      renderDocumentList();
+      return;
+    }
+    if (event.target.closest('[data-document-favorites]')) {
+      documentFilters.favoritesOnly = !documentFilters.favoritesOnly;
+      saveDocumentPreferences();
+      currentPage = 1;
+      renderDocumentList();
+      return;
+    }
+    if (event.target.closest('[data-document-clear-filters]')) {
+      documentFilters = { search: '', type: '', owner: '', project: '', sector: '', dateFrom: '', dateTo: '', sort: 'recent', favoritesOnly: false };
+      selectedFolderName = '';
+      var search = document.querySelector('[data-documents-search]');
+      if (search) search.value = '';
+      saveDocumentPreferences();
+      selectFolder('', false);
+      return;
+    }
     var viewButton = event.target.closest('[data-document-view]');
     if (viewButton) {
       var nextMode = viewButton.dataset.documentView;
@@ -1036,42 +1351,65 @@
       } catch (error) {
         console.warn('Não foi possível salvar a visualização dos documentos:', error);
       }
+      saveDocumentPreferences();
       renderDocumentList();
       return;
     }
     var card = event.target.closest('.document-grid-card');
-    if (card && !event.target.closest('[data-document-action]')) {
+    if (card && !event.target.closest('[data-document-action],.document-action-menu,[data-document-favorite]')) {
       var openButton = card.querySelector('[data-document-action="open"]');
       if (openButton) openButton.click();
     }
+  }
+
+  function bindDocumentFilterControls() {
+    var search = document.querySelector('[data-documents-search]');
+    if (search) search.addEventListener('input', function () {
+      currentPage = 1;
+      documentFilters.search = search.value;
+      saveDocumentPreferences();
+      renderDocumentList();
+    });
+    document.addEventListener('change', function (event) {
+      var control = event.target.closest('[data-documents-filter]');
+      if (!control) return;
+      var key = control.dataset.documentsFilter;
+      if (key === 'folder') {
+        selectFolder(control.value, false);
+        return;
+      }
+      if (key === 'dateFrom' || key === 'dateTo') {
+        documentFilters[key] = control.value;
+      } else if (['type', 'owner', 'project', 'sector'].indexOf(key) !== -1) {
+        documentFilters[key] = control.value;
+      } else if (key === 'sort') {
+        documentFilters.sort = control.value;
+      } else {
+        return;
+      }
+      currentPage = 1;
+      saveDocumentPreferences();
+      renderDocumentList();
+    });
   }
 
   function bootstrapDocumentSync() {
     bindDocumentUpload();
     bindDocumentShareModal();
 
-    var search = document.querySelector('.filter-pill.search-mini input');
-    if (search) {
-      search.dataset.documentsSearch = 'true';
-      search.addEventListener('input', function () {
-        currentPage = 1;
-        renderDocumentList();
-      });
-    }
-
+    loadDocumentPreferences();
+    bindDocumentFilterControls();
     bindFolderCreation();
     bindFolderControls();
 
     document.addEventListener('click', handleDocumentViewControls);
     document.addEventListener('click', handleDocumentAction);
     renderDocumentList();
-    renderRecentDocuments();
     renderFolderCounts();
 
     if (window.RildonXStore && typeof window.RildonXStore.subscribe === 'function') {
       window.RildonXStore.subscribe(function () {
         renderDocumentList();
-        renderRecentDocuments();
         renderFolderCounts();
         scheduleStorageRefresh();
       });

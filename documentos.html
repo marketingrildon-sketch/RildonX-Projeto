@@ -8,9 +8,9 @@
 <link rel="icon" href="./assets/rildonx-favicon-BbktVzna.svg?v=9b1dc3cfe7dbd791" type="image/svg+xml">
   <script type="module" crossorigin src="./assets/supabase-client-Cf4XYirk.js?v=f4ebb090edc4e3d8"></script>
   <link rel="stylesheet" crossorigin href="./assets/supabase-client-B-p_5ELv.css?v=98d76c92205bc00b">
-  <link rel="stylesheet" crossorigin href="./assets/styles-COKFCrNg.css?v=586324b88eb7b698">
-<link rel="stylesheet" href="./assets/css/styles.css?v=094020ce7c3d4691">
-<script>window.RildonXBuildVersion = "3c418e666c742e47"; window.RildonXAssetVersions = {"assets/css/support-center.css":"e4a00bb8e683d11c","assets/css/infrastructure-center.css":"41d2229029360ad7"};</script>
+  <link rel="stylesheet" crossorigin href="./assets/documentos-BDM6OkuP.css?v=3117eef7804a3091">
+<link rel="stylesheet" href="./assets/css/styles.css?v=e56025c0900403a6">
+<script>window.RildonXBuildVersion = "72f356be20878414"; window.RildonXAssetVersions = {"assets/css/support-center.css":"e4a00bb8e683d11c","assets/css/infrastructure-center.css":"41d2229029360ad7"};</script>
 <script defer src="./assets/js/update-notifier.js?v=a2eb68b0c5730425"></script>
 </head>
 <body data-page="documentos">
@@ -135,22 +135,34 @@
         <h1>Documentos</h1>
         <p>Acesse, organize e compartilhe arquivos da equipe.</p>
       </div>
-      <button class="btn" id="document-upload-btn" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Novo upload
-      </button>
-      <input id="document-upload-input" type="file" multiple hidden>
     </div>
 
-    <div class="filters-row">
-      <div class="filter-pill search-mini" style="flex:1;">
+    <div class="documents-toolbar" role="toolbar" aria-label="Buscar, filtrar e organizar documentos">
+      <label class="filter-pill search-mini">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input placeholder="Buscar documentos...">
+        <input data-documents-search type="search" aria-label="Buscar documentos" placeholder="Buscar por nome, origem ou projeto...">
+      </label>
+      <select data-documents-filter="type" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option></select>
+      <select data-documents-filter="folder" aria-label="Filtrar por pasta"><option value="">Todas as pastas</option></select>
+      <select data-documents-filter="owner" aria-label="Filtrar por responsável"><option value="">Todos os responsáveis</option></select>
+      <select data-documents-filter="project" aria-label="Filtrar por projeto"><option value="">Todos os projetos</option></select>
+      <select data-documents-filter="sector" aria-label="Filtrar por setor"><option value="">Todos os setores</option></select>
+      <label class="document-date-filter"><span>De</span><input type="date" data-documents-filter="dateFrom" aria-label="Data inicial"></label>
+      <label class="document-date-filter"><span>Até</span><input type="date" data-documents-filter="dateTo" aria-label="Data final"></label>
+      <select data-documents-filter="sort" aria-label="Ordenar documentos">
+        <option value="recent">Mais recentes</option><option value="oldest">Mais antigos</option>
+        <option value="name">Nome</option><option value="type">Tipo</option><option value="size">Tamanho</option>
+      </select>
+      <button type="button" class="document-favorites-toggle" data-document-favorites aria-pressed="false">☆ Favoritos</button>
+      <div class="document-view-toggle" role="group" aria-label="Modo de visualização">
+        <button type="button" data-document-view="list" class="active" aria-pressed="true"><span aria-hidden="true">☷</span> Lista</button>
+        <button type="button" data-document-view="grid" aria-pressed="false"><span aria-hidden="true">▦</span> Grade</button>
       </div>
-      <div class="filter-pill">Tipo: Todos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-      <div class="filter-pill">Pasta: Todas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-      <div class="filter-pill">Responsável: Todos <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-      <div class="filter-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>Mais filtros</div>
+      <button class="btn document-upload-button" id="document-upload-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Enviar arquivos
+      </button>
+      <input id="document-upload-input" type="file" multiple hidden>
     </div>
 
     <div class="layout-2col">
@@ -377,7 +389,7 @@
           <div class="field">
             <label for="document-folder-name">Nome da pasta</label>
             <input id="document-folder-name" name="name" type="text" maxlength="60" required placeholder="Ex.: Contratos">
-            <div class="hint">A pasta ficará disponível para toda a equipe.</div>
+            <div class="hint">A pasta ficará disponível para toda a equipe. Você pode criar até 15 pastas personalizadas; Pessoal e Equipe são padrão.</div>
           </div>
         </div>
         <div class="modal-foot">
@@ -396,6 +408,7 @@
       <div><h3 id="document-share-title">Compartilhar arquivo</h3><p id="document-share-caption"></p></div>
       <button type="button" id="document-share-close" aria-label="Fechar">×</button>
     </div>
+    <div class="document-upload-progress" id="document-upload-progress" hidden aria-live="polite"></div>
     <div class="document-share-users" id="document-share-users"></div>
     <div class="document-share-actions">
       <button class="btn" type="button" id="document-share-cancel">Cancelar</button>
@@ -408,12 +421,12 @@
   window.SUPABASE_URL = 'https://lgzokudzdezgufddoicy.supabase.co';
   window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnem9rdWR6ZGV6Z3VmZGRvaWN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2OTY1MzEsImV4cCI6MjEwNTI3MjUzMX0.yssgd9GXoVNcM5inbSVo45IPYkx3x3br_U86MLSoEUs';
 </script>
-<script src="assets/js/document-upload.js?v=1fb637723af568ff"></script>
+<script src="assets/js/document-upload.js?v=0eff34c0780fbf4b"></script>
 <script src="assets/js/auth.js?v=eb2b7b73b52a70ff"></script>
 <script src="assets/js/data-store.js?v=ed16e73f969fcd51"></script>
 <script src="assets/js/supabase-sync.js?v=6e3a83b535d38212"></script>
 <script src="assets/js/business-calendar-sync.js?v=e934b65171c04590"></script>
-<script src="assets/js/document-sync.js?v=6846f0e2ad9a9052"></script>
+<script src="assets/js/document-sync.js?v=cb749f93d1f58c7b"></script>
 <script src="assets/js/app.js?v=c0abb1efaf8599ac"></script>
 <script src="assets/js/department-requests.js?v=3c40604632dde6b9"></script>
 <script src="assets/js/support-center.js?v=d7fbe640ba5137bb"></script>

@@ -391,13 +391,18 @@
 
     if (uploadResult.error) throw uploadResult.error;
 
-    var publicUrlResult = storage.getPublicUrl(uploadResult.data.path);
-    var publicUrl = publicUrlResult && publicUrlResult.data && publicUrlResult.data.publicUrl;
-    if (!publicUrl) {
+    var signedUrlResult = await storage.createSignedUrl(uploadResult.data.path, 3600);
+    if (signedUrlResult.error && isExpiredTokenError(signedUrlResult.error)) {
+      await getAuthenticatedUser(client, true);
+      signedUrlResult = await storage.createSignedUrl(uploadResult.data.path, 3600);
+    }
+    if (signedUrlResult.error || !signedUrlResult.data || !signedUrlResult.data.signedUrl) {
       var cleanupResult = await storage.remove([uploadResult.data.path]);
       if (cleanupResult.error) console.error('Falha ao remover arquivo sem URL:', cleanupResult.error);
-      throw new Error('O Storage não retornou um endereço para o arquivo.');
+      if (signedUrlResult.error) throw signedUrlResult.error;
+      throw new Error('O Storage não retornou um endereço temporário para o arquivo.');
     }
+    var signedUrl = signedUrlResult.data.signedUrl;
 
     var name = String(settings.senderName || 'Usuário');
     var payload = {
@@ -415,7 +420,7 @@
       }) : [],
       sent_at: new Date().toISOString(),
       folder: settings.folder || 'Equipe',
-      url: publicUrl,
+      url: signedUrl,
       mime_type: file.type || 'application/octet-stream'
     };
     if (typeof settings.relatedTaskId === 'string' && /^[0-9a-f-]{36}$/i.test(settings.relatedTaskId)) {
