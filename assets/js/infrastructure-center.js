@@ -21,7 +21,9 @@
   var style = document.createElement('link');
   style.rel = 'stylesheet';
   var styleUrl = new URL('assets/css/infrastructure-center.css', document.baseURI);
-  if (window.RildonXBuildVersion) styleUrl.searchParams.set('v', window.RildonXBuildVersion);
+  var styleVersion = window.RildonXAssetVersions &&
+    window.RildonXAssetVersions['assets/css/infrastructure-center.css'];
+  if (styleVersion) styleUrl.searchParams.set('v', styleVersion);
   style.href = styleUrl.href;
   document.head.appendChild(style);
 

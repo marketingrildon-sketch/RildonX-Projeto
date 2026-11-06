@@ -27,7 +27,9 @@
   var stylesheet = document.createElement('link');
   stylesheet.rel = 'stylesheet';
   var stylesheetUrl = new URL('assets/css/support-center.css', document.baseURI);
-  if (window.RildonXBuildVersion) stylesheetUrl.searchParams.set('v', window.RildonXBuildVersion);
+  var stylesheetVersion = window.RildonXAssetVersions &&
+    window.RildonXAssetVersions['assets/css/support-center.css'];
+  if (stylesheetVersion) stylesheetUrl.searchParams.set('v', stylesheetVersion);
   stylesheet.href = stylesheetUrl.href;
   document.head.appendChild(stylesheet);
 
