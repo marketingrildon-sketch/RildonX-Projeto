@@ -72,6 +72,11 @@
     };
   }
 
+  function renderFileIcon(file) {
+    var iconMarkup = window.RildonXFileIconMarkup && window.RildonXFileIconMarkup(file.extension);
+    return iconMarkup || escapeHtml(file.label);
+  }
+
   function getDocumentType(documentItem) {
     var presentation = getFilePresentation(documentItem);
     var extension = presentation.extension;
@@ -355,7 +360,7 @@
     return [
       '<div class="doc-table-row" data-document-id="' + id + '">',
       '<div class="name-cell">',
-      '    <div class="doc-icon ' + file.extension + '">' + file.label + '</div>',
+      '    <div class="doc-icon ' + file.extension + '">' + renderFileIcon(file) + '</div>',
       '    <div class="document-name-details"><button class="document-title-link" type="button" data-document-action="open" data-document-id="' + id + '" title="Abrir ' + name + '"><b>' + name + '</b></button><span class="document-row-meta">' +
       escapeHtml(documentItem.sizeLabel || '0 KB') + ' · ' + escapeHtml(getDocumentPermission(documentItem)) + '</span></div>',
       '  </div>',
@@ -381,7 +386,7 @@
     return '<article class="document-grid-card" data-document-id="' + id + '">' +
       '<div class="document-grid-card-actions">' + renderFavoriteButton(documentItem) + renderDocumentMoreActions(documentItem) + '</div>' +
       '<button class="document-grid-open" type="button" data-document-action="open" data-document-id="' + id + '" aria-label="Abrir ' + name + '">' +
-      '<span class="doc-icon ' + escapeHtml(file.extension) + '">' + escapeHtml(file.label) + '</span>' +
+      '<span class="doc-icon ' + escapeHtml(file.extension) + '">' + renderFileIcon(file) + '</span>' +
       '<strong title="' + name + '">' + name + '</strong></button>' +
       '<div class="document-grid-meta"><span>' + escapeHtml(getDocumentType(documentItem)) + ' · ' + escapeHtml(documentItem.sizeLabel || '0 KB') + '</span>' +
       '<span>' + escapeHtml(profile && (profile.displayName || profile.nickname) || documentItem.senderName || 'Usuário') + ' · ' + escapeHtml(formatDateTime(documentItem.sentAt)) + '</span></div>' +
@@ -529,7 +534,8 @@
     currentPage = Math.min(currentPage, Math.max(pageCount, 1));
     var pageDocuments = documents.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-    var emptyState = '<div class="document-empty-state"><div class="doc-icon file">ARQ</div><b>' +
+    var emptyIcon = window.RildonXIconMarkup && window.RildonXIconMarkup('document');
+    var emptyState = '<div class="document-empty-state"><div class="doc-icon file">' + (emptyIcon || 'ARQ') + '</div><b>' +
       (allDocuments.length ? 'Nenhum documento corresponde aos filtros' : 'Sua biblioteca está pronta para começar') +
       '</b><span>' + (allDocuments.length ? 'Limpe ou ajuste os filtros para ver os arquivos.' : 'Envie um arquivo ou salve um anexo de Mensagens sem criar uma cópia.') +
       '</span>' + (allDocuments.length ? '<button type="button" class="document-clear-filters" data-document-clear-filters>Limpar filtros</button>' : '') + '</div>';

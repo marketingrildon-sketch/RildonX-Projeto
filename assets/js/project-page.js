@@ -247,6 +247,8 @@
   }
 
   function icon(name) {
+    var customIcon = window.RildonXIconMarkup && window.RildonXIconMarkup(name);
+    if (customIcon) return customIcon;
     var paths = {
       edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/>',
       archive: '<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11h14V8M10 12h4"/>',
@@ -444,8 +446,8 @@
       '<button type="button" data-action="summary-filter" data-health="watch"><b>' + watchCount + '</b> para acompanhar</button>' +
       '<span>Saúde: prazo vencido, tarefa bloqueada/dependência pendente ou 14+ dias sem atualização; atenção próxima indica prazo em até 7 dias ou 7+ dias sem atualização. Escopo não avaliado sem baseline.</span></div></div>' +
       '<div class="project-section project-browse"><div class="project-toolbar"><div class="project-view-toggle" role="group" aria-label="Modo de visualização">' +
-      '<button type="button" class="' + (projectViewMode === 'list' ? 'active' : '') + '" data-action="view-mode" data-view-mode="list" aria-pressed="' + (projectViewMode === 'list') + '">☷ <span>Lista</span></button>' +
-      '<button type="button" class="' + (projectViewMode === 'grid' ? 'active' : '') + '" data-action="view-mode" data-view-mode="grid" aria-pressed="' + (projectViewMode === 'grid') + '">▦ <span>Grade</span></button>' +
+      '<button type="button" class="' + (projectViewMode === 'list' ? 'active' : '') + '" data-action="view-mode" data-view-mode="list" aria-pressed="' + (projectViewMode === 'list') + '">' + icon('list') + '<span>Lista</span></button>' +
+      '<button type="button" class="' + (projectViewMode === 'grid' ? 'active' : '') + '" data-action="view-mode" data-view-mode="grid" aria-pressed="' + (projectViewMode === 'grid') + '">' + icon('grid') + '<span>Grade</span></button>' +
       '</div><div class="project-tabs">' +
       tab('all', 'Todos', counts.all) + tab('in-progress', 'Em andamento', counts['in-progress']) +
       tab('planning', 'Planejamento', counts.planning) + tab('completed', 'Concluídos', counts.completed) +

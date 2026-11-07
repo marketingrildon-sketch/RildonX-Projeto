@@ -6,6 +6,371 @@
   });
 })();
 
+var systemIconFiles = {
+  inicio: 'página-inicio.png',
+  mural: 'página-mural.png',
+  mensagens: 'página-mensagens.png',
+  calendario: 'página-calendário.png',
+  tarefas: 'página-tarefas.png',
+  projetos: 'Pagina-projetos.png',
+  documentos: 'Página-documentos.png',
+  'meu espaço': 'Meu espaço.png',
+  pasta: 'pasta.png',
+  ajuda: 'ajuda.png',
+  ajustes: 'ajustes.png',
+  adicionar: 'adicionar-acrescentar.png',
+  'adicionar-usuario': 'adicionar-usuario.png',
+  anexo: 'anexo.png',
+  'arquivo-csv': 'arquivo-csv.png',
+  'arquivo-de-imagem': 'arquivo-jpeg.png',
+  'arquivo-doc': 'arquivo-doc.png',
+  'arquivo-html': 'arquivo-html.png',
+  'arquivo-jpeg': 'arquivo-jpeg.png',
+  'arquivo-pdf': 'arquivo-pdf.png',
+  'arquivo-png': 'arquivo-png.png',
+  'arquivo-pptx': 'arquivo-pptx.png',
+  'arquivo-svg': 'arquivo-svg.png',
+  'arquivo-txt': 'arquivo-txt.png',
+  'arquivo-video': 'arguivo-video.png',
+  'arquivo-xls': 'arquivo-xls.png',
+  'arquivo-xml': 'arquivo-xml.png',
+  'arquivo-zip': 'arquivo-zip.png',
+  arquivar: 'arquivar.png',
+  bomdia: 'Bom dia.png',
+  'chamado-ti': 'chamado TI.png',
+  comentar: 'comentar.png',
+  concluido: 'Concluido.png',
+  curtir: 'curtir.png',
+  detalhe: 'detalhe.png',
+  andamento: 'em andamento.png',
+  emoji: 'emoji.png',
+  enviar: 'enviar.png',
+  excluir: 'excluir.png',
+  'expandir-sidebar': 'expandir sidebar.png',
+  exportar: 'exportar.png',
+  favoritos: 'favoritos.png',
+  fechar: 'fechar.png',
+  'recolher-sidebar': 'recolher sidebar.png',
+  recolher: 'recolher.png',
+  editar: 'editar.png',
+  file: 'file.png',
+  funcionarios: 'funcionarios.png',
+  idea: 'idea.png',
+  activity: 'em andamento.png',
+  book: 'Página-documentos.png',
+  cart: 'carrinho.svg',
+  chevron: 'chevron-down.svg',
+  lightbulb: 'idea.png',
+  menu: 'menu.svg',
+  resize: 'redimensionar.png',
+  sair: 'sair.svg',
+  server: 'servidor.svg',
+  shield: 'políticas internas.png',
+  target: 'meta.svg',
+  training: 'treinamento.svg',
+  truck: 'entrega.svg',
+  user: 'usuario.svg',
+  users: 'adicionar-usuario.png',
+  'user-menu': 'chevron-down.svg',
+  'reserva-de-sala': 'reserva de sala.png',
+  grade: 'grade.png',
+  grafico: 'gráfico.png',
+  kanban: 'kanban (2).png',
+  lista: 'lista.png',
+  lupa: 'lupa.png',
+  modulos: 'módulos.png',
+  notificacao: 'notificacao.png',
+  pendente: 'pendente.png',
+  'politicas-internas': 'políticas internas.png',
+  'sala-de-reunioes': 'sala-de-reunioes.png',
+  'setor-pessoal': 'setor pessoal.png',
+  sincronizar: 'sincronizar.png'
+};
+
+var systemIconAliases = {
+  home: 'inicio',
+  feed: 'mural',
+  chat: 'mensagens',
+  message: 'mensagens',
+  calendar: 'calendario',
+  task: 'tarefas',
+  project: 'projetos',
+  document: 'documentos',
+  doc: 'anexo',
+  person: 'meu espaço',
+  'my-space': 'meu espaço',
+  search: 'lupa',
+  plus: 'adicionar',
+  quick: 'adicionar',
+  'add-user': 'adicionar-usuario',
+  settings: 'ajustes',
+  trash: 'excluir',
+  like: 'curtir',
+  comment: 'comentar',
+  send: 'enviar',
+  attachment: 'anexo',
+  download: 'exportar',
+  export: 'exportar',
+  close: 'fechar',
+  star: 'favoritos',
+  support: 'chamado-ti',
+  chart: 'grafico',
+  check: 'concluido',
+  alert: 'notificacao',
+  clock: 'pendente',
+  birthday: 'calendario',
+  alarm: 'notificacao',
+  notification: 'notificacao',
+  box: 'projetos',
+  folder: 'pasta',
+  list: 'lista',
+  grid: 'grade',
+  board: 'kanban',
+  sync: 'sincronizar',
+  'expand-sidebar': 'expandir-sidebar',
+  'collapse-sidebar': 'recolher-sidebar',
+  module: 'modulos',
+  modules: 'modulos',
+  greeting: 'bomdia',
+  'meeting-room': 'sala-de-reunioes',
+  resize: 'resize',
+  archive: 'arquivar',
+  edit: 'editar',
+  lightbulb: 'idea',
+  logout: 'sair',
+  sair: 'sair',
+  'user-menu': 'chevron',
+  profile: 'user',
+  account: 'user',
+  server: 'server',
+  book: 'book',
+  training: 'training',
+  cart: 'cart',
+  truck: 'truck',
+  shield: 'shield',
+  target: 'target',
+  activity: 'activity',
+  users: 'funcionarios',
+  'file-html': 'arquivo-html',
+  'file-jpeg': 'arquivo-jpeg',
+  'file-png': 'arquivo-png',
+  'file-svg': 'arquivo-svg',
+  'file-txt': 'arquivo-txt',
+  'file-video': 'arquivo-video',
+  'file-xml': 'arquivo-xml',
+  'file-zip': 'arquivo-zip',
+  'file-csv': 'arquivo-csv',
+  'file-image': 'arquivo-de-imagem',
+  'file-doc': 'arquivo-doc',
+  'file-pdf': 'arquivo-pdf',
+  'file-pptx': 'arquivo-pptx',
+  'file-xls': 'arquivo-xls'
+};
+
+window.RildonXIconMarkup = function (name, className, label) {
+  var iconKey = systemIconAliases[name] || name;
+  var file = systemIconFiles[iconKey];
+  if (!file) return '';
+  var classes = className ? ' class="system-icon ' + className + '"' : ' class="system-icon"';
+  var alt = label ? ' alt="' + String(label).replace(/[&<>"']/g, function (character) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+  }) + '"' : ' alt="" aria-hidden="true"';
+  return '<img' + classes + ' src="./icones_personalizados/' +
+    encodeURIComponent(file).replace(/%2F/gi, '/') + '"' + alt + '>';
+};
+
+window.RildonXFileIconMarkup = function (extension, className) {
+  var fileIcons = {
+    '3gp': 'file-video',
+    '7z': 'file-zip',
+    avi: 'file-video',
+    csv: 'file-csv',
+    doc: 'file-doc',
+    docx: 'file-doc',
+    gz: 'file-zip',
+    gif: 'file-image',
+    htm: 'file-html',
+    html: 'file-html',
+    heic: 'file-image',
+    heif: 'file-image',
+    jpeg: 'file-jpeg',
+    jpg: 'file-jpeg',
+    mkv: 'file-video',
+    mov: 'file-video',
+    mp4: 'file-video',
+    mpeg: 'file-video',
+    mpg: 'file-video',
+    m4v: 'file-video',
+    odp: 'file-pptx',
+    odt: 'file-doc',
+    ods: 'file-xls',
+    avif: 'file-image',
+    bmp: 'file-image',
+    webp: 'file-image',
+    tif: 'file-image',
+    tiff: 'file-image',
+    png: 'file-png',
+    rar: 'file-zip',
+    svg: 'file-svg',
+    txt: 'file-txt',
+    xml: 'file-xml',
+    zip: 'file-zip',
+    pdf: 'file-pdf',
+    ppt: 'file-pptx',
+    pptx: 'file-pptx',
+    xls: 'file-xls',
+    xlsx: 'file-xls',
+    webm: 'file-video'
+  };
+  var iconName = fileIcons[String(extension || '').toLowerCase()] || 'file';
+  return window.RildonXIconMarkup(iconName, className);
+};
+
+function replaceKnownSystemIcons(root) {
+  var semanticMap = [
+    [/logout|log out|sair/, 'sair'],
+    [/mobile-menu-btn|(^|[\s-])menu([\s-]|$)/, 'menu'],
+    [/user-chip|menu do usu[aá]rio|abrir perfil|abrir conta/, 'user-menu'],
+    [/activity-icon|notifica[cç][aã]o|notifica[cç][oõ]es|lembrete/, 'notificacao'],
+    [/event-icon|cal-event|task-date|proj-meta/, 'calendario'],
+    [/reserva de sala/, 'reserva-de-sala'],
+    [/cal-chip.*reuni[aã]o|sala de reuni[oõ]es/, 'sala-de-reunioes'],
+    [/setor pessoal/, 'setor-pessoal'],
+    [/adicionar usu[aá]rio|convidar usu[aá]rio|novo participante/, 'adicionar-usuario'],
+    [/quick-create|criar novo|adicionar|acrescentar|^novo$|novo evento|nova tarefa|novo projeto/, 'adicionar'],
+    [/rm-btn|excluir|remover|apagar|lixeira/, 'excluir'],
+    [/search-mini|search-box|search-field|pesquisar|buscar|^lupa$/, 'lupa'],
+    [/redimensionar|resize/, 'resize'],
+    [/arquivar|archive/, 'arquivar'],
+    [/editar|edit/, 'editar'],
+    [/document-folder-name|pasta/, 'pasta'],
+    [/opt-icon.*document|documentos\/declara[cç][oõ]es|atestado|anexo|anexar arquivo/, 'anexo'],
+    [/\.chev|(^|[\s-])chev([\s-]|$)/, 'chevron'],
+    [/composer-tool.*foto|foto/, 'arquivo-de-imagem'],
+    [/composer-tool.*documento|documento word|arquivo doc/, 'arquivo-doc'],
+    [/react|curtir|like/, 'curtir'],
+    [/comentar|comment/, 'comentar'],
+    [/enviar|send/, 'enviar'],
+    [/exportar|baixar|download|dl-btn/, 'exportar'],
+    [/fechar|close/, 'fechar'],
+    [/mensagem|conversa/, 'mensagens'],
+    [/publica[cç][aã]o|mural/, 'mural'],
+    [/arquiv(?:o )?csv/, 'arquivo-csv'],
+    [/arquivo.*html/, 'arquivo-html'],
+    [/arquivo.*jpe?g/, 'arquivo-jpeg'],
+    [/arquivo.*png/, 'arquivo-png'],
+    [/arquivo.*svg/, 'arquivo-svg'],
+    [/arquivo.*txt/, 'arquivo-txt'],
+    [/arquivo.*v[ií]deo|mp4|video/, 'arquivo-video'],
+    [/arquivo.*xml/, 'arquivo-xml'],
+    [/arquivo.*zip|compactado/, 'arquivo-zip'],
+    [/imagem/, 'arquivo-de-imagem'],
+    [/arquivo pdf/, 'arquivo-pdf'],
+    [/arquivo pptx|apresenta[cç][aã]o/, 'arquivo-pptx'],
+    [/arquivo xls|planilha excel/, 'arquivo-xls'],
+    [/chamado ti|chamados de suporte|suporte/, 'chamado-ti'],
+    [/ajuda/, 'ajuda'],
+    [/configura[cç][aã]o|ajustes/, 'ajustes'],
+    [/favorito|star/, 'favoritos'],
+    [/pendente|aguardando/, 'pendente'],
+    [/conclu[ií]d[ao]|finalizad[ao]/, 'concluido'],
+    [/em andamento|andamento/, 'andamento'],
+    [/gr[aá]fico|indicador/, 'grafico'],
+    [/biblioteca de m[oó]dulos|^m[oó]dulos$/, 'modulos'],
+    [/visualiza[cç][aã]o.*lista|(?:^|\s)lista(?:\s|$)|list-view/, 'lista'],
+    [/(?:^|\s)grade(?:\s|$)|grid-view/, 'grade'],
+    [/kanban|quadro/, 'kanban'],
+    [/sincronizar|sync/, 'sincronizar'],
+    [/expandir (?:menu|barra|sidebar)/, 'expandir-sidebar'],
+    [/recolher (?:menu|barra|sidebar)/, 'recolher-sidebar'],
+    [/pol[ií]ticas internas/, 'politicas-internas'],
+    [/detalhe|abrir detalhes/, 'detalhe']
+  ];
+  var scope = root || document;
+  var svgs = scope.matches && scope.matches('svg')
+    ? [scope].concat(Array.from(scope.querySelectorAll('svg')))
+    : Array.from(scope.querySelectorAll('svg'));
+  svgs.forEach(function (svg) {
+    var navItem = svg.closest('.nav-item[data-page]');
+    var pageHeading = svg.closest('.page-head h1, .topbar-page-heading');
+    var action = svg.closest('button, a, [role="button"], .qa-btn, .composer-tool, .user-chip, .activity-icon, .event-icon, .opt-icon, .chev');
+    var labelText = [
+      navItem && navItem.getAttribute('data-page'),
+      svg.getAttribute('aria-label'),
+      svg.getAttribute('title'),
+      action && action.getAttribute('aria-label'),
+      action && action.getAttribute('title'),
+      action && action.textContent,
+      svg.getAttribute('class'),
+      action && action.getAttribute('class'),
+      svg.parentElement && svg.parentElement.getAttribute('class'),
+      svg.parentElement && svg.parentElement.parentElement && svg.parentElement.parentElement.getAttribute('class')
+    ].filter(Boolean).join(' ').toLocaleLowerCase('pt-BR');
+    var semanticMatch = semanticMap.find(function (entry) { return entry[0].test(labelText); });
+    var navIcons = {
+      inicio: 'inicio',
+      feed: 'mural',
+      messenger: 'mensagens',
+      calendario: 'calendario',
+      tarefas: 'tarefas',
+      projetos: 'projetos',
+      documentos: 'documentos',
+      meuespaco: 'meu espaço',
+      pessoas: 'funcionarios',
+      perfil: 'meu espaço',
+      configuracoes: 'ajustes',
+      ajuda: 'ajuda'
+    };
+    var headingIcons = {
+      inicio: 'inicio',
+      feed: 'mural',
+      mensagens: 'mensagens',
+      calendario: 'calendario',
+      tarefas: 'tarefas',
+      projetos: 'projetos',
+      documentos: 'documentos',
+      meuespaco: 'meu espaço'
+    };
+    var pageName = document.body.getAttribute('data-page');
+    var iconName = navItem ? navIcons[navItem.dataset.page] :
+      pageHeading ? headingIcons[pageName] :
+      semanticMatch ? semanticMatch[1] : '';
+    if (!iconName) return;
+
+    var replacementMarkup = window.RildonXIconMarkup(iconName);
+    if (!replacementMarkup) return;
+    var template = document.createElement('template');
+    template.innerHTML = replacementMarkup;
+    var image = template.content.firstElementChild;
+    var computed = window.getComputedStyle(svg);
+    if (svg.getAttribute('class')) image.className += ' ' + svg.getAttribute('class');
+    image.style.width = computed.width;
+    image.style.height = computed.height;
+    image.style.flexShrink = computed.flexShrink;
+    image.style.margin = computed.margin;
+    image.style.opacity = computed.opacity;
+    image.style.verticalAlign = computed.verticalAlign;
+    image.style.objectFit = 'contain';
+    var title = svg.querySelector('title');
+    var accessibleLabel = svg.getAttribute('aria-label') || (title && title.textContent.trim());
+    if (accessibleLabel) {
+      image.setAttribute('alt', accessibleLabel);
+      image.setAttribute('role', 'img');
+      image.removeAttribute('aria-hidden');
+    }
+    svg.replaceWith(image);
+  });
+}
+
+replaceKnownSystemIcons(document);
+new MutationObserver(function (mutations) {
+  mutations.forEach(function (mutation) {
+    mutation.addedNodes.forEach(function (node) {
+      if (node.nodeType === 1) replaceKnownSystemIcons(node);
+    });
+  });
+}).observe(document.body, { childList: true, subtree: true });
+
 function normalizeSidebar() {
   var sidebar = document.querySelector('.sidebar');
   var nav = sidebar && sidebar.querySelector('.nav');
@@ -15,24 +380,28 @@ function normalizeSidebar() {
   });
 
   var icons = {
-    inicio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
-    feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>',
-    messenger: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
-    calendario: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
-    tarefas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>',
-    projetos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
-    documentos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
-    meuespaco: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-    sair: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
+    inicio: window.RildonXIconMarkup('home'),
+    feed: window.RildonXIconMarkup('feed'),
+    messenger: window.RildonXIconMarkup('chat'),
+    calendario: window.RildonXIconMarkup('calendar'),
+    tarefas: window.RildonXIconMarkup('task'),
+    projetos: window.RildonXIconMarkup('project'),
+    documentos: window.RildonXIconMarkup('document'),
+    meuespaco: window.RildonXIconMarkup('person'),
+    sair: window.RildonXIconMarkup('logout')
   };
 
   sidebar.querySelectorAll('.nav-item[data-page]').forEach(function (item) {
     var icon = icons[item.getAttribute('data-page')];
-    if (icon && !item.querySelector('svg')) item.insertAdjacentHTML('afterbegin', icon);
+    var existingIcon = item.querySelector('svg, .system-icon');
+    if (icon && existingIcon) existingIcon.outerHTML = icon;
+    else if (icon) item.insertAdjacentHTML('afterbegin', icon);
   });
 
   var logout = sidebar.querySelector('.logout-item');
-  if (logout && !logout.querySelector('svg')) logout.insertAdjacentHTML('afterbegin', icons.sair);
+  var logoutIcon = logout && logout.querySelector('svg, .system-icon');
+  if (logout && icons.sair && logoutIcon) logoutIcon.outerHTML = icons.sair;
+  else if (logout && icons.sair) logout.insertAdjacentHTML('afterbegin', icons.sair);
 }
 
 normalizeSidebar();
@@ -78,10 +447,10 @@ function initCollapsibleSidebar() {
     label.className = 'sidebar-label';
     label.textContent = labelText;
     item.appendChild(label);
-    item.classList.toggle('has-icon', Boolean(item.querySelector('svg')));
+    item.classList.toggle('has-icon', Boolean(item.querySelector('svg, img.system-icon')));
     item.setAttribute('aria-label', labelText);
     item.title = labelText;
-    if (!item.querySelector('svg')) {
+    if (!item.querySelector('svg, img.system-icon')) {
       var shortLabel = document.createElement('span');
       shortLabel.className = 'sidebar-item-short';
       shortLabel.setAttribute('aria-hidden', 'true');
@@ -93,7 +462,7 @@ function initCollapsibleSidebar() {
   var button = document.createElement('button');
   button.type = 'button';
   button.className = 'sidebar-collapse-btn';
-  button.innerHTML = '<span class="sidebar-collapse-icon" aria-hidden="true">«</span><span class="sidebar-collapse-label">recolher</span>';
+  button.innerHTML = '<span class="sidebar-collapse-icon" aria-hidden="true"></span><span class="sidebar-collapse-label">recolher</span>';
   var sidebarLogo = sidebar.querySelector('.sidebar-project-logo');
   var expandedLogoSource = sidebarLogo ? sidebarLogo.src : '';
   var faviconLink = document.querySelector('link[rel="icon"]');
@@ -117,7 +486,10 @@ function initCollapsibleSidebar() {
     button.title = isExpanded ? 'Recolher menu' : 'Expandir menu';
     button.classList.toggle('is-collapsed', !isExpanded);
     var icon = button.querySelector('.sidebar-collapse-icon');
-    if (icon) icon.textContent = isExpanded ? '«' : '»';
+    if (icon) {
+      var customIcon = window.RildonXIconMarkup(isExpanded ? 'collapse-sidebar' : 'expand-sidebar');
+      icon.innerHTML = customIcon || (isExpanded ? '«' : '»');
+    }
     var label = button.querySelector('.sidebar-collapse-label');
     if (label) label.hidden = !isExpanded;
     var logoSource = isExpanded ? expandedLogoSource : collapsedLogoSource;
@@ -1082,6 +1454,7 @@ function renderMessageAttachments(message, documents) {
     var labels = { doc: 'DOC', docx: 'DOC', pdf: 'PDF', ppt: 'PPT', pptx: 'PPT', xls: 'XLS', xlsx: 'XLS', png: 'IMG', jpg: 'IMG', jpeg: 'IMG' };
     var iconClass = /^[a-z0-9]+$/.test(extension) ? extension : 'file';
     var iconLabel = labels[extension] || (fileType ? fileType.slice(0, 4).toUpperCase() : 'ARQ');
+    var fileIcon = window.RildonXFileIconMarkup && window.RildonXFileIconMarkup(extension);
     var safeId = escapeHtml(documentItem.id || documentId || '');
     var safeName = escapeHtml(documentItem.name || 'Documento compartilhado');
     if (String(documentItem.mimeType || '').indexOf('image/') === 0 ||
@@ -1098,7 +1471,7 @@ function renderMessageAttachments(message, documents) {
 
     return [
       '<div class="file-bubble">',
-      '<div class="doc-icon ' + iconClass + '">' + iconLabel + '</div>',
+      '<div class="doc-icon ' + iconClass + '">' + (fileIcon || iconLabel) + '</div>',
       '<div class="file-details"><b>' + safeName + '</b><span>' + escapeHtml(fileType || 'Arquivo') + ' · ' + escapeHtml(documentItem.sizeLabel || 'Tamanho indisponível') + '</span></div>',
       '</div>'
     ].join('');
@@ -1219,9 +1592,10 @@ function renderConversationDetails(state, conversation, messages) {
       (extension ? extension.slice(0, 4).toUpperCase() : 'ARQ');
     var iconClass = /^[a-z0-9]+$/.test(extension) ? extension : 'file';
     var isImage = /^image\//.test(String(file.mimeType || '')) || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].indexOf(extension) !== -1;
+    var fileIcon = window.RildonXFileIconMarkup && window.RildonXFileIconMarkup(extension);
     return '<button class="conversation-file-preview" type="button" data-document-action="open" data-document-id="' +
       escapeHtml(file.id) + '">' +
-      (isImage ? '<img data-document-image-id="' + escapeHtml(file.id) + '" alt="" loading="lazy">' : '<span class="doc-icon ' + iconClass + '">' + escapeHtml(label) + '</span>') +
+      (isImage ? '<img data-document-image-id="' + escapeHtml(file.id) + '" alt="" loading="lazy">' : '<span class="doc-icon ' + iconClass + '">' + (fileIcon || escapeHtml(label)) + '</span>') +
       '<span><b title="' + escapeHtml(file.name || 'Arquivo compartilhado') + '">' +
       escapeHtml(file.name || 'Arquivo compartilhado') + '</b><small>' +
       escapeHtml(file.sizeLabel || 'Arquivo compartilhado') + '</small></span></button>';
@@ -2090,8 +2464,9 @@ function renderHomeRecentDocuments() {
     }
     var labels = { pdf: 'PDF', doc: 'DOC', docx: 'DOC', xls: 'XLS', xlsx: 'XLS', ppt: 'PPT', pptx: 'PPT', png: 'IMG', jpg: 'IMG', jpeg: 'IMG' };
     var fileClass = /^[a-z0-9]+$/.test(extension) ? extension : 'file';
+    var fileIcon = window.RildonXFileIconMarkup && window.RildonXFileIconMarkup(extension);
     return '<div class="doc-row home-document-row"><div class="doc-icon ' + escapeHtml(fileClass) + '">' +
-      escapeHtml(labels[extension] || extension.slice(0, 4).toUpperCase()) + '</div><div class="doc-info">' +
+      (fileIcon || escapeHtml(labels[extension] || extension.slice(0, 4).toUpperCase())) + '</div><div class="doc-info">' +
       '<b>' + escapeHtml(item.name || 'Arquivo sem nome') + '</b><span>' +
       escapeHtml(item.folder || 'Equipe') + ' · ' + escapeHtml(formatPostTime(item.sentAt)) + '</span></div></div>';
   }).join('') : '<div class="home-widget-empty">Nenhum documento recente.</div>';

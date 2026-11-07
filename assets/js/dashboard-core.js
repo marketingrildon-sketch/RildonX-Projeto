@@ -630,6 +630,8 @@
   }
 
   function iconMarkup(name) {
+    var customIcon = window.RildonXIconMarkup && window.RildonXIconMarkup(name);
+    if (customIcon) return customIcon;
     const paths = {
       task: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3h8M8 11l2 2 4-4M8 17h8"/>',
       project: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
@@ -1916,25 +1918,27 @@
         ? '<div class="dashboard-card-body-actions">' + moduleOpenAction + calendarAction + '</div>'
         : moduleOpenAction
       : '<a class="dashboard-card-body-action" draggable="false" href="' + escapeHtml(pageHref) + '">Abrir página</a>';
+    const cardTools = staticHomeCard ? '' :
+      '<div class="dashboard-card-tools dashboard-card-tools--footer">' +
+      '<button type="button" class="dashboard-card-tool-button" data-card-resize="' + escapeHtml(card.id) + '" data-next-size="' + escapeHtml(nextSize) +
+      '" aria-label="Redimensionar ' + escapeHtml(card.title) + ' para a proporção ' + nextSizeLabel + '" title="Proporção seguinte: ' + nextSizeLabel + '">' + iconMarkup('resize') + '</button>' +
+      '<button type="button" class="dashboard-card-tool-button dashboard-card-remove-button" data-card-remove="' + escapeHtml(card.id) + '" aria-label="Remover ' + escapeHtml(card.title) + ' do Meu Espaço" title="Remover card">' + iconMarkup('trash') + '</button></div>';
     return [
       '<article class="dashboard-card dashboard-card--' + escapeHtml(card.type) + '" data-tone="' + escapeHtml(staticHomeCard ? module && module.tone || 'general' : card.tone || module && module.tone || 'general') + '" data-size="' + escapeHtml(card.size) + '" data-card-id="' + escapeHtml(card.id) + '" draggable="' + (staticHomeCard ? 'false' : 'true') + '">',
       '  <div class="dashboard-card-header">',
       '    <div class="dashboard-card-title-wrap">',
-      '      <span class="dashboard-card-icon" data-kind="' + escapeHtml(catalog.icon) + '" data-tone="' + escapeHtml(module && module.tone || '') + '">' + iconMarkup(catalog.icon) + '</span>',
+      (staticHomeCard
+        ? '      <span class="dashboard-card-icon" data-kind="' + escapeHtml(catalog.icon) + '" data-tone="' + escapeHtml(module && module.tone || '') + '">' + iconMarkup(catalog.icon) + '</span>'
+        : ''),
       '      <div>',
       '        <h4>' + escapeHtml(card.title || catalog.label) + '</h4>',
       '      </div>',
-      '    </div>',
-      '    <div class="dashboard-card-tools">' +
-      (staticHomeCard ? '' :
-      '      <button type="button" class="dashboard-card-tool-button" data-card-resize="' + escapeHtml(card.id) + '" data-next-size="' + escapeHtml(nextSize) +
-      '" aria-label="Redimensionar ' + escapeHtml(card.title) + ' para a proporção ' + nextSizeLabel + '" title="Proporção seguinte: ' + nextSizeLabel + '">' + iconMarkup('resize') + '</button>' +
-      '      <button type="button" class="dashboard-card-tool-button dashboard-card-remove-button" data-card-remove="' + escapeHtml(card.id) + '" aria-label="Remover ' + escapeHtml(card.title) + ' do Meu Espaço" title="Remover card">' + iconMarkup('trash') + '</button>'),
       '    </div>',
       '  </div>',
       '  <div class="dashboard-card-body" data-density="' + escapeHtml(data.dashboardDensity || 'comfortable') + '">' +
       (items.heading ? '<h5 class="dashboard-card-list-heading">' + escapeHtml(items.heading) + '</h5>' : '') +
       (items.indicators ? '' : module ? renderBusinessMetrics(items) : '') + listMarkup + bodyAction + '</div>',
+      cardTools,
       '</article>'
     ].join('');
   }

@@ -43,7 +43,7 @@
 #page-projetos .project-card-actions{display:flex;gap:6px}
 #page-projetos .project-icon-btn{width:32px;height:32px;border:1px solid var(--border,#e8eaf0);border-radius:9px;background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer}
 #page-projetos .project-icon-btn:hover{background:#f7f8fa}
-#page-projetos .project-icon-btn svg{width:16px;height:16px}
+#page-projetos .project-icon-btn svg,#page-projetos .project-icon-btn img.system-icon{width:16px;height:16px;object-fit:contain}
 #page-projetos .project-section{background:var(--surface,#fff);border:1px solid var(--border,#e8eaf0);border-radius:15px;padding:18px}
 #page-projetos .project-section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
 #page-projetos .project-section-head h2{font-size:16px;margin:0}
