@@ -12,6 +12,7 @@ O bloqueio após cinco tentativas é aplicado pela Edge Function `rildonx-login`
 - `LOGIN_HASH_SECRET`: segredo aleatório longo para gerar identificadores irreversíveis das tentativas.
 - `RESEND_API_KEY`: chave de API de um remetente Resend verificado.
 - `LOGIN_ALERT_FROM`: remetente autorizado no Resend.
+- `LOGIN_ALLOWED_ORIGINS` (opcional): origens locais exatas, separadas por vírgula, para permitir testes com `npm run dev`. Inclua protocolo, host e porta, sem caminho; por exemplo, `http://localhost:4173,http://127.0.0.1:4173,http://<IP-DA-REDE-LOCAL>:4173`. Substitua o último item pelo IP atual da máquina que hospeda o Vite. Se o IP ou a porta mudar, atualize essa lista e publique novamente a Edge Function. Origens não listadas continuam bloqueadas.
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` são fornecidos pelo ambiente de Edge Functions do Supabase. Não coloque essas chaves nem a senha do usuário no código do navegador ou no e-mail de alerta.
 
@@ -21,7 +22,7 @@ Depois de definir os segredos, publique a função com:
 supabase functions deploy rildonx-login --project-ref <project-ref> --no-verify-jwt
 ```
 
-Somente então habilite `window.RILDONX_LOGIN_FUNCTION_ENABLED = true` em `assets/js/supabase-config.js` e publique novamente o site. O alerta contém somente o login tentado e o horário final do bloqueio, e é enviado para `rhrildon5@gmail.com`. A função não registra nem envia senhas. A autenticação padrão do Supabase continua sendo uma API pública; mantenha também a proteção contra força bruta e CAPTCHA/rate limit configurados em **Authentication → Rate Limits/Security**.
+Somente então habilite `window.RILDONX_LOGIN_FUNCTION_ENABLED = true` em `assets/js/supabase-config.js` e publique novamente o site. O projeto Vite atualiza automaticamente as versões de cache dos recursos no modo de desenvolvimento; reinicie `npm run dev` após alterar `vite.config.js`. O alerta contém somente o login tentado e o horário final do bloqueio, e é enviado para `rhrildon5@gmail.com`. A função não registra nem envia senhas. A autenticação padrão do Supabase continua sendo uma API pública; mantenha também a proteção contra força bruta e CAPTCHA/rate limit configurados em **Authentication → Rate Limits/Security**.
 
 ## Limite de sessão
 

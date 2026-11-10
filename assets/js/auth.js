@@ -245,9 +245,13 @@
         showError('Login ou senha inválidos.');
         return;
       }
+      if (responseStatus === 403) {
+        showError('Este endereço não está autorizado para autenticação. Use o endereço oficial ou solicite a liberação do ambiente local.');
+        return;
+      }
       if (error && (error.name === 'AuthRetryableFetchError' || error.name === 'FunctionsFetchError' ||
           error.name === 'FunctionsRelayError' || responseStatus >= 500)) {
-        showError('Não foi possível conectar ao serviço de autenticação. Verifique a conexão e tente novamente.');
+        showError('Não foi possível conectar ao serviço de autenticação. Verifique a conexão; em ambiente local, confirme se este endereço está autorizado.');
         return;
       }
       console.error('Não foi possível autenticar a conta:', error);

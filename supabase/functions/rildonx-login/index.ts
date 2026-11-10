@@ -13,13 +13,13 @@ function requiredEnv(name: string): string {
   return value;
 }
 
-function jsonResponse(body: unknown, status: number, origin: string | null, allowedOrigin: string): Response {
+function jsonResponse(body: unknown, status: number, origin: string | null): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Origin": origin === allowedOrigin ? allowedOrigin : "null",
+      "Access-Control-Allow-Origin": origin || "null",
       "Content-Type": "application/json",
       "Vary": "Origin",
       "Cache-Control": "no-store",
@@ -118,34 +118,38 @@ async function sendLockoutAlert(identifier: string, lockedUntil: string, hash: s
 
 Deno.serve(async (request) => {
   const origin = request.headers.get("Origin");
-  let allowedOrigin = "";
+  let allowedOrigins = new Set<string>();
   try {
-    allowedOrigin = new URL(requiredEnv("LOGIN_APP_URL")).origin;
+    allowedOrigins = new Set([
+      requiredEnv("LOGIN_APP_URL"),
+      ...(Deno.env.get("LOGIN_ALLOWED_ORIGINS") || "").split(","),
+    ].map((value) => new URL(value.trim()).origin));
   } catch (error) {
-    console.error("Login app origin is not configured.");
+    console.error("Login app origins are not configured.");
   }
+  const originAllowed = origin !== null && allowedOrigins.has(origin);
 
   if (request.method === "OPTIONS") {
-    return jsonResponse({}, origin === allowedOrigin ? 200 : 403, origin, allowedOrigin);
+    return jsonResponse({}, originAllowed ? 200 : 403, originAllowed ? origin : null);
   }
   if (request.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed." }, 405, origin, allowedOrigin);
+    return jsonResponse({ error: "Method not allowed." }, 405, originAllowed ? origin : null);
   }
-  if (!allowedOrigin || origin !== allowedOrigin) {
-    return jsonResponse({ error: "Origin not allowed." }, 403, origin, allowedOrigin);
+  if (!originAllowed) {
+    return jsonResponse({ error: "Origin not allowed." }, 403, null);
   }
 
   try {
     const rawBody = await request.text();
     if (rawBody.length > 4096) {
-      return jsonResponse({ error: INVALID_MESSAGE }, 400, origin, allowedOrigin);
+      return jsonResponse({ error: INVALID_MESSAGE }, 400, origin);
     }
     const body = JSON.parse(rawBody) as LoginBody;
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const login = typeof body.login === "string" ? body.login.trim().slice(0, 254) : email;
     const password = typeof body.password === "string" ? body.password : "";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || password.length < 1 || password.length > 1024) {
-      return jsonResponse({ error: INVALID_MESSAGE }, 400, origin, allowedOrigin);
+      return jsonResponse({ error: INVALID_MESSAGE }, 400, origin);
     }
 
     const hash = await identifierHash(email);
@@ -156,7 +160,7 @@ Deno.serve(async (request) => {
     const lock = lockRows[0];
     if (lock && lock.locked) {
       await sendLockoutAlert(login, lock.locked_until || new Date().toISOString(), hash);
-      return jsonResponse({ error: LOCK_MESSAGE }, 429, origin, allowedOrigin);
+      return jsonResponse({ error: LOCK_MESSAGE }, 429, origin);
     }
 
     const supabaseUrl = requiredEnv("SUPABASE_URL").replace(/\/$/, "");
@@ -179,22 +183,22 @@ Deno.serve(async (request) => {
       const attempt = attempts[0];
       if (attempt && attempt.locked) {
         await sendLockoutAlert(login, attempt.locked_until || new Date().toISOString(), hash);
-        return jsonResponse({ error: LOCK_MESSAGE }, 429, origin, allowedOrigin);
+        return jsonResponse({ error: LOCK_MESSAGE }, 429, origin);
       }
-      return jsonResponse({ error: INVALID_MESSAGE }, 401, origin, allowedOrigin);
+      return jsonResponse({ error: INVALID_MESSAGE }, 401, origin);
     }
     if (!authResponse.ok) {
-      return jsonResponse({ error: "Serviço de autenticação indisponível. Tente novamente." }, 503, origin, allowedOrigin);
+      return jsonResponse({ error: "Serviço de autenticação indisponível. Tente novamente." }, 503, origin);
     }
 
     const session = await authResponse.json();
     if (!session.access_token || !session.refresh_token) {
-      return jsonResponse({ error: "Serviço de autenticação indisponível. Tente novamente." }, 503, origin, allowedOrigin);
+      return jsonResponse({ error: "Serviço de autenticação indisponível. Tente novamente." }, 503, origin);
     }
     await callRpc("rildonx_reset_login_attempts", { p_identifier_hash: hash });
-    return jsonResponse(session, 200, origin, allowedOrigin);
+    return jsonResponse(session, 200, origin);
   } catch (error) {
     console.error("RildonX login request failed.", error instanceof Error ? error.message : "Unknown error.");
-    return jsonResponse({ error: "Serviço de autenticação indisponível. Tente novamente." }, 503, origin, allowedOrigin);
+    return jsonResponse({ error: "Serviço de autenticação indisponível. Tente novamente." }, 503, origin);
   }
 });
