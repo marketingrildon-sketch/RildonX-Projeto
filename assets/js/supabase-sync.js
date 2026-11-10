@@ -30,6 +30,7 @@
       senderInitials: row.sender_initials || row.senderInitials || 'U',
       ownerId: row.owner_id || row.ownerId || null,
       viewerIds: Array.isArray(row.viewer_ids) ? row.viewer_ids : [],
+      storagePath: row.storage_path || row.storagePath || null,
       sentAt: row.sent_at || row.sentAt || null,
       folder: row.folder || 'Equipe',
       messageId: row.message_id || row.messageId || null,
@@ -533,9 +534,11 @@
     if (!getSupabaseEnabled() || !window.RildonXStore) return;
 
     const authResult = await window.supabaseClient.auth.getUser();
-    if (authResult.error) console.error('Erro ao identificar usuario para carregar conversas:', authResult.error);
+    if (authResult.error) throw authResult.error;
     const currentUser = authResult.data && authResult.data.user;
     const currentUserId = currentUser ? currentUser.id : null;
+    window.RildonXStore.setUserScope(currentUserId);
+    if (!currentUserId) return;
     const hydrationFields = [
       'documents', 'documentFolders', 'messages', 'tasks', 'taskComments', 'projects',
       'profiles', 'conversations', 'visibleConversationIds', 'conversationReads', 'postAcknowledgements',
@@ -672,18 +675,18 @@
     const nextState = {
       ...currentState,
       user: authenticatedUser,
-      documents: docError ? currentState.documents || [] : (documentsResult.data || []).map(mapDocumentRow),
-      documentFolders: documentFoldersError ? currentState.documentFolders || [] : (documentFoldersResult.data || []).map(function (folder) {
+      documents: docError ? [] : (documentsResult.data || []).map(mapDocumentRow),
+      documentFolders: documentFoldersError ? [] : (documentFoldersResult.data || []).map(function (folder) {
         return { id: folder.id, name: folder.name };
       }),
-      messages: msgError ? currentState.messages || [] : (messagesResult.data || []).map(mapMessageRow),
-      tasks: taskError ? currentState.tasks || [] : (tasksResult.data || []).map(mapTaskRow),
-      taskComments: taskCommentsError ? currentState.taskComments || [] : taskComments,
-      projects: projectError ? currentState.projects || [] : (projectsResult.data || []).map(mapProjectRow),
-      profiles: profileError ? currentState.profiles || [] : profileRows,
-      conversations: conversationError ? currentState.conversations || [] : (conversationsResult.data || []).map(mapConversationRow),
+      messages: msgError ? [] : (messagesResult.data || []).map(mapMessageRow),
+      tasks: taskError ? [] : (tasksResult.data || []).map(mapTaskRow),
+      taskComments: taskCommentsError ? [] : taskComments,
+      projects: projectError ? [] : (projectsResult.data || []).map(mapProjectRow),
+      profiles: profileError ? [] : profileRows,
+      conversations: conversationError ? [] : (conversationsResult.data || []).map(mapConversationRow),
       visibleConversationIds: membershipError || conversationError
-        ? currentState.visibleConversationIds || []
+        ? []
         : isAdmin
         ? (conversationsResult.data || []).map(function (row) { return row.id; })
         : Array.from(new Set((membershipResult.data || [])
@@ -691,7 +694,7 @@
             return row.user_id === currentUserId && !row.hidden_at;
           })
           .map(function (row) { return row.conversation_id; }))),
-      conversationReads: membershipError ? currentState.conversationReads || [] : (membershipResult.data || []).filter(function(row) {
+      conversationReads: membershipError ? [] : (membershipResult.data || []).filter(function(row) {
         return row.user_id === currentUserId;
       }).map(function (row) {
         return {
@@ -702,7 +705,7 @@
           hiddenAt: row.hidden_at || null
         };
       }),
-      conversationMemberships: membershipError ? currentState.conversationMemberships || [] : (membershipResult.data || []).map(function (row) {
+      conversationMemberships: membershipError ? [] : (membershipResult.data || []).map(function (row) {
         return {
           conversationId: row.conversation_id,
           userId: row.user_id,
@@ -711,23 +714,21 @@
           hiddenAt: row.hidden_at || null
         };
       }),
-      events: eventsError ? currentState.events || [] : mergeRemoteWithCurrent(
+      events: eventsError ? [] : mergeRemoteWithCurrent(
         (eventsResult.data || []).map(mapEventRow),
         currentState.events
       ).filter(function (event) {
         return event.visibility !== 'private' || event.ownerId === currentUserId;
       }),
       posts: postError
-        ? (currentState.posts || []).filter(function (post) {
-          return currentUserId && String(post.authorId) === String(currentUserId);
-        })
+        ? []
         : remotePosts,
       postAcknowledgements: postAcknowledgementsError
-        ? currentState.postAcknowledgements || []
+        ? []
         : (postAcknowledgementsResult.data || []).map(mapPostAcknowledgementRow),
       muralLoaded: true,
       businessCardRecords: businessCardRecordsError
-        ? currentState.businessCardRecords || []
+        ? []
         : (businessCardRecordsResult.data || []).map(mapBusinessCardRow),
       businessCardRecordsLoadError: businessCardRecordsError
         ? 'Não foi possível carregar os cards setoriais. Verifique se a migração do Supabase foi aplicada e se seu perfil tem acesso ao setor.'
@@ -980,6 +981,30 @@
       drainStoreSyncQueue();
     } catch (error) {
       console.error('Falha na sincronização com Supabase:', error);
+      applyingRemoteState = true;
+      try {
+        window.RildonXStore.setRemoteState({
+          documents: [],
+          documentFolders: [],
+          messages: [],
+          tasks: [],
+          taskComments: [],
+          projects: [],
+          profiles: [],
+          conversations: [],
+          visibleConversationIds: [],
+          conversationReads: [],
+          conversationMemberships: [],
+          events: [],
+          posts: [],
+          postAcknowledgements: [],
+          businessCardRecords: [],
+          muralLoadError: 'Não foi possível confirmar suas permissões. Recarregue a página quando a conexão voltar.',
+          businessCardRecordsLoadError: 'Não foi possível confirmar suas permissões. Recarregue a página quando a conexão voltar.'
+        });
+      } finally {
+        applyingRemoteState = false;
+      }
       initialHydrationComplete = true;
       if (storeSyncPending) drainStoreSyncQueue();
       if (error && error.name === 'TimeoutError' && typeof window.showToast === 'function') {

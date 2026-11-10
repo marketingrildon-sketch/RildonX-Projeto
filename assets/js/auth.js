@@ -4,6 +4,8 @@
   var LOGIN_EMAILS = {
     'adson.ri': 'adson.ri@rildonx.local'
   };
+  var SESSION_LIMIT_MS = 8 * 60 * 60 * 1000;
+  var sessionExpiryTimer = null;
 
   function loginToEmail(login) {
     var normalizedLogin = String(login || '').trim().toLowerCase();
@@ -12,6 +14,12 @@
 
   function getClient() {
     return window.supabaseClient && typeof window.supabaseClient.auth === 'object' ? window.supabaseClient : null;
+  }
+
+  function clearUserCacheScope() {
+    if (window.RildonXStore && typeof window.RildonXStore.setUserScope === 'function') {
+      window.RildonXStore.setUserScope(null);
+    }
   }
 
   async function waitForClient() {
@@ -64,6 +72,82 @@
   function showStatus(message) {
     var target = document.getElementById('login-status');
     if (target) target.textContent = message;
+  }
+
+  function getSessionStorageKey(session) {
+    var userId = session && session.user && session.user.id;
+    if (!userId) return null;
+    var sessionId = '';
+    try {
+      var tokenParts = String(session.access_token || '').split('.');
+      if (tokenParts.length === 3) {
+        var payload = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
+        while (payload.length % 4) payload += '=';
+        var claims = JSON.parse(window.atob(payload));
+        sessionId = String(claims.session_id || claims.sid || '');
+      }
+    } catch (error) {
+      console.error('Não foi possível ler o identificador da sessão:', error);
+    }
+    return 'rildonx_session_started_v1:' + encodeURIComponent(userId) + ':' +
+      encodeURIComponent(sessionId || 'active-session');
+  }
+
+  function getSessionStartedAt(session, reset) {
+    var key = getSessionStorageKey(session);
+    if (!key) throw new Error('Não foi possível identificar a sessão autenticada.');
+    var storage = window.localStorage;
+    try {
+      var startedAt = Number(reset ? 0 : storage.getItem(key));
+      if (!Number.isFinite(startedAt) || startedAt <= 0 || startedAt > Date.now()) {
+        startedAt = Date.now();
+        storage.setItem(key, String(startedAt));
+      }
+      return startedAt;
+    } catch (error) {
+      console.error('Não foi possível salvar o horário de início da sessão no armazenamento compartilhado:', error);
+      storage = window.sessionStorage;
+      var sessionStartedAt = Number(reset ? 0 : storage.getItem(key));
+      if (!Number.isFinite(sessionStartedAt) || sessionStartedAt <= 0 || sessionStartedAt > Date.now()) {
+        sessionStartedAt = Date.now();
+        storage.setItem(key, String(sessionStartedAt));
+      }
+      return sessionStartedAt;
+    }
+  }
+
+  async function expireSession() {
+    if (sessionExpiryTimer) window.clearTimeout(sessionExpiryTimer);
+    sessionExpiryTimer = null;
+    var client = getClient();
+    if (client) {
+      try {
+        var result = await client.auth.signOut({ scope: 'local' });
+        if (result.error) console.error('Não foi possível encerrar a sessão expirada:', result.error);
+      } catch (error) {
+        console.error('Não foi possível encerrar a sessão expirada:', error);
+      }
+    }
+    clearUserCacheScope();
+    sessionStorage.removeItem('rildonx_force_password_change');
+    window.location.replace('login.html?sessionExpired=true');
+  }
+
+  async function enforceSessionLimit(session, reset) {
+    if (sessionExpiryTimer) window.clearTimeout(sessionExpiryTimer);
+    var startedAt = getSessionStartedAt(session, reset);
+    var remainingMs = SESSION_LIMIT_MS - (Date.now() - startedAt);
+    if (remainingMs <= 0) {
+      await expireSession();
+      return false;
+    }
+    sessionExpiryTimer = window.setTimeout(function () {
+      expireSession().catch(function (error) {
+        console.error('Não foi possível encerrar a sessão após o prazo máximo:', error);
+        window.location.replace('login.html?sessionExpired=true');
+      });
+    }, remainingMs);
+    return true;
   }
 
   function isAllowedLogin(login) {
@@ -132,15 +216,45 @@
 
     var result;
     try {
-      result = await client.auth.signInWithPassword({ email: loginToEmail(login), password: password });
+      if (window.RILDONX_LOGIN_FUNCTION_ENABLED === true) {
+        var loginResult = await client.functions.invoke('rildonx-login', {
+          body: {
+            email: loginToEmail(login),
+            login: login,
+            password: password
+          }
+        });
+        if (loginResult.error) throw loginResult.error;
+        if (!loginResult.data || !loginResult.data.access_token || !loginResult.data.refresh_token) {
+          throw new Error('O serviço de autenticação não retornou uma sessão válida.');
+        }
+        result = await client.auth.setSession({
+          access_token: loginResult.data.access_token,
+          refresh_token: loginResult.data.refresh_token
+        });
+      } else {
+        result = await client.auth.signInWithPassword({ email: loginToEmail(login), password: password });
+      }
     } catch (error) {
-      if (error && error.name === 'AuthRetryableFetchError') {
+      var responseStatus = error && error.context && error.context.status;
+      if (responseStatus === 429) {
+        showError('Login temporariamente bloqueado após cinco tentativas. Tente novamente em 15 minutos.');
+        return;
+      }
+      if (error && (error.name === 'AuthRetryableFetchError' || error.name === 'FunctionsFetchError' ||
+          error.name === 'FunctionsRelayError' || responseStatus >= 500)) {
         showError('Não foi possível conectar ao serviço de autenticação. Verifique a conexão e tente novamente.');
         return;
       }
-      throw error;
+      console.error('Não foi possível autenticar a conta:', error);
+      showError('Não foi possível autenticar agora. Tente novamente.');
+      return;
     }
     if (result.error) {
+      if (result.error.status === 429) {
+        showError('Login temporariamente bloqueado após cinco tentativas. Tente novamente em 15 minutos.');
+        return;
+      }
       if (result.error.name === 'AuthRetryableFetchError' || result.error.status === 0 || result.error.status >= 500) {
         showError('Não foi possível conectar ao serviço de autenticação. Verifique a conexão e tente novamente.');
         return;
@@ -160,6 +274,14 @@
       console.error('Não foi possível verificar o status da conta:', error);
       await client.auth.signOut();
       showError('Não foi possível verificar se sua conta está habilitada. Tente novamente.');
+      return;
+    }
+    try {
+      if (!await enforceSessionLimit(result.data.session, true)) return;
+    } catch (error) {
+      console.error('Não foi possível iniciar o limite da sessão:', error);
+      await client.auth.signOut({ scope: 'local' });
+      showError('Não foi possível iniciar uma sessão segura neste navegador. Habilite o armazenamento e tente novamente.');
       return;
     }
     if (user && user.user_metadata && user.user_metadata.must_change_password !== false) {
@@ -276,13 +398,22 @@
       return false;
     }
     if (!session) {
+      clearUserCacheScope();
       window.location.href = 'login.html';
+      return false;
+    }
+    try {
+      if (!await enforceSessionLimit(session, false)) return false;
+    } catch (error) {
+      console.error('Não foi possível verificar o limite da sessão:', error);
+      window.location.replace('login.html?authUnavailable=true');
       return false;
     }
     try {
       if (!await isAccountActive(session.user && session.user.id)) {
         var client = getClient();
         if (client) await client.auth.signOut();
+        clearUserCacheScope();
         window.location.href = 'login.html?disabled=true';
         return false;
       }
@@ -312,6 +443,10 @@
       if (new URLSearchParams(window.location.search).get('disabled') === 'true') {
         showError('Esta conta está desabilitada. Entre em contato com o RH.');
       }
+      var sessionExpired = new URLSearchParams(window.location.search).get('sessionExpired') === 'true';
+      if (sessionExpired) {
+        showError('Sua sessão foi encerrada após o limite de 8 horas. Entre novamente para continuar.');
+      }
       if (authError) {
         showError('O link de recuperação expirou ou não é válido. Solicite um novo link.');
         window.history.replaceState(null, '', window.location.pathname);
@@ -338,7 +473,7 @@
         createPasswordPanel(true);
         return;
       }
-      if (session) {
+      if (session && !sessionExpired) {
         if (callbackType === 'invite' ||
             session.user && session.user.user_metadata && session.user.user_metadata.must_change_password === true) {
           sessionStorage.setItem('rildonx_force_password_change', 'true');
@@ -357,11 +492,27 @@
       return;
     }
     if (!(await protectPage())) return;
+    var client = getClient();
+    if (client && typeof client.auth.onAuthStateChange === 'function') {
+      client.auth.onAuthStateChange(function (event) {
+        if (event !== 'SIGNED_OUT') return;
+        clearUserCacheScope();
+        window.location.replace('login.html');
+      });
+    }
     document.querySelectorAll('.logout-item').forEach(function (button) {
       button.addEventListener('click', async function (event) {
         event.preventDefault();
         var client = getClient();
-        if (client) await client.auth.signOut();
+        if (client) {
+          var result = await client.auth.signOut({ scope: 'local' });
+          if (result.error) {
+            console.error('Não foi possível encerrar a sessão:', result.error);
+            if (typeof window.showToast === 'function') window.showToast('Não foi possível encerrar a sessão. Tente novamente.');
+            return;
+          }
+        }
+        clearUserCacheScope();
         window.location.href = 'login.html';
       });
     });

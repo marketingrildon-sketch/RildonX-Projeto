@@ -31,7 +31,7 @@
 .infrastructure-button-primary:hover{background:var(--blue-500)}
 .infrastructure-button-secondary{border-color:var(--border);background:var(--card);color:var(--text)}
 .infrastructure-button-secondary:hover{border-color:var(--blue-500);color:var(--blue-600)}
-.infrastructure-button-danger{align-self:flex-start;border-color:#f2c8c8;background:#fff;color:#b42318}
+.infrastructure-button-danger{align-self:flex-start;border-color:#f2c8c8;background:var(--card);color:#b42318}
 .infrastructure-list-heading{display:flex;align-items:center;justify-content:space-between;margin-top:1px;color:var(--text)}
 .infrastructure-list-heading b{font-size:12px}
 .infrastructure-list-heading span{color:var(--text-muted);font-size:9px}

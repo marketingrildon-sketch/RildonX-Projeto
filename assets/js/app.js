@@ -3221,6 +3221,8 @@ function renderGlobalUserSummary() {
     if (appearanceForm) {
       appearanceForm.elements.theme.value = appearance.theme;
       appearanceForm.elements.background.value = appearance.background;
+      appearanceForm.elements.highContrast.checked = Boolean(appearance.highContrast);
+      appearanceForm.elements.reduceMotion.checked = Boolean(appearance.reduceMotion);
     }
     applySavedTheme(appearance.theme);
     updateSignedInUserPresentation(name, role, avatarUrl);
@@ -3434,6 +3436,8 @@ function applySavedTheme(theme, preferenceOverrides) {
     ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     : selectedTheme;
   document.documentElement.setAttribute('data-theme', resolvedTheme);
+  document.documentElement.setAttribute('data-contrast', preferences.highContrast ? 'high' : 'normal');
+  document.documentElement.setAttribute('data-reduce-motion', preferences.reduceMotion ? 'true' : 'false');
   document.documentElement.removeAttribute('data-palette');
   document.body.setAttribute('data-background', preferences.background || 'none');
   if (preferences.background === 'image' && preferences.backgroundImage) {
@@ -3445,11 +3449,21 @@ function applySavedTheme(theme, preferenceOverrides) {
   if (selector) selector.value = selectedTheme;
   var background = document.querySelector('#appearance-settings-form [name="background"]');
   if (background) background.value = preferences.background;
+  var highContrast = document.querySelector('#appearance-settings-form [name="highContrast"]');
+  if (highContrast) highContrast.checked = Boolean(preferences.highContrast);
+  var reduceMotion = document.querySelector('#appearance-settings-form [name="reduceMotion"]');
+  if (reduceMotion) reduceMotion.checked = Boolean(preferences.reduceMotion);
   renderAppearanceImagePreview(preferences.backgroundImage);
 }
 
 function getAppearancePreferences() {
-  var defaults = { theme: 'light', background: 'none', backgroundImage: '' };
+  var defaults = {
+    theme: 'light',
+    background: 'none',
+    backgroundImage: '',
+    highContrast: false,
+    reduceMotion: false
+  };
   try {
     defaults.theme = localStorage.getItem('rildonx_theme') || defaults.theme;
     var saved = JSON.parse(localStorage.getItem('rildonx_appearance') || '{}');
@@ -3466,7 +3480,9 @@ function applyAppearanceFormPreview(form, pendingImage) {
   applySavedTheme(form.elements.theme.value, {
     theme: form.elements.theme.value,
     background: background,
-    backgroundImage: pendingImage || previous.backgroundImage
+    backgroundImage: pendingImage || previous.backgroundImage,
+    highContrast: form.elements.highContrast.checked,
+    reduceMotion: form.elements.reduceMotion.checked
   });
 }
 
@@ -3565,8 +3581,11 @@ function bindProfileSettings() {
       }
       switchAccountButton.disabled = true;
       try {
-        var result = await window.supabaseClient.auth.signOut();
+        var result = await window.supabaseClient.auth.signOut({ scope: 'local' });
         if (result.error) throw result.error;
+        if (window.RildonXStore && typeof window.RildonXStore.setUserScope === 'function') {
+          window.RildonXStore.setUserScope(null);
+        }
         window.location.href = 'login.html';
       } catch (error) {
         console.error('Não foi possível trocar de conta:', error);
@@ -3681,6 +3700,8 @@ function bindProfileSettings() {
     var preferences = getAppearancePreferences();
     appearanceForm.elements.theme.value = preferences.theme;
     appearanceForm.elements.background.value = preferences.background;
+    appearanceForm.elements.highContrast.checked = Boolean(preferences.highContrast);
+    appearanceForm.elements.reduceMotion.checked = Boolean(preferences.reduceMotion);
     var imageInput = appearanceForm.elements.backgroundImage;
     var pendingImage = '';
     var removeImage = false;
@@ -3712,7 +3733,9 @@ function bindProfileSettings() {
         return;
       }
       if (event.target === appearanceForm.elements.theme ||
-          event.target === appearanceForm.elements.background) {
+          event.target === appearanceForm.elements.background ||
+          event.target === appearanceForm.elements.highContrast ||
+          event.target === appearanceForm.elements.reduceMotion) {
         applyAppearanceFormPreview(appearanceForm, pendingImage);
       }
     });
@@ -3740,7 +3763,9 @@ function bindProfileSettings() {
         var nextPreferences = {
           theme: theme,
           background: appearanceForm.elements.background.value,
-          backgroundImage: removeImage ? '' : (pendingImage || previous.backgroundImage)
+          backgroundImage: removeImage ? '' : (pendingImage || previous.backgroundImage),
+          highContrast: appearanceForm.elements.highContrast.checked,
+          reduceMotion: appearanceForm.elements.reduceMotion.checked
         };
         if (nextPreferences.background === 'image' && !nextPreferences.backgroundImage) {
           throw new Error('Selecione uma imagem ou escolha outro fundo.');

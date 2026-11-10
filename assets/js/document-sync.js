@@ -209,9 +209,22 @@
     return ids;
   }
 
+  function isModuleOnlyFolder(folder) {
+    var moduleFolders = [
+      'cards setoriais',
+      'gestão de documentos',
+      'marketing - branding',
+      'marketing - indicadores',
+      'projetos',
+      'tarefas'
+    ];
+    var normalized = String(folder || '').trim().toLocaleLowerCase('pt-BR');
+    return moduleFolders.indexOf(normalized) !== -1;
+  }
+
   function isDocumentVisible(documentItem, messageAttachmentIds) {
     var folder = String(documentItem.folder || '').trim().toLocaleLowerCase('pt-BR');
-    if (folder === 'mural' || isMedicalDocument(documentItem)) return false;
+    if (folder === 'mural' || isModuleOnlyFolder(folder) || isMedicalDocument(documentItem)) return false;
 
     var isMessageDocument = Boolean(documentItem.messageId) ||
       messageAttachmentIds.has(String(documentItem.id)) ||
@@ -245,7 +258,8 @@
     return folderNames.filter(function (folder) {
       var name = String(folder || '').trim();
       var normalized = name.toLocaleLowerCase('pt-BR');
-      if (!name || normalized === 'mural' || normalized.indexOf('mensagens não salvas') === 0 || seen.has(normalized)) return false;
+      if (!name || normalized === 'mural' || normalized.indexOf('mensagens não salvas') === 0 ||
+          isModuleOnlyFolder(normalized) || seen.has(normalized)) return false;
       seen.add(normalized);
       return true;
     });
@@ -259,7 +273,7 @@
       var isDefault = DEFAULT_FOLDERS.some(function (defaultFolder) {
         return defaultFolder.toLocaleLowerCase('pt-BR') === normalized;
       });
-      if (name && !isDefault) names.add(normalized);
+      if (name && !isDefault && !isModuleOnlyFolder(normalized)) names.add(normalized);
     });
     return names.size;
   }

@@ -127,16 +127,16 @@ export async function readMarketingReport(file) {
 function metricDefinition(header) {
   const value = normalizeText(header);
   const definitions = [
-    { key: 'reach', label: 'Alcance', category: 'Visibilidade', aliases: ['alcance', 'reach', 'accounts reached', 'contas alcancadas', 'pessoas alcancadas'] },
-    { key: 'impressions', label: 'Impressões', category: 'Visibilidade', aliases: ['impressao', 'impressions', 'views', 'visualizacoes', 'impressoes'] },
-    { key: 'followers', label: 'Seguidores', category: 'Visibilidade', aliases: ['seguidores', 'followers', 'follows', 'new followers'] },
-    { key: 'engagement', label: 'Engajamentos', category: 'Engajamento', aliases: ['engajamento', 'engagement', 'interacoes', 'interactions', 'engaged', 'reacoes', 'curtidas', 'comments', 'comentarios', 'shares', 'compartilhamentos', 'saves', 'salvamentos'] },
-    { key: 'clicks', label: 'Cliques', category: 'Oportunidades', aliases: ['cliques', 'clicks', 'link clicks', 'outbound clicks'] },
-    { key: 'sessions', label: 'Sessões', category: 'Oportunidades', aliases: ['sessoes', 'sessions', 'visitas'] },
-    { key: 'leads', label: 'Leads', category: 'Oportunidades', aliases: ['leads', 'oportunidades', 'contatos'] },
-    { key: 'conversions', label: 'Conversões', category: 'Oportunidades', aliases: ['conversoes', 'conversions', 'purchases', 'compras', 'key events'] },
-    { key: 'spend', label: 'Investimento', category: 'Oportunidades', aliases: ['investimento', 'spend', 'amount spent', 'valor gasto', 'cost', 'custo'] },
-    { key: 'revenue', label: 'Receita', category: 'Oportunidades', aliases: ['receita', 'revenue', 'conversion value', 'purchase revenue', 'valor de conversao'] }
+    { key: 'reach', label: 'Alcance', category: 'Visibilidade', unit: 'contas ou pessoas', aliases: ['alcance', 'reach', 'accounts reached', 'contas alcancadas', 'pessoas alcancadas'] },
+    { key: 'impressions', label: 'Impressões', category: 'Visibilidade', unit: 'impressões', aliases: ['impressao', 'impressions', 'views', 'visualizacoes', 'impressoes'] },
+    { key: 'followers', label: 'Seguidores', category: 'Visibilidade', unit: 'seguidores', aliases: ['seguidores', 'followers', 'follows', 'new followers'] },
+    { key: 'engagement', label: 'Engajamentos', category: 'Engajamento', unit: 'interações', aliases: ['engajamento', 'engagement', 'interacoes', 'interactions', 'engaged', 'reacoes', 'curtidas', 'comments', 'comentarios', 'shares', 'compartilhamentos', 'saves', 'salvamentos'] },
+    { key: 'clicks', label: 'Cliques', category: 'Oportunidades', unit: 'cliques', aliases: ['cliques', 'clicks', 'link clicks', 'outbound clicks'] },
+    { key: 'sessions', label: 'Sessões', category: 'Oportunidades', unit: 'sessões', aliases: ['sessoes', 'sessions', 'visitas'] },
+    { key: 'leads', label: 'Leads', category: 'Oportunidades', unit: 'leads', aliases: ['leads', 'oportunidades', 'contatos'] },
+    { key: 'conversions', label: 'Conversões', category: 'Oportunidades', unit: 'conversões', aliases: ['conversoes', 'conversions', 'purchases', 'compras', 'key events'] },
+    { key: 'spend', label: 'Investimento', category: 'Oportunidades', unit: 'moeda (não especificada)', aliases: ['investimento', 'spend', 'amount spent', 'valor gasto', 'cost', 'custo'] },
+    { key: 'revenue', label: 'Receita', category: 'Oportunidades', unit: 'moeda (não especificada)', aliases: ['receita', 'revenue', 'conversion value', 'purchase revenue', 'valor de conversao'] }
   ];
   return definitions.find(function (definition) {
     return definition.aliases.some(function (alias) {
@@ -159,6 +159,17 @@ function numberValue(value) {
   }
   const number = Number(text);
   return Number.isFinite(number) ? number : null;
+}
+
+function metricValue(value) {
+  const number = numberValue(value);
+  if (number !== null) return { value: number, status: number === 0 ? 'zero' : 'value' };
+  const text = normalizeText(value);
+  if (!text) return { value: null, status: 'missing' };
+  if (/^(n a|na|nao aplicavel|not applicable|not available)$/.test(text)) {
+    return { value: null, status: 'not_applicable' };
+  }
+  return { value: null, status: 'import_error' };
 }
 
 function monthValue(value, fallback) {
@@ -197,7 +208,8 @@ function recordsFromRows(rows, fallbackMonth) {
       metaColumns = {
         date: headerIndex(headers, function (text) { return /(^| )(date|data|period|periodo|month|mes|dia)( |$)/.test(text); }),
         channel: headerIndex(headers, function (text) { return /^(channel|canal|platform|plataforma|account|conta)$/.test(text); }),
-        campaign: headerIndex(headers, function (text) { return /campaign|campanha/.test(text); })
+        campaign: headerIndex(headers, function (text) { return /campaign|campanha/.test(text); }),
+        unit: headerIndex(headers, function (text) { return /^(unit|unidade|currency|moeda)$/.test(text); })
       };
       break;
     }
@@ -210,16 +222,19 @@ function recordsFromRows(rows, fallbackMonth) {
     const dateColumn = headerIndex(headers, function (text) { return /^(date|data|period|periodo|month|mes|dia)$/.test(text); });
     const channelColumn = headerIndex(headers, function (text) { return /^(channel|canal|platform|plataforma)$/.test(text); });
     const campaignColumn = headerIndex(headers, function (text) { return /campaign|campanha/.test(text); });
+    const unitColumn = headerIndex(headers, function (text) { return /^(unit|unidade|currency|moeda)$/.test(text); });
     return rows.slice(1).reduce(function (result, row) {
       const definition = metricDefinition(row[metricColumn]);
-      const value = numberValue(row[valueColumn]);
+      const metric = metricValue(row[valueColumn]);
       const month = monthValue(dateColumn >= 0 ? row[dateColumn] : '', fallbackMonth);
-      if (!definition || value === null || !month) return result;
+      if (!definition || !month) return result;
       result.push({
         metric: definition.key,
         label: definition.label,
         category: definition.category,
-        value: value,
+        unit: unitColumn >= 0 && String(row[unitColumn] || '').trim() || definition.unit,
+        value: metric.value,
+        status: metric.status,
         month: month,
         channel: channelColumn >= 0 ? String(row[channelColumn] || '').trim() : '',
         campaign: campaignColumn >= 0 ? String(row[campaignColumn] || '').trim() : ''
@@ -229,23 +244,23 @@ function recordsFromRows(rows, fallbackMonth) {
   }
   const result = [];
   rows.slice(headerRow + 1).forEach(function (row) {
-    const seenMetrics = new Set();
-    const values = metricColumns.map(function (column) {
-      return { definition: column.definition, value: numberValue(row[column.columnIndex]) };
-    }).filter(function (metric) {
-      if (metric.value === null || seenMetrics.has(metric.definition.key)) return false;
-      seenMetrics.add(metric.definition.key);
-      return true;
-    });
-    if (!values.length) return;
     const month = monthValue(metaColumns.date >= 0 ? row[metaColumns.date] : '', fallbackMonth);
     if (!month) return;
-    values.forEach(function (metric) {
+    const rowMetrics = metricColumns.map(function (column) {
+      return { column: column, metric: metricValue(row[column.columnIndex]) };
+    });
+    if (rowMetrics.every(function (entry) { return entry.metric.status === 'missing'; }) &&
+        row.every(function (value) { return value === '' || value === null || value === undefined; })) return;
+    rowMetrics.forEach(function (entry) {
+      const column = entry.column;
+      const metric = entry.metric;
       result.push({
-        metric: metric.definition.key,
-        label: metric.definition.label,
-        category: metric.definition.category,
+        metric: column.definition.key,
+        label: column.definition.label,
+        category: column.definition.category,
+        unit: metaColumns.unit >= 0 && String(row[metaColumns.unit] || '').trim() || column.definition.unit,
         value: metric.value,
+        status: metric.status,
         month: month,
         channel: metaColumns.channel >= 0 ? String(row[metaColumns.channel] || '').trim() : '',
         campaign: metaColumns.campaign >= 0 ? String(row[metaColumns.campaign] || '').trim() : ''
@@ -258,16 +273,18 @@ function recordsFromRows(rows, fallbackMonth) {
 function recordsFromText(text, fallbackMonth) {
   const output = [];
   String(text || '').split(/\r?\n/).forEach(function (line) {
-    const parts = line.trim().match(/^(.{2,60}?)(?:\s*[:|;\t]\s*|\s+)([-+]?\d[\d.,\s]*)\s*$/);
+    const parts = line.trim().match(/^(.{2,60}?)(?:\s*[:|;\t]\s*|\s+)([-+]?\d[\d.,\s]*|n\/?a|n\.a\.|não aplicável|not applicable|not available)?\s*$/i);
     if (!parts) return;
     const definition = metricDefinition(parts[1]);
-    const value = numberValue(parts[2]);
-    if (!definition || value === null || !fallbackMonth) return;
+    const metric = metricValue(parts[2]);
+    if (!definition || !fallbackMonth) return;
     output.push({
       metric: definition.key,
       label: definition.label,
       category: definition.category,
-      value: value,
+      unit: definition.unit,
+      value: metric.value,
+      status: metric.status,
       month: fallbackMonth,
       channel: '',
       campaign: ''

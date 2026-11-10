@@ -5,7 +5,6 @@
   const HOME_CARDS_LIMIT = 3;
   const PANEL_MODULE_IDS = new Set([
     'marketing-insights',
-    'marketing-commemorations',
     'hr-birthdays',
     'purchase-dashboard',
     'purchase-comparison',
@@ -898,6 +897,7 @@
   function trainingRecords(data, includeArchived) {
     return (data.businessCardRecords || []).filter(function (record) {
       return record && record.moduleKey === 'hr-training' && (includeArchived || !record.archived) &&
+        record.isDemo !== true && !(record.data && record.data.isDemo === true) &&
         (!record.data || record.data.recordType !== 'investment');
     });
   }
@@ -905,6 +905,7 @@
   function trainingInvestments(data, includeArchived) {
     return (data.businessCardRecords || []).filter(function (record) {
       return record && record.moduleKey === 'hr-training' && (includeArchived || !record.archived) &&
+        record.isDemo !== true && !(record.data && record.data.isDemo === true) &&
         record.data && record.data.recordType === 'investment';
     });
   }
@@ -1209,7 +1210,8 @@
       };
     }
     let records = (data.businessCardRecords || []).filter(function (record) {
-      return record && record.moduleKey === module.id && !record.archived;
+      return record && record.moduleKey === module.id && !record.archived && record.isDemo !== true &&
+        !(record.data && record.data.isDemo === true);
     });
     let metricDataPresent = null;
     if (module.id === 'sales-time-off') {
@@ -1527,15 +1529,25 @@
         ];
       }
       if (module.id === 'marketing-insights') {
-        const totals = {};
-        records.forEach(function (record) {
-          const metrics = record.data && Array.isArray(record.data.metrics) ? record.data.metrics : [];
-          metrics.forEach(function (metric) {
-            totals[metric.label] = (totals[metric.label] || 0) + (Number(metric.value) || 0);
+        const latestReport = records.slice().sort(function (first, second) {
+          const firstDate = Date.parse(first.data && first.data.importedAt || first.createdAt || '') || 0;
+          const secondDate = Date.parse(second.data && second.data.importedAt || second.createdAt || '') || 0;
+          return secondDate - firstDate;
+        }).find(function (record) {
+          return record.data && Array.isArray(record.data.metrics) && record.data.metrics.some(function (metric) {
+            const value = Number(metric.value);
+            const status = metric.status || (metric.value == null || metric.value === '' ? 'missing' : value === 0 ? 'zero' : 'value');
+            return (status === 'value' || status === 'zero') && Number.isFinite(value);
           });
         });
-        chart = Object.keys(totals).map(function (label) {
-          return { label: label, value: totals[label] };
+        const latestMetrics = latestReport && latestReport.data.metrics || [];
+        chart = latestMetrics.filter(function (metric) {
+          const value = Number(metric.value);
+          const status = metric.status || (metric.value == null || metric.value === '' ? 'missing' : value === 0 ? 'zero' : 'value');
+          return (status === 'value' || status === 'zero') && Number.isFinite(value);
+        }).slice(0, 5).map(function (metric) {
+          const details = [metric.label, metric.unit, metric.channel, metric.campaign].filter(Boolean);
+          return { label: details.join(' · '), value: Number(metric.value) };
         });
         metrics = [];
         metricDataPresent = chart.length > 0;
@@ -1822,31 +1834,25 @@
   function renderBusinessMetrics(items) {
     if (!items || !items.hasData) return '';
     const metricRows = (items.metrics || []).map(function (metric) {
-      const rawValue = String(metric.value == null ? '' : metric.value);
+      const value = metric.value == null ? '' : String(metric.value).trim();
       const numericValue = typeof metric.value === 'number' ? metric.value :
-        Number(rawValue.replace(/[^\d,.-]/g, '').replace(/\.(?=.*[,])/g, '').replace(',', '.'));
-      return Number.isFinite(numericValue) ? { label: metric.label, value: numericValue, display: rawValue } : null;
+        Number(value.replace(/[^\d,.-]/g, '').replace(/\.(?=.*[,])/g, '').replace(',', '.'));
+      return value && Number.isFinite(numericValue) ? { label: metric.label, value: value } : null;
     }).filter(Boolean);
-    const metricMax = Math.max.apply(Math, metricRows.map(function (metric) { return Math.abs(metric.value); }).concat([1]));
-    const metricsMarkup = metricRows.length
-      ? '<div class="dashboard-module-chart dashboard-module-metric-chart" role="img" aria-label="Gráfico dos indicadores">' +
-        metricRows.map(function (metric) {
-          return '<div class="dashboard-module-chart-row"><span title="' + escapeHtml(metric.label) + '">' + escapeHtml(metric.label) +
-            '</span><div><i style="width:' + Math.max(0, Math.min(100, Math.abs(metric.value) / metricMax * 100)) + '%"></i></div><b>' +
-            escapeHtml(metric.display) + '</b></div>';
-        }).join('') + '</div>' : '';
-    let chartMarkup = '';
-    if (items.chart && items.chart.length) {
-      const max = Math.max.apply(Math, items.chart.map(function (item) { return Number(item.value) || 0; }).concat([1]));
-      chartMarkup = '<div class="dashboard-module-chart">' + items.chart.map(function (item) {
-        const value = Number(item.value) || 0;
-        return '<div class="dashboard-module-chart-row"><span title="' + escapeHtml(item.label) + '">' + escapeHtml(item.label) +
-          '</span><div><i style="width:' + Math.max(0, Math.min(100, value / max * 100)) + '%"></i></div><b>' +
-          escapeHtml(value.toLocaleString('pt-BR')) + '</b></div>';
-      }).join('') + '</div>';
-    }
-    return metricsMarkup || chartMarkup
-      ? '<div class="dashboard-module-visual">' + metricsMarkup + chartMarkup + '</div>'
+    const chartRows = (items.chart || []).map(function (item) {
+      const rawValue = item.value == null ? '' : String(item.value).trim();
+      const value = Number(rawValue);
+      return rawValue && Number.isFinite(value)
+        ? { label: item.label, value: value.toLocaleString('pt-BR') }
+        : null;
+    }).filter(Boolean);
+    const rows = metricRows.length ? metricRows : chartRows;
+    return rows.length
+      ? '<div class="dashboard-module-visual"><div class="dashboard-module-metrics">' +
+        rows.map(function (metric) {
+          return '<div class="dashboard-module-metric"><b>' + escapeHtml(metric.value) + '</b><small>' +
+            escapeHtml(metric.label) + '</small></div>';
+        }).join('') + '</div></div>'
       : '';
   }
 
@@ -2208,26 +2214,22 @@
       '<button type="button" class="dashboard-remove-btn" data-card-remove>Remover</button></div></article>';
   }
 
-  function libraryCardMarkup(type, description, features, sector, tone, config, data, module, homeCards) {
+  function libraryCardMarkup(type, description, sector, tone, config, data, module, homeCards) {
     const catalog = CARD_CATALOG[type];
     const added = config.cards.some(function (card) { return card.type === type; });
     const addedToHome = homeCards.indexOf(type) >= 0;
     const homeLimitReached = homeCards.length >= HOME_CARDS_LIMIT;
     const permitted = !module || canAccessBusinessCard(module, data);
     const pageHref = catalog.href || 'meu-espaco.html';
-    const availableFeatures = module
-      ? module.source
-        ? ['Dados ligados às páginas existentes', 'Atualização pelo store compartilhado', 'Exportação CSV']
-        : ['Cadastro, edição e arquivamento', 'Busca e filtro por campos', 'Favoritos e exportação CSV', 'Criar tarefa vinculada']
-      : features || [];
-    const featureList = availableFeatures.map(function (feature) { return '<li>' + escapeHtml(feature) + '</li>'; }).join('');
-    return '<article class="dashboard-library-card' + (!permitted ? ' is-restricted' : '') + '" data-access="' + (permitted ? 'allowed' : 'restricted') + '" data-tone="' + escapeHtml(module ? tone || 'blue' : 'general') + '">' +
+    const moduleKindLabel = module ? module.kind === 'panel' ? 'Painel' : 'Processo' : '';
+    return '<article class="dashboard-library-card' + (!permitted ? ' is-restricted' : '') + '" data-access="' + (permitted ? 'allowed' : 'restricted') +
+      (module ? ' data-module-kind="' + escapeHtml(module.kind) + '"' : '') + '" data-tone="' + escapeHtml(module ? tone || 'blue' : 'general') + '">' +
       '<div class="dashboard-library-card-header"><span class="dashboard-library-icon">' + iconMarkup(catalog.icon) + '</span>' +
       '<div class="dashboard-library-info"><h4>' + escapeHtml(catalog.label) + '</h4>' +
       '<small>' + escapeHtml(sector || 'Geral') + '</small></div>' +
-      '</div></div>' +
-      '<p class="dashboard-library-description">' + escapeHtml(description) + '</p>' +
-      '<ul>' + featureList + '</ul>' +
+      (moduleKindLabel ? '<span class="dashboard-library-type-badge">' + moduleKindLabel + '</span>' : '') +
+      '</div>' +
+      '<p class="dashboard-library-description">' + escapeHtml(description || '') + '</p>' +
       '<div class="dashboard-library-card-actions">' +
       (module
         ? '<button type="button" class="btn secondary dashboard-library-open" data-library-open="' + escapeHtml(type) + '"' +
@@ -2254,9 +2256,10 @@
     });
   }
 
-  function renderLibraryContent(root, config, data, homeCards, activeSector) {
+  function renderLibraryContent(root, config, data, homeCards, activeSector, activeKind) {
     if (!root) return;
     const selectedSector = activeSector || 'general';
+    const selectedKind = activeKind === 'panel' || activeKind === 'process' ? activeKind : 'all';
     const sector = selectedSector === 'general'
       ? null
       : getLibrarySectors().find(function (item) { return item.key === selectedSector; });
@@ -2264,26 +2267,37 @@
       root.innerHTML = '<div class="dashboard-data-empty">Nenhum card disponível.</div>';
       return;
     }
-    const modules = (sector ? sector.modules : BUSINESS_CARD_MODULES).slice().sort(function (first, second) {
+    const allModules = (sector ? sector.modules : BUSINESS_CARD_MODULES).slice().sort(function (first, second) {
       return first.title.localeCompare(second.title, 'pt-BR');
     });
+    const modules = allModules.filter(function (module) {
+      return selectedKind === 'all' || module.kind === selectedKind;
+    });
+    const kindTabs = '<div class="dashboard-library-kind-tabs" role="group" aria-label="Tipo de módulo">' +
+      [['all', 'Todos'], ['panel', 'Painéis'], ['process', 'Processos']].map(function (item) {
+        return '<button type="button" data-library-kind="' + item[0] + '"' +
+          (selectedKind === item[0] ? ' class="active"' : '') + ' aria-pressed="' +
+          (selectedKind === item[0] ? 'true' : 'false') + '">' + item[1] + '</button>';
+      }).join('') + '</div>';
     const moduleCards = modules.map(function (module) {
-      return libraryCardMarkup(module.id, module.description, module.features, module.sector, module.tone, config, data, module, homeCards);
+      return libraryCardMarkup(module.id, module.description, module.sector, module.tone, config, data, module, homeCards);
     }).join('');
-    root.innerHTML = moduleCards
-      ? '<section class="dashboard-library-sector' + (sector ? '' : ' is-general') + '" data-library-panel="' + escapeHtml(selectedSector) + '" data-tone="' + escapeHtml(modules[0].tone) + '">' +
-        '<header><span>' + iconMarkup(sector ? modules[0].icon : 'star') + '</span><div><h3>' + escapeHtml(sector ? modules[0].sector : 'Todos os módulos') +
-        '</h3><small>' + modules.length + ' módulos · acesso conforme o setor</small></div></header>' +
+    root.innerHTML = kindTabs + (moduleCards
+      ? '<section class="dashboard-library-sector' + (sector ? '' : ' is-general') + '" data-library-panel="' + escapeHtml(selectedSector) + '" data-tone="' + escapeHtml((modules[0] || allModules[0] || {}).tone || 'blue') + '">' +
+        '<header><span>' + iconMarkup(sector ? (modules[0] || allModules[0]).icon : 'star') + '</span><div><h3>' + escapeHtml(sector ? sector.modules[0].sector : 'Todos os módulos') +
+        '</h3><small>' + modules.length + (modules.length === 1 ? ' módulo' : ' módulos') + ' · ' +
+        (selectedKind === 'panel' ? 'consulta e indicadores' : selectedKind === 'process' ? 'cadastros e atualização de dados' : 'acesso conforme o setor') + '</small></div></header>' +
         '<div class="dashboard-library-cards">' + moduleCards + '</div></section>'
-      : '<div class="dashboard-data-empty">Nenhum módulo disponível neste setor.</div>';
+      : '<div class="dashboard-data-empty">Nenhum módulo disponível nesta categoria.</div>');
     const section = root.querySelector('.dashboard-library-sector');
     if (section) section.dataset.view = activeLibraryView;
   }
 
-  function hydrateLibrary(root, dashboardConfig, data, homeCards, activeSector) {
+  function hydrateLibrary(root, dashboardConfig, data, homeCards, activeSector, activeKind) {
     if (!root) return;
     const sectors = getLibrarySectors();
     const selectedSector = activeSector || 'general';
+    const selectedKind = activeKind === 'panel' || activeKind === 'process' ? activeKind : 'all';
     const sectorTabs = sectors.map(function (sector) {
       const module = sector.modules[0];
       return '<button type="button" class="dashboard-library-tab' + (selectedSector === sector.key ? ' active' : '') +
@@ -2304,7 +2318,7 @@
       (activeLibraryView === 'list' ? ' class="active"' : '') + '>Lista</button>' +
       '</div><div id="dashboard-library-results" class="dashboard-library-content" role="tabpanel"></div></div>';
     root.dataset.activeSector = selectedSector;
-    renderLibraryContent(root.querySelector('.dashboard-library-content'), dashboardConfig, data, homeCards, selectedSector);
+    renderLibraryContent(root.querySelector('.dashboard-library-content'), dashboardConfig, data, homeCards, selectedSector, selectedKind);
   }
 
   function businessFieldMarkup(field, value, disabledOptions) {
@@ -2410,9 +2424,11 @@
     let businessReturnTo = '';
     let businessReturnLibrary = false;
     let businessReturnSector = 'general';
+    let businessReturnKind = 'all';
     let businessReturnScroll = 0;
     let businessReturnLibraryScroll = 0;
     let activeLibrarySector = 'general';
+    let activeLibraryKind = 'all';
     let businessSearch = '';
     let includeArchived = false;
     let businessFilterValue = '';
@@ -2422,7 +2438,7 @@
     let hrTrainingFilters = { month: '', course: '', employee: '' };
     let marketingContentView = 'kanban';
     let marketingCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    let marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
+    let marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '', report: '' };
     let marketingComparisonMonths = { primary: '', secondary: '' };
     let marketingDocumentInsightCache = new Map();
     let marketingDocumentInsightLoads = new Map();
@@ -2610,7 +2626,8 @@
       const query = String(search || '').trim().toLocaleLowerCase('pt-BR');
       const filterField = businessFilterField(module);
       return (dashboardState.businessCardRecords || []).filter(function (record) {
-        if (!record || record.moduleKey !== module.id || (!includeArchived && record.archived)) return false;
+        if (!record || record.moduleKey !== module.id || record.isDemo === true ||
+            record.data && record.data.isDemo === true || (!includeArchived && record.archived)) return false;
         if (module.id === 'hr-leave-attendance' &&
             record.data && record.data.recordType === 'monthly-vacations') return false;
         if (module.id === 'quality-risks' && qualityRiskMatrixFilter &&
@@ -2825,59 +2842,13 @@
       return [];
     }
 
-    function renderCommemorativeDates() {
-      const root = document.getElementById('calendar-commemorations-list');
-      if (!root) return;
-      const currentUser = getCurrentProfile(dashboardState);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dates = (dashboardState.events || []).filter(function (event) {
-        if (!event || event.deletedAt ||
-            ['feriado', 'aniversario', 'acao_comercial'].indexOf(event.category) === -1) return false;
-        if (event.visibility === 'private' &&
-            String(event.ownerId || event.createdBy || '') !== String(currentUser.id || '')) return false;
-        if (event.visibility === 'restricted' &&
-            String(event.ownerId || event.createdBy || '') !== String(currentUser.id || '') &&
-            !(event.viewerIds || []).some(function (id) { return String(id) === String(currentUser.id || ''); })) return false;
-        const value = event.allDay && event.allDayStartDate ? event.allDayStartDate : event.startsAt;
-        const date = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
-          ? parseCalendarDate(value)
-          : dateValue(value);
-        if (!date) return false;
-        date.setHours(0, 0, 0, 0);
-        return date >= today;
-      }).map(function (event) {
-        const value = event.allDay && event.allDayStartDate ? event.allDayStartDate : event.startsAt;
-        const date = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
-          ? parseCalendarDate(value)
-          : dateValue(value);
-        date.setHours(0, 0, 0, 0);
-        return { event: event, date: date };
-      }).sort(function (first, second) { return first.date - second.date; }).slice(0, 5);
-      root.innerHTML = dates.length
-        ? dates.map(function (item) {
-          const daysUntil = Math.round((item.date.getTime() - today.getTime()) / 86400000);
-          const when = daysUntil === 0 ? 'hoje' : daysUntil === 1 ? 'amanhã' : 'em ' + daysUntil + ' dias';
-          const dateKey = [item.date.getFullYear(), String(item.date.getMonth() + 1).padStart(2, '0'),
-            String(item.date.getDate()).padStart(2, '0')].join('-');
-          return '<div class="mini-row"><a class="calendar-commemoration-link" href="calendario.html?date=' +
-            encodeURIComponent(dateKey) + '"><span class="calendar-commemoration-dot" data-category="' +
-            escapeHtml(item.event.category) + '"></span><b>' + escapeHtml(item.event.title || 'Data comemorativa') +
-            '</b><span class="calendar-commemoration-date">' +
-            escapeHtml(item.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })) +
-            '</span></a><span class="mini-badge">' + escapeHtml(when) + '</span></div>';
-        }).join('')
-        : '<p class="calendar-commemorations-empty">Nenhuma data comemorativa futura cadastrada no Calendário.</p>';
-    }
-
     function render() {
       const current = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
       renderDashboard(dashboardRoot, current, dashboardState);
       const homeCards = getStoredHomeCards();
       renderHomeDashboard(homeDashboardRoot, homeCards, dashboardState);
-      renderCommemorativeDates();
       if (libraryRoot && libraryRoot.classList.contains('open')) {
-        hydrateLibrary(libraryRoot, current, dashboardState, homeCards, activeLibrarySector);
+        hydrateLibrary(libraryRoot, current, dashboardState, homeCards, activeLibrarySector, activeLibraryKind);
       }
       if (businessRoot && businessRoot.classList.contains('open') && activeBusinessModule &&
           !businessRoot.querySelector('[data-business-form]')) {
@@ -2890,7 +2861,8 @@
       const config = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
       const params = new URLSearchParams(window.location.search);
       activeLibrarySector = params.get('librarySector') || 'general';
-      hydrateLibrary(libraryRoot, config, dashboardState, getStoredHomeCards(), activeLibrarySector);
+      activeLibraryKind = params.get('libraryKind') || 'all';
+      hydrateLibrary(libraryRoot, config, dashboardState, getStoredHomeCards(), activeLibrarySector, activeLibraryKind);
       libraryRoot.classList.add('open');
     }
 
@@ -2921,6 +2893,7 @@
         const panel = libraryRoot.querySelector('.dashboard-library-panel');
         target.searchParams.set('returnLibrary', '1');
         target.searchParams.set('returnSector', activeLibrarySector);
+        target.searchParams.set('returnKind', activeLibraryKind);
         target.searchParams.set('returnScroll', String(window.scrollY));
         target.searchParams.set('returnLibraryScroll', String(panel ? panel.scrollTop : 0));
       }
@@ -2956,7 +2929,7 @@
       });
       persistDashboard(config);
       render();
-      hydrateLibrary(libraryRoot, config, dashboardState, getStoredHomeCards(), activeLibrarySector);
+      hydrateLibrary(libraryRoot, config, dashboardState, getStoredHomeCards(), activeLibrarySector, activeLibraryKind);
       if (typeof window.showToast === 'function') window.showToast(catalog.label + ' foi adicionado ao seu espaço.');
     }
 
@@ -2988,67 +2961,9 @@
 
     function internalDemandRecords() {
       return (dashboardState.businessCardRecords || []).filter(function (record) {
-        return record && record.moduleKey === 'marketing-internal-demands' && !record.archived;
+        return record && record.moduleKey === 'marketing-internal-demands' && !record.archived &&
+          record.isDemo !== true && !(record.data && record.data.isDemo === true);
       });
-    }
-
-    function internalDemandDashboardMarkup() {
-      const records = internalDemandRecords();
-      if (!records.length) return '';
-      const activeStatuses = records.filter(function (record) {
-        return !/^(concluida|cancelada|finalizada)$/i.test(normalizeSearchText(record.status || ''));
-      });
-      const approvals = records.filter(function (record) {
-        return normalizeSearchText(record.data && record.data.approvalStatus || '') === 'pendente';
-      });
-      const incompleteBriefings = records.filter(function (record) {
-        const data = record.data || {};
-        return !String(data.briefingObjective || '').trim() ||
-          !String(data.briefingAudience || '').trim() ||
-          !String(data.briefingDeliverables || '').trim();
-      });
-      const completedRecords = records.filter(function (record) {
-        return /^(concluida|finalizada)$/i.test(normalizeSearchText(record.status || '')) &&
-          parseCalendarDate(record.data && record.data.completedAt);
-      });
-      const completionDays = completedRecords.map(function (record) {
-        const completedAt = parseCalendarDate(record.data.completedAt);
-        const createdAt = new Date(record.createdAt);
-        if (!completedAt || !Number.isFinite(createdAt.getTime())) return null;
-        const createdDate = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
-        return Math.max(0, (completedAt.getTime() - createdDate.getTime()) / 86400000);
-      }).filter(function (days) { return days != null; });
-      const averageDays = completionDays.length
-        ? completionDays.reduce(function (total, days) { return total + days; }, 0) / completionDays.length
-        : null;
-      const sectors = {};
-      records.forEach(function (record) {
-        const sector = String(record.data && record.data.requesterSector || '').trim();
-        if (sector) sectors[sector] = (sectors[sector] || 0) + 1;
-      });
-      const sectorRows = Object.keys(sectors).sort(function (first, second) {
-        return sectors[second] - sectors[first] || first.localeCompare(second, 'pt-BR');
-      }).slice(0, 4);
-      const countMetrics = [
-        { label: 'Solicitações recebidas', value: records.length },
-        { label: 'Demandas pendentes', value: activeStatuses.length },
-        { label: 'Aprovações necessárias', value: approvals.length },
-        { label: 'Briefings incompletos', value: incompleteBriefings.length }
-      ].concat(sectorRows.map(function (sector) {
-        return { label: 'Setor · ' + sector, value: sectors[sector] };
-      }));
-      const maximum = Math.max.apply(Math, countMetrics.map(function (metric) { return metric.value; }).concat([1]));
-      const countChart = '<div class="dashboard-module-chart">' + countMetrics.map(function (metric) {
-        return '<div class="dashboard-module-chart-row"><span title="' + escapeHtml(metric.label) + '">' + escapeHtml(metric.label) +
-          '</span><div><i style="width:' + Math.max(0, Math.min(100, metric.value / maximum * 100)) + '%"></i></div><b>' +
-          metric.value.toLocaleString('pt-BR') + '</b></div>';
-      }).join('') + '</div>';
-      const timeChart = averageDays == null ? '' : '<div class="dashboard-module-chart"><div class="dashboard-module-chart-row">' +
-        '<span>Tempo médio de atendimento</span><div><i style="width:100%"></i></div><b>' +
-        escapeHtml(averageDays.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' dias') +
-        '</b></div></div>';
-      return '<section class="internal-demand-dashboard" aria-label="Gráficos de demandas internas">' +
-        '<h3>Indicadores calculados a partir das solicitações registradas</h3>' + countChart + timeChart + '</section>';
     }
 
     function businessRecordMeta(record, module) {
@@ -3141,7 +3056,8 @@
 
     function qualityActiveRecords(moduleId) {
       return (dashboardState.businessCardRecords || []).filter(function (record) {
-        return record && record.moduleKey === moduleId && !record.archived;
+        return record && record.moduleKey === moduleId && !record.archived &&
+          record.isDemo !== true && !(record.data && record.data.isDemo === true);
       });
     }
 
@@ -3688,7 +3604,8 @@
 
     function marketingInsightRecords() {
       return (dashboardState.businessCardRecords || []).filter(function (record) {
-        return record && record.moduleKey === 'marketing-insights' && !record.archived;
+        return record && record.moduleKey === 'marketing-insights' && !record.archived &&
+          record.isDemo !== true && !(record.data && record.data.isDemo === true);
       });
     }
 
@@ -3717,10 +3634,17 @@
       });
     }
 
+    function marketingInsightReportLabel(value, index) {
+      const date = value
+        ? dateLabel(value, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '';
+      return 'Relatório importado' + (date ? ' · ' + date : '') + (index == null ? '' : ' · ' + (index + 1));
+    }
+
     function marketingInsightRows() {
       const reports = marketingInsightRecords();
       const linkedDocumentIds = new Set();
-      const rows = reports.reduce(function (allRows, report) {
+      const rows = reports.reduce(function (allRows, report, index) {
         const data = report.data || {};
         const documentId = String(data.documentId || '');
         if (documentId) linkedDocumentIds.add(documentId);
@@ -3735,8 +3659,10 @@
         return allRows.concat(metrics.map(function (metric) {
           return Object.assign({}, metric, {
             reportId: report.id,
-            reportTitle: report.title,
-            documentId: documentId
+            reportTitle: marketingInsightReportLabel(data.importedAt || report.createdAt, index),
+            documentId: documentId,
+            source: data.source || 'Relatório importado',
+            importedAt: data.importedAt || report.createdAt || ''
           });
         }));
       }, []);
@@ -3748,8 +3674,10 @@
         return allRows.concat(cached.metrics.map(function (metric) {
           return Object.assign({}, metric, {
             reportId: 'document-' + fileId,
-            reportTitle: file.name,
-            documentId: fileId
+            reportTitle: marketingInsightReportLabel(file.sentAt),
+            documentId: fileId,
+            source: 'Relatório importado',
+            importedAt: file.sentAt || ''
           });
         }));
       }, rows);
@@ -3839,7 +3767,7 @@
       const errors = files.map(function (file) {
         const cached = marketingDocumentInsightCache.get(String(file.id || ''));
         return cached && cached.signature === marketingDocumentSignature(file) && cached.error
-          ? file.name + ': ' + cached.error
+          ? cached.error
           : '';
       }).filter(Boolean);
       return {
@@ -3854,6 +3782,7 @@
         return (!marketingInsightsFilters.channel || row.channel === marketingInsightsFilters.channel) &&
           (!marketingInsightsFilters.campaign || row.campaign === marketingInsightsFilters.campaign) &&
           (!marketingInsightsFilters.metric || row.metric === marketingInsightsFilters.metric) &&
+          (!marketingInsightsFilters.report || String(row.reportId) === marketingInsightsFilters.report) &&
           (!marketingInsightsFilters.from || row.month >= marketingInsightsFilters.from) &&
           (!marketingInsightsFilters.to || row.month <= marketingInsightsFilters.to) &&
           (!query || [row.reportTitle, row.label, row.channel, row.campaign, row.month].join(' ')
@@ -3870,80 +3799,109 @@
       }).join('');
     }
 
+    function marketingMetricStatus(row) {
+      if (row.status) return row.status;
+      if (row.value === null || row.value === undefined || row.value === '') return 'missing';
+      return Number(row.value) === 0 ? 'zero' : 'value';
+    }
+
+    function isNumericMarketingMetric(row) {
+      const status = marketingMetricStatus(row);
+      return (status === 'value' || status === 'zero') && row.value !== null &&
+        row.value !== undefined && Number.isFinite(Number(row.value));
+    }
+
+    function marketingMetricUnit(row) {
+      if (row.unit) return String(row.unit);
+      const units = {
+        reach: 'contas ou pessoas',
+        impressions: 'impressões',
+        followers: 'seguidores',
+        engagement: 'interações',
+        clicks: 'cliques',
+        sessions: 'sessões',
+        leads: 'leads',
+        conversions: 'conversões',
+        spend: 'moeda (não especificada)',
+        revenue: 'moeda (não especificada)'
+      };
+      return units[row.metric] || 'unidade não informada';
+    }
+
+    function marketingMetricStatusLabel(row) {
+      const labels = {
+        value: 'Informado',
+        zero: 'Zero informado',
+        missing: 'Valor ausente',
+        not_applicable: 'Não aplicável',
+        import_error: 'Falha na leitura'
+      };
+      return labels[marketingMetricStatus(row)] || 'Estado desconhecido';
+    }
+
     function marketingInsightsMarkup() {
       const allRows = marketingInsightRows();
       const rows = filteredMarketingInsightRows();
-      const categories = ['Visibilidade', 'Engajamento', 'Oportunidades'];
-      const totals = {};
-      rows.forEach(function (row) {
-        const category = row.category || 'Oportunidades';
-        totals[category] = totals[category] || {};
-        totals[category][row.label] = (totals[category][row.label] || 0) + (Number(row.value) || 0);
+      const numericRows = rows.filter(isNumericMarketingMetric);
+      const categories = Array.from(new Set(numericRows.map(function (row) { return row.category; }).filter(Boolean)));
+      const latestMetricMonths = {};
+      numericRows.forEach(function (row) {
+        const key = [row.category, row.metric, marketingMetricUnit(row)].join('|');
+        if (!latestMetricMonths[key] || String(row.month || '') > latestMetricMonths[key]) {
+          latestMetricMonths[key] = String(row.month || '');
+        }
       });
-      const months = Array.from(new Set(allRows.map(function (row) { return row.month; }).filter(Boolean)))
+      const totals = {};
+      numericRows.forEach(function (row) {
+        const category = row.category;
+        const unit = marketingMetricUnit(row);
+        const periodKey = [category, row.metric, unit].join('|');
+        if (String(row.month || '') !== latestMetricMonths[periodKey]) return;
+        totals[category] = totals[category] || {};
+        const key = [row.label, unit].join('|');
+        totals[category][key] = totals[category][key] || {
+          label: row.label,
+          value: 0,
+          unit: unit,
+          month: row.month || ''
+        };
+        totals[category][key].value += Number(row.value) || 0;
+      });
+      const months = Array.from(new Set(allRows.filter(isNumericMarketingMetric).map(function (row) { return row.month; }).filter(Boolean)))
         .sort().reverse();
       const comparisonMetric = marketingInsightsFilters.metric ||
         (allRows.find(function (row) { return row.metric === 'reach'; }) || allRows[0] || {}).metric || '';
       const firstMonth = marketingComparisonMonths.primary || months[0] || '';
       const secondMonth = marketingComparisonMonths.secondary || months[1] || '';
       const monthTotal = function (month) {
-        return allRows.filter(function (row) {
-          return row.month === month && row.metric === comparisonMetric &&
+        const selectedRows = allRows.filter(function (row) {
+          return isNumericMarketingMetric(row) && row.month === month && row.metric === comparisonMetric &&
             (!marketingInsightsFilters.channel || row.channel === marketingInsightsFilters.channel) &&
-            (!marketingInsightsFilters.campaign || row.campaign === marketingInsightsFilters.campaign);
-        }).reduce(function (sum, row) { return sum + (Number(row.value) || 0); }, 0);
+            (!marketingInsightsFilters.campaign || row.campaign === marketingInsightsFilters.campaign) &&
+            (!marketingInsightsFilters.report || String(row.reportId) === marketingInsightsFilters.report);
+        });
+        const units = Array.from(new Set(selectedRows.map(marketingMetricUnit)));
+        return {
+          value: selectedRows.reduce(function (sum, row) { return sum + Number(row.value); }, 0),
+          count: selectedRows.length,
+          unit: units.length === 1 ? units[0] : '',
+          comparable: units.length <= 1
+        };
       };
       const firstTotal = monthTotal(firstMonth);
       const secondTotal = monthTotal(secondMonth);
-      const change = secondTotal ? ((firstTotal - secondTotal) * 100 / secondTotal) : null;
-      const savedReports = marketingInsightRecords().map(function (report) {
-        const data = report.data || {};
-        const file = marketingInsightDocuments().find(function (item) {
-          return String(item.id || '') === String(data.documentId || '');
-        });
-        const cached = file && marketingDocumentInsightCache.get(String(file.id));
-        const cachedMetrics = cached && cached.signature === marketingDocumentSignature(file) ? cached.metrics : [];
-        return Object.assign({}, report, {
-          data: Object.assign({}, data, {
-            metrics: Array.isArray(data.metrics) && data.metrics.length ? data.metrics : cachedMetrics
-          })
-        });
-      });
-      const linkedDocumentIds = new Set(savedReports.map(function (report) {
-        return String(report.data && report.data.documentId || '');
-      }).filter(Boolean));
-      const documentReports = marketingInsightDocuments().reduce(function (reports, file) {
-        const documentId = String(file.id || '');
-        const cached = marketingDocumentInsightCache.get(documentId);
-        if (!cached || cached.signature !== marketingDocumentSignature(file) ||
-            !cached.metrics.length || linkedDocumentIds.has(documentId)) return reports;
-        reports.push({
-          id: 'document-' + documentId,
-          title: file.name,
-          createdAt: file.sentAt || '',
-          documentOnly: true,
-          data: {
-            metrics: cached.metrics,
-            documentId: documentId,
-            source: 'Arquivo em Documentos',
-            importedAt: file.sentAt || ''
-          }
-        });
-        return reports;
-      }, []);
-      const reportList = savedReports.concat(documentReports).sort(function (first, second) {
-        return String(second.data && second.data.importedAt || second.createdAt || '')
-          .localeCompare(String(first.data && first.data.importedAt || first.createdAt || ''));
-      }).slice(0, 8);
+      const change = firstTotal.count && secondTotal.count && firstTotal.comparable && secondTotal.comparable &&
+        firstTotal.unit === secondTotal.unit && secondTotal.value !== 0
+        ? ((firstTotal.value - secondTotal.value) * 100 / secondTotal.value)
+        : null;
       const documentStatus = marketingDocumentInsightStatus();
       const documentStatusMarkup = documentStatus.loading
-        ? '<p class="marketing-insights-empty" role="status">Lendo arquivos da pasta “Marketing - Indicadores” em Documentos…</p>'
+        ? '<p class="marketing-insights-empty" role="status">Processando relatórios associados a este módulo…</p>'
         : '';
       const documentErrorsMarkup = documentStatus.errors.length
-        ? '<div class="dashboard-business-warning" role="status"><b>Alguns arquivos não geraram indicadores:</b> ' +
+        ? '<div class="dashboard-business-warning" role="status"><b>Alguns relatórios não geraram indicadores:</b> ' +
           escapeHtml(documentStatus.errors.join(' · ')) + '</div>'
         : '';
-      const currentUserId = authenticatedUserId || getCurrentProfile(dashboardState).id;
       const toolbar = '<div class="dashboard-business-toolbar marketing-insights-toolbar">' +
         '<label><span>' + iconMarkup('activity') + '</span><input type="search" data-business-search value="' + escapeHtml(businessSearch) +
         '" placeholder="Buscar relatórios, campanhas ou métricas"></label>' +
@@ -3956,72 +3914,70 @@
           return '<option value="' + escapeHtml(entry[0]) + '"' + (marketingInsightsFilters.metric === entry[0] ? ' selected' : '') + '>' +
             escapeHtml(entry[1]) + '</option>';
         }).join('') + '</select></label>' +
+        '<label class="dashboard-business-filter"><span>Relatório / fonte</span><select data-marketing-insight-filter="report">' +
+        '<option value="">Todos os relatórios</option>' + Array.from(new Map(allRows.map(function (row) {
+          return [String(row.reportId), row.reportTitle || row.source || 'Relatório'];
+        })).entries()).map(function (entry) {
+          return '<option value="' + escapeHtml(entry[0]) + '"' +
+            (marketingInsightsFilters.report === entry[0] ? ' selected' : '') + '>' + escapeHtml(entry[1]) + '</option>';
+        }).join('') + '</select></label>' +
         '<label class="dashboard-business-filter"><span>De</span><input type="month" data-marketing-insight-filter="from" value="' +
         escapeHtml(marketingInsightsFilters.from) + '"></label>' +
         '<label class="dashboard-business-filter"><span>Até</span><input type="month" data-marketing-insight-filter="to" value="' +
         escapeHtml(marketingInsightsFilters.to) + '"></label>' +
         '<button type="button" class="btn secondary" data-marketing-pdf>Exportar relatório PDF</button></div>';
       const categoryPanels = categories.map(function (category) {
-        const items = Object.keys(totals[category] || {}).map(function (label) {
-          return { label: label, value: totals[category][label] };
+        const items = Object.keys(totals[category] || {}).map(function (key) {
+          return totals[category][key];
         }).sort(function (first, second) { return second.value - first.value; });
-        const maximum = Math.max.apply(null, items.map(function (item) { return item.value; }).concat([1]));
         return '<section class="marketing-insight-category"><h3>' + escapeHtml(category) + '</h3>' +
-          (items.length ? items.map(function (item) {
-            return '<div class="marketing-insight-bar"><div><b>' + escapeHtml(item.label) + '</b><strong>' +
-              escapeHtml(Number(item.value).toLocaleString('pt-BR')) + '</strong></div><span><i style="width:' +
-              Math.max(2, Math.round(item.value * 100 / maximum)) + '%"></i></span></div>';
-          }).join('') : '<p class="marketing-insights-empty">Sem dados para os filtros atuais.</p>') + '</section>';
+          (items.length ? '<div class="marketing-insight-values">' + items.map(function (item) {
+            const label = item.label + (item.month ? ' · ' + marketingMonthLabel(item.month) : '');
+            return '<div class="marketing-insight-value"><b>' + escapeHtml(label) + '</b><strong>' +
+              escapeHtml(Number(item.value).toLocaleString('pt-BR')) + '</strong><small>' +
+              escapeHtml(item.unit || 'Unidade não informada') + '</small></div>';
+          }).join('') + '</div>' : '<p class="marketing-insights-empty">Sem dados para os filtros atuais.</p>') + '</section>';
       }).join('');
-      const breakdownMetric = rows.find(function (row) { return row.metric === comparisonMetric; }) ||
-        rows[0] || null;
+      const breakdownMetric = numericRows.find(function (row) { return row.metric === comparisonMetric; }) || null;
       function breakdownMarkup(field, heading) {
         const grouped = {};
+        const units = new Set();
         if (breakdownMetric) {
-          rows.filter(function (row) { return row.metric === breakdownMetric.metric; }).forEach(function (row) {
+          numericRows.filter(function (row) { return row.metric === breakdownMetric.metric; }).forEach(function (row) {
             const label = String(row[field] || '').trim() || 'Sem informação';
             grouped[label] = (grouped[label] || 0) + (Number(row.value) || 0);
+            units.add(marketingMetricUnit(row));
           });
         }
         const items = Object.keys(grouped).map(function (label) { return { label: label, value: grouped[label] }; })
-          .filter(function (item) { return item.value > 0; })
           .sort(function (first, second) { return second.value - first.value; });
-        const chartItems = items.slice(0, 5);
-        if (items.length > 5) {
-          chartItems.push({
-            label: 'Outros',
-            value: items.slice(5).reduce(function (sum, item) { return sum + item.value; }, 0)
-          });
-        }
-        const total = chartItems.reduce(function (sum, item) { return sum + item.value; }, 0);
-        const colors = ['#2563eb', '#14b8a6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
-        let angle = 0;
-        const gradient = chartItems.map(function (item, index) {
-          const start = angle;
-          angle += total ? item.value * 360 / total : 0;
-          return colors[index % colors.length] + ' ' + start.toFixed(2) + 'deg ' + angle.toFixed(2) + 'deg';
-        }).join(', ');
         return '<section class="marketing-insight-breakdown"><h3>' + heading + '</h3><small>' +
-          escapeHtml(breakdownMetric ? 'Métrica: ' + breakdownMetric.label : 'Selecione uma métrica com estes dados.') + '</small>' +
-          (chartItems.length ? '<div class="marketing-insight-donut-layout"><div class="marketing-insight-donut" role="img" aria-label="' +
-            escapeHtml('Distribuição de ' + (breakdownMetric ? breakdownMetric.label : 'métricas') + ' por ' + heading.toLocaleLowerCase('pt-BR')) +
-            '" style="background:conic-gradient(' + gradient + ')"><div><b>' + escapeHtml(Number(total).toLocaleString('pt-BR')) +
-            '</b><span>Total</span></div></div><ul class="marketing-insight-legend">' +
-            chartItems.map(function (item, index) {
-              const percentage = total ? item.value * 100 / total : 0;
-              return '<li><span><i style="--marketing-chart-color:' + colors[index % colors.length] + '"></i><b>' +
-                escapeHtml(item.label) + '</b></span><strong>' + escapeHtml(percentage.toLocaleString('pt-BR', { maximumFractionDigits: 1 })) +
-                '%</strong><small>' + escapeHtml(Number(item.value).toLocaleString('pt-BR')) + '</small></li>';
-            }).join('') + '</ul></div>'
-            : '<p class="marketing-insights-empty">Sem dados positivos para montar o gráfico com os filtros atuais.</p>') + '</section>';
+          escapeHtml(breakdownMetric
+            ? 'Ranking de ' + breakdownMetric.label + ' · unidade: ' + Array.from(units).join(', ')
+            : 'Sem valores numéricos para os filtros atuais.') + '</small>' +
+          (items.length && units.size === 1 ? (function () {
+            const maximum = Math.max.apply(null, items.map(function (item) { return Math.abs(item.value); }).concat([1]));
+            return '<div class="marketing-insight-column-chart-wrap"><ul class="marketing-insight-column-chart" style="grid-template-columns:repeat(' +
+              items.length + ',minmax(58px,1fr))">' + items.map(function (item) {
+                const magnitude = Math.abs(item.value) / maximum * 50;
+                const top = item.value < 0 ? 50 : 50 - magnitude;
+                return '<li><div class="marketing-insight-column-plot" aria-hidden="true"><i style="top:' +
+                  top + '%;height:' + magnitude + '%"></i></div><b>' +
+                  escapeHtml(Number(item.value).toLocaleString('pt-BR')) + '</b><span>' +
+                  escapeHtml(item.label) + '</span></li>';
+              }).join('') + '</ul></div>';
+          })() : '<p class="marketing-insights-empty">' +
+            (items.length ? 'Não é possível comparar unidades diferentes.' : 'Sem dados para os filtros atuais.') + '</p>') + '</section>';
       }
       const breakdowns = '<div class="marketing-insight-breakdowns">' +
         breakdownMarkup('channel', 'Desempenho das redes sociais') +
         breakdownMarkup('campaign', 'Desempenho das campanhas') + '</div>';
       const trendValues = {};
-      rows.filter(function (row) { return row.metric === comparisonMetric && row.month; }).forEach(function (row) {
+      numericRows.filter(function (row) { return row.metric === comparisonMetric && row.month; }).forEach(function (row) {
         trendValues[row.month] = (trendValues[row.month] || 0) + (Number(row.value) || 0);
       });
+      const trendUnits = new Set(numericRows.filter(function (row) { return row.metric === comparisonMetric; })
+        .map(marketingMetricUnit));
       const trendMonths = Object.keys(trendValues).sort();
       const trendMaximum = Math.max.apply(null, trendMonths.map(function (month) { return trendValues[month]; }).concat([1]));
       const chartWidth = 680;
@@ -4038,10 +3994,10 @@
         return (index ? 'L' : 'M') + point.x.toFixed(1) + ' ' + point.y.toFixed(1);
       }).join(' ');
       const trendChart = '<section class="marketing-insight-trend"><div class="marketing-insight-chart-heading"><div><h3>Evolução mensal</h3><small>' +
-        escapeHtml(comparisonMetric ? (rows.find(function (row) { return row.metric === comparisonMetric; }) || {}).label || 'Métrica selecionada' : 'Selecione uma métrica') +
+        escapeHtml(comparisonMetric ? (numericRows.find(function (row) { return row.metric === comparisonMetric; }) || {}).label || 'Métrica selecionada' : 'Selecione uma métrica') +
         '</small></div><span>' + escapeHtml(trendMonths.length + (trendMonths.length === 1 ? ' mês' : ' meses')) + '</span></div>' +
-        (trendPoints.length ? '<div class="marketing-insight-line-wrap"><svg viewBox="0 0 ' + chartWidth + ' ' + chartHeight +
-          '" role="img" aria-label="' + escapeHtml('Evolução mensal de ' + ((rows.find(function (row) { return row.metric === comparisonMetric; }) || {}).label || 'indicadores')) +
+        (trendPoints.length && trendUnits.size === 1 ? '<div class="marketing-insight-line-wrap"><svg viewBox="0 0 ' + chartWidth + ' ' + chartHeight +
+          '" role="img" aria-label="' + escapeHtml('Evolução mensal de ' + ((numericRows.find(function (row) { return row.metric === comparisonMetric; }) || {}).label || 'indicadores')) +
           '"><line class="marketing-chart-gridline" x1="' + chartPadding.left + '" y1="' + chartPadding.top + '" x2="' + chartWidth +
           '" y2="' + chartPadding.top + '"></line><line class="marketing-chart-gridline" x1="' + chartPadding.left + '" y1="' +
           (chartPadding.top + plotHeight / 2) + '" x2="' + chartWidth + '" y2="' + (chartPadding.top + plotHeight / 2) +
@@ -4055,7 +4011,9 @@
               '</title></circle><text class="marketing-chart-x-label" x="' + point.x.toFixed(1) + '" y="' + (chartHeight - 8) +
               '" text-anchor="middle">' + escapeHtml(marketingMonthLabel(point.month)) + '</text>';
           }).join('') + '</svg></div>'
-          : '<p class="marketing-insights-empty">Importe dados com mês e valores para visualizar a evolução.</p>') + '</section>';
+          : '<p class="marketing-insights-empty">' + (trendPoints.length
+            ? 'A evolução foi ocultada porque os registros usam unidades diferentes.'
+            : 'Importe dados com mês e valores para visualizar a evolução.') + '</p>') + '</section>';
       function comparisonOptions(selected) {
         return '<option value="">Selecione o mês</option>' + months.map(function (month) {
           const label = marketingMonthLabel(month);
@@ -4072,45 +4030,76 @@
         '<label>Mês atual<select data-marketing-compare="primary">' + comparisonOptions(firstMonth) + '</select></label>' +
         '<label>Mês anterior<select data-marketing-compare="secondary">' + comparisonOptions(secondMonth) + '</select></label></div>' +
         '<article><span>' + escapeHtml(firstMonth ? marketingMonthLabel(firstMonth) : 'Mês atual') +
-        '</span><b>' + escapeHtml(firstTotal.toLocaleString('pt-BR')) + '</b></article>' +
+        '</span><b>' + escapeHtml(firstTotal.count && firstTotal.comparable
+          ? Number(firstTotal.value).toLocaleString('pt-BR') + (firstTotal.unit ? ' ' + firstTotal.unit : '')
+          : firstTotal.count ? 'Unidades incompatíveis' : 'Sem dados') + '</b></article>' +
         '<article><span>' + escapeHtml(secondMonth ? marketingMonthLabel(secondMonth) : 'Mês anterior') +
-        '</span><b>' + escapeHtml(secondTotal.toLocaleString('pt-BR')) + '</b></article>' +
-        '<article><span>Variação</span><b>' + (change === null ? '—' : (change > 0 ? '+' : '') + change.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%') + '</b></article></section>';
-      const recent = '<section class="marketing-insight-reports"><h3>Relatórios recentes</h3>' +
-        (reportList.length ? reportList.map(function (report) {
-          const data = report.data || {};
-          const canArchive = !report.documentOnly &&
-            (String(report.createdBy || '') === String(currentUserId || '') || isBusinessCardManager(dashboardState));
-          return '<article><div><b>' + escapeHtml(report.title) + '</b><small>' +
-            escapeHtml((data.metrics || []).length + ' métricas · ' + (data.source || 'Relatório importado') + ' · ' +
-              dateLabel(data.importedAt || report.createdAt, { day: '2-digit', month: 'short', year: 'numeric' })) +
-            '</small></div>' + (data.documentId ? '<button type="button" data-marketing-open-document="' +
-              escapeHtml(data.documentId) + '">Abrir arquivo</button><button type="button" data-marketing-download-document="' +
-              escapeHtml(data.documentId) + '">Baixar</button>' : '') +
-            (canArchive ? '<button type="button" data-business-archive="' + escapeHtml(report.id) + '">Arquivar</button>' : '') + '</article>';
-        }).join('') : '<p class="marketing-insights-empty">Envie um relatório para começar a acompanhar os resultados.</p>') + '</section>';
+        '</span><b>' + escapeHtml(secondTotal.count && secondTotal.comparable
+          ? Number(secondTotal.value).toLocaleString('pt-BR') + (secondTotal.unit ? ' ' + secondTotal.unit : '')
+          : secondTotal.count ? 'Unidades incompatíveis' : 'Sem dados') + '</b></article>' +
+        '<article><span>Variação</span><b>' + (change === null
+          ? firstTotal.count && secondTotal.count ? 'Não calculável' : 'Sem dados'
+          : (change > 0 ? '+' : '') + change.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%') +
+        '</b></article><p class="marketing-insight-comparison-note">A variação usa as somas registradas; a cobertura de cada período não é inferida. Confirme a equivalência dos dados na fonte antes de comparar.</p></section>';
+      const rowReportIds = new Set(rows.map(function (row) { return String(row.reportId); }));
+      const rowSources = Array.from(new Set(rows.map(function (row) { return row.source || 'Relatório importado'; })));
+      const rowUnits = Array.from(new Set(rows.map(marketingMetricUnit)));
+      const rowMonths = rows.map(function (row) { return row.month; }).filter(Boolean).sort();
+      const latestUpdate = rows.map(function (row) { return row.importedAt; }).filter(Boolean).sort().pop();
+      const activeFilters = [
+        marketingInsightsFilters.channel && 'Canal: ' + marketingInsightsFilters.channel,
+        marketingInsightsFilters.campaign && 'Campanha: ' + marketingInsightsFilters.campaign,
+        marketingInsightsFilters.metric && 'Métrica: ' + (allRows.find(function (row) {
+          return row.metric === marketingInsightsFilters.metric;
+        }) || {}).label,
+        marketingInsightsFilters.report && 'Fonte: ' + (allRows.find(function (row) {
+          return String(row.reportId) === marketingInsightsFilters.report;
+        }) || {}).reportTitle,
+        marketingInsightsFilters.from && 'De: ' + marketingMonthLabel(marketingInsightsFilters.from),
+        marketingInsightsFilters.to && 'Até: ' + marketingMonthLabel(marketingInsightsFilters.to)
+      ].filter(Boolean);
+      const metadataMarkup = '<section class="marketing-insight-metadata" aria-label="Contexto dos indicadores">' +
+        '<span><b>Unidade:</b> ' + escapeHtml(rowUnits.length === 1 ? rowUnits[0] : rowUnits.length ? 'varia por métrica; veja os registros' : 'sem dados') + '</span>' +
+        '<span><b>Período:</b> ' + escapeHtml(rowMonths.length
+          ? marketingMonthLabel(rowMonths[0]) + (rowMonths[rowMonths.length - 1] !== rowMonths[0] ? ' – ' + marketingMonthLabel(rowMonths[rowMonths.length - 1]) : '')
+          : 'não informado') + '</span>' +
+        '<span><b>Fonte:</b> ' + escapeHtml(rowSources.length ? rowSources.join(', ') : 'sem dados') + '</span>' +
+        '<span><b>Atualizado:</b> ' + escapeHtml(latestUpdate ? dateLabel(latestUpdate, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'indisponível') + '</span>' +
+        '<span><b>Filtros:</b> ' + escapeHtml(activeFilters.join(' · ') || 'nenhum') + '</span>' +
+        '</section>';
+      const aggregationWarning = rowReportIds.size > 1 && !marketingInsightsFilters.report
+        ? '<p class="dashboard-business-warning" role="note">A visão combina ' + rowReportIds.size +
+          ' relatórios. Cobertura e critérios podem variar entre fontes; selecione um relatório antes de comparar períodos.</p>'
+        : '';
       return toolbar + '<form class="marketing-report-upload" data-marketing-report-upload>' +
         '<label><span>Arquivos de relatório (até 10)</span><input type="file" name="reportFile" accept=".csv,.xls,.xlsx,.pdf,image/png,image/jpeg,image/webp,image/bmp,image/tiff" multiple required></label>' +
         '<label><span>Mês do relatório, quando não estiver no arquivo</span><input type="month" name="reportMonth" value="' +
         new Date().toISOString().slice(0, 7) + '" required></label><button type="submit" class="btn"' +
         (dashboardState.businessCardRecordsLoadError || !window.RildonXMarketingReportImport
           ? ' disabled title="Aguarde o carregamento dos dados e do leitor de relatórios"' : '') + '>Importar relatório</button>' +
-        '<small>CSV, Excel, PDF ou imagem. Os dados são interpretados localmente no navegador e os arquivos ficam em Documentos. Relatórios enviados à pasta “Marketing - Indicadores” também são lidos automaticamente.</small></form>' +
-        documentStatusMarkup + documentErrorsMarkup +
-        '<div class="marketing-insight-categories">' + categoryPanels + '</div>' + trendChart + breakdowns + comparison + recent +
+        '<small>CSV, Excel, PDF ou imagem. O arquivo é processado para extrair métricas; gráficos e tabelas exibem apenas os resultados associados a este módulo.</small></form>' +
+        documentStatusMarkup + documentErrorsMarkup + metadataMarkup + aggregationWarning +
+        '<div class="marketing-insight-categories">' + (categoryPanels || '<p class="marketing-insights-empty">Nenhuma métrica numérica disponível nos dados importados. Consulte os estados dos registros abaixo.</p>') +
+        '</div>' + trendChart + breakdowns + comparison +
         '<section class="marketing-insight-data"><h3>Dados usados no relatório</h3>' +
-        (rows.length ? '<div class="marketing-insight-table-wrap"><table><thead><tr><th>Mês</th><th>Métrica</th><th>Valor</th><th>Canal</th><th>Campanha</th><th>Arquivo</th></tr></thead><tbody>' +
+        '<p>Os gráficos somam valores numéricos importados. Campos ausentes e não aplicáveis não são convertidos em zero. Fórmula: soma por métrica, unidade, período e filtros ativos.</p>' +
+        (rows.length ? '<div class="marketing-insight-table-wrap"><table><thead><tr><th>Período</th><th>Métrica</th><th>Valor</th><th>Unidade</th><th>Estado</th><th>Canal</th><th>Campanha</th><th>Fonte</th><th>Atualizado</th><th>Origem</th></tr></thead><tbody>' +
           rows.map(function (row) {
-            return '<tr><td>' + escapeHtml(row.month) + '</td><td>' + escapeHtml(row.label) + '</td><td>' +
-              escapeHtml(Number(row.value).toLocaleString('pt-BR')) + '</td><td>' + escapeHtml(row.channel || '—') + '</td><td>' +
-              escapeHtml(row.campaign || '—') + '</td><td>' + escapeHtml(row.reportTitle) + '</td></tr>';
+            const valueMarkup = isNumericMarketingMetric(row) ? Number(row.value).toLocaleString('pt-BR') : '—';
+            return '<tr><td>' + escapeHtml(row.month || '—') + '</td><td>' + escapeHtml(row.label) + '</td><td>' +
+              escapeHtml(valueMarkup) + '</td><td>' + escapeHtml(marketingMetricUnit(row)) + '</td><td>' +
+              escapeHtml(marketingMetricStatusLabel(row)) + '</td><td>' + escapeHtml(row.channel || '—') + '</td><td>' +
+              escapeHtml(row.campaign || '—') + '</td><td>' + escapeHtml(row.source || 'Relatório importado') + '</td><td>' +
+              escapeHtml(row.importedAt ? dateLabel(row.importedAt, { day: '2-digit', month: 'short', year: 'numeric' }) : '—') +
+              '</td><td>' + escapeHtml(row.reportTitle || 'Relatório importado') + '</td></tr>';
           }).join('') + '</tbody></table></div>' : '<p class="marketing-insights-empty">Nenhum dado corresponde aos filtros atuais.</p>') +
         '</section>';
     }
 
     function marketingMaterialRecords() {
       return (dashboardState.businessCardRecords || []).filter(function (record) {
-        return record && record.moduleKey === 'marketing-materials' && !record.archived;
+        return record && record.moduleKey === 'marketing-materials' && !record.archived &&
+          record.isDemo !== true && !(record.data && record.data.isDemo === true);
       });
     }
 
@@ -4159,7 +4148,7 @@
         '<label><span>Tags</span><input type="text" name="tags" placeholder="campanha, produto, marca"></label>' +
         '<label><span>Observações</span><input type="text" name="notes" placeholder="Uso recomendado, versão aprovada"></label>' +
         '<button type="submit" class="btn"' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aguarde a conexão dos dados compartilhados"' : '') +
-        '>Enviar material</button><small>O arquivo é salvo uma única vez na infraestrutura de Documentos e referenciado nesta Central.</small></form>' +
+        '>Enviar material</button><small>Os arquivos enviados ficam associados a esta Central e não aparecem na página Documentos.</small></form>' +
         '<div class="marketing-material-grid">' + (items.length ? items.map(function (item) {
           const record = item.record;
           const data = record && record.data || {};
@@ -4233,20 +4222,19 @@
           });
           if (!uploaded || !uploaded.id) throw new Error('O serviço não confirmou o arquivo enviado.');
           const extension = String(file.name).split('.').pop().toUpperCase();
+          const importedAt = new Date().toISOString();
           const record = {
             id: window.crypto && typeof window.crypto.randomUUID === 'function' ? window.crypto.randomUUID() : null,
             moduleKey: 'marketing-insights',
             sector: 'marketing',
-            title: file.name,
+            title: 'Relatório de indicadores',
             status: 'Importado',
             createdBy: authenticatedUserId || profile.id,
             data: {
               metrics: metrics,
               documentId: uploaded.id,
-              fileName: file.name,
-              fileType: extension,
               source: 'Relatório ' + extension,
-              importedAt: new Date().toISOString()
+              importedAt: importedAt
             }
           };
           if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
@@ -4278,7 +4266,7 @@
       }
       if (!results.length) throw new Error('Nenhum relatório foi importado. ' + failures.join(' · '));
       businessSearch = '';
-      marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
+      marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '', report: '' };
       marketingComparisonMonths = { primary: '', secondary: '' };
       renderBusinessModule('marketing-insights');
       if (typeof window.showToast === 'function') {
@@ -4811,9 +4799,9 @@
         '</h2><p>' + escapeHtml(module.description) + '</p></div><div class="dashboard-business-header-actions">' +
         (businessOpenedFromLibrary ? '<button type="button" class="dashboard-business-back" data-business-library-back>‹ Voltar</button>' : '') +
         '<button type="button" class="dashboard-library-close dashboard-business-exit" data-business-close aria-label="Sair do painel" title="Sair do painel">×</button></div></div>' +
-        accessError + monthlyVacationsMarkup + (moduleId === 'marketing-internal-demands'
-          ? internalDemandDashboardMarkup()
-          : moduleId === 'hr-employee-control' ? '' : renderBusinessMetrics(summary)) +
+        accessError + monthlyVacationsMarkup +
+        (moduleId === 'marketing-internal-demands' || moduleId === 'hr-employee-control'
+          ? '' : renderBusinessMetrics(summary)) +
         (moduleId === 'hr-employee-control'
           ? '<div class="dashboard-business-toolbar employee-control-toolbar"><input type="search" data-employee-search placeholder="Buscar por nome, setor ou cargo" aria-label="Buscar funcionários">' +
             '<button type="button" class="btn" data-people-create-user>Cadastrar Usuário</button></div>' +
@@ -4901,7 +4889,7 @@
       hrTrainingFilters = { month: '', course: '', employee: '' };
       marketingContentView = 'kanban';
       marketingCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-      marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '' };
+      marketingInsightsFilters = { channel: '', campaign: '', metric: '', from: '', to: '', report: '' };
       marketingComparisonMonths = { primary: '', secondary: '' };
       marketingMaterialsView = 'materials';
       businessRoot.classList.add('open');
@@ -4936,6 +4924,7 @@
       businessReturnTo = params.get('returnTo') || new URL('meu-espaco.html', window.location.href).href;
       businessReturnLibrary = params.get('returnLibrary') === '1';
       businessReturnSector = params.get('returnSector') || 'general';
+      businessReturnKind = params.get('returnKind') || 'all';
       businessReturnScroll = Number(params.get('returnScroll')) || 0;
       businessReturnLibraryScroll = Number(params.get('returnLibraryScroll')) || 0;
       businessRoot.classList.add('is-standalone');
@@ -4948,6 +4937,7 @@
         if (businessReturnLibrary) {
           returnUrl.searchParams.set('restoreLibrary', '1');
           returnUrl.searchParams.set('librarySector', businessReturnSector);
+          returnUrl.searchParams.set('libraryKind', businessReturnKind);
           returnUrl.searchParams.set('libraryScroll', String(businessReturnScroll));
           returnUrl.searchParams.set('libraryPanelScroll', String(businessReturnLibraryScroll));
         }
@@ -5680,7 +5670,22 @@
             current,
             dashboardState,
             getStoredHomeCards(),
-            activeLibrarySector
+            activeLibrarySector,
+            activeLibraryKind
+          );
+          return;
+        }
+        const kindTab = event.target.closest('[data-library-kind]');
+        if (kindTab) {
+          activeLibraryKind = kindTab.dataset.libraryKind;
+          const current = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
+          renderLibraryContent(
+            libraryRoot.querySelector('.dashboard-library-content'),
+            current,
+            dashboardState,
+            getStoredHomeCards(),
+            activeLibrarySector,
+            activeLibraryKind
           );
           return;
         }
@@ -5699,7 +5704,8 @@
             current,
             dashboardState,
             getStoredHomeCards(),
-            activeLibrarySector
+            activeLibrarySector,
+            activeLibraryKind
           );
           return;
         }

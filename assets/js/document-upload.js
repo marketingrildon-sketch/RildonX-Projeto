@@ -415,6 +415,7 @@
         return part.charAt(0);
       }).join('').slice(0, 2).toUpperCase() || 'U',
       owner_id: user.id,
+      storage_path: uploadResult.data.path,
       viewer_ids: Array.isArray(settings.viewerIds) ? settings.viewerIds.filter(function (id) {
         return typeof id === 'string' && id !== user.id;
       }) : [],

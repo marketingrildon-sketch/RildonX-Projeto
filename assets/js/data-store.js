@@ -1,9 +1,14 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'rildonx_shared_store_v1';
-  const SYNC_OUTBOX_KEY = 'rildonx_sync_outbox_v1';
+  const STORAGE_KEY_PREFIX = 'rildonx_store_v2_user_';
+  const SYNC_OUTBOX_KEY_PREFIX = 'rildonx_sync_outbox_v2_user_';
   const SYNC_COLLECTION_KEYS = ['messages', 'tasks', 'projects', 'conversations', 'businessCardRecords'];
+  let activeUserId = null;
+
+  function getScopedStorageKey(prefix) {
+    return activeUserId ? prefix + encodeURIComponent(activeUserId) : null;
+  }
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -94,12 +99,17 @@
 
   function readState() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const storageKey = getScopedStorageKey(STORAGE_KEY_PREFIX);
+      if (!storageKey) return clone(DEFAULT_STATE);
+      const raw = localStorage.getItem(storageKey);
       if (!raw) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_STATE));
+        localStorage.setItem(storageKey, JSON.stringify(DEFAULT_STATE));
         return clone(DEFAULT_STATE);
       }
       const state = JSON.parse(raw);
+      if (!state || typeof state !== 'object' || Array.isArray(state)) {
+        throw new Error('O estado local não contém um objeto válido.');
+      }
       if (Array.isArray(state.events)) {
         const sharedEvents = state.events.filter(function (event) { return event.visibility !== 'private'; });
         if (sharedEvents.length !== state.events.length) {
@@ -123,24 +133,29 @@
         state.messages = (state.messages || []).filter(function (message) {
           return !message || message.conversationId !== 'local-test';
         });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        localStorage.setItem(storageKey, JSON.stringify(state));
       }
       return state;
     } catch (error) {
+      console.error('Não foi possível ler o cache local desta conta:', error);
       return clone(DEFAULT_STATE);
     }
   }
 
   function writeState(state) {
+    const storageKey = getScopedStorageKey(STORAGE_KEY_PREFIX);
+    if (!storageKey) return;
     const persistedState = Object.assign({}, state, {
       events: (state.events || []).filter(function (event) { return event.visibility !== 'private'; })
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedState));
+    localStorage.setItem(storageKey, JSON.stringify(persistedState));
   }
 
   function readSyncOutbox() {
     try {
-      const value = JSON.parse(localStorage.getItem(SYNC_OUTBOX_KEY) || '{}');
+      const storageKey = getScopedStorageKey(SYNC_OUTBOX_KEY_PREFIX);
+      if (!storageKey) return {};
+      const value = JSON.parse(localStorage.getItem(storageKey) || '{}');
       return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
     } catch (error) {
       console.error('Não foi possível ler alterações pendentes de sincronização:', error);
@@ -149,14 +164,15 @@
   }
 
   function writeSyncOutbox() {
-    localStorage.setItem(SYNC_OUTBOX_KEY, JSON.stringify(syncOutbox));
+    const storageKey = getScopedStorageKey(SYNC_OUTBOX_KEY_PREFIX);
+    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(syncOutbox));
   }
 
   const store = {
-    state: readState(),
+    state: clone(DEFAULT_STATE),
     listeners: []
   };
-  let syncOutbox = readSyncOutbox();
+  let syncOutbox = {};
   let lastSyncSnapshot = clone(store.state);
 
   function mergePendingCollection(remoteItems, localItems) {
@@ -216,6 +232,17 @@
     };
   }
 
+  function setUserScope(userId) {
+    const nextUserId = typeof userId === 'string' && userId.trim() ? userId.trim() : null;
+    if (nextUserId === activeUserId) return false;
+    activeUserId = nextUserId;
+    store.state = readState();
+    syncOutbox = readSyncOutbox();
+    lastSyncSnapshot = clone(store.state);
+    notify('scope');
+    return true;
+  }
+
   function setState(nextState) {
     store.state = Object.assign({}, store.state, nextState || {});
     writeState(store.state);
@@ -248,7 +275,7 @@
   }
 
   window.addEventListener('storage', function (event) {
-    if (event.key !== STORAGE_KEY || !event.newValue) return;
+    if (event.key !== getScopedStorageKey(STORAGE_KEY_PREFIX) || !event.newValue) return;
     try {
       const nextState = JSON.parse(event.newValue);
       if (!nextState || typeof nextState !== 'object') return;
@@ -540,7 +567,8 @@
     addMessageWithDocument: addMessageWithDocument,
     getRecentDocuments: getRecentDocuments,
     readState: getState,
-    STORAGE_KEY: STORAGE_KEY,
+    STORAGE_KEY: function () { return getScopedStorageKey(STORAGE_KEY_PREFIX); },
+    setUserScope: setUserScope,
     getPendingSyncChanges: getPendingSyncChanges,
     clearPendingSyncChanges: clearPendingSyncChanges,
     cloudConfig: {

@@ -111,7 +111,7 @@ body[data-page="projetos"] .content{max-width:none}
 #project-page-root .project-activity-card .project-activity-time{margin-left:20px}
 #project-page-root .project-activity-card .project-empty{padding:20px 10px}
 #project-page-root .task-workload-card .project-section-head{align-items:center}
-#project-page-root .task-workload-card .project-section-head select{max-width:132px;min-height:31px;padding:5px 7px;border:1px solid var(--border-soft,#e8eaf0);border-radius:7px;background:#fff;color:var(--text-secondary,#667085);font:inherit;font-size:10px}
+#project-page-root .task-workload-card .project-section-head select{max-width:132px;min-height:31px;padding:5px 7px;border:1px solid var(--border-soft,#e8eaf0);border-radius:7px;background:var(--card);color:var(--text-secondary,#667085);font:inherit;font-size:10px}
 #project-page-root .task-workload-card .task-workload-list{max-height:220px;overflow-y:auto}
 #project-page-root .task-workload-card>small{display:block;color:var(--text-muted,#77808d);font-size:10px;line-height:1.45}
 #project-page-root .project-stats{margin:0}
@@ -193,7 +193,8 @@ body[data-page="projetos"] .content{max-width:none}
 #project-page-root .project-grid-footer>span{display:grid;gap:2px;color:var(--text-muted);font-size:9px}
 #project-page-root .project-grid-footer>span b{color:var(--text);font-size:13px}
 #project-page-root .project-card--grid .project-member-stack{justify-content:flex-end}
-#project-page-root .project-detail-tab.active{background:#eaf1ff;border-color:#cbdafa;color:#2f5fe0}
+#project-page-root .project-detail-tab.active{background:#eaf1ff;border-color:#cbdafa;color:var(--blue-600)}
+html[data-theme="dark"] #project-page-root .project-detail-tab.active{background:var(--blue-600);border-color:var(--blue-600);color:#08212a}
 #project-page-root .project-dialog{width:min(820px,100%);border:1px solid #e1e9f4;border-radius:15px}
 #project-page-root .project-overlay{background:rgba(13,25,48,.58);backdrop-filter:blur(2px)}
 @media(max-width:1200px){
@@ -218,6 +219,38 @@ body[data-page="projetos"] .content{max-width:none}
   #project-page-root .project-view-toggle button{flex:1}
 }
 
+html[data-theme="dark"] #page-projetos .project-stat-track,
+html[data-theme="dark"] #page-projetos .project-progress{background:#414141}
+html[data-theme="dark"] #page-projetos .project-image,
+html[data-theme="dark"] #page-projetos .project-avatar,
+html[data-theme="dark"] #page-projetos .project-detail-cell,
+html[data-theme="dark"] #page-projetos .project-grid-dates,
+html[data-theme="dark"] #page-projetos .project-formula-note{background:#383838;color:var(--text)}
+html[data-theme="dark"] #page-projetos .project-status,
+html[data-theme="dark"] #page-projetos .project-status.archived,
+html[data-theme="dark"] #page-projetos .project-health--unknown{background:#383838;color:#e5e5e5}
+html[data-theme="dark"] #page-projetos .project-status.in-progress,
+html[data-theme="dark"] #page-projetos .project-health--watch{background:#40362a;color:#ffe5a1}
+html[data-theme="dark"] #page-projetos .project-status.completed,
+html[data-theme="dark"] #page-projetos .project-health--healthy{background:#28382f;color:#b4e7c2}
+html[data-theme="dark"] #page-projetos .project-health--attention{background:#492c2b;color:#ffd1ce}
+html[data-theme="dark"] #project-page-root .project-view-toggle button.active{background:var(--blue-600);color:#08212a}
+html[data-theme="dark"] #page-projetos .project-card-footer,
+html[data-theme="dark"] #page-projetos .project-activity-item,
+html[data-theme="dark"] #page-projetos .project-grid-footer{border-color:var(--border)}
+html[data-theme="dark"] #page-projetos .project-icon-btn:hover,
+html[data-theme="dark"] #page-projetos .project-alerts button:hover{background:#383838;color:var(--text)}
+html[data-theme="dark"] #page-projetos .project-detail-tab.active{background:#40362a;border-color:#ffcc29;color:#ffe5a1}
+html[data-theme="dark"] #page-projetos .project-dialog,
+html[data-theme="dark"] #page-projetos .project-dialog-head,
+html[data-theme="dark"] #page-projetos .project-dialog-body,
+html[data-theme="dark"] #page-projetos .project-dialog-foot{color:var(--text)}
+html[data-theme="dark"] #page-projetos .project-field input,
+html[data-theme="dark"] #page-projetos .project-field textarea,
+html[data-theme="dark"] #page-projetos .project-field select,
+html[data-theme="dark"] #page-projetos .project-user-option{border-color:var(--border);background:var(--bg);color:var(--text)}
+html[data-theme="dark"] #page-projetos .project-member-stack .project-avatar{border-color:var(--card)}
+
 #project-page-root .project-layout{display:block}
 #project-page-root .project-workspace{width:100%;display:grid;gap:12px}
 #project-page-root .project-executive-summary{padding:14px 16px;border:1px solid var(--border-soft,#e8eaf0);border-radius:12px;background:var(--card,#fff)}
@@ -225,14 +258,14 @@ body[data-page="projetos"] .content{max-width:none}
 #project-page-root .project-executive-summary h2{margin:0;font-size:17px}
 #project-page-root .project-executive-summary p{margin:4px 0 0;color:var(--text-muted,#77808d);font-size:12px}
 #project-page-root .project-alerts{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--border-soft,#e8eaf0)}
-#project-page-root .project-alerts button{padding:6px 9px;border:1px solid #e6ebf2;border-radius:8px;background:#fff;color:var(--text);font:inherit;font-size:11px;cursor:pointer}
+#project-page-root .project-alerts button{padding:6px 9px;border:1px solid #e6ebf2;border-radius:8px;background:var(--card);color:var(--text);font:inherit;font-size:11px;cursor:pointer}
 #project-page-root .project-alerts button b{margin-right:3px}
 #project-page-root .project-alerts>span{flex:1;min-width:220px;color:var(--text-muted,#77808d);font-size:10px;line-height:1.45}
 #project-page-root .project-browse{padding:14px}
 #project-page-root .project-browse .project-toolbar{display:grid;grid-template-columns:auto 1fr;gap:10px}
 #project-page-root .project-browse .project-tabs{justify-content:flex-end;flex-wrap:wrap}
 #project-page-root .project-filters{display:grid;grid-template-columns:minmax(180px,1.5fr) repeat(3,minmax(130px,1fr)) repeat(2,minmax(150px,1.1fr));gap:8px;margin-top:12px}
-#project-page-root .project-filters input,#project-page-root .project-filters select{width:100%;min-width:0;min-height:36px;padding:7px 9px;border:1px solid var(--border-soft,#e8eaf0);border-radius:8px;background:#fff;color:var(--text-secondary,#667085);font:inherit;font-size:11px}
+#project-page-root .project-filters input,#project-page-root .project-filters select{width:100%;min-width:0;min-height:36px;padding:7px 9px;border:1px solid var(--border-soft,#e8eaf0);border-radius:8px;background:var(--card);color:var(--text-secondary,#667085);font:inherit;font-size:11px}
 #project-page-root .project-card--list{grid-template-columns:minmax(200px,1.8fr) minmax(88px,.7fr) minmax(105px,.85fr) minmax(115px,.95fr) minmax(82px,.6fr) minmax(95px,.7fr) auto}
 #project-page-root .project-list-progress{display:grid;gap:5px;min-width:0}
 #project-page-root .project-list-progress small{color:var(--text-muted);font-size:9.5px}
@@ -265,7 +298,7 @@ body[data-page="projetos"] .content{max-width:none}
 #project-page-root .project-timeline-item small{color:var(--text-muted,#77808d);font-size:10px;font-weight:400;line-height:1.5}
 #project-page-root .project-register-form{display:grid;gap:8px;margin-top:14px;padding:12px;border:1px solid var(--border-soft,#e8eaf0);border-radius:9px}
 #project-page-root .project-register-form label{display:grid;gap:6px;font-size:11px;font-weight:700}
-#project-page-root .project-register-form select,#project-page-root .project-register-form textarea{padding:8px;border:1px solid var(--border-soft,#e8eaf0);border-radius:7px;background:#fff;color:var(--text);font:inherit;font-size:12px}
+#project-page-root .project-register-form select,#project-page-root .project-register-form textarea{padding:8px;border:1px solid var(--border-soft,#e8eaf0);border-radius:7px;background:var(--card);color:var(--text);font:inherit;font-size:12px}
 #project-page-root .project-register-form button{justify-self:start}
 #project-page-root .project-review-checklists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
 #project-page-root .project-review-checklists section{padding:12px;border:1px solid var(--border-soft,#e8eaf0);border-radius:9px}

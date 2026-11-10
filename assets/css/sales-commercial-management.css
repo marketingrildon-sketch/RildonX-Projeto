@@ -72,7 +72,7 @@
   min-height: 40px;
   border: 1px solid #cbd6de;
   border-radius: 8px;
-  background: #fff;
+  background: var(--card);
   color: #233142;
   font: inherit;
   padding: 8px 10px;
@@ -113,7 +113,7 @@
   padding: 18px;
   border: 1px solid #e3e9ee;
   border-radius: 12px;
-  background: #fff;
+  background: var(--card);
 }
 
 .sales-commercial-metrics article span,
@@ -134,7 +134,7 @@
   padding: 16px 18px;
   border: 1px solid #e3e9ee;
   border-radius: 12px;
-  background: #fff;
+  background: var(--card);
 }
 
 .sales-commercial-progress > div,
@@ -164,7 +164,7 @@
   padding: 16px 18px;
   border: 1px solid #e3e9ee;
   border-radius: 12px;
-  background: #fff;
+  background: var(--card);
 }
 
 .sales-commercial-chart h3 {
@@ -221,7 +221,7 @@
   overflow: auto;
   border: 1px solid #e3e9ee;
   border-radius: 10px;
-  background: #fff;
+  background: var(--card);
 }
 
 .sales-commercial-table {

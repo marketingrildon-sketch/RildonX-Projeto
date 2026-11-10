@@ -1,0 +1,4 @@
+project_id = "lgzokudzdezgufddoicy"
+
+[functions.rildonx-login]
+verify_jwt = false
