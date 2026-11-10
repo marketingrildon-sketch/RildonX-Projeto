@@ -64,7 +64,8 @@ async function callRpc<T>(name: string, body: Record<string, unknown>): Promise<
     cache: "no-store",
   });
   if (!response.ok) throw new Error(`Login security RPC failed: ${name}`);
-  return await response.json() as T;
+  const responseBody = await response.text();
+  return responseBody ? JSON.parse(responseBody) as T : undefined as T;
 }
 
 async function sendLockoutAlert(identifier: string, lockedUntil: string, hash: string): Promise<void> {

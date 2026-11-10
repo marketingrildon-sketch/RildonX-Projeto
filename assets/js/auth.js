@@ -241,6 +241,10 @@
         showError('Login temporariamente bloqueado após cinco tentativas. Tente novamente em 15 minutos.');
         return;
       }
+      if (responseStatus === 401) {
+        showError('Login ou senha inválidos.');
+        return;
+      }
       if (error && (error.name === 'AuthRetryableFetchError' || error.name === 'FunctionsFetchError' ||
           error.name === 'FunctionsRelayError' || responseStatus >= 500)) {
         showError('Não foi possível conectar ao serviço de autenticação. Verifique a conexão e tente novamente.');
