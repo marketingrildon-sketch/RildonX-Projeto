@@ -233,8 +233,14 @@ function replaceKnownSystemIcons(root) {
     [/user-chip|menu do usu[aá]rio|abrir perfil|abrir conta/, 'user-menu'],
     [/activity-icon|notifica[cç][aã]o|notifica[cç][oõ]es|lembrete/, 'notificacao'],
     [/event-icon|cal-event|task-date|proj-meta/, 'calendario'],
+    [/cal-chip.*c-campanha|cal-legend-row.*campanha/, 'grafico'],
+    [/cal-chip.*c-treinamento|cal-legend-row.*treinamento/, 'training'],
+    [/cal-chip.*c-conteudo|cal-legend-row.*conte[uú]do/, 'idea'],
+    [/cal-chip.*c-evento|cal-legend-row.*evento/, 'calendario'],
+    [/cal-chip.*c-prazo|cal-legend-row.*prazo/, 'pendente'],
+    [/cal-chip.*c-reuniao|cal-legend-row.*reuni[aã]o|reuni[aã]o/, 'sala-de-reunioes'],
     [/reserva de sala/, 'reserva-de-sala'],
-    [/cal-chip.*reuni[aã]o|sala de reuni[oõ]es/, 'sala-de-reunioes'],
+    [/sala de reuni/, 'sala-de-reunioes'],
     [/setor pessoal/, 'setor-pessoal'],
     [/adicionar usu[aá]rio|convidar usu[aá]rio|novo participante/, 'adicionar-usuario'],
     [/quick-create|criar novo|adicionar|acrescentar|^novo$|novo evento|nova tarefa|novo projeto/, 'adicionar'],
@@ -244,10 +250,16 @@ function replaceKnownSystemIcons(root) {
     [/arquivar|archive/, 'arquivar'],
     [/editar|edit/, 'editar'],
     [/document-folder-name|pasta/, 'pasta'],
-    [/opt-icon.*document|documentos\/declara[cç][oõ]es|atestado|anexo|anexar arquivo/, 'anexo'],
+    [/documentos\/declara[cç][oõ]es|atestado|anexo|anexar arquivo/, 'anexo'],
+    [/status:/, 'pendente'],
+    [/respons[aá]vel:|departamento:|projetos do departamento/, 'funcionarios'],
+    [/meus projetos/, 'user'],
+    [/mais filtros/, 'ajustes'],
+    [/atrasados/, 'notificacao'],
+    [/tip-card/, 'idea'],
     [/\.chev|(^|[\s-])chev([\s-]|$)/, 'chevron'],
     [/composer-tool.*foto|foto/, 'arquivo-de-imagem'],
-    [/composer-tool.*documento|documento word|arquivo doc/, 'arquivo-doc'],
+    [/composer-tool.*documento|documento.*composer-tool|documento word|arquivo doc/, 'arquivo-doc'],
     [/react|curtir|like/, 'curtir'],
     [/comentar|comment/, 'comentar'],
     [/enviar|send/, 'enviar'],
@@ -273,6 +285,7 @@ function replaceKnownSystemIcons(root) {
     [/configura[cç][aã]o|ajustes/, 'ajustes'],
     [/favorito|star/, 'favoritos'],
     [/pendente|aguardando/, 'pendente'],
+    [/\bponto\b/, 'pendente'],
     [/conclu[ií]d[ao]|finalizad[ao]/, 'concluido'],
     [/em andamento|andamento/, 'andamento'],
     [/gr[aá]fico|indicador/, 'grafico'],
@@ -293,6 +306,10 @@ function replaceKnownSystemIcons(root) {
   svgs.forEach(function (svg) {
     var navItem = svg.closest('.nav-item[data-page]');
     var pageHeading = svg.closest('.page-head h1, .topbar-page-heading');
+    var optionContext = svg.closest('.option-btn');
+    var filterContext = svg.closest('.filter-pill, .mini-row');
+    var calendarContext = svg.closest('.cal-chip, .cal-legend-row');
+    var modalHeading = svg.closest('.modal-head h2, .modal-head h3, .modal-head');
     var action = svg.closest('button, a, [role="button"], .qa-btn, .composer-tool, .user-chip, .activity-icon, .event-icon, .opt-icon, .chev');
     var labelText = [
       navItem && navItem.getAttribute('data-page'),
@@ -301,6 +318,10 @@ function replaceKnownSystemIcons(root) {
       action && action.getAttribute('aria-label'),
       action && action.getAttribute('title'),
       action && action.textContent,
+      optionContext && optionContext.textContent,
+      filterContext && filterContext.textContent,
+      calendarContext && calendarContext.textContent,
+      modalHeading && modalHeading.textContent,
       svg.getAttribute('class'),
       action && action.getAttribute('class'),
       svg.parentElement && svg.parentElement.getAttribute('class'),
@@ -2574,21 +2595,69 @@ function normalizeSearchText(value) {
 
 function getGlobalSearchEntries(state) {
   var profiles = state.profiles || [];
+  var nameAliases = getCurrentUserNameAliases(profiles);
+  var isAdmin = Boolean(window.RildonXIsAdmin);
+  var accessibleProjects = (state.projects || []).filter(function(project) {
+    return project && project.isDemo !== true &&
+      (isAdmin || project.allUsers === true || isCurrentUserProject(project, nameAliases));
+  });
+  var accessibleProjectIds = new Set(accessibleProjects.map(function(project) { return String(project.id); }));
+  var accessibleTasks = (state.tasks || []).filter(function(task) {
+    return task && task.isDemo !== true &&
+      (isAdmin || isCurrentUserTask(task, nameAliases) ||
+        task.projectId && accessibleProjectIds.has(String(task.projectId)));
+  });
+  var visibleConversationIds = new Set(state.visibleConversationIds || []);
+  getHiddenConversationIds(state).forEach(function(id) { visibleConversationIds.add(id); });
+  if (isAdmin) {
+    (state.conversations || []).forEach(function(conversation) {
+      if (conversation && conversation.id !== 'local-test') visibleConversationIds.add(conversation.id);
+    });
+  }
+  var accessibleMessages = (state.messages || []).filter(function(message) {
+    return message && message.localOnly !== true && message.conversationId !== 'local-test' &&
+      visibleConversationIds.has(message.conversationId);
+  });
+  var messageAttachmentIds = new Set();
+  accessibleMessages.forEach(function(message) {
+    (Array.isArray(message.attachments) ? message.attachments : []).forEach(function(attachment) {
+      var id = typeof attachment === 'string' ? attachment : attachment && attachment.id;
+      if (id) messageAttachmentIds.add(String(id));
+    });
+  });
+  var accessibleDocuments = (state.documents || []).filter(function(item) {
+    var folder = String(item && item.folder || '').trim().toLocaleLowerCase('pt-BR');
+    var url = String(item && item.url || '').toLocaleLowerCase('pt-BR');
+    if (!item || folder === 'mural' || folder === 'exames ocupacionais' ||
+        url.indexOf('/hr-medical-exam-files/') !== -1) return false;
+    var isMessageDocument = Boolean(item.messageId) || messageAttachmentIds.has(String(item.id)) ||
+      folder.indexOf('mensagens não salvas') === 0;
+    if (isMessageDocument && folder !== 'mensagens') return false;
+    return isAdmin || matchesCurrentUser(item.ownerId, nameAliases) ||
+      (Array.isArray(item.viewerIds) && item.viewerIds.some(function(viewerId) {
+        return matchesCurrentUser(viewerId, nameAliases);
+      })) ||
+      item.relatedTaskId && accessibleTasks.some(function(task) {
+        return String(task.id) === String(item.relatedTaskId);
+      }) ||
+      item.relatedProjectId && accessibleProjectIds.has(String(item.relatedProjectId));
+  });
+
   return []
     .concat(profiles.map(function(profile) {
       return { kind: 'Pessoa', title: profile.displayName || profile.nickname || 'Pessoa', detail: [profile.role, profile.sector].filter(Boolean).join(' · '), href: 'mensagens.html' };
     }))
-    .concat((state.messages || []).map(function(message) {
+    .concat(accessibleMessages.map(function(message) {
       var senderProfile = findProfileById(message.senderId, profiles);
       return { kind: 'Mensagem', title: message.text || 'Arquivo compartilhado', detail: getProfileDisplayName(senderProfile, message.senderName || 'Colaborador') + ' · ' + (message.conversationId || 'Conversa'), href: 'mensagens.html', time: message.sentAt };
     }))
-    .concat((state.documents || []).map(function(item) {
+    .concat(accessibleDocuments.map(function(item) {
       return { kind: 'Documento', title: item.name || 'Arquivo sem nome', detail: item.folder || 'Equipe', href: 'documentos.html', time: item.sentAt };
     }))
-    .concat((state.projects || []).map(function(project) {
+    .concat(accessibleProjects.map(function(project) {
       return { kind: 'Projeto', title: project.name || 'Projeto', detail: project.sector || 'Equipe', href: 'projetos.html', time: project.updatedAt };
     }))
-    .concat((state.tasks || []).map(function(task) {
+    .concat(accessibleTasks.map(function(task) {
       return { kind: 'Tarefa', title: task.title || 'Tarefa sem título', detail: getTaskStatusLabel(task.status) + ' · ' + (task.priority || 'Média'), href: 'tarefas.html', time: task.createdAt };
     }));
 }

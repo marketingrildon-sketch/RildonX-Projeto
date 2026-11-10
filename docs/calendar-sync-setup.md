@@ -86,3 +86,5 @@ Não publique uma chave de serviço nem segredos OAuth no front-end. Se a págin
 Preferências de categoria são privadas por usuário e sincronizadas em `calendar_preferences`. A exportação `.ics` é apenas um arquivo pontual; ela não cria uma conexão contínua. Recorrência, convites e lembretes não são ativados por esta migração: ainda precisam de regras de edição, cancelamento e notificação. A detecção de conflito compara os eventos visíveis; não há catálogo confiável de salas para validar disponibilidade física.
 
 Se as datas de tarefas ou projetos forem salvas, mas não aparecerem no Calendário, execute novamente `supabase-calendar-enhancements.sql` no SQL Editor. Essa migração cria as colunas de origem e permissões usadas para vincular os eventos às datas e restringir seu acesso.
+
+Se a sincronização falhar com `events_category_check` ou o código `23514`, execute `supabase-event-categories.sql` no SQL Editor. Ela atualiza a restrição para aceitar a categoria `tarefa` usada nos eventos derivados de tarefas.
