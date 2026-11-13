@@ -1,0 +1,8 @@
+RILDON V8.7 — Ajustes solicitados em 21/10/2026
+1. Gerencia Vendas Perdidas: remove resumo estatistico duplicado do filtro, conserva os cards principais e historico.
+2. Gerencia Visao Executiva: remove Resumo da meta lateral redundante e amplia o grafico.
+3. Toda a equipe: Meta do dia atualizada soma as metas diarias individuais (falta vender de cada vendedor / seus dias restantes), em vez de dividir toda equipe por um unico prazo. Requer metas individuais salvas no PostgreSQL.
+4. Meus Atendimentos: reduz numeros nos cards para exibir valores completos; grades responsivas.
+5. Solicitações: campos de pesquisa, solicitante, fornecedor, status e periodo alinhados.
+Nenhuma operacao de limpeza no PostgreSQL. Instalar em pasta separada, parar servidor antigo e iniciar esta versao.
+OBS: testes locais de sintaxe; homologacao no navegador e banco da loja ainda necessaria.

@@ -1,0 +1,14 @@
+RILDON V6.9 — Compras e ativacao de banco Google Sheets
+
+Na aba Compras, pedidos sem resposta tem botao Responder. Pedidos respondidos passam a ter botao Detalhes. O historico completo continua visivel na Gerencia e em Compras; os vendedores veem somente suas solicitacoes.
+
+BANCO ONLINE: o sistema precisa de credencial da Rildon no computador Windows para ler/escrever na planilha online. Nao ha credenciais privadas neste pacote; por seguranca, a conexao vem desativada.
+
+1. Faca backup de rildon_sync.sqlite3 ANTES de atualizar o sistema.
+2. Instale dependencias: python -m pip install -r requirements_google.txt
+3. No Google Cloud, ative Google Sheets API e crie uma conta de servico. Compartilhe a planilha https://docs.google.com/spreadsheets/d/1SuidD4V0cgqVnz7JyBJNLp_Nt-mnHzlH_6h3gmt5Mw4/edit com o e-mail da conta, como Editor.
+4. Guarde o arquivo JSON de credenciais no servidor e NAO envie no chat ou nos ZIPs de distribuicao.
+5. Execute ATIVAR_GOOGLE_SHEETS.bat e forneca o caminho do JSON. A integracao so sera ativada depois de testar com sucesso a leitura.
+6. Reinicie o servidor. Na aba solicitacoes, a origem aparecera como Dados online - Google Sheets; faca um cadastro de teste e confirme na planilha e nos tres paineis.
+7. O Google Sheets sera fonte do modulo de SOLICITACOES, nao do ERP inteiro. Outros modulos mantem SQLite. Solicitacoes feitas apenas no SQLite nao sao migradas automaticamente para evitar duplicidades.
+8. Nao reordene nem apague linhas da aba Pedidos enquanto o sistema estiver ligado: o ID online corresponde a linha da planilha.

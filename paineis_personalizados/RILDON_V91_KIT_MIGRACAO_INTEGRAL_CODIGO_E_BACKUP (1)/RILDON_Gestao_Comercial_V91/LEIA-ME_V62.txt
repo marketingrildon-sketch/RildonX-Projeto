@@ -1,0 +1,43 @@
+RILDON GESTÃO COMERCIAL V6.2 — MÓDULO SOLICITAÇÃO DE ITENS NOVOS
+
+Base: V6.1 existente, preservando Vendas Perdidas, Metas e Meus Atendimentos.
+
+NOVO MÓDULO:
+- Aba Solicitação de Itens Novos no menu lateral da Gerência e do Vendedor.
+- Novo acesso exclusivo de Compras: http://localhost:8789/compras.html
+- Compras acessa somente solicitações no novo portal.
+- Vendedor registra data, solicitante, referência, peça, quantidade, fornecedor, observação.
+- Compras responde status (Pendente / Atendido / Não Atendido), responsável, previsão de chegada e observação.
+- Pesquisa e filtros por fornecedor, solicitante, status e data.
+- Gerência e Compras cadastram fornecedores, compradores e solicitantes.
+- Dados gravados em tabelas sol_* do mesmo banco SQLite local rildon_sync.sqlite3.
+
+PRIMEIRO ACESSO A COMPRAS: usuário COMPRAS / senha inicial 12345.
+A senha inicial é apenas para piloto em rede local. Alterar antes da operação definitiva.
+Gerência e vendedores usam seus logins existentes, com autenticação de solicitação ao abrir a nova aba.
+Se a senha do site principal foi alterada apenas neste navegador, a nova aba pode solicitar login separadamente;
+esse caso, alinhar as credenciais no servidor antes da implantação.
+
+INSTALAÇÃO:
+1. Faça cópia de segurança da pasta e, especialmente, de rildon_sync.sqlite3 da versão atual.
+2. Feche o servidor anterior da porta 8789.
+3. Extraia V6.2 em uma pasta nova.
+4. Copie o arquivo rildon_sync.sqlite3 do sistema atual para a raiz desta pasta V6.2.
+5. Execute INICIAR_SITE.bat. Acesse http://localhost:8789/api/build para confirmar version 6.2.
+6. Gerência: http://localhost:8789/gerencia.html
+   Vendedores: http://localhost:8789/vendedor.html
+   Compras: http://localhost:8789/compras.html
+
+IMPORTANTE:
+- O código do Google Apps Script fornecido via PDF serviu como referência funcional.
+- Os pedidos antigos que estão na planilha Google NÃO são migrados automaticamente.
+- A URL externa pode exigir login Google e não é necessária para operar a V6.2.
+- Não publique este protótipo na internet: os demais módulos do sistema legado ainda usam autenticação local parcial.
+- O usuário COMPRAS está restrito ao módulo novo pelas permissões das rotas /api/requests/;
+  recomenda-se revisar a segurança das demais APIs antes de acesso externo.
+
+TESTES:
+- Login COMPRAS / Vendedor pela API.
+- Vendedor cria solicitação; Compras responde; vendedor proibido de responder (HTTP 403).
+- Dados persistidos no SQLite; teste realizado em banco descartável.
+- Testes visuais nos navegadores e integração na rede real ainda são necessários.

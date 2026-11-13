@@ -1,0 +1,27 @@
+RILDON | GESTÃO COMERCIAL V5.8 — VALIDAÇÃO DO HTML X2
+
+Esta versão é derivada da V5.7 e não muda o banco de dados nem o login.
+
+MELHORIAS
+- Reconhece cabeçalhos de vendedor que aparecem na mesma tabela de vendas, e não apenas em uma tabela separada.
+- Procura o cabeçalho Cliente / Valor nas primeiras linhas, aceitando uma linha de título acima e uma coluna de Data da Venda.
+- Mantém toda a verificação: soma por vendedor, devoluções, líquido e TOTAL GERAL.
+- Quando os totais não batem, informa o TOTAL GERAL do X2, a soma reconhecida e a diferença em reais; não salva dados parciais.
+- Mantém os módulos, filtros e a configuração da extensão da V5.7.
+
+INSTALAÇÃO
+1. Feche a versão antiga que está na porta 8789.
+2. Extraia o ZIP em uma pasta nova.
+3. Faça backup do banco rildon_sync.sqlite3 e copie o banco para a pasta nova enquanto o servidor está fechado.
+4. Execute INICIAR_SITE.bat.
+5. Verifique http://localhost:8789/api/build (version 5.8).
+6. Importe o HTML na gerência e CONFIRA os totais antes de confirmar.
+
+TESTES
+- HTML de 15/10/2026: 163 registros, totais conferidos.
+- HTML acumulado de 01/10 a 15/10: 978 registros, totais conferidos.
+- Exemplo artificial com cabeçalho de vendedor na mesma tabela e datas individuais: aprovado.
+- Diferença proposital no TOTAL GERAL: o sistema bloqueou e mostrou o valor da diferença.
+
+LIMITAÇÃO
+O HTML que gerou o print mais recente não está disponível nesta conversa. Portanto, a causa exata daquela divergência ainda não pode ser confirmada sem analisar esse arquivo. Se ela persistir, envie somente o HTML atual do X2, sem precisar reenviar o ZIP do sistema.

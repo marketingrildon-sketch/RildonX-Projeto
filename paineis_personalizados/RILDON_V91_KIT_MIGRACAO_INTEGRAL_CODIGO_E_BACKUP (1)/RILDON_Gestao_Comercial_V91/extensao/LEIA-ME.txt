@@ -1,0 +1,9 @@
+RILDON METAS v1.0 — CAPTURA APÓS PESQUISAR
+
+1. Faça login no X2 e abra Vendas 3.0 > Relatório de Vendas.
+2. Configure o relatório para UM ÚNICO DIA, agrupe por Vendedor e inclua Matriz e Distribuidora.
+3. Clique em Pesquisar no próprio X2.
+4. Ao carregar produtos_vendidos.jsp, a extensão captura automaticamente e salva no armazenamento LOCAL do Chrome.
+5. Abra o popup da extensão para ver os totais e exportar JSON.
+
+OBS: Ainda não envia para aplicativo externo/Supabase. Relatórios de vários dias não são capturados. O total é extraído da última coluna de cada TOTAL por vendedor; use o layout de relatório já validado.

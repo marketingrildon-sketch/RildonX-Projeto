@@ -1,0 +1,11 @@
+RILDON V7.6 — CORREÇÕES DE NAVEGAÇÃO E METAS
+
+1) Feche o servidor RILDON.
+2) Extraia em pasta nova.
+3) Inicie pelo INICIAR_SITE.bat e atualize navegador Ctrl+Shift+R.
+4) Gerência: painel avançado em Visão Executiva; Gestão de Metas somente edição/cadastro.
+5) Vendedor: abas isoladas; painel somente em Minhas Metas.
+6) Planejamento considera segunda a sexta. As vendas de sábado continuam no realizado. Feriados e fechamento extraordinário não são detectados automaticamente.
+7) Clique nos pontos ou colunas do gráfico para preencher o filtro de dia.
+
+Esta versão NÃO foi validada contra o PostgreSQL do Windows do cliente; preserve a versão anterior.

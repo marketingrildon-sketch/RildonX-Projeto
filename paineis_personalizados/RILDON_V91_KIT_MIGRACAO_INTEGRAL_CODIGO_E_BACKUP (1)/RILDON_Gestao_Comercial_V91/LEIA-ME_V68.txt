@@ -1,0 +1,22 @@
+RILDON GESTÃO COMERCIAL V6.8 — CORREÇÃO DE TELAS E PERMISSÕES
+
+1) Fazer backup do arquivo rildon_sync.sqlite3 do computador que atua como servidor.
+2) Extrair o ZIP numa nova pasta. Não sobrescrever nem excluir o banco existente.
+3) Manter o banco original na mesma pasta do novo servidor, se desejar preservar o histórico local.
+4) Encerrar o servidor antigo e iniciar o novo com INICIAR_SITE.bat.
+5) Testar /api/build, que deverá indicar 6.8, e fazer Ctrl+Shift+R nas três abas do navegador.
+
+CORREÇÕES
+- Corrigida estrutura HTML que deixava botões e tabelas fora do painel, aparecendo sobre o login de Compras.
+- Login Compras com usuário COMPRAS previamente selecionado e visual igual aos demais acessos Rildon.
+- Solicitante já é definido pelo login do vendedor no servidor.
+- Novo filtro dedicado de solicitante para Compras e Gerência.
+- Vendedor não vê o filtro de solicitante e o backend restringe os dados às próprias solicitações.
+- Compras e Gerência veem todo o histórico, inclusive status Atendido e Não Atendido.
+- Aviso identifica se a fonte de dados é SQLite local ou Google Sheets online.
+
+ATENÇÃO: a integração Google Sheets só funciona após configurar as credenciais reais no servidor.
+Sem essas credenciais, as 925 solicitações antigas continuam no Google Drive, mas não aparecem automaticamente no SQLite.
+É possível importar uma cópia CSV da aba Pedidos com IMPORTAR_HISTORICO_GOOGLE_SHEETS.py
+ou ativar o modo Google Sheets, seguindo CONFIGURAR_GOOGLE_SHEETS.txt.
+A V6.8 NÃO apaga automaticamente nenhuma base existente.

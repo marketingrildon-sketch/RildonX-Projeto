@@ -151,7 +151,8 @@
     var items = filteredRecords();
     return '<div class="qdm-list-card"><div class="qdm-list-heading"><h3>Documentos Internos</h3>' +
       '<div class="qdm-list-actions"><button type="button" class="btn" data-qdm-create>+ Novo Documento</button>' +
-      '<button type="button" class="btn secondary" data-qdm-export-csv>Exportar CSV</button>' +
+      '<button type="button" class="btn secondary module-export-icon" data-qdm-export-csv aria-label="Exportar CSV" title="Exportar CSV">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button>' +
       '<button type="button" class="btn secondary" data-qdm-export-pdf>Exportar PDF</button></div></div>' +
       '<div class="qdm-filters"><label><span>Setor</span><select data-qdm-filter>' +
       selectOptions(allSectors(), sectorFilter, 'Todos os Setores') + '</select></label>' +

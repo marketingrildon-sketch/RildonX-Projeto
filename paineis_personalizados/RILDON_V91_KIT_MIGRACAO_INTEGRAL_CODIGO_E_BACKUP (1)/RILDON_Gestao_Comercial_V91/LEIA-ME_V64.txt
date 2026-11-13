@@ -1,0 +1,20 @@
+RILDON GESTÃO COMERCIAL V6.4
+
+ALTERAÇÕES:
+- Corrigido erro "Cannot set properties of null" ao enviar solicitação.
+- Envio bloqueado enquanto a requisição está em andamento para evitar cliques duplicados.
+- Histórico atualizado após envio, com filtros limpos.
+- Removida rolagem vertical interna da lista e iframe redimensionado pelo conteúdo.
+- Compras: "Respondido por" é uma seleção obrigatória entre Aldimar e Djalma.
+- Observação do vendedor visível na tabela e nos detalhes.
+- Tela mais enxuta: pesquisa, fornecedor, status, lista e ações.
+
+INSTALAÇÃO:
+1. Pare o servidor anterior (porta 8789).
+2. Extraia o ZIP numa pasta nova.
+3. FAÇA BACKUP do arquivo rildon_sync.sqlite3 antigo antes de copiá-lo para a nova pasta.
+4. Execute INICIAR_SITE.bat e confirme http://localhost:8789/api/build com version 6.4.
+5. Atualize o navegador com Ctrl+F5.
+
+O banco de dados não acompanha o ZIP. Solicitações duplicadas que já tenham sido gravadas continuam presentes e não foram apagadas automaticamente.
+O módulo continua experimental; não expor a porta 8789 à internet.

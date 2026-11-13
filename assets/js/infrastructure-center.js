@@ -234,7 +234,8 @@
       '<option value="overdue"' + (dueFilter === 'overdue' ? ' selected' : '') + '>Vencidos / limite atingido</option>' +
       '<option value="soon"' + (dueFilter === 'soon' ? ' selected' : '') + '>Próximos 30 dias</option></select>' +
       '<label class="infrastructure-archived-filter"><input type="checkbox" data-infrastructure-archived-filter' + (includeArchived ? ' checked' : '') + '> Incluir arquivados</label>' +
-      '<button type="button" class="infrastructure-button infrastructure-button-secondary" data-infrastructure-export>Exportar CSV</button>' +
+      '<button type="button" class="infrastructure-button infrastructure-button-secondary module-export-icon" data-infrastructure-export aria-label="Exportar CSV" title="Exportar CSV">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button>' +
       '<button type="button" class="infrastructure-button infrastructure-button-primary" data-infrastructure-create>+ Cadastrar equipamento</button></div>' +
       '<div class="infrastructure-list-heading"><b>Equipamentos</b><span data-infrastructure-result-count></span></div>' +
       '<div class="infrastructure-asset-list" data-infrastructure-list>' +

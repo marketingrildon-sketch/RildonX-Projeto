@@ -1,0 +1,19 @@
+RILDON GESTÃO COMERCIAL V6.7
+
+ALTERAÇÕES
+- Solicitações: filtros por data inicial/final; removidos Ano/Mês.
+- Layout de solicitações: grade corrigida e login de Compras ajustado ao padrão Rildon.
+- Google Sheets: conector pronto para usar a planilha Base Histórica das 72 Fábricas, com criação/resposta e catálogo de fornecedores.
+- Banco online depende de uma conta de serviço autorizada pela Rildon; nenhuma chave é fornecida no ZIP.
+- Por padrão, a conexão Google vem DESATIVADA, preservando o SQLite local.
+- Outras abas continuam com o funcionamento original da V6.6, sem conversão para nuvem.
+- Leia CONFIGURAR_GOOGLE_SHEETS.txt antes de ativar.
+
+INSTALAÇÃO
+1. Faça backup de rildon_sync.sqlite3; copie para esta pasta.
+2. Feche versão anterior.
+3. Execute INICIAR_SITE.bat.
+4. Confira /api/build = 6.7.
+5. Conecte a conta de serviço conforme as instruções.
+
+ATENÇÃO: ainda faltam os testes reais de autorização Google na máquina Windows.

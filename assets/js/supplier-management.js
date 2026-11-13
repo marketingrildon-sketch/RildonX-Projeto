@@ -809,7 +809,8 @@
       '</div><p class="pm-help">Clique nos indicadores para consultar fornecedores da área selecionada. As faixas contam os dias desde o último pedido; fornecedores inativos ou suspensos entram em Ruptura / Atraso. O prazo médio considera entregas válidas.</p>' +
       (noOrders.length ? '<section class="pm-dashboard-chart pm-order-no-orders"><div class="pm-section-head"><div><h3>Fornecedores e fabricantes sem pedido <span class="pm-count">' +
         noOrders.length + '</span></h3><p class="pm-help">Cadastros que ainda não possuem pedido em todo o histórico.</p></div><div class="pm-dashboard-section-actions">' +
-        '<button type="button" class="btn secondary" data-pm-export-no-orders>Exportar CSV</button><button type="button" class="btn secondary" data-pm-print>Baixar PDF</button></div></div>' +
+        '<button type="button" class="btn secondary module-export-icon" data-pm-export-no-orders aria-label="Exportar fornecedores sem pedido em CSV" title="Exportar fornecedores sem pedido em CSV">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button><button type="button" class="btn secondary" data-pm-print>Baixar PDF</button></div></div>' +
         table(['Fornecedor / fabricante', 'Comprador responsável', 'Situação cadastral', 'Histórico'], noOrders.map(function (item) {
           var buyer = buyerById(item.supplier.data.buyerId);
           return '<tr><td>' + escapeHtml(item.supplier.title) + '</td><td>' + escapeHtml(buyer && buyer.title || '—') +
@@ -821,7 +822,8 @@
           'Nenhum fornecedor nesta faixa.') + '</section>' : '') +
       '<div class="pm-section-head"><h3>Pedidos e entregas</h3><div class="pm-dashboard-section-actions">' +
       (canEdit ? '<button type="button" class="btn" data-pm-toggle-order-form>' + (ordersFormOpen ? 'Fechar formulário' : '+ Lançar novo pedido') + '</button>' : '') +
-      '<button type="button" class="btn secondary" data-pm-export>Exportar CSV</button><button type="button" class="btn secondary" data-pm-print>Baixar relatório PDF</button></div></div>' +
+      '<button type="button" class="btn secondary module-export-icon" data-pm-export aria-label="Exportar pedidos em CSV" title="Exportar pedidos em CSV">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button><button type="button" class="btn secondary" data-pm-print>Baixar relatório PDF</button></div></div>' +
       (ordersFormOpen ? recordForm('order', null, canEdit, true) : '') +
       table(['Nº', 'Área', 'Fornecedor', 'Comprador', 'Pedido', 'Faturamento', 'Entrega / prazo', 'Status', 'Valor pedido', 'Recebido', 'Cancelado', 'Pendente', 'Ações'], rows,
         'Nenhum pedido cadastrado.');
@@ -874,7 +876,8 @@
     return '<h2 class="pm-dashboard-title">Avaliação de desempenho por fornecedor</h2><div class="pm-section-head">' +
       (canEdit ? '<button type="button" class="btn" data-pm-toggle-evaluation-form>' +
         (evaluationFormOpen ? 'Fechar avaliação' : '+ Nova avaliação') + '</button>' : '<span></span>') +
-      '<div class="pm-dashboard-section-actions"><button type="button" class="btn secondary" data-pm-export>Avaliações CSV</button>' +
+      '<div class="pm-dashboard-section-actions"><button type="button" class="btn secondary module-export-icon" data-pm-export aria-label="Exportar avaliações em CSV" title="Exportar avaliações em CSV">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button>' +
       '<button type="button" class="btn" data-pm-print>Baixar relatório PDF</button></div></div>' +
       '<p class="pm-help">Clique em um fornecedor para consultar o histórico de notas e o gráfico de desempenho.</p>' +
       (evaluationFormOpen ? recordForm('evaluation', { id: '', data: { supplierId: selectedEvaluationSupplierId } }, canEdit, true) : '') +
@@ -981,7 +984,8 @@
       monthlyOrders.length + ' pedido(s) · ' + missingReceived + ' pedido(s) sem valor recebido informado.</p>' +
       '<p class="pm-help">Os parâmetros e cálculos são definidos na configuração do mês. Pedidos, recebimentos e cancelamentos são compartilhados com Pedidos e Entregas.</p>' +
       (budgetConfigOpen && canEdit ? recordForm('budget', config || { id: '', data: { month: budgetReferenceMonth } }, true) : '') +
-      '<div class="pm-dashboard-section-actions"><button type="button" class="btn secondary" data-pm-export-budget>Exportar evolução CSV</button>' +
+      '<div class="pm-dashboard-section-actions"><button type="button" class="btn secondary module-export-icon" data-pm-export-budget aria-label="Exportar evolução dos saldos em CSV" title="Exportar evolução dos saldos em CSV">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button>' +
       '<button type="button" class="btn" data-pm-print>Baixar relatório PDF</button></div><h3>Evolução dos saldos mensais</h3>' +
       table(['Mês', 'Base', 'Saldo anterior', 'Disponível', 'Pedidos', 'Recebido', 'Cancelado', 'A receber', 'Saldo seguinte', 'Ações'],
         chain.map(function (month) {
@@ -1166,7 +1170,8 @@
       '<div class="pm-toolbar">' + (!standalone ? '<nav class="pm-tabs" aria-label="Cadastros e controles de gestão">' +
       tabs.map(function (tab) { return '<button type="button" data-pm-tab="' + tab[0] + '" class="' + (activeTab === tab[0] ? 'is-active' : '') + '">' + tab[1] + '</button>'; }).join('') +
       '</nav>' : '') + '<div class="pm-tools">' + searchMarkup + '<button type="button" class="btn secondary" data-pm-refresh>Atualizar</button>' +
-      '<button type="button" class="btn secondary" data-pm-export>Exportar CSV</button><button type="button" class="btn secondary" data-pm-print>Relatório / PDF</button></div></div>' +
+      '<button type="button" class="btn secondary module-export-icon" data-pm-export aria-label="Exportar dados em CSV" title="Exportar dados em CSV">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button><button type="button" class="btn secondary" data-pm-print>Relatório / PDF</button></div></div>' +
       '<div class="pm-access-note">' + (canEdit ? 'Perfil Administrador: acesso de edição. Alterações são auditadas no banco.' :
         'Perfil Leitor: consulta e exportação liberadas; gravações protegidas também no banco.') + '</div>' +
       loadMessage + '<div class="pm-content">' + content + '</div></div>';

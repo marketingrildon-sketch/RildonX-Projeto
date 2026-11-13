@@ -302,6 +302,7 @@
     var image = project.imageUrl
       ? '<img class="project-image" src="' + escapeHtml(project.imageUrl) + '" alt="">'
       : '<span class="project-image project-image-fallback">' + escapeHtml((project.name || 'P').trim().charAt(0).toUpperCase()) + '</span>';
+    var strategicBadge = project.isStrategic ? '<span class="project-status">Estratégico</span>' : '';
     var actions = '';
     if (isCreator(project)) {
       actions = '<div class="project-card-actions">' +
@@ -317,7 +318,7 @@
       return '<article class="project-card project-card--grid" data-action="details" data-id="' + escapeHtml(project.id) + '">' +
         '<div class="project-grid-top">' + image + (actions || '<span></span>') + '</div>' +
         '<div class="project-grid-title"><h3>' + escapeHtml(project.name) + '</h3><p>' + escapeHtml(project.description || 'Sem descrição.') + '</p></div>' +
-        '<div class="project-card-badges"><span class="project-status ' + statusClass(status) + '">' + escapeHtml(status) + '</span><span class="project-health project-health--' + health.key + '">' + escapeHtml(health.label) + '</span></div>' +
+        '<div class="project-card-badges">' + strategicBadge + '<span class="project-status ' + statusClass(status) + '">' + escapeHtml(status) + '</span><span class="project-health project-health--' + health.key + '">' + escapeHtml(health.label) + '</span></div>' +
         '<div class="project-grid-dates"><span><small>Início</small>' + escapeHtml(formatDate(project.startDate)) + '</span>' +
         '<span><small>Conclusão prevista</small>' + escapeHtml(formatDate(project.endDate)) + '</span></div>' +
         '<div class="project-progress-row"><div class="project-progress"><span style="width:' + calculated.progress + '%"></span></div><span class="project-progress-label">' + calculated.progress + '% concluído</span></div>' +
@@ -327,7 +328,7 @@
     return '<article class="project-card project-card--list" data-action="details" data-id="' + escapeHtml(project.id) + '">' +
       '<div class="project-list-primary">' + image + '<div class="project-title-wrap"><h3>' + escapeHtml(project.name) + '</h3>' +
       '<p class="project-description">' + escapeHtml(project.description || 'Sem descrição.') + '</p>' +
-      '<span class="project-status ' + statusClass(status) + '">' + escapeHtml(status) + '</span> <span class="project-health project-health--' + health.key + '">' + escapeHtml(health.label) + '</span></div></div>' +
+      strategicBadge + ' <span class="project-status ' + statusClass(status) + '">' + escapeHtml(status) + '</span> <span class="project-health project-health--' + health.key + '">' + escapeHtml(health.label) + '</span></div></div>' +
       '<div class="project-list-date"><small>Início</small><span>' + escapeHtml(formatDate(project.startDate)) + '</span></div>' +
       '<div class="project-list-date"><small>Conclusão prevista</small><span>' + escapeHtml(formatDate(project.endDate)) + '</span></div>' +
       '<div class="project-list-progress"><small>Progresso</small><div class="project-progress"><span style="width:' + calculated.progress + '%"></span></div><strong>' + calculated.progress + '% concluído</strong></div>' +
@@ -581,6 +582,14 @@
       escapeHtml(relativeDate(project.updatedAt)) + '</strong></div><div class="project-detail-cell"><small>Saúde · critérios</small><strong>' + escapeHtml(projectHealth(project, s).label) +
       '</strong><small>Prazo, tarefas bloqueadas e tempo desde a última atualização. Sem informação não é presumida como saudável.</small></div></div><p class="project-detail-description">' +
       escapeHtml(project.description || 'Sem descrição.') + '</p><p class="project-formula-note">Progresso = soma dos pesos das tarefas concluídas ÷ soma dos pesos das tarefas vinculadas. O peso vem de metadata.progressWeight quando positivo; sem configuração, cada tarefa vale 1. Tarefas não são duplicadas para a linha do tempo.</p>';
+    if (detailTab === 'overview' && project.isStrategic) {
+      body += '<section class="project-detail-description"><h3>Portfólio estratégico</h3>' +
+        '<p><strong>Patrocinador:</strong> ' + escapeHtml(project.sponsor || 'Não informado') + '</p>' +
+        '<p><strong>Responsável estratégico:</strong> ' + escapeHtml(project.strategicOwner || 'Não informado') + '</p>' +
+        '<p><strong>Marcos:</strong> ' + escapeHtml(project.milestones || 'Não informados') + '</p>' +
+        '<p><strong>Riscos principais:</strong> ' + escapeHtml(project.riskSummary || 'Não informados') + '</p>' +
+        '<p><strong>Decisões relevantes:</strong> ' + escapeHtml(project.decisionSummary || 'Não informadas') + '</p></section>';
+    }
     if (detailTab === 'overview') body += checklistMarkup;
     return '<div class="project-overlay" data-overlay="detail"><section class="project-dialog" role="dialog" aria-modal="true" aria-label="' + escapeHtml(project.name) + '">' +
       '<header class="project-dialog-head"><div class="project-dialog-title"><h2>' + escapeHtml(project.name) + '</h2><span class="project-status ' + statusClass(displayStatus(project, s)) + '">' +
@@ -641,6 +650,15 @@
       escapeHtml(project && project.description || '') + '</textarea></div>' +
       '<div class="project-field"><label for="project-start">Data de início</label><input type="date" id="project-start" name="startDate" value="' + escapeHtml(project && project.startDate || '') + '"></div>' +
       '<div class="project-field"><label for="project-end">Data de conclusão prevista</label><input type="date" id="project-end" name="endDate" value="' + escapeHtml(project && project.endDate || '') + '"></div>' +
+      '<div class="project-field full"><label class="project-user-option"><input type="checkbox" name="isStrategic" ' + (project && project.isStrategic ? 'checked' : '') + '>Incluir no portfólio estratégico</label></div>' +
+      '<div class="project-field"><label for="project-sponsor">Patrocinador</label><input id="project-sponsor" name="sponsor" maxlength="160" value="' + escapeHtml(project && project.sponsor || '') + '"></div>' +
+      '<div class="project-field"><label for="project-strategic-owner">Responsável estratégico</label><input id="project-strategic-owner" name="strategicOwner" maxlength="160" value="' + escapeHtml(project && project.strategicOwner || '') + '"></div>' +
+      '<div class="project-field full"><label for="project-milestones">Marcos relevantes</label><textarea id="project-milestones" name="milestones" maxlength="4000" placeholder="Registre os marcos e datas acordados">' +
+      escapeHtml(project && project.milestones || '') + '</textarea></div>' +
+      '<div class="project-field full"><label for="project-risk-summary">Riscos principais</label><textarea id="project-risk-summary" name="riskSummary" maxlength="4000">' +
+      escapeHtml(project && project.riskSummary || '') + '</textarea></div>' +
+      '<div class="project-field full"><label for="project-decision-summary">Decisões relevantes</label><textarea id="project-decision-summary" name="decisionSummary" maxlength="4000">' +
+      escapeHtml(project && project.decisionSummary || '') + '</textarea></div>' +
       '<div class="project-field full"><label for="project-image">Imagem de perfil do projeto</label><input id="project-image" name="image" type="file" accept="image/png,image/jpeg,image/webp,image/gif">' +
       '<span class="project-file-note">' + (project && project.imageUrl ? 'A imagem atual será mantida se nenhum arquivo novo for escolhido.' : 'PNG, JPG, WebP ou GIF.') + '</span></div>' +
       '<div class="project-field full"><label for="project-files">Anexos</label><input id="project-files" name="files" type="file" multiple>' +
@@ -740,6 +758,12 @@
       description: description,
       startDate: startDate || null,
       endDate: endDate || null,
+      isStrategic: formData.get('isStrategic') === 'on',
+      sponsor: String(formData.get('sponsor') || '').trim(),
+      strategicOwner: String(formData.get('strategicOwner') || '').trim(),
+      milestones: String(formData.get('milestones') || '').trim(),
+      riskSummary: String(formData.get('riskSummary') || '').trim(),
+      decisionSummary: String(formData.get('decisionSummary') || '').trim(),
       members: members.ids,
       allUsers: members.everyone,
       createdBy: existing ? existing.createdBy : currentUserId,

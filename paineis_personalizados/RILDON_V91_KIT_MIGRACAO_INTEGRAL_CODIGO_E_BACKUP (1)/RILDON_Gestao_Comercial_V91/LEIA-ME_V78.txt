@@ -1,0 +1,3 @@
+RILDON V7.8 — filtros por intervalo na Gerência, ranking proporcional dentro do gráfico, painel do vendedor enxuto e consulta de garantias exclusivamente no vendedor.
+Fonte: PRAZO DE GARANTIA DAS FÁBRICAS.xlsx (70 fabricantes).
+Instale em pasta separada, pare o servidor anterior e inicie INICIAR_SITE.bat. Não altera o banco PostgreSQL.

@@ -1,0 +1,7 @@
+RILDON V7.9 - Correcao do Vendedor
+- Corrigida excecao JavaScript ao carregar Minhas Metas.
+- Corrigida alternancia das abas Vendas Perdidas / Minhas Metas / Atendimentos / Solicitacoes / Garantias.
+- Ocultados aviso flutuante de sincronizacao e contador de registros/quantidade em falta da aba Vendas Perdidas.
+- Valores grandes agora quebram dentro dos cartoes.
+- Banco de dados e backend preservados.
+Instale em pasta nova e confira Minhas Metas e Vendas Perdidas.

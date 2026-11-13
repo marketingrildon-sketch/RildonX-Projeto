@@ -1,0 +1,11 @@
+RILDON V7.1 - CORRECAO POP-UP DE DETALHES
+
+Ajuste exclusivo em site/solicitacoes.html: janelas de Detalhes, Resposta de Compras e Fornecedores passam a ser centralizadas na area visivel ao usuario quando a tela esta embutida em iframe.
+
+INSTALACAO RECOMENDADA (SEM SUBSTITUIR BACKEND):
+1. Pare o servidor Rildon.
+2. Na pasta V7.0 atualmente usada, substitua APENAS site/solicitacoes.html pelo arquivo da pasta site neste ZIP.
+3. Inicie o servidor e no navegador pressione Ctrl+Shift+R.
+4. Teste Detalhes em varios pontos de uma listagem longa.
+
+Nenhum arquivo de banco de dados e alterado.

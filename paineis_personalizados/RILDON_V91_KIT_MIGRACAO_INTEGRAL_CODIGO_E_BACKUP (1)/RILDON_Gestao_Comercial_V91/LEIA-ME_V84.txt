@@ -1,0 +1,11 @@
+RILDON Gestão Comercial V8.4 — ajustes de Compras e navegação
+
+- Compras: autenticação e troca de senha com senha atual; gestão de responsáveis que respondem pedidos (cadastro, renomeação e remoção); nomes Aldimar e Djalma são preservados.
+- Compras: pedidos pendentes no topo; pedidos respondidos em ordem de data original; campos de filtro em grade, inclusive Status.
+- Vendedor: normalização da troca de abas para evitar página em branco.
+- Gerência e Vendedor: cabeçalho compacto, sem banner de metas duplicado.
+- Dados armazenados no PostgreSQL do servidor atual, sem limpeza nem reinicialização.
+
+ATENÇÃO: responsáveis de Compras são nomes para resposta, não contas de login independentes. A credencial COMPRAS é própria da tela de Compras; troque a senha inicial se ainda usar uma senha padrão.
+
+Instalação: extraia em pasta nova, feche o servidor anterior, inicie INICIAR_SITE.bat. Navegador: Ctrl+Shift+R. Teste troca de abas e senhas em computador conectado ao servidor.

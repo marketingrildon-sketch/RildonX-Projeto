@@ -1,0 +1,2701 @@
+<!DOCTYPE html>
+<!-- saved from url=(0099)https://n-7mc6qr3vwgcptbpc5yckduo4mr7sx42rqetg7iq-0lu-script.googleusercontent.com/userCodeAppPanel -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script src="./cb=gapi.loaded_0" async=""></script><script src="./jsapi"></script><script>window.parent.maeExportApis_();</script>
+
+
+  
+  
+  
+  <!--<base target="_top">--><base href="." target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <script src="./chart.js.download"></script>
+  <script src="./chartjs-plugin-datalabels.min.js.download"></script>
+  
+  
+  <script src="./api.js.download" gapi_processed="true"></script>
+  
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="./css" rel="stylesheet">
+
+  
+  
+  
+  <style>
+     
+    :root {
+      --azul-escuro: #0B4C6B;
+      --azul-medio:  #0081B8;
+      --azul-claro:  #00AFEF;
+      --amarelo:     #FFCC29;
+      --verde:       #2E9E5B;
+      --vermelho:    #E5484D;
+      --laranja:     #F5A524;
+      --cinza:       #6B7280;
+
+      --bg:          #F3F5F8;
+      --bg-elevado:  #FFFFFF;
+      --borda:       #E4E8EF;
+      --texto:       #1F2937;
+      --texto-suave: #6B7280;
+
+      --raio-sm: 8px;
+      --raio-md: 12px;
+      --raio-lg: 18px;
+
+      --sombra-sm: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 1px rgba(16, 24, 40, 0.04);
+      --sombra-md: 0 4px 14px rgba(16, 24, 40, 0.08);
+      --sombra-lg: 0 12px 32px rgba(16, 24, 40, 0.14);
+
+      --sidebar-w: 236px;
+      --topbar-h: 64px;
+    }
+
+  * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #C7CEDA transparent; }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb { background-color: #C7CEDA; border-radius: 20px; }
+  *::-webkit-scrollbar-thumb:hover { background-color: #A9B2C3; }
+
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--texto); -webkit-font-smoothing: antialiased; }
+
+   
+  body.modo-leitor .admin-only { display: none !important; }
+  body.modo-leitor .kanban-card select { pointer-events: none; opacity: 0.6; appearance: none; background: transparent; }
+
+   
+  .header-topo { background: linear-gradient(180deg, var(--azul-escuro), #08384F); color: white; padding: 22px 18px 14px; display: flex; align-items: center; justify-content: flex-start; position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; flex-direction: column; z-index: 100; box-shadow: var(--sombra-md); }
+  .header-topo > div:first-child { display: flex; align-items: center; width: 100%; gap: 10px; }
+  .header-topo img { max-height: 34px; border-radius: 6px; background: white; padding: 3px; }
+  .header-topo h1 { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.25; }
+
+  .nav-bar { display: flex; flex-direction: column; gap: 3px; background: transparent; padding: 22px 10px 10px; width: 100%; overflow-y: auto;}
+  .nav-btn { background-color: transparent; color: rgba(255,255,255,0.75); border: none; padding: 11px 14px; cursor: pointer; font-family: inherit; font-size: 13.5px; font-weight: 500; border-radius: var(--raio-sm); transition: .18s ease; text-align: left; width: 100%; }
+  .nav-btn:hover { background-color: rgba(255,255,255,0.08); color: white; }
+  .nav-btn.active { background-color: var(--azul-claro); color: white; font-weight: 700; box-shadow: var(--sombra-sm); }
+  
+  .area-conteudo { margin-left: var(--sidebar-w); min-height: 100vh; padding: 26px 30px 60px; }
+  .modulo-container { padding: 26px 28px; background-color: var(--bg-elevado); margin: 0 0 20px; border-radius: var(--raio-lg); box-shadow: var(--sombra-sm); border: 1px solid var(--borda); min-height: 76vh; display: none; animation: entrarConteudo .25s ease; }
+  .modulo-container.active { display: block; }
+  @keyframes entrarConteudo { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  h2 { margin: 0 0 18px; padding-bottom: 14px; border-bottom: 1px solid var(--borda); color: var(--azul-escuro); font-size: 20px; font-weight: 700; }
+
+   
+  .cards-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 15px; }
+  .card { flex: 1 1 170px; background-color: var(--bg-elevado); border: 1px solid var(--borda); border-top: 3px solid var(--azul-claro); padding: 16px 18px; border-radius: var(--raio-md); box-shadow: var(--sombra-sm); transition: .18s ease; }
+  .card:hover { transform: translateY(-2px); box-shadow: var(--sombra-md); }
+  .card h3 { margin: 0; font-size: 10.5px; color: var(--texto-suave); text-transform: uppercase; font-weight: 600; }
+  .card p { margin: 10px 0 0; font-size: 27px; font-weight: 800; color: var(--azul-escuro); display: flex; align-items: center; gap: 8px;}
+  
+  .card.card-alerta { border-top-color: var(--vermelho); }
+  .card.card-alerta h3, .card.card-alerta p { color: var(--vermelho); }
+  .card.card-aviso { border-top-color: var(--laranja); }
+  .card.card-aviso h3, .card.card-aviso p { color: var(--laranja); }
+  .card.card-sucesso { border-top-color: var(--verde); }
+  .card.card-sucesso h3, .card.card-sucesso p { color: var(--verde); }
+
+   
+  .topo-tabela { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .btn-acao { background-color: var(--azul-medio); color: white; cursor: pointer; border: none; font-family: inherit; font-weight: 600; padding: 9px 16px; border-radius: var(--raio-sm); transition: .15s ease; font-size: 13px; box-shadow: var(--sombra-sm); display: inline-flex; align-items: center; gap: 6px; }
+  .btn-acao:hover { background-color: var(--azul-escuro); transform: translateY(-1px); box-shadow: var(--sombra-md); }
+  .btn-acao:active { transform: translateY(0) scale(.98); }
+  .btn-acao:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-alerta { background-color: var(--amarelo); color: #4A3600; }
+  .btn-alerta:hover { background-color: #E8B70F; }
+  .btn-icone { padding: 6px 10px; font-size: 12px; margin-right: 5px; background: var(--bg); color: var(--texto); box-shadow: none; border: 1px solid var(--borda); }
+  .btn-icone:hover { background: #E9EDF3; transform: none; }
+  .btn-cancelar { background-color: #9AA3B2; color: white; }
+  .btn-cancelar:hover { background-color: #7C8493; }
+
+   
+  .table-container { overflow: auto; max-height: 58vh; border: 1px solid var(--borda); border-radius: var(--raio-md); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--borda); }
+  th { background-color: #F7F9FC; color: var(--azul-escuro); font-weight: 700; font-size: 11.5px; text-transform: uppercase; position: sticky; top: 0; z-index: 2; }
+  tbody tr:hover { background-color: #F5F9FD; }
+  .linha-atrasada { color: var(--vermelho); background-color: #FDECEC; }
+  
+  input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--azul-medio); }
+  
+   
+  .esconder-checkboxes .col-checkbox { display: none !important; }
+
+   
+  .form-painel { background: var(--bg-elevado); padding: 16px; border-radius: var(--raio-md); border: 1px solid var(--borda); box-shadow: var(--sombra-sm); }
+  .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
+  .form-group label { margin-bottom: 6px; font-weight: 600; font-size: 12.5px; color: var(--texto-suave); }
+  .form-group input, .form-group select, .form-group textarea { padding: 10px 12px; border: 1px solid var(--borda); border-radius: var(--raio-sm); width: 100%; font-family: inherit; font-size: 13.5px; background: var(--bg-elevado); color: var(--texto); transition: .15s ease;}
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--azul-claro); box-shadow: 0 0 0 3px rgba(0,175,239,0.18); }
+  .form-group input:disabled, .form-group select:disabled { opacity: 0.6; cursor: not-allowed; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+  .form-grid-full { grid-column: 1 / -1; }
+  .oculto { display: none !important; }
+
+   
+  .toast { position: fixed; bottom: 24px; right: 24px; background-color: var(--azul-escuro); color: white; padding: 14px 22px; border-radius: var(--raio-md); border-left: 5px solid var(--amarelo); z-index: 9999; font-weight: 600; font-size: 13.5px; box-shadow: var(--sombra-lg); transition: transform .3s, opacity .3s; }
+  .toast.esconder { opacity: 0; transform: translateY(12px); pointer-events: none; }
+  .toast-erro { background-color: var(--vermelho); border-left-color: #ffb4b6; }
+
+   
+  .kanban-container { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; }
+  .kanban-coluna { flex: 0 0 270px; background: #EEF1F6; border-radius: var(--raio-md); padding: 12px; max-height: 62vh; display: flex; flex-direction: column; }
+  .kanban-coluna h4 { margin: 2px 4px 10px; font-size: 12px; text-transform: uppercase; color: var(--texto-suave); border-bottom: 2px solid #D7DDE7; padding-bottom: 8px; }
+  .kanban-coluna > div[id^="kb-"] { overflow-y: auto; flex: 1; padding-right: 2px; }
+  .kanban-card { background: var(--bg-elevado); padding: 13px; border-radius: var(--raio-sm); box-shadow: var(--sombra-sm); margin-bottom: 10px; border-left: 4px solid var(--azul-claro); font-size: 12.5px; transition: .15s ease; }
+  .kanban-card:hover { box-shadow: var(--sombra-md); transform: translateY(-1px); }
+  .kanban-card h5 { margin: 0 0 6px; font-size: 13.5px; color: var(--texto); }
+  .kanban-card select { border: 1px solid var(--borda); border-radius: 6px; font-family: inherit; font-size: 12px; width: 100%; padding: 6px; margin-top: 8px; color: var(--texto-suave); }
+
+   
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; transition: opacity .2s ease; }
+  .modal-overlay:not(.oculto) { opacity: 1; }
+  .modal-content { background: white; padding: 26px; border-radius: var(--raio-lg); width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; box-shadow: var(--sombra-lg); position: relative; transform: scale(.96) translateY(6px); transition: transform .22s; }
+  .modal-overlay:not(.oculto) .modal-content { transform: scale(1) translateY(0); }
+  .modal-fechar { position: absolute; top: 16px; right: 16px; cursor: pointer; font-size: 20px; font-weight: bold; color: var(--texto-suave); width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: .15s ease;}
+  .modal-fechar:hover { background: var(--bg); color: var(--texto); }
+  .modal-acoes { display: flex; gap: 10px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--borda); justify-content: flex-end; }
+  .item-detalhe { margin-bottom: 9px; border-bottom: 1px dashed var(--borda); padding-bottom: 7px; font-size: 13.5px; }
+  .item-detalhe strong { color: var(--azul-escuro); font-weight: 600; display: inline-block; width: 140px; }
+  .grafico-container { max-width: 800px; margin: 20px auto; padding: 20px; background: #FAFBFD; border: 1px solid var(--borda); border-radius: var(--raio-md); }
+
+  .drive-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--borda); cursor: pointer; border-radius: 8px; margin-bottom: 4px; }
+  .drive-item:hover { background-color: #f1f5f9; border-color: var(--azul-claro); }
+  .drive-icon { font-size: 24px; margin-right: 16px; }
+  .drive-details { display: flex; flex-direction: column; }
+  .drive-title { font-weight: 600; color: var(--azul-escuro); font-size: 14px; }
+  .drive-url { font-size: 11px; color: #94a3b8; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px; }
+
+  @media (max-width: 860px) {
+    :root { --sidebar-w: 0px; }
+    .header-topo { position: static; width: 100%; height: auto; flex-direction: row; padding: 12px 16px; align-items: center; }
+    .header-topo > div:first-child { flex: 1; }
+    .nav-bar { flex-direction: row; overflow-x: auto; padding: 0; position: fixed; top: 60px; left: 0; right: 0; background: var(--azul-escuro); z-index: 99; }
+    .header-topo > .btn-acao { margin-top: 0; width: auto; }
+    .area-conteudo { margin-left: 0; padding: 100px 14px 40px; }
+  }
+</style>
+<style>.picker-dialog-frame{width:100%;height:100%;border:0;overflow:hidden}.picker-dialog-bg{position:absolute;top:0;left:0;background-color:#fff;z-index:1000}.picker-dialog{position:absolute;top:0;left:0;background-color:#fff;border:1px solid #acacac;width:auto;padding:0;z-index:1001;overflow:auto;box-shadow:0 4px 16px rgba(0,0,0,.2)}.picker-dialog-content{height:100%;font-size:0;padding:0}.picker-dialog-buttons,.picker-dialog-title{display:none}</style></head>
+<body>
+
+<div id="tela-login" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--azul-escuro); z-index:9999; display:flex; align-items:center; justify-content:center;" class="oculto">
+  <div style="background:white; padding:40px; border-radius:var(--raio-lg); width:90%; max-width:400px; box-shadow:var(--sombra-lg);">
+    <div style="text-align:center; margin-bottom:32px;">
+       <img src="./ujPNp6X.png" alt="Logo" style="max-height:60px;">
+       <h2 style="color:var(--azul-escuro); margin-top:16px; border:none; padding:0;">SGQ Interno</h2>
+       <p style="color:var(--texto-suave); font-size:13px; margin:0;">Insira as suas credenciais para acessar</p>
+    </div>
+    <form onsubmit="efetuarLogin(event)">
+       <div class="form-group">
+         <label>Usuário</label>
+         <input type="text" id="login-usuario" required="">
+       </div>
+       <div class="form-group">
+         <label>Senha</label>
+         <input type="password" id="login-senha" required="">
+       </div>
+       <button type="submit" class="btn-acao" id="btn-login" style="width:100%; justify-content:center; margin-top:16px; padding:12px; font-size:14px;">Entrar no Sistema</button>
+    </form>
+  </div>
+</div>
+
+<div id="toast-mensagem" class="toast esconder" style="z-index: 10000;">Bem-vindo, Planejador de controle da qualidade!</div>
+
+<div id="app-wrapper" class="">
+
+  
+  <div class="header-topo">
+    <div><img src="./ujPNp6X.png" alt="Logo"><h1>SGQ Interno<br><span style="font-weight:400; opacity:.7; font-size:11px;">Grupo Rildon</span></h1></div>
+    <div class="nav-bar">
+      <button class="nav-btn active" onclick="abrirModulo('Dashboard', this)">📊 Dashboard</button>
+      <button class="nav-btn" onclick="abrirModulo('Tarefas', this)">✅ Tarefas</button>
+      <button class="nav-btn" onclick="abrirModulo('Documentos', this)">📄 Documentos</button>
+      <button class="nav-btn" onclick="abrirModulo('Treinamentos', this)">🎓 Treinamentos</button>
+      <button class="nav-btn" onclick="abrirModulo('Auditorias', this)">🔍 Auditorias</button>
+      <button class="nav-btn" id="btn-Planos" onclick="abrirModulo('PlanosMelhoria', this)">🧭 Planos 5W2H</button>
+      <button class="nav-btn" onclick="abrirModulo('Riscos', this)">🛡️ Riscos</button>
+      <button class="nav-btn" onclick="abrirModulo('Agenda', this)">🗓️ Agenda</button>
+      <button class="nav-btn" onclick="abrirModulo('Indicadores', this)">📈 Indicadores</button>
+      <button class="nav-btn" onclick="abrirModulo('Programa5S', this)">🧹 Programa 5S</button>
+      <button class="nav-btn" onclick="abrirModulo('Kaizen', this)">💡 Kaizen</button>
+    </div>
+    
+    <div style="margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 8px;">
+       <button class="btn-acao btn-alerta admin-only" style="width: 100%; justify-content:center;" onclick="abrirModulo('Configuracoes', this)">⚙️ Configurações</button>
+       <button class="btn-acao admin-only" style="background: rgba(255,255,255,0.15); width: 100%; justify-content:center;" onclick="abrirModulo('Usuarios', this)">🔐 Acessos</button>
+       <button class="btn-acao" style="background: rgba(0,0,0,0.2); width: 100%; justify-content:center;" onclick="sairSistema()">Sair</button>
+    </div>
+  </div>
+
+  <div class="area-conteudo">
+    
+<div id="Dashboard" class="modulo-container active">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom: 1px solid var(--borda); padding-bottom: 14px;">
+    <h2 style="margin:0; border:none; padding:0;">📊 Painel de Controle SGQ</h2>
+    <div style="display: flex; align-items:center; gap:8px;">
+    <label style="font-size:12px; font-weight:600; color:var(--azul-escuro);">Período:</label>
+    <input type="date" id="filtro-data-inicio" onchange="renderizarTudo()" style="padding:6px 10px; border-radius:6px; border:1px solid var(--borda); font-family:inherit; font-size:13px;">
+    <span style="font-size:12px; font-weight:600; color:var(--texto-suave);">até</span>
+    <input type="date" id="filtro-data-fim" onchange="renderizarTudo()" style="padding:6px 10px; border-radius:6px; border:1px solid var(--borda); font-family:inherit; font-size:13px;">
+</div>
+  </div>
+  
+  <div class="cards-grid" style="margin-bottom: 24px;">
+    <div class="card card-alerta">
+      <h3>Tarefas Atrasadas</h3>
+      <p>⏰ <span id="dash-tarefas-atrasadas">1</span></p>
+    </div>
+    <div class="card card-aviso">
+      <h3>Total NCs Encontradas</h3>
+      <p>⚠️ <span id="dash-ncs">0</span></p>
+    </div>
+    <div class="card card-alerta">
+      <h3>Planos Atrasados</h3>
+      <p>⏳ <span id="dash-planos-atrasados">1</span></p>
+    </div>
+    <div class="card card-alerta">
+      <h3>Revisões de Risco Vencidas</h3>
+      <p>🛡️ <span id="dash-riscos-atrasados">0</span></p>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px;">
+    
+    <div class="form-painel">
+      <h3 style="margin-top:0; color:var(--azul-escuro); font-size: 16px;">📄 Documentação</h3>
+      <div style="position:relative; height:240px; display:flex; justify-content:center; align-items:center;">
+        <canvas id="canvasDocsStatus" style="box-sizing: border-box; display: block; height: 240px; width: 457px;" width="457" height="240"></canvas>
+        <div style="position:absolute; text-align:center; pointer-events:none; display:flex; flex-direction:column; align-items:center;">
+          <span id="txt-docs-perc" style="font-size:28px; font-weight:800; color:var(--azul-escuro); line-height:1;">50%</span>
+          <span style="font-size:12px; color:var(--texto-suave); font-weight:600; margin-top:2px;">Vigentes</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-painel">
+      <h3 style="margin-top:0; color:var(--azul-escuro); font-size: 16px;">🔍 Qualidade das Auditorias</h3>
+      <div style="position:relative; height:240px;"><canvas id="canvasGaugeAuditoria" style="box-sizing: border-box; display: block; height: 240px; width: 457px;" width="457" height="240"></canvas></div>
+    </div>
+
+    <div class="form-painel">
+      <h3 style="margin-top:0; color:var(--azul-escuro); font-size: 16px;">🔍 NCs por Setor</h3>
+      <div style="position:relative; height:240px;"><canvas id="canvasNCsPorSetor" style="box-sizing: border-box; display: block; height: 240px; width: 457px;" width="457" height="240"></canvas></div>
+    </div>
+
+    <div class="form-painel">
+      <h3 style="margin-top:0; color:var(--azul-escuro); font-size: 16px;">🧭 Status dos Planos 5W2H</h3>
+      <div style="position:relative; height:240px;"><canvas id="canvasPlanosStatus" style="box-sizing: border-box; display: block; height: 240px; width: 457px;" width="457" height="240"></canvas></div>
+    </div>
+    
+    <div class="form-painel">
+      <h3 style="margin-top:0; color:var(--azul-escuro); font-size: 16px;">🛡️ Nível de Risco Corporativo</h3>
+      <div style="position:relative; height:240px; display:flex; justify-content:center; align-items:center;">
+        <canvas id="canvasMatrizRiscos" style="box-sizing: border-box; display: block; height: 240px; width: 457px;" width="457" height="240"></canvas>
+      </div>
+    </div>
+
+    <div class="form-painel">
+      <h3 style="margin-top:0; color:var(--azul-escuro); font-size: 16px;">🎓 Resumo de Treinamentos</h3>
+      <div style="display:flex; flex-direction:column; gap:16px; margin-top:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--borda); padding-bottom:8px;">
+          <span style="color:var(--texto-suave); font-weight:600;">Treinamentos Realizados</span>
+          <span id="dash-trein-realizados" style="font-size:24px; font-weight:800; color:var(--azul-escuro);">4</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--borda); padding-bottom:8px;">
+          <span style="color:var(--texto-suave); font-weight:600;">Pessoas Treinadas</span>
+          <span id="dash-trein-pessoas" style="font-size:24px; font-weight:800; color:var(--azul-escuro);">14</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:var(--texto-suave); font-weight:600;">Total de Horas</span>
+          <span id="dash-trein-horas" style="font-size:24px; font-weight:800; color:var(--azul-escuro);">8h</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-painel" style="grid-column: 1 / -1; display:flex; flex-wrap:wrap; gap:20px;">
+      <div style="flex: 1 1 200px;">
+        <h3 style="margin-top:0; color:var(--azul-escuro); font-size: 16px;">🧹 Programa 5S</h3>
+        <div class="card" style="margin-bottom:12px; border-top-color:var(--amarelo); box-shadow:none; border:1px solid var(--borda);">
+          <h3>Avaliações</h3><p id="dash-5s-qtd">0</p>
+        </div>
+        <div class="card" style="border-top-color:var(--amarelo); box-shadow:none; border:1px solid var(--borda);">
+          <h3>Média Global</h3><p id="dash-5s-media">0</p>
+        </div>
+      </div>
+      <div style="flex: 2 1 400px; position:relative; height:240px;"><canvas id="canvasMedia5S" style="box-sizing: border-box; display: block; height: 240px; width: 632px;" width="632" height="240"></canvas></div>
+    </div>
+
+    <div class="form-painel" style="grid-column: 1 / -1;">
+      <h3 style="margin-top:0; color:var(--azul-escuro); font-size: 16px;">💡 Funil de Ideias Kaizen</h3>
+      <div style="position:relative; height:260px;"><canvas id="canvasFunilKaizen" style="box-sizing: border-box; display: block; height: 260px; width: 968px;" width="968" height="260"></canvas></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="Agenda" class="modulo-container">
+  <h2>🗓️ Agenda Unificada de Prazos</h2>
+  <div class="table-container">
+    <table id="tb-Agenda">
+      <thead>
+        <tr><th>Tipo</th><th>Referência</th><th>Data</th><th>Status / Prazo</th><th style="text-align: right;">Ação</th></tr>
+      </thead>
+      <tbody><tr><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:#F5A524; color:white;">Plano de Ação</span></td><td>fgndfgnhrfd</td><td>20/10/2026</td><td style="color:var(--vermelho); font-weight:600;">2 dias atrasado</td><td style="text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('PlanosMelhoria', 'PLA-1792616057399')">👁️ Ver</button></td></tr><tr><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:#E5484D; color:white;">Risco</span></td><td>fgnfgd (Contas a receber)</td><td>24/10/2026</td><td style="color:var(--laranja); font-weight:600;">faltam 2 dias</td><td style="text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Riscos', 'RIS-1792616122180')">👁️ Ver</button></td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="Usuarios" class="modulo-container">
+  <h2>🔐 Administração de Acessos</h2>
+  <div id="tela-Usuarios-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('Usuarios')">+ Novo Usuário</button></div>
+      <div>
+        <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Usuarios', 'csv')">📥 Exportar CSV</button>
+        <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('Usuarios', 'pdf')">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table id="tb-Usuarios">
+        <thead><tr><th class="col-checkbox"><input type="checkbox" onclick="selecionarTodos('Usuarios', this)"></th><th>Nome</th><th>Usuário</th><th>Perfil</th><th style="text-align: right;">Ações</th></tr></thead>
+        <tbody><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-Usuarios" value="USU-1790338499681"></td>
+        <td>Planejador de controle da qualidade</td><td>Qualidade</td><td>Administrador</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('Usuarios','USU-1790338499681')">👁️ Ver</button>
+        </td>
+      </tr><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-Usuarios" value="USU-1790353975467"></td>
+        <td>adm</td><td>adm</td><td>Administrador</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('Usuarios','USU-1790353975467')">👁️ Ver</button>
+        </td>
+      </tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="tela-Usuarios-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom: 15px;" onclick="alternarTela('tela-Usuarios-form','tela-Usuarios-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'Usuarios')">
+      <input type="hidden" id="Usuarios_id">
+      <div class="form-grid">
+        <div class="form-group form-grid-full"><label>Nome Completo</label><input type="text" id="Usuarios_nome" required=""></div>
+        <div class="form-group"><label>Usuário</label><input type="text" id="Usuarios_usuario" required=""></div>
+        <div class="form-group"><label>Senha de Acesso</label><input type="text" id="Usuarios_senha" required=""></div>
+        <div class="form-group">
+          <label>Perfil de Acesso</label>
+          <select id="Usuarios_perfil" required="">
+            <option value="Leitor">Visualizador (Leitor)</option>
+            <option value="Administrador">Administrador Total</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn-acao admin-only" style="margin-top: 15px;">Salvar Usuário</button>
+    </form>
+  </div>
+</div>
+
+<div id="Riscos" class="modulo-container">
+  <h2>Gestão de Riscos (Matriz PxI)</h2>
+  <div id="tela-Riscos-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('Riscos')">+ Novo Risco</button></div>
+      <div>
+        <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Riscos', 'csv')">📥 Exportar CSV</button>
+        <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('Riscos', 'pdf')">📄 Exportar PDF</button>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 24px; padding: 16px; background: var(--bg-elevado); border: 1px solid var(--borda); border-radius: var(--raio-md);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+          <h3 style="margin:0; font-size:15px; color:var(--azul-escuro);">Matriz de Riscos Ativos</h3>
+          <button id="btn-limpar-filtro-risco" class="btn-acao btn-cancelar oculto" onclick="limparFiltroRisco()" style="padding: 4px 10px; font-size: 11px;">Limpar Filtro</button>
+      </div>
+      <div style="display: flex; align-items: stretch; gap: 8px;">
+          <div style="writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; font-size: 11px; font-weight: 600; color: var(--texto-suave);">Probabilidade</div>
+          <div style="flex: 1;">
+              <div id="grid-matriz-riscos" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); gap: 4px;"><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(245, 165, 36, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(229, 72, 77, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(229, 72, 77, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(229, 72, 77, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(245, 165, 36, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(245, 165, 36, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(229, 72, 77, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(229, 72, 77, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(245, 165, 36, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(245, 165, 36, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(245, 165, 36, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; cursor:pointer;" onclick="filtrarRiscoMatriz(3,4)"><span style="font-size:16px; font-weight:700; color:var(--texto);">1</span></div><div style="background:rgba(229, 72, 77, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(245, 165, 36, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(245, 165, 36, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(245, 165, 36, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div><div style="background:rgba(46, 158, 91, 0.4); border:1px solid var(--borda); display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; " onclick=""></div></div>
+              <div style="text-align: center; font-size: 11px; font-weight: 600; color: var(--texto-suave); margin-top: 8px;">Impacto</div>
+          </div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table id="tb-Riscos">
+        <thead><tr><th class="col-checkbox"><input type="checkbox" onclick="selecionarTodos('Riscos', this)"></th><th>Data</th><th>Processo/Setor</th><th>Descrição</th><th>Criticidade</th><th>Status</th><th>Próxima Revisão</th><th style="text-align: right;">Ações</th></tr></thead>
+        <tbody><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-Riscos" value="RIS-1792616122180"></td>
+        <td>21/10/2026</td><td>Contas a receber</td><td>fgnfgd</td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:#fef3c7; color:#d97706">12 - Moderado</span></td><td>Identificado</td><td>24/10/2026</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('Riscos','RIS-1792616122180')">👁️ Ver</button>
+        </td>
+      </tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="tela-Riscos-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom: 15px;" onclick="alternarTela('tela-Riscos-form','tela-Riscos-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'Riscos')">
+      <input type="hidden" id="Riscos_id">
+      <div class="form-grid">
+        <div class="form-group"><label>Data da Identificação</label><input type="date" id="Riscos_data" required=""></div>
+        <div class="form-group"><label>Processo / Setor</label><select id="Riscos_setor" class="dinamico-setor" required=""><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select></div>
+        <div class="form-group form-grid-full"><label>Descrição do Risco (Ameaça)</label><textarea id="Riscos_descricao" rows="2" required=""></textarea></div>
+        <div class="form-group">
+          <label>Probabilidade (1 a 5)</label>
+          <select id="Riscos_probabilidade" required="" onchange="calcRisco()"><option value="">Selecione...</option><option value="1">1 - Raro</option><option value="2">2 - Improvável</option><option value="3">3 - Possível</option><option value="4">4 - Provável</option><option value="5">5 - Quase Certo</option></select>
+        </div>
+        <div class="form-group">
+          <label>Impacto (1 a 5)</label>
+          <select id="Riscos_impacto" required="" onchange="calcRisco()"><option value="">Selecione...</option><option value="1">1 - Leve</option><option value="2">2 - Menor</option><option value="3">3 - Moderado</option><option value="4">4 - Maior</option><option value="5">5 - Catastrófico</option></select>
+        </div>
+        <div class="form-group"><label>Criticidade (P x I)</label><input type="text" id="Riscos_criticidade" readonly="" style="font-weight: 700; background: var(--bg);"></div>
+        <div class="form-group">
+          <label>Resposta ao Risco</label>
+          <select id="Riscos_resposta" required=""><option value="Evitar">Evitar</option><option value="Mitigar">Mitigar</option><option value="Transferir">Transferir</option><option value="Aceitar">Aceitar</option></select>
+        </div>
+        <div class="form-group"><label>Responsável</label><input type="text" id="Riscos_responsavel" required=""></div>
+        <div class="form-group"><label>Próxima Revisão</label><input type="date" id="Riscos_proxima_revisao"></div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="Riscos_status" required=""><option value="Identificado">Identificado</option><option value="Em Tratamento">Em Tratamento</option><option value="Encerrado">Encerrado</option></select>
+        </div>
+      </div>
+      <button type="submit" class="btn-acao admin-only" style="margin-top: 15px;">Salvar Risco</button>
+    </form>
+  </div>
+</div>
+
+<div id="Configuracoes" class="modulo-container">
+  <h2>⚙️ Configurações do Sistema</h2>
+  <div id="tela-Configuracoes-lista" class="esconder-checkboxes">
+      <form onsubmit="salvarGenerico(event, 'Configuracoes')">
+        <div class="form-grid">
+          <div class="form-group">
+             <label>Tipo de Configuração</label>
+             <select id="Configuracoes_tipo" required="">
+               <option value="Setor">Setor</option>
+               <option value="TipoDoc">Tipo de Documento</option>
+               <option value="TipoAuditoria">Tipo de Auditoria</option>
+             </select>
+          </div>
+          <div class="form-group"><label>Nome / Valor</label><input type="text" id="Configuracoes_valor" required=""></div>
+        </div>
+        <button type="submit" class="btn-acao admin-only">Salvar Registro</button>
+      </form>
+      <div style="margin-top: 15px; text-align:right;">
+        <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Configuracoes', 'csv')">📥 Exportar CSV</button>
+        <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('Configuracoes', 'pdf')">📄 Exportar PDF</button>
+      </div>
+      <div class="table-container" style="margin-top:20px;"><table id="tb-Configuracoes"><thead><tr><th class="col-checkbox"><input type="checkbox" onclick="selecionarTodos('Configuracoes', this)"></th><th>Tipo</th><th>Valor</th><th>Ação</th></tr></thead><tbody><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789558379359"></td>
+        <td>Setor</td><td>Qualidade</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789558379359')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559008718"></td>
+        <td>TipoDoc</td><td>POP</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559008718')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559018120"></td>
+        <td>TipoDoc</td><td>Política</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559018120')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559035560"></td>
+        <td>TipoDoc</td><td>Instrução de trabalho</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559035560')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559054532"></td>
+        <td>Setor</td><td>Comercial</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559054532')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559064232"></td>
+        <td>Setor</td><td>Garantia</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559064232')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559070492"></td>
+        <td>Setor</td><td>Gerência</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559070492')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559087953"></td>
+        <td>Setor</td><td>Expedição - OMRE</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559087953')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559096901"></td>
+        <td>Setor</td><td>Expedição </td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559096901')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559115377"></td>
+        <td>Setor</td><td>Estoque</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559115377')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559126457"></td>
+        <td>Setor</td><td>Estoque - OMRE</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559126457')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559137374"></td>
+        <td>Setor</td><td>Compras</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559137374')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559150561"></td>
+        <td>Setor</td><td>Contas a pagar</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559150561')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559157429"></td>
+        <td>Setor</td><td>Contas a receber</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559157429')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559170008"></td>
+        <td>Setor</td><td>Marketing</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559170008')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559177214"></td>
+        <td>Setor</td><td>TI</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559177214')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559195642"></td>
+        <td>Setor</td><td>RH/DP</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559195642')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1789559255469"></td>
+        <td>Setor</td><td>Entrada de mercadoria e formação de preço</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1789559255469')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1790353198376"></td>
+        <td>TipoAuditoria</td><td>Processo</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1790353198376')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1790353224433"></td>
+        <td>TipoAuditoria</td><td>Rotina</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1790353224433')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1790353243637"></td>
+        <td>TipoAuditoria</td><td>Setor</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1790353243637')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1791198975380"></td>
+        <td>Setor</td><td>Caixa</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1791198975380')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1791199132092"></td>
+        <td>Setor</td><td>Administrativo</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1791199132092')">🗑️</button>
+        </td>
+      </tr><tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="CON-1791285899941"></td>
+        <td>Setor</td><td>Crediário</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','CON-1791285899941')">🗑️</button>
+        </td>
+      </tr></tbody></table></div>
+  </div>
+</div>
+
+<div id="Tarefas" class="modulo-container">
+  <h2>Gestão de Tarefas (Kanban)</h2>
+  <div id="tela-Tarefas-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('Tarefas')">+ Nova Tarefa</button></div>
+      <div>
+         <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Tarefas', 'csv')">📥 Exportar CSV</button>
+         <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('Tarefas', 'pdf')">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="topo-tabela">
+      <div style="width:100%;"><input type="text" id="filtro-tarefas" placeholder="Pesquisar tarefas..." onkeyup="renderizarTudo()" style="width:100%; padding:9px 12px; border:1px solid var(--borda); border-radius:8px;"></div>
+    </div>
+    <div class="kanban-container">
+      <div class="kanban-coluna"><h4>Pendente</h4><div id="kb-tar-Pendente"></div></div>
+      <div class="kanban-coluna"><h4>A Fazer</h4><div id="kb-tar-AFazer"><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Plano de treinamento</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1789562495873', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer" selected="">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1789562495873')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Programa Kaizen</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1789563610310', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer" selected="">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1789563610310')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Análise do formulário</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1789581561375', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer" selected="">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1789581561375')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Resolução de problemas</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1789591340373', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer" selected="">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1789591340373')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Controle de manutenção</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1790944338547', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer" selected="">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1790944338547')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>RH/DP</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1791378334198', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer" selected="">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1791378334198')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Pesquisa de satisfação</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1791899777155', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer" selected="">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1791899777155')">👁️ Detalhes</button></div>
+        </div></div></div>
+      <div class="kanban-coluna"><h4>Fazendo</h4><div id="kb-tar-Fazendo"><div class="kanban-card" style="border-left-color: var(--vermelho);">
+          <h5>Projeto: Canhoto digital</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:var(--vermelho); font-weight:600">09/10/2026</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1789561213737', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo" selected="">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1789561213737')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Construir Manual da qualidade</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1789591249539', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo" selected="">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1789591249539')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Planilha de gestão de fornecedores</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1791288168508', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo" selected="">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1791288168508')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Atualização do POP: COMPRAS</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1791304720401', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo" selected="">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1791304720401')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Atualização do POP: RH/DP</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1791304765223', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo" selected="">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1791304765223')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Atualização do POP: ESTOQUE</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1791304798345', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo" selected="">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1791304798345')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Melhoria no endereçamento do estoque</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1791980107797', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo" selected="">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1791980107797')">👁️ Detalhes</button></div>
+        </div></div></div>
+      <div class="kanban-coluna"><h4>Aguardando Aprovação</h4><div id="kb-tar-Aguardandoaprovacao"><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Programa 5S</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1789562324584', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação" selected="">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1789562324584')">👁️ Detalhes</button></div>
+        </div><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Diagramação dos documentos</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">-</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1791373736776', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação" selected="">Aguardando aprovação</option>
+            <option value="Concluído">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1791373736776')">👁️ Detalhes</button></div>
+        </div></div></div>
+      <div class="kanban-coluna"><h4>Concluído</h4><div id="kb-tar-Concluido"><div class="kanban-card" style="border-left-color: var(--azul-claro);">
+          <h5>Quinta-feira - 24/09</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:inherit; font-weight:400">24/09/2026</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', 'TAR-1790196607718', 'etapa', this.value)">
+            <option value="Pendente">Pendente</option>
+            <option value="A Fazer">A Fazer</option>
+            <option value="Fazendo">Fazendo</option>
+            <option value="Aguardando aprovação">Aguardando aprovação</option>
+            <option value="Concluído" selected="">Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', 'TAR-1790196607718')">👁️ Detalhes</button></div>
+        </div></div></div>
+    </div>
+  </div>
+  <div id="tela-Tarefas-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom: 15px;" onclick="alternarTela('tela-Tarefas-form','tela-Tarefas-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'Tarefas')">
+      <input type="hidden" id="Tarefas_id">
+      <div class="form-grid">
+        <div class="form-group form-grid-full"><label>Título</label><input type="text" id="Tarefas_titulo" required=""></div>
+        <div class="form-group form-grid-full"><label>Descrição</label><textarea id="Tarefas_descricao" rows="2"></textarea></div>
+        <div class="form-group"><label>Início</label><input type="date" id="Tarefas_data_inicio"></div>
+        <div class="form-group"><label>Entrega</label><input type="date" id="Tarefas_data_entrega"></div>
+        <div class="form-group"><label>Etapa</label>
+          <select id="Tarefas_etapa">
+            <option>Pendente</option>
+            <option>A Fazer</option>
+            <option>Fazendo</option>
+            <option>Aguardando aprovação</option>
+            <option>Concluído</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn-acao admin-only">Salvar</button>
+    </form>
+  </div>
+</div>
+
+<div id="Documentos" class="modulo-container">
+  <h2>Documentos Internos</h2>
+  <div id="tela-Documentos-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('Documentos')">+ Novo Documento</button></div>
+      <div>
+         <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Documentos', 'csv')">📥 Exportar CSV</button>
+         <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('Documentos', 'pdf')">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="topo-tabela">
+      <div><select id="filtro-docs-setor" class="dinamico-setor" onchange="renderizarTudo()" style="padding:8px 10px; border-radius:8px;"><option value="">Todos os Setores</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select></div>
+    </div>
+    <div class="table-container">
+      <table id="tb-Documentos">
+        <thead>
+          <tr>
+            <th class="col-checkbox"><input type="checkbox" onclick="selecionarTodos('Documentos', this)"></th>
+            <th>Código</th>
+            <th>Título</th>
+            <th>Setor</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-Documentos" value="DOC-1791199299500"></td>
+        <td><strong style="color:var(--azul-escuro)">CX.2.16.0</strong></td><td>POP: MANUAL DO CAIXA</td><td>Caixa</td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:#dcfce7; color:#166534">Vigente</span></td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('Documentos','DOC-1791199299500')">👁️ Ver</button>
+        </td>
+      </tr><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-Documentos" value="DOC-1791492613896"></td>
+        <td><strong style="color:var(--azul-escuro)">QA.1.0</strong></td><td>MANUAL DA QUALIDADE</td><td>Qualidade</td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:#fef3c7; color:#92400e">Em Revisão</span></td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('Documentos','DOC-1791492613896')">👁️ Ver</button>
+        </td>
+      </tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="tela-Documentos-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom: 15px;" onclick="alternarTela('tela-Documentos-form','tela-Documentos-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'Documentos')">
+      <input type="hidden" id="Documentos_id">
+      <div class="form-grid">
+        
+        <div class="form-group"><label>Código</label><input type="text" id="Documentos_codigo"></div>
+        <div class="form-group"><label>Título</label><input type="text" id="Documentos_titulo"></div>
+        <div class="form-group"><label>Tipo Doc.</label><select id="Documentos_tipo_documento" class="dinamico-tipodoc"><option value="">-- Escolha --</option><option value="Instrução de trabalho">Instrução de trabalho</option><option value="Política">Política</option><option value="POP">POP</option></select></div>
+        <div class="form-group"><label>Setor</label><select id="Documentos_setor" class="dinamico-setor"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select></div>
+        
+        
+        <div class="form-group"><label>Versão</label><input type="text" id="Documentos_versao"></div>
+        <div class="form-group"><label>Data Criação</label><input type="date" id="Documentos_data_criacao"></div>
+        <div class="form-group"><label>Última Atualização</label><input type="date" id="Documentos_ultima_atualizacao"></div>
+        <div class="form-group"><label>Status</label><select id="Documentos_status"><option value="Vigente">Vigente</option><option value="Em Revisão">Em Revisão</option></select></div>
+        
+        
+        <div class="form-group form-grid-full" style="border-top: 1px dashed var(--borda); padding-top: 16px;">
+          <label>📝 Criado por</label>
+          <div style="display:flex; gap:10px; margin-bottom: 12px;"><input type="text" id="temp_nome_criado_por" style="flex:2;" placeholder="Nome do colaborador"><select id="temp_setor_criado_por" class="dinamico-setor" style="flex:1;"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select><button type="button" class="btn-acao admin-only" onclick="adicionarPapelDoc('criado_por')">+ Adicionar</button></div>
+          <div id="ui_criado_por" style="background: var(--bg); padding: 16px; border-radius: var(--raio-md); min-height: 60px;"></div><textarea id="Documentos_criado_por" class="oculto"></textarea>
+        </div>
+
+        <div class="form-group form-grid-full" style="border-top: 1px dashed var(--borda); padding-top: 16px;">
+          <label>✔️ Validado por</label>
+          <div style="display:flex; gap:10px; margin-bottom: 12px;"><input type="text" id="temp_nome_validado_por" style="flex:2;" placeholder="Nome do colaborador"><select id="temp_setor_validado_por" class="dinamico-setor" style="flex:1;"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select><button type="button" class="btn-acao admin-only" onclick="adicionarPapelDoc('validado_por')">+ Adicionar</button></div>
+          <div id="ui_validado_por" style="background: var(--bg); padding: 16px; border-radius: var(--raio-md); min-height: 60px;"></div><textarea id="Documentos_validado_por" class="oculto"></textarea>
+        </div>
+
+        <div class="form-group form-grid-full" style="border-top: 1px dashed var(--borda); padding-top: 16px;">
+          <label>✅ Aprovado por</label>
+          <div style="display:flex; gap:10px; margin-bottom: 12px;"><input type="text" id="temp_nome_aprovado_por" style="flex:2;" placeholder="Nome do colaborador"><select id="temp_setor_aprovado_por" class="dinamico-setor" style="flex:1;"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select><button type="button" class="btn-acao admin-only" onclick="adicionarPapelDoc('aprovado_por')">+ Adicionar</button></div>
+          <div id="ui_aprovado_por" style="background: var(--bg); padding: 16px; border-radius: var(--raio-md); min-height: 60px;"></div><textarea id="Documentos_aprovado_por" class="oculto"></textarea>
+        </div>
+        
+        <div class="form-group form-grid-full" style="border-top: 1px dashed var(--borda); padding-top: 16px;">
+          <label>🔍 Revisado por</label>
+          <div style="display:flex; gap:10px; margin-bottom: 12px;"><input type="text" id="temp_nome_revisado_por" style="flex:2;" placeholder="Nome do colaborador"><select id="temp_setor_revisado_por" class="dinamico-setor" style="flex:1;"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select><button type="button" class="btn-acao admin-only" onclick="adicionarPapelDoc('revisado_por')">+ Adicionar</button></div>
+          <div id="ui_revisado_por" style="background: var(--bg); padding: 16px; border-radius: var(--raio-md); min-height: 60px;"></div><textarea id="Documentos_revisado_por" class="oculto"></textarea>
+        </div>
+        
+        <div class="form-group form-grid-full" style="border-top: 1px dashed var(--borda); padding-top: 16px;">
+          <label>🎖️ Revisão aprovada por</label>
+          <div style="display:flex; gap:10px; margin-bottom: 12px;"><input type="text" id="temp_nome_revisao_aprovada_por" style="flex:2;" placeholder="Nome do colaborador"><select id="temp_setor_revisao_aprovada_por" class="dinamico-setor" style="flex:1;"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select><button type="button" class="btn-acao admin-only" onclick="adicionarPapelDoc('revisao_aprovada_por')">+ Adicionar</button></div>
+          <div id="ui_revisao_aprovada_por" style="background: var(--bg); padding: 16px; border-radius: var(--raio-md); min-height: 60px;"></div><textarea id="Documentos_revisao_aprovada_por" class="oculto"></textarea>
+        </div>
+
+        <div class="form-group form-grid-full" style="border-top: 1px dashed var(--borda); padding-top: 16px;"><label>Anexo (Drive)</label><div style="display:flex; gap:12px;"><input type="url" id="Documentos_link_drive" style="flex:1;"><button type="button" class="btn-acao admin-only" onclick="abrirSuperPicker('Documentos_link_drive')">📂 Procurar</button></div></div>
+      </div>
+      <button type="submit" class="btn-acao admin-only" style="margin-top: 15px;">Salvar</button>
+    </form>
+  </div>
+</div>
+
+<div id="Treinamentos" class="modulo-container">
+  <h2>Gestão de Treinamentos</h2>
+  <div id="tela-Treinamentos-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('Treinamentos')">+ Novo Treinamento</button></div>
+      <div>
+         <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Treinamentos', 'csv')">📥 Exportar CSV</button>
+         <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('Treinamentos', 'pdf')">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table id="tb-Treinamentos">
+        <thead>
+          <tr>
+            <th class="col-checkbox"><input type="checkbox" onclick="selecionarTodos('Treinamentos', this)"></th>
+            <th>Data</th>
+            <th>Tema</th>
+            <th>Instrutor</th>
+            <th>Participantes</th>
+            <th>Status</th>
+            <th style="text-align: right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-Treinamentos" value="TRE-1791285739878"></td>
+        <td>02/10/2026</td><td>Atualização de POP</td><td>Charles Rener</td><td><strong>4</strong></td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:#dcfce7; color:#166534">Realizado</span></td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('Treinamentos','TRE-1791285739878')">👁️ Ver</button>
+        </td>
+      </tr><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-Treinamentos" value="TRE-1791285810059"></td>
+        <td>05/10/2026</td><td>Atualização de POP</td><td>Charles Rener</td><td><strong>1</strong></td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:#dcfce7; color:#166534">Realizado</span></td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('Treinamentos','TRE-1791285810059')">👁️ Ver</button>
+        </td>
+      </tr><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-Treinamentos" value="TRE-1791285966454"></td>
+        <td>29/09/2026</td><td>Atualização de POP</td><td>Charles Rener</td><td><strong>3</strong></td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:#dcfce7; color:#166534">Realizado</span></td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('Treinamentos','TRE-1791285966454')">👁️ Ver</button>
+        </td>
+      </tr><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-Treinamentos" value="TRE-1791286911249"></td>
+        <td>17/09/2026</td><td>Programa 5S</td><td>Charles Rener</td><td><strong>6</strong></td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:#dcfce7; color:#166534">Realizado</span></td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('Treinamentos','TRE-1791286911249')">👁️ Ver</button>
+        </td>
+      </tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="tela-Treinamentos-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom: 15px;" onclick="alternarTela('tela-Treinamentos-form','tela-Treinamentos-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'Treinamentos')">
+      <input type="hidden" id="Treinamentos_id">
+      <div class="form-grid">
+        <div class="form-group"><label>Data</label><input type="date" id="Treinamentos_data" required=""></div>
+        <div class="form-group"><label>Tema / Assunto</label><input type="text" id="Treinamentos_tema" required=""></div>
+        <div class="form-group"><label>Instrutor</label><input type="text" id="Treinamentos_instrutor" required=""></div>
+        <div class="form-group"><label>Carga Horária</label><input type="text" id="Treinamentos_carga_horaria" required=""></div>
+        <div class="form-group"><label>Status</label><select id="Treinamentos_status" required=""><option>Agendado</option><option>Realizado</option><option>Cancelado</option></select></div>
+        <div class="form-group form-grid-full"><label>Anexo (Lista de Presença)</label><div style="display:flex; gap:12px;"><input type="url" id="Treinamentos_anexo_lista" style="flex:1;"><button type="button" class="btn-acao admin-only" onclick="abrirSuperPicker('Treinamentos_anexo_lista')">📂 Procurar</button></div></div>
+        <div class="form-group form-grid-full" style="border-top: 1px dashed var(--borda); padding-top: 16px;">
+          <label>👥 Gestão de Participantes</label>
+          <div style="display:flex; gap:10px; margin-bottom: 12px;"><input type="text" id="temp_nome_participante" style="flex:2;" placeholder="Nome"><select id="temp_setor_participante" class="dinamico-setor" style="flex:1;"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select><button type="button" class="btn-acao admin-only" onclick="adicionarParticipanteTreinamento()">+ Adicionar</button></div>
+          <div id="lista_participantes_ui" style="background: var(--bg); padding: 16px; border-radius: var(--raio-md); min-height: 60px;"></div>
+          <textarea id="Treinamentos_participantes" class="oculto"></textarea>
+        </div>
+      </div>
+      <button type="submit" class="btn-acao admin-only">Salvar</button>
+    </form>
+  </div>
+</div>
+
+<div id="Auditorias" class="modulo-container">
+  <h2>Gestão de Auditorias</h2>
+  <div id="tela-Auditorias-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('Auditorias')">+ Nova Auditoria</button></div>
+      <div>
+        <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Auditorias', 'csv')">📥 Exportar CSV</button>
+        <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('Auditorias', 'pdf')">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table id="tb-Auditorias">
+        <thead>
+          <tr>
+            <th class="col-checkbox"><input type="checkbox" onclick="selecionarTodos('Auditorias', this)"></th>
+            <th>Data</th>
+            <th>Setor</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="tela-Auditorias-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom: 15px;" onclick="alternarTela('tela-Auditorias-form','tela-Auditorias-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'Auditorias')">
+      <input type="hidden" id="Auditorias_id">
+      <div class="form-grid">
+        <div class="form-group"><label>Data</label><input type="date" id="Auditorias_data" required=""></div>
+        <div class="form-group"><label>Tipo de Auditoria</label><select id="Auditorias_tipo" class="dinamico-tipo-auditoria" required=""><option value="">-- Escolha --</option><option value="Processo">Processo</option><option value="Rotina">Rotina</option><option value="Setor">Setor</option></select></div>
+        <div class="form-group"><label>Setor</label><select id="Auditorias_setor" class="dinamico-setor" required=""><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select></div>
+        <div class="form-group"><label>Auditor</label><input type="text" id="Auditorias_auditor"></div>
+        <div class="form-group"><label>Cláusula ISO</label><input type="text" id="Auditorias_clausula"></div>
+        <div class="form-group"><label>Qtd NCs</label><input type="number" id="Auditorias_nc" value="0"></div>
+        <div class="form-group"><label>Status</label><select id="Auditorias_status"><option>Concluída</option><option>Agendada</option></select></div>
+        <div class="form-group"><label>Prazo P/ Próxima</label><input type="date" id="Auditorias_prazo"></div>
+      </div>
+      <button type="submit" class="btn-acao admin-only">Salvar</button>
+    </form>
+  </div>
+</div>
+
+<div id="PlanosMelhoria" class="modulo-container">
+  <h2>Planos de Ação (5W2H)</h2>
+  <div id="tela-PlanosMelhoria-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('PlanosMelhoria')">+ Novo Plano</button></div>
+      <div>
+        <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('PlanosMelhoria', 'csv')">📥 Exportar CSV</button>
+        <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('PlanosMelhoria', 'pdf')">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table id="tb-PlanosMelhoria">
+        <thead>
+          <tr>
+            <th class="col-checkbox"><input type="checkbox" onclick="selecionarTodos('PlanosMelhoria', this)"></th>
+            <th>Ação (O Que)</th>
+            <th>Prazo</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody><tr class="">
+        <td class="col-checkbox"><input type="checkbox" class="chk-PlanosMelhoria" value="PLA-1792616057399"></td>
+        <td class="linha-atrasada">fgndfgnhrfd</td><td>20/10/2026</td><td>Aberto</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('PlanosMelhoria','PLA-1792616057399')">👁️ Ver</button>
+        </td>
+      </tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="tela-PlanosMelhoria-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom:15px;" onclick="alternarTela('tela-PlanosMelhoria-form','tela-PlanosMelhoria-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'PlanosMelhoria')">
+      <input type="hidden" id="PlanosMelhoria_id">
+      <div class="form-grid">
+        <div class="form-group form-grid-full"><label>Origem</label><input type="text" id="PlanosMelhoria_origem"></div>
+        <div class="form-group form-grid-full"><label>O que (Ação)</label><input type="text" id="PlanosMelhoria_o_que" required=""></div>
+        <div class="form-group form-grid-full"><label>Por que</label><input type="text" id="PlanosMelhoria_por_que"></div>
+        <div class="form-group"><label>Onde (Setor)</label><select id="PlanosMelhoria_onde" class="dinamico-setor"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select></div>
+        <div class="form-group"><label>Início</label><input type="date" id="PlanosMelhoria_data_inicio"></div>
+        <div class="form-group"><label>Prazo</label><input type="date" id="PlanosMelhoria_prazo"></div>
+        <div class="form-group"><label>Responsável</label><input type="text" id="PlanosMelhoria_responsavel"></div>
+        <div class="form-group"><label>Status</label><select id="PlanosMelhoria_status"><option>Aberto</option><option>Em Andamento</option><option>Concluído</option></select></div>
+        <div class="form-group"><label>Eficácia Verificada?</label><select id="PlanosMelhoria_eficacia_verificada"><option>Não</option><option>Sim</option></select></div>
+        <div class="form-group form-grid-full"><label>Como?</label><textarea id="PlanosMelhoria_como" rows="3"></textarea></div>
+      </div>
+      <button type="submit" class="btn-acao admin-only">Salvar</button>
+    </form>
+  </div>
+</div>
+
+<div id="Indicadores" class="modulo-container">
+  <h2>Indicadores</h2>
+  <div id="tela-Indicadores-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('Indicadores')">+ Novo Indicador</button></div>
+      <div>
+         <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Indicadores', 'csv')">📥 Exportar CSV</button>
+         <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('Indicadores', 'pdf')">📄 Exportar PDF</button>
+         <button class="btn-acao" style="background:var(--azul-escuro);" onclick="abrirModulo('HistoricoIndicadores', document.querySelector('.nav-btn'))">📈 Ver Gráficos</button>
+      </div>
+    </div>
+    <div class="table-container">
+      <table id="tb-Indicadores">
+        <thead>
+          <tr>
+            <th class="col-checkbox"><input type="checkbox" onclick="selecionarTodos('Indicadores', this)"></th>
+            <th>Nome</th>
+            <th>Setor</th>
+            <th>Meta</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="tela-Indicadores-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom: 15px;" onclick="alternarTela('tela-Indicadores-form','tela-Indicadores-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'Indicadores')">
+      <input type="hidden" id="Indicadores_id">
+      <div class="form-grid">
+        <div class="form-group"><label>Nome</label><input type="text" id="Indicadores_nome" required=""></div>
+        <div class="form-group"><label>Setor</label><select id="Indicadores_setor" class="dinamico-setor"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select></div>
+        <div class="form-group"><label>Meta</label><input type="number" step="0.01" id="Indicadores_meta" required=""></div>
+        <div class="form-group"><label>Período</label><select id="Indicadores_periodo"><option>Mensal</option></select></div>
+      </div>
+      <button type="submit" class="btn-acao admin-only">Salvar</button>
+    </form>
+  </div>
+</div>
+
+<div id="HistoricoIndicadores" class="modulo-container">
+  <h2>Lançamento e Gráficos</h2>
+  <div class="form-painel" style="margin-bottom: 24px;">
+    <div class="form-grid">
+      <div class="form-group"><label>Selecione o Indicador para Análise:</label><select id="select-indicador-grafico" onchange="renderizarTudo(); verificarIndicadorSelecionado();"><option value="">-- Escolha --</option></select></div>
+    </div>
+  </div>
+  <div class="grafico-container"><canvas id="meuGrafico"></canvas></div>
+  <div id="tela-HistoricoIndicadores-lista" class="esconder-checkboxes">
+    <div class="topo-tabela" style="margin-top:40px;">
+      <h3 style="margin:0; color:var(--azul-escuro); font-size:15px;">Tabela de Lançamentos</h3>
+      <div id="container-btn-lancar-mes">
+        <button class="btn-acao admin-only" id="btn-lancar-mes" onclick="document.getElementById('form-lancamento').classList.remove('oculto')" disabled="" style="opacity: 0.5;">+ Lançar Mês</button>
+        <button class="btn-acao" style="background:var(--verde); margin-left: 8px;" onclick="iniciarExportacao('HistoricoIndicadores', 'csv')">📥 Exportar CSV</button>
+        <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('HistoricoIndicadores', 'pdf')">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <p id="msg-selecione-indicador" class="" style="color:var(--laranja); font-size:13px; font-weight:600; margin-bottom: 20px;">Selecione um indicador primeiro para habilitar o lançamento.</p>
+    
+    <div id="form-lancamento" class="oculto form-painel" style="margin-bottom:20px; padding:16px;">
+      <form onsubmit="salvarGenerico(event, 'HistoricoIndicadores')">
+        <input type="hidden" id="HistoricoIndicadores_id">
+        <input type="hidden" id="HistoricoIndicadores_indicador_id" value="">
+        <input type="hidden" id="HistoricoIndicadores_mes">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Mês</label>
+            <div style="display:flex; gap:8px;">
+                <select id="HistoricoIndicadores_mes_select" required="" style="flex:1;">
+                    <option value="Jan">Jan</option><option value="Fev">Fev</option>
+                    <option value="Mar">Mar</option><option value="Abr">Abr</option>
+                    <option value="Mai">Mai</option><option value="Jun">Jun</option>
+                    <option value="Jul">Jul</option><option value="Ago">Ago</option>
+                    <option value="Set">Set</option><option value="Out">Out</option>
+                    <option value="Nov">Nov</option><option value="Dez">Dez</option>
+                </select>
+                <select id="HistoricoIndicadores_ano_select" required="" style="flex:1;"><option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label>Valor Alcançado</label><input type="number" step="0.01" id="HistoricoIndicadores_valor" required=""></div>
+        </div>
+        <button type="submit" class="btn-acao admin-only">Salvar Lançamento</button>
+      </form>
+    </div>
+    <div class="table-container">
+      <table id="tb-HistoricoIndicadores">
+        <thead>
+          <tr>
+            <th class="col-checkbox"><input type="checkbox" onclick="selecionarTodos('HistoricoIndicadores', this)"></th>
+            <th>Mês</th>
+            <th>Valor</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="Programa5S" class="modulo-container">
+  <h2>Gestão 5S por Setor</h2>
+  <div id="tela-Programa5S-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('Programa5S')">+ Nova Auditoria</button></div>
+      <div>
+        <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Programa5S', 'csv')">📥 Exportar Base Completa</button>
+      </div>
+    </div>
+    <div id="grid-5s-setores" class="cards-grid"><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Qualidade')"><h3 style="font-size: 13px;">Qualidade</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Comercial')"><h3 style="font-size: 13px;">Comercial</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Garantia')"><h3 style="font-size: 13px;">Garantia</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Gerência')"><h3 style="font-size: 13px;">Gerência</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Expedição - OMRE')"><h3 style="font-size: 13px;">Expedição - OMRE</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Expedição ')"><h3 style="font-size: 13px;">Expedição </h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Estoque')"><h3 style="font-size: 13px;">Estoque</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Estoque - OMRE')"><h3 style="font-size: 13px;">Estoque - OMRE</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Compras')"><h3 style="font-size: 13px;">Compras</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Contas a pagar')"><h3 style="font-size: 13px;">Contas a pagar</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Contas a receber')"><h3 style="font-size: 13px;">Contas a receber</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Marketing')"><h3 style="font-size: 13px;">Marketing</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('TI')"><h3 style="font-size: 13px;">TI</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('RH/DP')"><h3 style="font-size: 13px;">RH/DP</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Entrada de mercadoria e formação de preço')"><h3 style="font-size: 13px;">Entrada de mercadoria e formação de preço</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Caixa')"><h3 style="font-size: 13px;">Caixa</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Administrativo')"><h3 style="font-size: 13px;">Administrativo</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div><div class="card" style="border-top-color: var(--cinza); cursor: pointer;" onclick="abrirResumo5SSetor('Crediário')"><h3 style="font-size: 13px;">Crediário</h3><p style="color: var(--cinza); font-size: 28px;">- <span style="font-size: 14px; color: var(--texto-suave);"></span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>0</strong> auditorias</div></div></div>
+  </div>
+  <div id="tela-Programa5S-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom:15px;" onclick="alternarTela('tela-Programa5S-form','tela-Programa5S-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'Programa5S')">
+      <input type="hidden" id="Programa5S_id">
+      <div class="form-grid">
+        <div class="form-group"><label>Data da Auditoria</label><input type="date" id="Programa5S_data" required=""></div>
+        <div class="form-group"><label>Setor Auditado</label><select id="Programa5S_setor" class="dinamico-setor" required=""><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select></div>
+        <div class="form-group"><label>Auditor Responsável</label><input type="text" id="Programa5S_responsavel" required=""></div>
+      </div>
+      <div class="form-grid" style="background: var(--bg); padding:14px; border-radius:var(--raio-md);">
+        <div class="form-group"><label>Seiri (Utilização)</label><input type="number" id="Programa5S_seiri" max="5" value="0" oninput="calc5S()"></div>
+        <div class="form-group"><label>Seiton (Organização)</label><input type="number" id="Programa5S_seiton" max="5" value="0" oninput="calc5S()"></div>
+        <div class="form-group"><label>Seiso (Limpeza)</label><input type="number" id="Programa5S_seiso" max="5" value="0" oninput="calc5S()"></div>
+        <div class="form-group"><label>Seiketsu (Padronização)</label><input type="number" id="Programa5S_seiketsu" max="5" value="0" oninput="calc5S()"></div>
+        <div class="form-group"><label>Shitsuke (Disciplina)</label><input type="number" id="Programa5S_shitsuke" max="5" value="0" oninput="calc5S()"></div>
+      </div>
+      <div class="form-group" style="margin-top:12px;"><label>Pontuação Total Automática</label><input type="text" id="Programa5S_pontuacao_total" readonly="" style="font-weight: bold; color: var(--azul-escuro);"></div>
+      <button type="submit" class="btn-acao admin-only">Salvar Auditoria</button>
+    </form>
+  </div>
+</div>
+
+<div id="Kaizen" class="modulo-container">
+  <h2>Módulo Kaizen</h2>
+  <div id="tela-Kaizen-lista" class="esconder-checkboxes">
+    <div class="topo-tabela">
+      <div><button class="btn-acao admin-only" onclick="prepararFormulario('Kaizen')">💡 Nova Sugestão</button></div>
+      <div>
+        <button class="btn-acao" style="background:var(--verde);" onclick="iniciarExportacao('Kaizen', 'csv')">📥 Exportar CSV</button>
+        <button class="btn-acao" style="background:var(--azul-claro);" onclick="iniciarExportacao('Kaizen', 'pdf')">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="kanban-container">
+      <div class="kanban-coluna"><h4>Sugerido</h4><div id="kb-Sugerido"></div></div>
+      <div class="kanban-coluna"><h4>Avaliando</h4><div id="kb-Avaliando"></div></div>
+      <div class="kanban-coluna"><h4>Aprovado</h4><div id="kb-Aprovado"></div></div>
+      <div class="kanban-coluna"><h4>Implementado</h4><div id="kb-Implementado"></div></div>
+      <div class="kanban-coluna"><h4>Rejeitado</h4><div id="kb-Rejeitado"></div></div>
+    </div>
+  </div>
+  <div id="tela-Kaizen-form" class="oculto form-painel">
+    <button class="btn-acao" style="background:var(--cinza); margin-bottom: 15px;" onclick="alternarTela('tela-Kaizen-form', 'tela-Kaizen-lista')">← Voltar</button>
+    <form onsubmit="salvarGenerico(event, 'Kaizen')">
+      <input type="hidden" id="Kaizen_id">
+      <input type="hidden" id="Kaizen_status" value="Sugerido">
+      <div class="form-grid">
+        <div class="form-group"><label>Data</label><input type="date" id="Kaizen_data" required=""></div>
+        <div class="form-group"><label>Autor</label><input type="text" id="Kaizen_autor" required=""></div>
+        <div class="form-group form-grid-full"><label>Setor</label><select id="Kaizen_setor" class="dinamico-setor"><option value="">-- Escolha --</option><option value="Administrativo">Administrativo</option><option value="Caixa">Caixa</option><option value="Comercial">Comercial</option><option value="Compras">Compras</option><option value="Contas a pagar">Contas a pagar</option><option value="Contas a receber">Contas a receber</option><option value="Crediário">Crediário</option><option value="Entrada de mercadoria e formação de preço">Entrada de mercadoria e formação de preço</option><option value="Estoque">Estoque</option><option value="Estoque - OMRE">Estoque - OMRE</option><option value="Expedição ">Expedição </option><option value="Expedição - OMRE">Expedição - OMRE</option><option value="Garantia">Garantia</option><option value="Gerência">Gerência</option><option value="Marketing">Marketing</option><option value="Qualidade">Qualidade</option><option value="RH/DP">RH/DP</option><option value="TI">TI</option></select></div>
+        <div class="form-group form-grid-full"><label>Problema</label><textarea id="Kaizen_problema" rows="2" required=""></textarea></div>
+        <div class="form-group form-grid-full"><label>Ideia</label><textarea id="Kaizen_ideia" rows="3" required=""></textarea></div>
+        <div class="form-group form-grid-full"><label>Benefício Esperado</label><input type="text" id="Kaizen_beneficio_esperado" required=""></div>
+      </div>
+      <button type="submit" class="btn-acao admin-only">Enviar</button>
+    </form>
+  </div>
+</div>
+
+
+
+<div id="modal-confirmacao" class="modal-overlay oculto" style="z-index: 1010;">
+  <div class="modal-content" style="max-width: 400px; text-align: center;">
+    <h3 style="color: var(--vermelho); margin-top: 0; font-size: 22px;">⚠️ Atenção!</h3>
+    <p style="color: var(--texto-suave); font-size: 15px; margin-bottom: 25px;">Tem certeza que deseja excluir este registro?</p>
+    <div style="display: flex; justify-content: center; gap: 15px;">
+      <button class="btn-acao btn-cancelar" onclick="fecharModalConfirmacao()">Cancelar</button>
+      <button class="btn-acao admin-only" style="background-color: var(--vermelho);" onclick="executarExclusaoConfirmada()">Sim, Excluir</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="meuModal" class="modal-overlay oculto">
+  <div class="modal-content">
+    <span class="modal-fechar" onclick="fecharModal()">×</span>
+    <h3 id="modal-titulo" style="color: var(--azul-escuro); margin-top:0;">Detalhes</h3>
+    <div id="modal-body" style="font-size: 14px; color: var(--texto);"></div>
+    <div class="modal-acoes" id="modal-acoes-container"></div>
+  </div>
+</div>
+
+
+<div id="modal-super-picker" class="modal-overlay oculto" style="z-index: 1002;">
+  <div class="modal-content" style="max-width: 700px; background: #f8fafc;">
+    <span class="modal-fechar" onclick="fecharSuperPicker()">×</span>
+    <h3 style="color: var(--azul-escuro); margin-top:0; display:flex; align-items:center; gap:8px;">
+      <span style="font-size:24px;">📂</span> Explorador do Google Drive
+    </h3>
+    <div style="display:flex; gap:12px; margin-bottom: 24px; margin-top: 16px;">
+      <input type="text" id="input-picker-busca" placeholder="Pesquisar arquivo..." style="flex:1; padding:12px 16px; border:1px solid #cbd5e1; border-radius:8px;">
+      <button class="btn-acao" onclick="iniciarBuscaNativa()">Pesquisar</button>
+    </div>
+    <div id="picker-resultados" style="max-height: 400px; overflow-y: auto; background: white; border: 1px solid var(--borda); border-radius: 8px; padding: 8px;"></div>
+  </div>
+</div>
+
+
+<div id="modal-5s-resumo" class="modal-overlay oculto" style="z-index: 998;">
+  <div class="modal-content" style="max-width: 550px;">
+    <span class="modal-fechar" onclick="fecharModal5SResumo()">×</span>
+    <h3 id="modal-5s-resumo-titulo" style="color: var(--azul-escuro); margin-top:0;">Gestão 5S</h3>
+    <div id="secao-implantacao-5s" style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--borda);">
+      <h4 style="color: var(--azul-escuro); margin: 0 0 12px; font-size: 15px;">1. Implantação</h4>
+      <div id="implantacao-view"></div>
+      <div id="implantacao-form" class="oculto form-painel">
+        <form onsubmit="salvarImplantacao5S(event)">
+          <input type="hidden" id="imp5s_id">
+          <div class="form-grid">
+            <div class="form-group"><label>Data</label><input type="date" id="imp5s_data" required=""></div>
+            <div class="form-group"><label>Responsável</label><input type="text" id="imp5s_responsavel" required=""></div>
+            <div class="form-group"><label>Status</label><select id="imp5s_status" required=""><option>Planejada</option><option>Em Andamento</option><option>Concluída</option></select></div>
+            <div class="form-group"><label>Próxima Avaliação</label><input type="date" id="imp5s_proxima"></div>
+            <div class="form-group form-grid-full"><label>Observações</label><textarea id="imp5s_obs" rows="2"></textarea></div>
+          </div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end;"><button type="button" class="btn-acao btn-cancelar" onclick="fecharFormImplantacao5S()">Cancelar</button><button type="submit" class="btn-acao admin-only">Salvar</button></div>
+        </form>
+      </div>
+    </div>
+    <div id="secao-avaliacoes-5s">
+      <h4 style="color: var(--azul-escuro); margin: 0 0 12px; font-size: 15px;">2. Auditorias e Desempenho</h4>
+      <p style="color: var(--texto-suave);">
+        Auditorias Realizadas: <strong id="modal-5s-resumo-count">0</strong> | Média Geral: <strong id="modal-5s-resumo-media">0</strong> / 25
+      </p>
+      <p id="msg-sem-avaliacoes" class="oculto" style="text-align:center; color:var(--texto-suave); margin:30px 0;">Nenhuma auditoria registrada neste setor.</p>
+      <div id="grafico-container-5s" class="grafico-container" style="max-width: 400px; padding:10px; background: transparent; border:none;"><canvas id="grafico-5s-setor"></canvas></div>
+    </div>
+    <div class="modal-acoes"><button class="btn-acao btn-icone" onclick="fecharModal5SResumo()">Fechar</button><button class="btn-acao" id="btn-ver-lista-avaliacoes">Ver auditorias detalhadas</button></div>
+  </div>
+</div>
+
+<div id="modal-5s-lista" class="modal-overlay oculto" style="z-index: 999;">
+  <div class="modal-content" style="max-width: 800px;">
+    <span class="modal-fechar" onclick="fecharModal5SLista()">×</span>
+    <h3 id="modal-5s-lista-titulo" style="color: var(--azul-escuro); margin-top:0;">Auditorias</h3>
+    <div class="table-container"><table id="tb-5s-lista-setor"><thead><tr><th>Data</th><th>Resp</th><th>Nota</th><th style="text-align: right;">Ação</th></tr></thead><tbody></tbody></table></div>
+    <div class="modal-acoes"><button class="btn-acao btn-cancelar" id="btn-voltar-resumo-5s">← Voltar</button></div>
+  </div>
+</div>
+<script>
+
+
+
+const CHAVE_API_DRIVE = 'AIzaSyADTajQhUxF7nIRb1gDeS8dEGTKFuOxsuY';
+let DB = {
+  Configuracoes:[], Tarefas:[], Documentos:[], Auditorias:[], PlanosMelhoria:[],
+  Indicadores:[], HistoricoIndicadores:[], Programa5S:[], Kaizen:[],
+  Implantacao5S:[], Treinamentos:[], Riscos:[], Usuarios:[]
+};
+
+let usuarioAtual = null;
+let graficoAtual = null; let grafico5SSetor = null; let graficoDocsStatus = null;
+let graficoGaugeAuditoria = null; let graficoNCsPorSetor = null; let graficoPlanosStatus = null;
+let graficoMedia5S = null; let graficoFunilKaizen = null; let graficoMatrizRiscos = null;
+let exclusaoPendente = null; let inputDestinoDrive = ''; let setorImplantacaoAtivo = '';
+let filtroMatrizRisco = null; let isPickerApiLoaded = false;
+
+
+
+
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof popularAnosLancamento === "function") popularAnosLancamento();
+
+  if (typeof gapi !== 'undefined') {
+    gapi.load('picker', { callback: function() { isPickerApiLoaded = true; } });
+  }
+
+  const sessaoSalva = sessionStorage.getItem('usuarioLogadoSGQ');
+
+  if (sessaoSalva) {
+    
+    usuarioAtual = JSON.parse(sessaoSalva);
+    document.getElementById('tela-login').classList.add('oculto');
+    document.getElementById('app-wrapper').classList.remove('oculto');
+    if (usuarioAtual.perfil !== 'Administrador') {
+      document.body.classList.add('modo-leitor');
+    } else {
+      document.body.classList.remove('modo-leitor');
+    }
+
+    
+    const cacheDB = sessionStorage.getItem('cache_banco_sgq');
+    if (cacheDB) {
+      try {
+        const dadosParseados = JSON.parse(cacheDB);
+        Object.assign(DB, dadosParseados);
+        processarConfiguracoes();
+        ativarModulo(sessionStorage.getItem('moduloAtivoSGQ') || 'Dashboard');
+        renderizarModulo(sessionStorage.getItem('moduloAtivoSGQ') || 'Dashboard');
+      } catch(e) {
+        console.warn("Cache corrompido, limpando...");
+        sessionStorage.removeItem('cache_banco_sgq');
+      }
+    } else {
+      
+      ativarModulo(sessionStorage.getItem('moduloAtivoSGQ') || 'Dashboard');
+      exibirAviso("Carregando dados...", false);
+    }
+
+    
+    buscarDadosServidor(true);
+
+  } else {
+    
+    document.getElementById('tela-login').classList.remove('oculto');
+    document.getElementById('app-wrapper').classList.add('oculto');
+    const btnLogin = document.getElementById('btn-login');
+    if (btnLogin) { btnLogin.innerText = 'Carregando...'; btnLogin.disabled = true; }
+    buscarDadosServidor(false);
+  }
+});
+
+
+
+
+function buscarDadosServidor(emBackground) {
+  google.script.run
+    .withSuccessHandler(function(bancoCompleto) {
+      Object.assign(DB, bancoCompleto);
+
+      try {
+        sessionStorage.setItem('cache_banco_sgq', JSON.stringify(bancoCompleto));
+      } catch(e) {
+        console.warn("Storage cheio, rodando em RAM.");
+        sessionStorage.removeItem('cache_banco_sgq');
+      }
+
+      processarConfiguracoes();
+
+      if (!emBackground) {
+        
+        const btnLogin = document.getElementById('btn-login');
+        if (btnLogin) { btnLogin.disabled = false; btnLogin.innerText = 'Entrar no Sistema'; }
+      } else {
+        
+        const moduloAtual = sessionStorage.getItem('moduloAtivoSGQ') || 'Dashboard';
+        renderizarModulo(moduloAtual);
+      }
+    })
+    .withFailureHandler(function(erro) {
+      const btnLogin = document.getElementById('btn-login');
+      if (btnLogin) { btnLogin.disabled = false; btnLogin.innerText = 'Erro! Tentar Novamente'; }
+      exibirAviso("Falha de conexão: " + erro.message, true);
+    })
+    .getTodasAsTabelas();
+}
+
+
+
+
+function renderizarModulo(idModulo) {
+  if (!idModulo) return;
+  if (idModulo === 'Dashboard' || idModulo === 'HistoricoIndicadores') {
+    if (typeof renderizarTudo === "function") renderizarTudo();
+  } else {
+    if (typeof renderizarTudo === "function") renderizarTudo();
+  }
+  if (idModulo === 'Agenda' && typeof montarAgenda === "function") {
+    montarAgenda();
+  }
+}
+
+
+
+
+function ativarModulo(idModulo) {
+  document.querySelectorAll('.modulo-container').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  const target = document.getElementById(idModulo);
+  if (target) target.classList.add('active');
+
+  const btnAtivo = Array.from(document.querySelectorAll('.nav-btn'))
+    .find(b => b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${idModulo}'`));
+  if (btnAtivo) btnAtivo.classList.add('active');
+}
+
+
+
+
+function processarConfiguracoes() {
+  
+  const tb = document.querySelector('#tb-Configuracoes tbody');
+  if (tb) {
+    tb.innerHTML = '';
+    DB.Configuracoes.forEach(c => {
+      tb.innerHTML += `<tr>
+        <td class="col-checkbox"><input type="checkbox" class="chk-Configuracoes" value="${c.id}"></td>
+        <td>${c.tipo}</td><td>${c.valor}</td>
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone admin-only" onclick="excluirGenerico('Configuracoes','${c.id}')">🗑️</button>
+        </td>
+      </tr>`;
+    });
+  }
+
+  const setores = DB.Configuracoes
+    .filter(c => c.tipo === 'Setor').map(c => c.valor)
+    .sort((a, b) => a.localeCompare(b));
+  const tiposDoc = DB.Configuracoes
+    .filter(c => c.tipo === 'TipoDoc').map(c => c.valor)
+    .sort((a, b) => a.localeCompare(b));
+  const tiposAuditoria = DB.Configuracoes
+    .filter(c => c.tipo === 'TipoAuditoria').map(c => c.valor)
+    .sort((a, b) => a.localeCompare(b));
+
+  function preencherSelect(selector, opcoes, textoVazio = '-- Escolha --') {
+    document.querySelectorAll(selector).forEach(s => {
+      const valorAtual = s.value;
+      s.innerHTML = `<option value="">${textoVazio}</option>` +
+        opcoes.map(x => `<option value="${x}">${x}</option>`).join('');
+      if (valorAtual && opcoes.includes(valorAtual)) s.value = valorAtual;
+    });
+  }
+
+  preencherSelect('.dinamico-setor', setores);
+  preencherSelect('.dinamico-tipodoc', tiposDoc);
+  preencherSelect('.dinamico-tipo-auditoria', tiposAuditoria);
+
+  
+  const filtroDocs = document.getElementById('filtro-docs-setor');
+  if (filtroDocs) {
+    const valorAtual = filtroDocs.value;
+    filtroDocs.innerHTML = '<option value="">Todos os Setores</option>' +
+      setores.map(x => `<option value="${x}">${x}</option>`).join('');
+    if (valorAtual && setores.includes(valorAtual)) filtroDocs.value = valorAtual;
+  }
+}
+
+// ==========================================
+
+
+function efetuarLogin(event) {
+  event.preventDefault();
+  const usuario = document.getElementById('login-usuario').value.trim();
+  const senha = document.getElementById('login-senha').value.trim();
+
+  
+  if (usuario === 'adm' && senha === 'adm') {
+    usuarioAtual = { nome: 'Administrador Padrão', perfil: 'Administrador' };
+    sessionStorage.setItem('usuarioLogadoSGQ', JSON.stringify(usuarioAtual));
+    iniciarSessao();
+    return;
+  }
+
+  const user = (DB.Usuarios || []).find(u =>
+    u.usuario && u.senha &&
+    u.usuario.toString().trim() === usuario &&
+    u.senha.toString().trim() === senha
+  );
+
+  if (user) {
+    usuarioAtual = user;
+    sessionStorage.setItem('usuarioLogadoSGQ', JSON.stringify(usuarioAtual));
+    iniciarSessao();
+  } else {
+    exibirAviso("Credenciais inválidas!", true);
+  }
+}
+
+function iniciarSessao() {
+  document.getElementById('tela-login').classList.add('oculto');
+  document.getElementById('app-wrapper').classList.remove('oculto');
+  if (usuarioAtual.perfil !== 'Administrador') {
+    document.body.classList.add('modo-leitor');
+  } else {
+    document.body.classList.remove('modo-leitor');
+  }
+  sessionStorage.setItem('moduloAtivoSGQ', 'Dashboard');
+  ativarModulo('Dashboard');
+  renderizarModulo('Dashboard');
+  exibirAviso(`Bem-vindo, ${usuarioAtual.nome}!`);
+}
+
+function sairSistema() {
+  usuarioAtual = null;
+  sessionStorage.removeItem('usuarioLogadoSGQ');
+  sessionStorage.removeItem('moduloAtivoSGQ');
+  sessionStorage.removeItem('cache_banco_sgq');
+  document.body.classList.remove('modo-leitor');
+  document.getElementById('app-wrapper').classList.add('oculto');
+  document.getElementById('tela-login').classList.remove('oculto');
+  document.getElementById('login-senha').value = '';
+  document.getElementById('login-usuario').value = '';
+}
+
+function abrirModulo(idModulo, btn) {
+  document.querySelectorAll('[id$="-form"]').forEach(f => {
+    if (f.id.startsWith('tela-') && !f.classList.contains('oculto')) {
+      f.classList.add('oculto');
+    }
+  });
+  document.querySelectorAll('[id$="-lista"]').forEach(l => {
+    if (l.id.startsWith('tela-')) l.classList.remove('oculto');
+  });
+
+  ativarModulo(idModulo);
+  sessionStorage.setItem('moduloAtivoSGQ', idModulo);
+
+  
+  const lista = document.getElementById(`tela-${idModulo}-lista`);
+  if (lista) lista.classList.add('esconder-checkboxes');
+
+  renderizarModulo(idModulo);
+}
+
+
+
+
+function formatarDataBR(dataStr) {
+  if (!dataStr) return '-';
+  if (dataStr.includes('/')) return dataStr;
+  if (dataStr.includes('-')) {
+    const p = dataStr.split('-');
+    if (p.length >= 3) return `${p[2].substring(0,2)}/${p[1]}/${p[0]}`;
+  }
+  return dataStr;
+}
+
+function exibirAviso(msg, isError = false) {
+  const toast = document.getElementById('toast-mensagem');
+  toast.innerText = msg;
+  toast.className = 'toast ' + (isError ? 'toast-erro' : '');
+  toast.classList.remove('esconder');
+  setTimeout(() => toast.classList.add('esconder'), 4500);
+}
+
+function tratarErro(erro) { exibirAviso("Erro: " + erro.message, true); }
+
+function alternarTela(esc, mos) {
+  document.getElementById(esc).classList.add('oculto');
+  document.getElementById(mos).classList.remove('oculto');
+}
+
+function renderTabelaArray(nomeAba, arrayDados, formatadorHtml, rowClassFn = null) {
+  const tb = document.querySelector(`#tb-${nomeAba} tbody`);
+  if (!tb) return;
+  tb.innerHTML = '';
+  if (arrayDados) {
+    arrayDados.forEach(item => {
+      let rowClass = rowClassFn ? rowClassFn(item) : '';
+      tb.innerHTML += `<tr class="${rowClass}">
+        <td class="col-checkbox"><input type="checkbox" class="chk-${nomeAba}" value="${item.id}"></td>
+        ${formatadorHtml(item)}
+        <td style="text-align:right;">
+          <button class="btn-acao btn-icone" onclick="abrirModalGenerico('${nomeAba}','${item.id}')">👁️ Ver</button>
+        </td>
+      </tr>`;
+    });
+  }
+}
+
+
+
+
+
+
+function prepararFormulario(nomeAba, id = '') {
+  const formEl = document.getElementById(`tela-${nomeAba}-form`);
+  if (!formEl) return;
+  
+  const form = formEl.querySelector('form');
+  if (form) form.reset(); 
+
+  const inputId = document.getElementById(`${nomeAba}_id`);
+  if (inputId) inputId.value = '';
+
+  
+  const uisDinamicas = ['ui_criado_por', 'ui_validado_por', 'ui_revisado_por', 'ui_revisao_aprovada_por', 'ui_aprovado_por', 'lista_participantes_ui'];
+  uisDinamicas.forEach(uiId => { const el = document.getElementById(uiId); if (el) el.innerHTML = ''; });
+
+  if (id) {
+      
+      const obj = (DB[nomeAba] || []).find(x => x.id === id);
+      if (obj) {
+          if (inputId) inputId.value = obj.id;
+          Object.keys(obj).forEach(chave => {
+              const campo = document.getElementById(`${nomeAba}_${chave}`);
+              if (campo) campo.value = obj[chave];
+          });
+          
+          if (nomeAba === 'Documentos') {
+              ['criado_por', 'validado_por', 'revisado_por', 'revisao_aprovada_por', 'aprovado_por'].forEach(p => { 
+                  if (typeof atualizarUIDocPapel === "function") atualizarUIDocPapel(p); 
+              });
+          }
+          if (nomeAba === 'Treinamentos') { 
+              if (typeof atualizarUIParticipantes === "function") atualizarUIParticipantes(); 
+          }
+      }
+  } else {
+      
+      const campoData = document.getElementById(`${nomeAba}_data`) || document.getElementById(`${nomeAba}_data_criacao`);
+      if (campoData) campoData.value = new Date().toISOString().split('T')[0];
+  }
+  
+  alternarTela(`tela-${nomeAba}-lista`, `tela-${nomeAba}-form`);
+}
+
+
+
+function abrirModalGenerico(nomeAba, id) {
+  const obj = DB[nomeAba].find(x => x.id === id); if(!obj) return;
+  let html = '';
+  
+  const correcoesPT = {
+    'Codigo': 'Código', 'Titulo': 'Título', 'Tipo Documento': 'Tipo de Documento', 'Versao': 'Versão',
+    'Data Criacao': 'Data de Criação', 'Ultima Atualizacao': 'Última Atualização',
+    'Criado Por': 'Criado por', 'Validado Por': 'Validado por', 'Aprovado Por': 'Aprovado por',
+    'Revisado Por': 'Revisado por', 'Revisao Aprovada Por': 'Revisão aprovada por',
+    'Link Drive': 'Link Drive', 'Status': 'Status', 'Descricao': 'Descrição', 'O Que': 'O Que (Ação)', 
+    'Por Que': 'Por Que', 'Eficacia Verificada': 'Eficácia Verificada', 'Proxima Revisao': 'Próxima Revisão'
+  };
+
+  function renderizarCampo(chave, valor) {
+    if (!valor) return '';
+    if (chave.includes('data') || chave.includes('prazo') || chave.includes('inicio') || chave.includes('revisao') || chave.includes('validade') || chave.includes('atualizacao')) {
+       valor = formatarDataBR(valor);
+    }
+    
+    let isBlockLayout = false;
+    const camposDeLista = ['criado_por', 'validado_por', 'revisado_por', 'aprovado_por', 'revisao_aprovada_por', 'participantes'];
+
+    if (typeof valor === 'string' && valor.includes('http')) { 
+        valor = `<a href="${valor}" target="_blank" style="color:var(--azul-claro);">Abrir Anexo ↗</a>`; 
+    } else if (camposDeLista.includes(chave) || (typeof valor === 'string' && valor.includes('\n'))) {
+        valor = valor.toString().split('\n').map(v => v.trim().startsWith('•') ? v : `• ${v}`).join('<br>');
+        isBlockLayout = true;
+    }
+    
+    let nomeAmigavel = chave.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    for (let key in correcoesPT) { if (nomeAmigavel.includes(key)) nomeAmigavel = nomeAmigavel.replace(key, correcoesPT[key]); }
+    
+    if (isBlockLayout) {
+        return `<div class="item-detalhe" style="display:block;"><strong style="display:block; margin-bottom: 6px;">${nomeAmigavel}:</strong><span style="display:block; color: var(--texto-suave); line-height: 1.6; margin-left: 4px;">${valor}</span></div>`;
+    } else {
+        return `<div class="item-detalhe"><strong>${nomeAmigavel}:</strong> <span>${valor}</span></div>`;
+    }
+  }
+
+  if (nomeAba === 'Documentos') {
+      const ordem = ['titulo', 'codigo', 'setor', 'tipo_documento', 'versao', 'data_criacao', 'status', 'criado_por', 'validado_por', 'aprovado_por', 'link_drive'];
+      ordem.forEach(k => { if(obj[k]) html += renderizarCampo(k, obj[k]); });
+      
+      if (obj['ultima_atualizacao'] || obj['revisado_por'] || obj['revisao_aprovada_por']) {
+         html += `<div style="text-align:center; margin: 20px 0 15px; color: var(--azul-escuro); font-weight: bold; border-bottom: 1px dashed var(--borda); padding-bottom: 8px;">--------------- ATUALIZAÇÕES ---------------</div>`;
+         if(obj['ultima_atualizacao']) html += renderizarCampo('ultima_atualizacao', obj['ultima_atualizacao']);
+         if(obj['revisado_por']) html += renderizarCampo('revisado_por', obj['revisado_por']);
+         if(obj['revisao_aprovada_por']) html += renderizarCampo('revisao_aprovada_por', obj['revisao_aprovada_por']);
+      }
+      const jaRenderizados = [...ordem, 'ultima_atualizacao', 'revisado_por', 'revisao_aprovada_por', 'id', 'senha'];
+      Object.keys(obj).forEach(k => { if(!jaRenderizados.includes(k) && obj[k]) html += renderizarCampo(k, obj[k]); });
+  } else {
+      Object.keys(obj).forEach(chave => { if(chave === 'id' || chave === 'senha') return; html += renderizarCampo(chave, obj[chave]); });
+  }
+  
+  // ARQUITETURA CORRIGIDA: Adição do comando fecharModal() acoplado ao onclick do botão Editar
+  let botaoEditar = nomeAba === 'HistoricoIndicadores' ? '' : `<button class="btn-acao admin-only" style="background:#f1f5f9; color:#334155; border:1px solid var(--borda);" onclick="fecharModal(); prepararFormulario('${nomeAba}', '${id}')">✏️ Editar</button>`;
+  
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-acoes-container').innerHTML = `${botaoEditar} <button class="btn-acao admin-only" style="background:var(--vermelho);" onclick="excluirGenerico('${nomeAba}', '${id}')">🗑️ Excluir</button>`;
+  document.getElementById('meuModal').classList.remove('oculto');
+}
+
+
+function fecharModal() { document.getElementById('meuModal').classList.add('oculto'); }
+function fecharModalConfirmacao() { document.getElementById('modal-confirmacao').classList.add('oculto'); exclusaoPendente = null; }
+
+
+function excluirGenerico(nomeAba, id) {
+    exclusaoPendente = { aba: nomeAba, id: id };
+    document.getElementById('modal-confirmacao').classList.remove('oculto');
+}
+
+function executarExclusaoConfirmada() {
+    if (!exclusaoPendente) return;
+    const aba = exclusaoPendente.aba; const id = exclusaoPendente.id;
+    fecharModalConfirmacao();
+    if(document.getElementById('meuModal')) fecharModal();
+    
+    exibirAviso("Excluindo registro...");
+    google.script.run
+        .withSuccessHandler(resposta => {
+            DB[aba] = resposta.dados;
+            if(aba === 'Configuracoes') processarConfiguracoes();
+            
+            
+            sessionStorage.removeItem('cache_banco_sgq');
+            if (typeof buscarDadosServidor === "function") buscarDadosServidor(true);
+            if (typeof renderizarTudo === "function") renderizarTudo();
+            
+            exibirAviso(resposta.mensagem);
+        })
+        .withFailureHandler(tratarErro)
+        .excluirRegistro(aba, id);
+}
+
+
+function selecionarTodos(nomeAba, checkboxPai) {
+    const checkboxes = document.querySelectorAll(`.chk-${nomeAba}`);
+    checkboxes.forEach(chk => chk.checked = checkboxPai.checked);
+}
+
+
+
+function salvarGenerico(event, nomeAba) {
+    event.preventDefault();
+
+    
+    if (nomeAba === 'HistoricoIndicadores') {
+        const indId = document.getElementById('HistoricoIndicadores_indicador_id').value;
+        if (!indId) { exibirAviso("Selecione um indicador antes de lançar.", true); return; }
+        const mesSel = document.getElementById('HistoricoIndicadores_mes_select').value;
+        const anoSel = document.getElementById('HistoricoIndicadores_ano_select').value;
+        document.getElementById('HistoricoIndicadores_mes').value = mesSel + '/' + anoSel;
+    }
+
+    
+    const inputs = event.target.querySelectorAll('input, select, textarea');
+    let obj = {};
+    inputs.forEach(inp => {
+        if (inp.id && inp.id.startsWith(nomeAba + '_')) {
+            obj[inp.id.replace(nomeAba + '_', '')] = inp.value;
+        }
+    });
+
+    exibirAviso("Salvando...");
+
+    
+    google.script.run
+        .withSuccessHandler(respostaPacote => {
+
+            
+            DB[nomeAba] = respostaPacote.dados;
+
+            
+            const formEl = document.getElementById(`tela-${nomeAba}-form`);
+            const listaEl = document.getElementById(`tela-${nomeAba}-lista`);
+            if (formEl) formEl.classList.add('oculto');
+            if (listaEl) listaEl.classList.remove('oculto');
+
+            
+            if (typeof processarConfiguracoes === "function") processarConfiguracoes();
+
+            
+            try {
+                sessionStorage.setItem('cache_banco_sgq', JSON.stringify(DB));
+            } catch(e) {
+                console.warn("Limite de cache excedido. Sincronizando via RAM.");
+                sessionStorage.removeItem('cache_banco_sgq');
+            }
+
+            
+            if (typeof renderizarTudo === "function") renderizarTudo();
+
+            exibirAviso(respostaPacote.mensagem);
+
+            
+            if (typeof buscarDadosServidor === "function") buscarDadosServidor(true);
+        })
+        .withFailureHandler(tratarErro)
+        .salvarRegistro(nomeAba, obj);
+}
+
+</script>
+<script>
+  
+  
+  
+  function abrirNavegadorDrive(idCampoDestino) {
+    inputDestinoDrive = idCampoDestino;
+    if (CHAVE_API_DRIVE === 'COLE_AQUI_A_SUA_CHAVE_DE_API' || CHAVE_API_DRIVE === '') { exibirAviso("Atenção: A Chave de API não foi inserida.", true); return; }
+    exibirAviso("Conectando ao Google Drive...");
+    google.script.run.withSuccessHandler(desenharJanelaPicker).withFailureHandler(tratarErro).obterTokenDrive();
+  }
+  function desenharJanelaPicker(token) {
+    if (isPickerApiLoaded && token) {
+      const view = new google.picker.DocsView(google.picker.ViewId.DOCS).setIncludeFolders(true).setSelectFolderEnabled(false);
+      const picker = new google.picker.PickerBuilder().addView(view).setOAuthToken(token).setDeveloperKey(CHAVE_API_DRIVE).setOrigin(google.script.host.origin).setCallback(aoSelecionarArquivo).setTitle('Navegue pelo seu Google Drive').build();
+      picker.setVisible(true);
+    } else { exibirAviso("A API do Drive ainda não carregou.", true); }
+  }
+  function aoSelecionarArquivo(data) { if (data.action == google.picker.Action.PICKED) { document.getElementById(inputDestinoDrive).value = data.docs[0].url; exibirAviso("Link do arquivo colado com sucesso!"); } }
+  function abrirSuperPicker(idCampoDestino) { inputDestinoDrive = idCampoDestino; document.getElementById('input-picker-busca').value = ''; document.getElementById('picker-resultados').innerHTML = ''; document.getElementById('modal-super-picker').classList.remove('oculto'); }
+  function fecharSuperPicker() { document.getElementById('modal-super-picker').classList.add('oculto'); }
+  function iniciarBuscaNativa() {
+    const termo = document.getElementById('input-picker-busca').value; if (!termo || termo.length < 3) return;
+    document.getElementById('picker-resultados').innerHTML = `Buscando...`;
+    google.script.run.withSuccessHandler(exibirResultadosNativos).withFailureHandler(tratarErro).pesquisarNoDrive(termo);
+  }
+  function exibirResultadosNativos(resultados) {
+    const div = document.getElementById('picker-resultados');
+    if (resultados.length === 0) { div.innerHTML = 'Nenhum arquivo.'; return; }
+    let html = ''; resultados.forEach(arq => { html += `<div class="drive-item" onclick="selecionarArquivoNativo('${arq.url}')"><div class="drive-details"><span class="drive-title">${arq.nome}</span></div></div>`; }); div.innerHTML = html;
+  }
+  function selecionarArquivoNativo(url) { if(inputDestinoDrive) { document.getElementById(inputDestinoDrive).value = url; fecharSuperPicker(); } }
+
+  // ==========================================
+  
+  
+  function adicionarPapelDoc(papel) {
+    const inputNome = document.getElementById(`temp_nome_${papel}`);
+    const selectSetor = document.getElementById(`temp_setor_${papel}`);
+    const textarea = document.getElementById(`Documentos_${papel}`);
+    
+    const nome = inputNome.value.trim();
+    const setor = selectSetor.value;
+    if (!nome || !setor) return;
+    
+    const novaLinha = `${nome} (${setor})`;
+    textarea.value = textarea.value === '' ? novaLinha : textarea.value + '\n' + novaLinha;
+    
+    inputNome.value = ''; inputNome.focus();
+    atualizarUIDocPapel(papel);
+  }
+
+  function atualizarUIDocPapel(papel) {
+    const textarea = document.getElementById(`Documentos_${papel}`);
+    const containerUI = document.getElementById(`ui_${papel}`);
+    if (!textarea || !containerUI) return;
+    
+    if (textarea.value.trim() === '') { containerUI.innerHTML = '<em style="color:var(--texto-suave);">Vazio</em>'; return; }
+    
+    let html = '<ul style="margin:0; padding-left:18px;">'; 
+    textarea.value.split('\n').forEach((linha, index) => { 
+        html += `<li style="margin-bottom:4px;">${linha} <button type="button" class="admin-only" onclick="removerPapelDoc('${papel}', ${index})" style="background:transparent; border:none; color:var(--vermelho); cursor:pointer; font-weight:bold; font-size:11px;">X</button></li>`; 
+    }); 
+    containerUI.innerHTML = html + '</ul>';
+  }
+
+  function removerPapelDoc(papel, index) {
+    const textarea = document.getElementById(`Documentos_${papel}`);
+    let linhas = textarea.value.split('\n'); 
+    linhas.splice(index, 1); 
+    textarea.value = linhas.join('\n'); 
+    atualizarUIDocPapel(papel);
+  }
+
+  
+  function adicionarParticipanteTreinamento() {
+    const inputNome = document.getElementById('temp_nome_participante'); const selectSetor = document.getElementById('temp_setor_participante'); const textarea = document.getElementById('Treinamentos_participantes');
+    const nome = inputNome.value.trim(); const setor = selectSetor.value;
+    if (!nome || !setor) return;
+    const novaLinha = `${nome} (${setor})`; textarea.value = textarea.value === '' ? novaLinha : textarea.value + '\n' + novaLinha;
+    inputNome.value = ''; inputNome.focus(); atualizarUIParticipantes();
+  }
+  
+  function atualizarUIParticipantes() {
+    const textarea = document.getElementById('Treinamentos_participantes'); const containerUI = document.getElementById('lista_participantes_ui');
+    if (!textarea || !containerUI) return;
+    if (textarea.value.trim() === '') { containerUI.innerHTML = '<em style="color:var(--texto-suave);">Vazio</em>'; return; }
+    
+    let html = '<ul style="margin:0; padding-left:18px;">'; 
+    textarea.value.split('\n').forEach((linha, index) => { 
+        html += `<li style="margin-bottom:4px;">${linha} <button type="button" class="admin-only" onclick="removerParticipante(${index})" style="background:transparent; border:none; color:var(--vermelho); cursor:pointer; font-weight:bold; font-size:11px;">X</button></li>`; 
+    }); 
+    containerUI.innerHTML = html + '</ul>';
+  }
+  
+  function removerParticipante(index) {
+    const textarea = document.getElementById('Treinamentos_participantes');
+    let linhas = textarea.value.split('\n'); linhas.splice(index, 1); textarea.value = linhas.join('\n'); atualizarUIParticipantes();
+  }
+
+  
+  
+  
+  function calcRisco() {
+    let p = parseInt(document.getElementById('Riscos_probabilidade').value) || 0; let i = parseInt(document.getElementById('Riscos_impacto').value) || 0;
+    let score = p * i; let campo = document.getElementById('Riscos_criticidade');
+    if (score === 0) { campo.value = ''; campo.style.color = 'inherit'; }
+    else if (score <= 5) { campo.value = score + ' - Baixo (Aceitar)'; campo.style.color = 'var(--verde)'; }
+    else if (score < 15) { campo.value = score + ' - Moderado (Mitigar)'; campo.style.color = 'var(--laranja)'; }
+    else { campo.value = score + ' - Alto (Agir Já)'; campo.style.color = 'var(--vermelho)'; }
+  }
+
+  function desenharMatrizRiscos() {
+      const container = document.getElementById('grid-matriz-riscos');
+      if(!container) return;
+      let html = '';
+      for(let p = 5; p >= 1; p--) {
+          for(let i = 1; i <= 5; i++) {
+              let count = (DB.Riscos || []).filter(r => parseInt(r.probabilidade) === p && parseInt(r.impacto) === i && r.status !== 'Encerrado').length;
+              let sc = p * i;
+              let bg = sc <= 5 ? 'rgba(46, 158, 91, 0.4)' : (sc < 15 ? 'rgba(245, 165, 36, 0.4)' : 'rgba(229, 72, 77, 0.4)');
+              let border = (filtroMatrizRisco && filtroMatrizRisco.p === p && filtroMatrizRisco.i === i) ? '2px solid var(--azul-escuro)' : '1px solid var(--borda)';
+              let numStr = count > 0 ? `<span style="font-size:16px; font-weight:700; color:var(--texto);">${count}</span>` : '';
+              let cursor = count > 0 ? 'cursor:pointer;' : '';
+              html += `<div style="background:${bg}; border:${border}; display:flex; justify-content:center; align-items:center; height: 35px; border-radius: 4px; transition: 0.2s; ${cursor}" onclick="${count > 0 ? `filtrarRiscoMatriz(${p},${i})` : ''}">${numStr}</div>`;
+          }
+      }
+      container.innerHTML = html;
+      let btnLimpar = document.getElementById('btn-limpar-filtro-risco');
+      if(filtroMatrizRisco) btnLimpar.classList.remove('oculto'); else btnLimpar.classList.add('oculto');
+  }
+
+  function filtrarRiscoMatriz(p, i) { filtroMatrizRisco = {p: p, i: i}; renderizarTudo(); }
+  function limparFiltroRisco() { filtroMatrizRisco = null; renderizarTudo(); }
+
+  
+  
+  
+  function popularAnosLancamento() {
+      const select = document.getElementById('HistoricoIndicadores_ano_select');
+      if(select.options.length > 0) return;
+      const anoAtual = new Date().getFullYear();
+      for(let i = anoAtual - 2; i <= anoAtual + 2; i++) {
+          let opt = document.createElement('option');
+          opt.value = i; opt.text = i;
+          if(i === anoAtual) opt.selected = true;
+          select.appendChild(opt);
+      }
+  }
+
+  function verificarIndicadorSelecionado() {
+     const id = document.getElementById('select-indicador-grafico').value;
+     const btn = document.getElementById('btn-lancar-mes');
+     const msg = document.getElementById('msg-selecione-indicador');
+     const form = document.getElementById('form-lancamento');
+     if (id) { btn.disabled = false; btn.style.opacity = 1; msg.classList.add('oculto'); } 
+     else { btn.disabled = true; btn.style.opacity = 0.5; form.classList.add('oculto'); msg.classList.remove('oculto'); }
+  }
+
+  function preencherSelectsGrafico() {
+    const s = document.getElementById('select-indicador-grafico');
+    const valAtual = s.value;
+    s.innerHTML = '<option value="">-- Escolha --</option>';
+    DB.Indicadores.forEach(d => s.innerHTML += `<option value="${d.id}">${d.nome}</option>`);
+    s.value = valAtual;
+    document.getElementById('HistoricoIndicadores_indicador_id').value = s.value;
+    gerarGrafico();
+    verificarIndicadorSelecionado();
+  }
+
+  function gerarGrafico() {
+    const id = document.getElementById('select-indicador-grafico').value;
+    document.getElementById('HistoricoIndicadores_indicador_id').value = id;
+    if(graficoAtual) graficoAtual.destroy();
+    if(!id) return;
+    const ind = DB.Indicadores.find(i=>i.id===id);
+    const hist = DB.HistoricoIndicadores.filter(h=>h.indicador_id===id);
+    renderTabelaArray('HistoricoIndicadores', hist, h => `<td>${h.mes}</td><td>${h.valor}</td>`);
+    const ctx = document.getElementById('meuGrafico').getContext('2d');
+    graficoAtual = new Chart(ctx, { type:'bar', data:{ labels:hist.map(h=>h.mes), datasets:[{label:'Valor Real', data:hist.map(h=>h.valor), backgroundColor:hist.map(h=>parseFloat(h.valor)>=parseFloat(ind.meta)?'#00AFEF':'#E5484D'), borderRadius: 4}]}});
+  }
+
+  // ==========================================
+  
+  
+  function renderKanbanTarefas() {
+    ['Pendente', 'AFazer', 'Fazendo', 'Aguardandoaprovacao', 'Concluido'].forEach(id => { let c = document.getElementById('kb-tar-'+id); if(c) c.innerHTML=''; });
+    let filtro = document.getElementById('filtro-tarefas').value.toLowerCase();
+    
+    let tarefasOrdenadas = [...DB.Tarefas].sort((a, b) => {
+      let dateA = a.data_entrega ? new Date(a.data_entrega).getTime() : Infinity;
+      let dateB = b.data_entrega ? new Date(b.data_entrega).getTime() : Infinity;
+      return dateA - dateB;
+    });
+
+    let colMap = { 'Pendente': 'kb-tar-Pendente', 'A Fazer': 'kb-tar-AFazer', 'Fazendo': 'kb-tar-Fazendo', 'Aguardando aprovação': 'kb-tar-Aguardandoaprovacao', 'Concluído': 'kb-tar-Concluido' };
+
+    tarefasOrdenadas.forEach(t => {
+      if (filtro && !t.titulo.toLowerCase().includes(filtro) && !(t.descricao||'').toLowerCase().includes(filtro)) return;
+      let dest = colMap[t.etapa] || 'kb-tar-AFazer';
+      let col = document.getElementById(dest);
+      if(col){
+        let atrasado = (t.etapa!=='Concluído' && t.data_entrega && new Date(t.data_entrega).getTime() < new Date().setHours(0,0,0,0));
+        let card = document.createElement('div'); card.className = `kanban-card`;
+        card.style.borderLeftColor = atrasado ? 'var(--vermelho)' : 'var(--azul-claro)';
+        card.innerHTML = `
+          <h5>${t.titulo}</h5><p style="margin-bottom:8px;"><strong>Prazo:</strong> <span style="color:${atrasado?'var(--vermelho)':'inherit'}; font-weight:${atrasado?'600':'400'}">${formatarDataBR(t.data_entrega)}</span></p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Tarefas', '${t.id}', 'etapa', this.value)">
+            <option value="Pendente" ${t.etapa==='Pendente'?'selected':''}>Pendente</option>
+            <option value="A Fazer" ${t.etapa==='A Fazer'?'selected':''}>A Fazer</option>
+            <option value="Fazendo" ${t.etapa==='Fazendo'?'selected':''}>Fazendo</option>
+            <option value="Aguardando aprovação" ${t.etapa==='Aguardando aprovação'?'selected':''}>Aguardando aprovação</option>
+            <option value="Concluído" ${t.etapa==='Concluído'?'selected':''}>Concluído</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Tarefas', '${t.id}')">👁️ Detalhes</button></div>
+        `;
+        col.appendChild(card);
+      }
+    });
+  }
+
+  function renderKanbanKaizen() {
+    ['Sugerido', 'Avaliando', 'Aprovado', 'Implementado', 'Rejeitado'].forEach(id => { let c = document.getElementById('kb-'+id); if(c) c.innerHTML=''; });
+    DB.Kaizen.forEach(kz => {
+      let dest = 'kb-' + (kz.status || 'Sugerido');
+      let col = document.getElementById(dest);
+      if(col){
+        let card = document.createElement('div'); card.className = `kanban-card`;
+        card.innerHTML = `
+          <h5>${kz.ideia}</h5><p style="margin-bottom:8px;"><strong>Setor:</strong> ${kz.setor}</p>
+          <select style="width:100%; margin-top:8px; padding:6px; border:1px solid var(--borda); border-radius:4px; font-family:inherit; color:var(--texto-suave);" onchange="mudarStatusGenerico('Kaizen', '${kz.id}', 'status', this.value)">
+            <option value="Sugerido" ${kz.status==='Sugerido'?'selected':''}>Sugerido</option>
+            <option value="Avaliando" ${kz.status==='Avaliando'?'selected':''}>Avaliando</option>
+            <option value="Aprovado" ${kz.status==='Aprovado'?'selected':''}>Aprovado</option>
+            <option value="Implementado" ${kz.status==='Implementado'?'selected':''}>Implementado</option>
+            <option value="Rejeitado" ${kz.status==='Rejeitado'?'selected':''}>Rejeitado</option>
+          </select>
+          <div style="margin-top:12px; text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Kaizen', '${kz.id}')">👁️ Detalhes</button></div>
+        `;
+        col.appendChild(card);
+      }
+    });
+  }
+
+  // ==========================================
+  
+  
+  function montarAgenda() {
+    let agenda = []; const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+    (DB.Riscos || []).forEach(r => { if (r.status !== 'Encerrado' && r.proxima_revisao) agenda.push({ tipo: 'Risco', ref: r.descricao + ' ('+r.setor+')', data: r.proxima_revisao, id: r.id, aba: 'Riscos' }); });
+    (DB.Auditorias || []).forEach(a => { if (a.prazo) agenda.push({ tipo: 'Auditoria', ref: 'Setor '+a.setor, data: a.prazo, id: a.id, aba: 'Auditorias' }); });
+    (DB.PlanosMelhoria || []).forEach(p => { if (p.status !== 'Concluído' && p.prazo) agenda.push({ tipo: 'Plano de Ação', ref: p.o_que, data: p.prazo, id: p.id, aba: 'PlanosMelhoria' }); });
+    (DB.Implantacao5S || []).forEach(i => { if (i.proxima_avaliacao) agenda.push({ tipo: '5S', ref: 'Setor '+i.setor, data: i.proxima_avaliacao, id: i.id, aba: 'Implantacao5S', setor: i.setor }); });
+
+    agenda.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+
+    const tbody = document.querySelector('#tb-Agenda tbody'); if(!tbody) return; tbody.innerHTML = '';
+
+    agenda.forEach(item => {
+        let diffTime = new Date(item.data).getTime() - hoje.getTime();
+        let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        let textoDias = '', corDias = 'inherit';
+
+        if (diffDays < 0) { textoDias = `${Math.abs(diffDays)} dias atrasado`; corDias = 'var(--vermelho)'; }
+        else if (diffDays === 0) { textoDias = `Vence hoje`; corDias = 'var(--laranja)'; }
+        else if (diffDays <= 7) { textoDias = `faltam ${diffDays} dias`; corDias = 'var(--laranja)'; }
+        else { textoDias = `faltam ${diffDays} dias`; }
+
+        let badgeCor = item.tipo === 'Risco' ? '#E5484D' : (item.tipo === 'Auditoria' ? '#00AFEF' : (item.tipo === 'Plano de Ação' ? '#F5A524' : '#2E9E5B'));
+        let badge = `<span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:${badgeCor}; color:white;">${item.tipo}</span>`;
+        let btnAction = item.tipo === '5S' ? `<button class="btn-acao btn-icone" onclick="abrirResumo5SSetor('${item.setor}')">👁️ Ver</button>` : `<button class="btn-acao btn-icone" onclick="abrirModalGenerico('${item.aba}', '${item.id}')">👁️ Ver</button>`;
+
+        tbody.innerHTML += `<tr><td>${badge}</td><td>${item.ref}</td><td>${formatarDataBR(item.data)}</td><td style="color:${corDias}; font-weight:600;">${textoDias}</td><td style="text-align:right;">${btnAction}</td></tr>`;
+    });
+  }
+</script>
+<script>
+
+  
+  
+  function dataEstaNoPeriodo(dataStr, dataInicio, dataFim) {
+      if (!dataInicio && !dataFim) return true;
+      if (!dataStr) return false;
+      let d = dataStr;
+      if (d.includes('/')) { const p = d.split('/'); if (p.length >= 3) d = `${p[2]}-${p[1]}-${p[0]}`; }
+      const dataItem = new Date(d + 'T00:00:00').getTime();
+      const inicio = dataInicio ? new Date(dataInicio + 'T00:00:00').getTime() : 0;
+      const fim = dataFim ? new Date(dataFim + 'T23:59:59').getTime() : Infinity;
+      return dataItem >= inicio && dataItem <= fim;
+  }
+
+  if (typeof ChartDataLabels !== 'undefined') {
+      Chart.register(ChartDataLabels);
+      Chart.defaults.set('plugins.datalabels', {
+          color: '#fff', font: { weight: 'bold', family: 'Inter' },
+          display: function(context) { return context.dataset.data[context.dataIndex] > 0; }
+      });
+  }
+
+  
+  
+  
+  function renderizarTudo() {
+    const dashboardAtivo = document.getElementById('canvasDocsStatus');
+    if(!dashboardAtivo) return;
+    const moduloAtual = sessionStorage.getItem('moduloAtivoSGQ') || 'Dashboard';
+    if(moduloAtual !== 'Dashboard') {
+        
+        const h = new Date(); h.setHours(0,0,0,0);
+        renderTabelaArray('Documentos', DB.Documentos || [], d => `<td><strong style="color:var(--azul-escuro)">${d.codigo}</strong></td><td>${d.titulo}</td><td>${d.setor}</td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:${d.status==='Vigente'?'#dcfce7':'#fef3c7'}; color:${d.status==='Vigente'?'#166534':'#92400e'}">${d.status}</span></td>`);
+        renderTabelaArray('Usuarios', DB.Usuarios || [], u => `<td>${u.nome}</td><td>${u.usuario}</td><td>${u.perfil}</td>`);
+        renderTabelaArray('Auditorias', DB.Auditorias || [], a => `<td>${formatarDataBR(a.data)}</td><td>${a.setor}</td><td>${a.status}</td>`);
+        renderTabelaArray('PlanosMelhoria', DB.PlanosMelhoria || [], p => `<td class="${(p.status!=='Concluído'&&p.prazo&&new Date(p.prazo).getTime()<h.getTime())?'linha-atrasada':''}">${p.o_que}</td><td>${formatarDataBR(p.prazo)}</td><td>${p.status}</td>`);
+        renderTabelaArray('Treinamentos', DB.Treinamentos || [], t => {
+            let qtd = (t.participantes && t.participantes.trim() !== '') ? t.participantes.split('\n').length : 0;
+            return `<td>${formatarDataBR(t.data)}</td><td>${t.tema}</td><td>${t.instrutor}</td><td><strong>${qtd}</strong></td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:${t.status==='Realizado'?'#dcfce7':(t.status==='Cancelado'?'#fee2e2':'#f1f5f9')}; color:${t.status==='Realizado'?'#166534':(t.status==='Cancelado'?'#991b1b':'#475569')}">${t.status}</span></td>`;
+        });
+        let riscosParaMostrar = DB.Riscos || [];
+        if (filtroMatrizRisco) {
+            riscosParaMostrar = riscosParaMostrar.filter(r => parseInt(r.probabilidade) === filtroMatrizRisco.p && parseInt(r.impacto) === filtroMatrizRisco.i && r.status !== 'Encerrado');
+        }
+        renderTabelaArray('Riscos', riscosParaMostrar, r => {
+            let sc = (parseInt(r.probabilidade)||0) * (parseInt(r.impacto)||0);
+            let corBg = sc<=5 ? '#dcfce7' : (sc<15 ? '#fef3c7' : '#fee2e2');
+            let corTx = sc<=5 ? '#166534' : (sc<15 ? '#d97706' : '#991b1b');
+            let lbl = sc<=5 ? 'Baixo' : (sc<15 ? 'Moderado' : 'Alto');
+            return `<td>${formatarDataBR(r.data)}</td><td>${r.setor}</td><td>${r.descricao}</td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:${corBg}; color:${corTx}">${sc} - ${lbl}</span></td><td>${r.status}</td><td>${formatarDataBR(r.proxima_revisao)}</td>`;
+        }, r => {
+            if (r.status !== 'Encerrado' && r.proxima_revisao && new Date(r.proxima_revisao).getTime() < h.getTime()) return 'linha-atrasada';
+            return '';
+        });
+        desenharMatrizRiscos();
+        renderTabelaArray('Indicadores', DB.Indicadores || [], i => `<td>${i.nome}</td><td>${i.setor}</td><td>${i.meta}</td>`);
+        preencherSelectsGrafico();
+        renderKanbanTarefas();
+        renderKanbanKaizen();
+        renderCards5S();
+        montarAgenda();
+        return;
+    }
+
+    const h = new Date(); h.setHours(0,0,0,0);
+    
+    
+    let dInicio = document.getElementById('filtro-data-inicio') ? document.getElementById('filtro-data-inicio').value : '';
+    let dFim = document.getElementById('filtro-data-fim') ? document.getElementById('filtro-data-fim').value : '';
+
+    
+    let tarDash = DB.Tarefas.filter(t => dataEstaNoPeriodo(t.data_entrega || t.data_inicio, dInicio, dFim));
+    let audDash = DB.Auditorias.filter(a => dataEstaNoPeriodo(a.data, dInicio, dFim));
+    let plDash = DB.PlanosMelhoria.filter(p => dataEstaNoPeriodo(p.data_inicio || p.prazo, dInicio, dFim));
+    let treinDash = DB.Treinamentos.filter(t => dataEstaNoPeriodo(t.data, dInicio, dFim));
+    let s5Dash = DB.Programa5S.filter(s => dataEstaNoPeriodo(s.data, dInicio, dFim));
+    let kzDash = DB.Kaizen.filter(k => dataEstaNoPeriodo(k.data, dInicio, dFim));
+    let riscoDash = DB.Riscos.filter(r => dataEstaNoPeriodo(r.data, dInicio, dFim));
+    
+    document.getElementById('dash-tarefas-atrasadas').innerText = tarDash.filter(t => t.etapa !== "Concluído" && t.data_entrega && new Date(t.data_entrega).getTime() < h.getTime()).length;
+    let ncs = 0; audDash.forEach(a => ncs += (parseInt(a.nc)||0)); document.getElementById('dash-ncs').innerText = ncs;
+    document.getElementById('dash-planos-atrasados').innerText = plDash.filter(p => p.status!=="Concluído" && p.prazo && new Date(p.prazo).getTime() < h.getTime()).length;
+    document.getElementById('dash-riscos-atrasados').innerText = riscoDash.filter(r => r.status !== 'Encerrado' && r.proxima_revisao && new Date(r.proxima_revisao).getTime() < h.getTime()).length;
+
+    
+    let treinRealizados = 0; let pessoasTreinadas = 0; let horasTotais = 0;
+    (treinDash || []).forEach(t => {
+      if (t.status === 'Realizado') {
+        treinRealizados++;
+        let qtd = (t.participantes && t.participantes.trim() !== '') ? t.participantes.split('\n').length : 0;
+        pessoasTreinadas += qtd;
+        let horas = parseFloat((t.carga_horaria || '0').replace(',', '.').replace(/[^\d.-]/g, ''));
+        if (!isNaN(horas)) horasTotais += horas;
+      }
+    });
+    document.getElementById('dash-trein-realizados').innerText = treinRealizados;
+    document.getElementById('dash-trein-pessoas').innerText = pessoasTreinadas;
+    document.getElementById('dash-trein-horas').innerText = horasTotais + 'h';
+
+    
+    let docsVig = DB.Documentos.filter(d=>d.status==='Vigente').length; let docsRev = DB.Documentos.filter(d=>d.status==='Em Revisão').length; let percVig = (docsVig+docsRev)>0 ? Math.round((docsVig/(docsVig+docsRev))*100) : 0;
+    document.getElementById('txt-docs-perc').innerText = percVig + '%';
+    if(graficoDocsStatus) graficoDocsStatus.destroy();
+    graficoDocsStatus = new Chart(document.getElementById('canvasDocsStatus'), { type: 'doughnut', data: { labels: ['Vigentes', 'Em Revisão'], datasets: [{ data: [docsVig, docsRev], backgroundColor: ['#2E9E5B', '#F5A524'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom', labels: {font:{family:'Inter'}} } } } });
+
+    let audSem = audDash.filter(a => parseInt(a.nc||0) === 0).length; let audCom = audDash.length - audSem;
+    if(graficoGaugeAuditoria) graficoGaugeAuditoria.destroy();
+    graficoGaugeAuditoria = new Chart(document.getElementById('canvasGaugeAuditoria'), { type: 'doughnut', data: { labels: ['Sem NC', 'Com NC'], datasets: [{ data: [audSem, audCom], backgroundColor: ['#2E9E5B', '#E5484D'], borderWidth: 0 }] }, options: { rotation: -90, circumference: 180, cutout: '75%', maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: {font:{family:'Inter'}} } } } });
+
+    let agrupNCs = audDash.reduce((acc, a) => { acc[a.setor] = (acc[a.setor]||0) + parseInt(a.nc||0); return acc; }, {});
+    if(graficoNCsPorSetor) graficoNCsPorSetor.destroy();
+    graficoNCsPorSetor = new Chart(document.getElementById('canvasNCsPorSetor'), { type: 'bar', data: { labels: Object.keys(agrupNCs), datasets: [{ label: 'NCs', data: Object.values(agrupNCs), backgroundColor: '#E5484D', borderRadius: 4 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: {font:{family:'Inter'}} }, y: { ticks: {font:{family:'Inter'}, precision:0} } } } });
+
+    let plA = plDash.filter(p=>p.status==='Aberto').length; let plE = plDash.filter(p=>p.status==='Em Andamento').length; let plC = plDash.filter(p=>p.status==='Concluído').length;
+    if(graficoPlanosStatus) graficoPlanosStatus.destroy();
+    graficoPlanosStatus = new Chart(document.getElementById('canvasPlanosStatus'), { type: 'bar', data: { labels: ['Aberto', 'Em Andamento', 'Concluído'], datasets: [{ data: [plA, plE, plC], backgroundColor: ['#6B7280', '#F5A524', '#2E9E5B'], borderRadius: 4 }] }, options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: {font:{family:'Inter'}, precision:0} }, y: { ticks: {font:{family:'Inter'}} } } } });
+
+    let rAlto = 0, rMod = 0, rBaixo = 0;
+    (riscoDash || []).forEach(r => { let sc = (parseInt(r.probabilidade)||0) * (parseInt(r.impacto)||0); if(sc === 0) return; if(sc <= 5) rBaixo++; else if(sc < 15) rMod++; else rAlto++; });
+    if(graficoMatrizRiscos) graficoMatrizRiscos.destroy();
+    graficoMatrizRiscos = new Chart(document.getElementById('canvasMatrizRiscos'), { type: 'doughnut', data: { labels: ['Baixo', 'Moderado', 'Alto'], datasets: [{ data: [rBaixo, rMod, rAlto], backgroundColor: ['#2E9E5B', '#F5A524', '#E5484D'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: {font:{family:'Inter'}} } } } });
+
+    document.getElementById('dash-5s-qtd').innerText = s5Dash.length;
+    let soma5s = 0; s5Dash.forEach(s => soma5s += (parseInt(s.pontuacao_total)||0));
+    document.getElementById('dash-5s-media').innerText = s5Dash.length > 0 ? (soma5s / s5Dash.length).toFixed(1) : 0;
+    let dados5S = agrupar5SPorSetorArray(s5Dash).filter(d => d.count > 0);
+    if(graficoMedia5S) graficoMedia5S.destroy();
+    graficoMedia5S = new Chart(document.getElementById('canvasMedia5S'), { type: 'bar', data: { labels: dados5S.map(d=>d.setor), datasets: [{ label:'Média 5S', data: dados5S.map(d=>d.mediaTotal), backgroundColor: dados5S.map(d=>d.mediaTotal<15?'#E5484D':(d.mediaTotal<20?'#F5A524':'#2E9E5B')), borderRadius: 4 }] }, options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { suggestedMin:0, suggestedMax:25, ticks: {font:{family:'Inter'}} }, x: { ticks: {font:{family:'Inter'}} } } } });
+
+    let kzS = kzDash.filter(k=>k.status==='Sugerido').length; let kzA = kzDash.filter(k=>k.status==='Avaliando').length; let kzAp = kzDash.filter(k=>k.status==='Aprovado').length; let kzI = kzDash.filter(k=>k.status==='Implementado').length; let kzR = kzDash.filter(k=>k.status==='Rejeitado').length;
+    if(graficoFunilKaizen) graficoFunilKaizen.destroy();
+    graficoFunilKaizen = new Chart(document.getElementById('canvasFunilKaizen'), { type: 'bar', data: { labels: ['Sugerido', 'Avaliando', 'Aprovado', 'Implementado', 'Rejeitado'], datasets: [{ label: 'Ideias Kaizen', data: [kzS, kzA, kzAp, kzI, kzR], backgroundColor: ['#6B7280', '#F5A524', '#00AFEF', '#2E9E5B', '#E5484D'], borderRadius: 4 }] }, options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: {font:{family:'Inter'}, precision:0} }, y: { ticks: {font:{family:'Inter'}} } } } });
+
+    
+    let docsFiltrados = DB.Documentos || [];
+    let setorDoc = document.getElementById('filtro-docs-setor').value;
+    if(setorDoc) docsFiltrados = docsFiltrados.filter(d => d.setor === setorDoc);
+    renderTabelaArray('Documentos', docsFiltrados, d => `<td><strong style="color:var(--azul-escuro)">${d.codigo}</strong></td><td>${d.titulo}</td><td>${d.setor}</td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:${d.status==='Vigente'?'#dcfce7':'#fef3c7'}; color:${d.status==='Vigente'?'#166534':'#92400e'}">${d.status}</span></td>`);
+
+    renderTabelaArray('Usuarios', DB.Usuarios || [], u => `<td>${u.nome}</td><td>${u.usuario}</td><td>${u.perfil}</td>`);
+
+    renderTabelaArray('Auditorias', DB.Auditorias, a => `<td>${formatarDataBR(a.data)}</td><td>${a.setor}</td><td>${a.status}</td>`);
+    renderTabelaArray('PlanosMelhoria', DB.PlanosMelhoria, p => `<td class="${(p.status!=='Concluído'&&p.prazo&&new Date(p.prazo).getTime()<h.getTime())?'linha-atrasada':''}">${p.o_que}</td><td>${formatarDataBR(p.prazo)}</td><td>${p.status}</td>`);
+    renderTabelaArray('Treinamentos', DB.Treinamentos || [], t => {
+      let qtd = (t.participantes && t.participantes.trim() !== '') ? t.participantes.split('\n').length : 0;
+      return `<td>${formatarDataBR(t.data)}</td><td>${t.tema}</td><td>${t.instrutor}</td><td><strong>${qtd}</strong></td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:${t.status==='Realizado'?'#dcfce7':(t.status==='Cancelado'?'#fee2e2':'#f1f5f9')}; color:${t.status==='Realizado'?'#166534':(t.status==='Cancelado'?'#991b1b':'#475569')}">${t.status}</span></td>`;
+    });
+    
+    let riscosParaMostrar = DB.Riscos || [];
+    if (filtroMatrizRisco) {
+      riscosParaMostrar = riscosParaMostrar.filter(r => parseInt(r.probabilidade) === filtroMatrizRisco.p && parseInt(r.impacto) === filtroMatrizRisco.i && r.status !== 'Encerrado');
+    }
+    renderTabelaArray('Riscos', riscosParaMostrar, r => {
+      let sc = (parseInt(r.probabilidade)||0) * (parseInt(r.impacto)||0);
+      let corBg = sc<=5 ? '#dcfce7' : (sc<15 ? '#fef3c7' : '#fee2e2'); let corTx = sc<=5 ? '#166534' : (sc<15 ? '#d97706' : '#991b1b'); let lbl = sc<=5 ? 'Baixo' : (sc<15 ? 'Moderado' : 'Alto');
+      return `<td>${formatarDataBR(r.data)}</td><td>${r.setor}</td><td>${r.descricao}</td><td><span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:${corBg}; color:${corTx}">${sc} - ${lbl}</span></td><td>${r.status}</td><td>${formatarDataBR(r.proxima_revisao)}</td>`;
+    }, r => {
+       if (r.status !== 'Encerrado' && r.proxima_revisao && new Date(r.proxima_revisao).getTime() < h.getTime()) return 'linha-atrasada';
+       return '';
+    });
+    desenharMatrizRiscos();
+
+    renderTabelaArray('Indicadores', DB.Indicadores, i => `<td>${i.nome}</td><td>${i.setor}</td><td>${i.meta}</td>`);
+
+    preencherSelectsGrafico();
+    renderKanbanTarefas();
+    renderKanbanKaizen();
+    renderCards5S();
+    montarAgenda();
+  }
+</script>
+<script>
+  
+  
+  
+  function agrupar5SPorSetorArray(arrayBase) {
+    const todosSetores = DB.Configuracoes.filter(c => c.tipo === 'Setor').map(c => c.valor);
+    const grupos = {};
+    todosSetores.forEach(s => { grupos[s] = { setor: s, count: 0, somaTotal: 0, somaSeiri: 0, somaSeiton: 0, somaSeiso: 0, somaSeiketsu: 0, somaShitsuke: 0 }; });
+    arrayBase.forEach(av => {
+      const s = av.setor; if (!grupos[s]) return;
+      grupos[s].count++; grupos[s].somaTotal += parseFloat(av.pontuacao_total) || 0;
+      grupos[s].somaSeiri += parseFloat(av.seiri) || 0; grupos[s].somaSeiton += parseFloat(av.seiton) || 0;
+      grupos[s].somaSeiso += parseFloat(av.seiso) || 0; grupos[s].somaSeiketsu += parseFloat(av.seiketsu) || 0; grupos[s].somaShitsuke += parseFloat(av.shitsuke) || 0;
+    });
+    return Object.values(grupos).map(g => ({
+      setor: g.setor, count: g.count, mediaTotal: g.count > 0 ? (g.somaTotal / g.count).toFixed(1) : 0,
+      mediaSeiri: g.count > 0 ? (g.somaSeiri / g.count).toFixed(1) : 0, mediaSeiton: g.count > 0 ? (g.somaSeiton / g.count).toFixed(1) : 0,
+      mediaSeiso: g.count > 0 ? (g.somaSeiso / g.count).toFixed(1) : 0, mediaSeiketsu: g.count > 0 ? (g.somaSeiketsu / g.count).toFixed(1) : 0, mediaShitsuke: g.count > 0 ? (g.somaShitsuke / g.count).toFixed(1) : 0
+    }));
+  }
+
+  function agrupar5SPorSetor() {
+    return agrupar5SPorSetorArray(DB.Programa5S);
+  }
+
+  function renderCards5S() {
+    const container = document.getElementById('grid-5s-setores'); if(!container) return;
+    container.innerHTML = '';
+    agrupar5SPorSetor().forEach(d => {
+      let cor = 'var(--cinza)'; if(d.count > 0) { cor = d.mediaTotal < 15 ? 'var(--vermelho)' : (d.mediaTotal < 20 ? 'var(--laranja)' : 'var(--verde)'); }
+      container.innerHTML += `<div class="card" style="border-top-color: ${cor}; cursor: pointer;" onclick="abrirResumo5SSetor('${d.setor}')"><h3 style="font-size: 13px;">${d.setor}</h3><p style="color: ${cor}; font-size: 28px;">${d.count > 0 ? d.mediaTotal : '-'} <span style="font-size: 14px; color: var(--texto-suave);">${d.count > 0 ? '/ 25' : ''}</span></p><div style="margin-top: 12px; font-size: 13px; color: var(--texto-suave);"><strong>${d.count}</strong> auditorias</div></div>`;
+    });
+  }
+
+  function abrirResumo5SSetor(setor) {
+    setorImplantacaoAtivo = setor; renderizarImplantacao5S(setor);
+    const dados = agrupar5SPorSetor(); const d = dados.find(g => g.setor === setor);
+    if(!d) return;
+
+    document.getElementById('modal-5s-resumo-titulo').innerText = `Gestão 5S: ${d.setor}`;
+    document.getElementById('modal-5s-resumo-count').innerText = d.count;
+
+    if (d.count === 0) {
+       document.getElementById('modal-5s-resumo-media').innerHTML = `<span style="color:var(--texto-suave);">S/N</span>`;
+       document.getElementById('grafico-container-5s').classList.add('oculto');
+       document.getElementById('msg-sem-avaliacoes').classList.remove('oculto');
+       document.getElementById('btn-ver-lista-avaliacoes').classList.add('oculto');
+    } else {
+       let cor = 'var(--verde)';
+       if(d.mediaTotal < 15) cor = 'var(--vermelho)';
+       else if(d.mediaTotal < 20) cor = 'var(--laranja)';
+
+       document.getElementById('modal-5s-resumo-media').innerHTML = `<span style="color:${cor}; font-weight:700;">${d.mediaTotal}</span>`;
+       document.getElementById('grafico-container-5s').classList.remove('oculto');
+       document.getElementById('msg-sem-avaliacoes').classList.add('oculto');
+       document.getElementById('btn-ver-lista-avaliacoes').classList.remove('oculto');
+
+       if(grafico5SSetor) grafico5SSetor.destroy();
+       const ctx = document.getElementById('grafico-5s-setor').getContext('2d');
+       grafico5SSetor = new Chart(ctx, {
+         type: 'radar',
+         data: {
+           labels: ['Utilização', 'Organização', 'Limpeza', 'Padronização', 'Disciplina'],
+           datasets: [{ label: 'Média de Desempenho', data: [d.mediaSeiri, d.mediaSeiton, d.mediaSeiso, d.mediaSeiketsu, d.mediaShitsuke], backgroundColor: 'rgba(0, 175, 239, 0.2)', borderColor: '#00AFEF', pointBackgroundColor: '#0B4C6B', borderWidth: 2 }]
+         },
+         options: { scales: { r: { suggestedMin: 0, suggestedMax: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+       });
+    }
+
+    document.getElementById('btn-ver-lista-avaliacoes').onclick = () => abrirListaAvaliacoes5S(setor);
+    document.getElementById('modal-5s-lista').classList.add('oculto');
+    document.getElementById('modal-5s-resumo').classList.remove('oculto');
+  }
+
+  function fecharModal5SResumo() { document.getElementById('modal-5s-resumo').classList.add('oculto'); }
+
+  function abrirListaAvaliacoes5S(setor) {
+    document.getElementById('modal-5s-resumo').classList.add('oculto');
+    document.getElementById('modal-5s-lista-titulo').innerText = `Auditorias - ${setor}`;
+
+    const avaliacoes = DB.Programa5S.filter(a => a.setor === setor);
+    const tbody = document.querySelector('#tb-5s-lista-setor tbody'); tbody.innerHTML = '';
+
+    avaliacoes.forEach(a => {
+      let cor = 'var(--verde)';
+      if(a.pontuacao_total < 15) cor = 'var(--vermelho)';
+      else if(a.pontuacao_total < 20) cor = 'var(--laranja)';
+
+      tbody.innerHTML += `<tr><td>${formatarDataBR(a.data)}</td><td>${a.responsavel}</td><td><strong style="color:${cor}">${a.pontuacao_total} / 25</strong></td><td style="text-align:right;"><button class="btn-acao btn-icone" onclick="abrirModalGenerico('Programa5S', '${a.id}')">👁️ Ver detalhes</button></td></tr>`;
+    });
+
+    document.getElementById('btn-voltar-resumo-5s').onclick = () => abrirResumo5SSetor(setor);
+    document.getElementById('modal-5s-lista').classList.remove('oculto');
+  }
+
+  function fecharModal5SLista() { document.getElementById('modal-5s-lista').classList.add('oculto'); }
+
+  function renderizarImplantacao5S(setor) {
+    const viewDiv = document.getElementById('implantacao-view'); const formDiv = document.getElementById('implantacao-form');
+    formDiv.classList.add('oculto'); viewDiv.classList.remove('oculto');
+    const registro = DB.Implantacao5S ? DB.Implantacao5S.find(i => i.setor === setor) : null;
+    if (registro) { 
+      let corBg = '#F3F5F8', corText = '#6B7280'; 
+      if (registro.status === 'Em Andamento') { corBg = '#FEF3C7'; corText = '#D97706'; }
+      else if (registro.status === 'Concluída') { corBg = '#DCFCE7'; corText = '#166534'; } 
+      let badge = `<span style="padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; background:${corBg}; color:${corText}">${registro.status}</span>`;
+      viewDiv.innerHTML = `<div style="display:flex; justify-content: space-between; align-items:flex-start;"><div style="font-size: 13.5px; color: var(--texto-suave);"><div style="margin-bottom: 6px;"><strong>Data:</strong> ${formatarDataBR(registro.data_implantacao)}</div><div style="margin-bottom: 6px;"><strong>Responsável:</strong> ${registro.responsavel || '-'}</div><div style="margin-bottom: 6px;"><strong>Status:</strong> ${badge}</div><div style="margin-bottom: 6px;"><strong>Próxima Avaliação:</strong> ${formatarDataBR(registro.proxima_avaliacao)}</div><div style="margin-top: 8px;"><strong>Observações:</strong><br>${registro.observacoes || 'Nenhuma.'}</div></div><button class="btn-acao btn-icone admin-only" onclick="abrirFormImplantacao5S()" style="font-weight: 600;">✏️ Editar</button></div>`; 
+    } 
+    else { viewDiv.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 12px 16px; border-radius: var(--raio-sm); border: 1px dashed var(--borda);"><span style="font-size: 13px; color: var(--texto-suave);">Implantação ainda não registada.</span><button class="btn-acao btn-icone admin-only" style="background: white; font-weight: 600;" onclick="abrirFormImplantacao5S()">+ Registrar</button></div>`; }
+  }
+  
+  function abrirFormImplantacao5S() {
+    const registro = DB.Implantacao5S ? DB.Implantacao5S.find(i => i.setor === setorImplantacaoAtivo) : null;
+    document.getElementById('imp5s_id').value = registro ? registro.id : '';
+    document.getElementById('imp5s_data').value = registro ? registro.data_implantacao : '';
+    document.getElementById('imp5s_responsavel').value = registro ? registro.responsavel : '';
+    document.getElementById('imp5s_status').value = registro ? registro.status : 'Planejada';
+    document.getElementById('imp5s_obs').value = registro ? registro.observacoes : '';
+    document.getElementById('imp5s_proxima').value = registro ? (registro.proxima_avaliacao || '') : '';
+    document.getElementById('implantacao-view').classList.add('oculto'); document.getElementById('implantacao-form').classList.remove('oculto');
+  }
+  
+  function fecharFormImplantacao5S() { document.getElementById('implantacao-form').classList.add('oculto'); document.getElementById('implantacao-view').classList.remove('oculto'); }
+  
+  function salvarImplantacao5S(event) {
+    event.preventDefault(); let obj = { id: document.getElementById('imp5s_id').value, setor: setorImplantacaoAtivo, data_implantacao: document.getElementById('imp5s_data').value, responsavel: document.getElementById('imp5s_responsavel').value, status: document.getElementById('imp5s_status').value, observacoes: document.getElementById('imp5s_obs').value, proxima_avaliacao: document.getElementById('imp5s_proxima').value };
+    google.script.run.withSuccessHandler(res => { DB.Implantacao5S = res.dados; renderizarImplantacao5S(setorImplantacaoAtivo); renderizarTudo(); }).salvarRegistro('Implantacao5S', obj);
+  }
+
+  function calc5S() {
+    const t = (parseInt(document.getElementById('Programa5S_seiri').value)||0) + (parseInt(document.getElementById('Programa5S_seiton').value)||0) + (parseInt(document.getElementById('Programa5S_seiso').value)||0) + (parseInt(document.getElementById('Programa5S_seiketsu').value)||0) + (parseInt(document.getElementById('Programa5S_shitsuke').value)||0);
+    document.getElementById('Programa5S_pontuacao_total').value = t;
+  }
+
+  // ==========================================
+  // CONTROLES DE KANBAN (ATUALIZAÇÃO RÁPIDA DE STATUS)
+  // ==========================================
+  function mudarStatusGenerico(nomeAba, id, campoAtributo, novoValor) {
+      const obj = (DB[nomeAba] || []).find(x => x.id === id);
+      if (!obj) return;
+      
+      obj[campoAtributo] = novoValor;
+      exibirAviso("Atualizando status...");
+      
+      google.script.run
+          .withSuccessHandler(respostaPacote => {
+              DB[nomeAba] = respostaPacote.dados;
+              sessionStorage.removeItem('cache_banco_sgq');
+              if (typeof buscarDadosServidor === "function") buscarDadosServidor(true);
+              if (typeof renderizarTudo === "function") renderizarTudo();
+              exibirAviso("Status atualizado com sucesso!");
+          })
+          .withFailureHandler(tratarErro)
+          .salvarRegistro(nomeAba, obj);
+  }
+
+  // ==========================================
+// MOTOR DE EXPORTAÇÃO INTELIGENTE (SMART TOGGLE)
+// ==========================================
+function iniciarExportacao(nomeAba, formato) {
+    const lista = document.getElementById(`tela-${nomeAba}-lista`);
+    if (!lista) return;
+
+    const modoOculto = lista.classList.contains('esconder-checkboxes');
+    const checkboxesMarcados = lista.querySelectorAll(`.chk-${nomeAba}:checked`);
+
+    if (modoOculto) {
+        // ESTADO 1: O 1º Clique REVELA as caixinhas (Checkboxes)
+        lista.classList.remove('esconder-checkboxes');
+        exibirAviso("Modo de Seleção Ativo: Marque os itens desejados e clique em Exportar novamente. (Para cancelar, clique sem marcar nada).");
+        return; // Interrompe o fluxo aqui, aguardando o 2º clique
+    } else {
+        // ESTADO 2: O 2º Clique AVALIA a seleção
+        if (checkboxesMarcados.length === 0) {
+            // Se nenhum checkbox foi marcado, OCULTA (Cancela a operação)
+            lista.classList.add('esconder-checkboxes');
+            exibirAviso("Exportação cancelada. Modo de seleção desativado.");
+            return;
+        } else {
+            // Se há marcação, EXECUTA a exportação
+            exibirAviso(`Gerando ${formato.toUpperCase()}...`);
+            
+            if (formato === 'pdf') { exportarPDF(nomeAba); } 
+            else if (formato === 'csv') { exportarCSV(nomeAba); }
+            
+            // Pós-Processamento: Limpa as seleções e oculta as caixas para zerar o ciclo
+            setTimeout(() => {
+                checkboxesMarcados.forEach(chk => chk.checked = false);
+                const chkTodos = lista.querySelector('thead .col-checkbox input');
+                if (chkTodos) chkTodos.checked = false;
+                lista.classList.add('esconder-checkboxes');
+            }, 1000);
+        }
+    }
+}
+
+  function obterDadosParaExportacao(nomeAba) {
+      let dados = DB[nomeAba];
+      if (!dados || dados.length === 0) { exibirAviso("Nada para exportar.", true); return null; }
+      
+      const checkboxes = document.querySelectorAll(`.chk-${nomeAba}:checked`);
+      if (checkboxes.length > 0) {
+          const idsSelecionados = Array.from(checkboxes).map(cb => cb.value);
+          dados = dados.filter(item => idsSelecionados.includes(item.id));
+      } else {
+          if (nomeAba === 'Documentos') {
+              let setorDoc = document.getElementById('filtro-docs-setor').value;
+              if(setorDoc) dados = dados.filter(d => d.setor === setorDoc);
+          }
+          if (nomeAba === 'Riscos' && filtroMatrizRisco) {
+              dados = dados.filter(r => parseInt(r.probabilidade) === filtroMatrizRisco.p && parseInt(r.impacto) === filtroMatrizRisco.i && r.status !== 'Encerrado');
+          }
+          if (nomeAba === 'HistoricoIndicadores') {
+              const idInd = document.getElementById('select-indicador-grafico').value;
+              if(idInd) dados = dados.filter(h => h.indicador_id === idInd);
+          }
+      }
+      return dados.length > 0 ? dados : null;
+  }
+
+  function exportarCSV(nomeAba) {
+      const dados = obterDadosParaExportacao(nomeAba);
+      if (!dados) { exibirAviso("Nenhum registro para exportar.", true); return; }
+      
+      let colunas = Object.keys(dados[0]).filter(c => c !== 'id' && c !== 'senha');
+      
+      if (nomeAba === 'Documentos') {
+          const ordemCsv = ['titulo', 'codigo', 'setor', 'tipo_documento', 'versao', 'data_criacao', 'status', 'criado_por', 'validado_por', 'aprovado_por', 'link_drive', 'ultima_atualizacao', 'revisado_por', 'revisao_aprovada_por'];
+          let orderedCols = ordemCsv.filter(c => colunas.includes(c));
+          let extraCols = colunas.filter(c => !ordemCsv.includes(c) && c !== 'id' && c !== 'senha');
+          colunas = [...orderedCols, ...extraCols];
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+      csvContent += colunas.join(";") + "\r\n";
+      
+      dados.forEach(d => {
+          let row = colunas.map(c => {
+              let val = d[c] || '';
+              if (typeof val === 'string') val = val.replace(/\n/g, ' ').replace(/"/g, '""');
+              return `"${val}"`;
+          });
+          csvContent += row.join(";") + "\r\n";
+      });
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Relatorio_${nomeAba}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  }
+
+  function exportarPDF(nomeAba) {
+      const dados = obterDadosParaExportacao(nomeAba);
+      if (!dados) { exibirAviso("Nenhum registro para exportar.", true); return; }
+      
+      let colunas = Object.keys(dados[0]).filter(c => c !== 'id' && c !== 'senha');
+      
+      if (nomeAba === 'Documentos') {
+          const ordemPdf = ['titulo', 'codigo', 'setor', 'tipo_documento', 'versao', 'data_criacao', 'status', 'criado_por', 'validado_por', 'aprovado_por', 'link_drive', 'ultima_atualizacao', 'revisado_por', 'revisao_aprovada_por'];
+          let orderedCols = ordemPdf.filter(c => colunas.includes(c));
+          let extraCols = colunas.filter(c => !ordemPdf.includes(c) && c !== 'id' && c !== 'senha');
+          colunas = [...orderedCols, ...extraCols];
+      }
+
+      const correcoesPT = {
+          'Codigo': 'Código', 'Titulo': 'Título', 'Versao': 'Versão', 'Descricao': 'Descrição',
+          'Observacoes': 'Observações', 'Responsavel': 'Responsável', 'Inicio': 'Início',
+          'Eficacia': 'Eficácia', 'Horaria': 'Horária', 'Carga Horaria': 'Carga Horária',
+          'Data Criacao': 'Data de Criação', 'Ultima Atualizacao': 'Última Atualização',
+          'O Que': 'O Que (Ação)', 'Por Que': 'Por Que', 'Eficacia Verificada': 'Eficácia Verificada', 
+          'Proxima Revisao': 'Próxima Revisão', 'Proxima Avaliacao': 'Próxima Avaliação', 
+          'Pontuacao Total': 'Pontuação Total', 'Data Implantacao': 'Data de Implantação', 'Link Drive': 'Link Drive',
+          'Tipo Documento': 'Tipo de Documento', 'Data Entrega': 'Data de Entrega',
+          'Criado Por': 'Criado por', 'Validado Por': 'Validado por', 'Revisado Por': 'Revisado por', 'Aprovado Por': 'Aprovado por',
+          'Revisao Aprovada Por': 'Revisão aprovada por', 'Participantes': 'Participantes', 'Etapa': 'Etapa'
+      };
+
+      function formatarCabecalho(chave) {
+          let nomeAmigavel = chave.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          for (let key in correcoesPT) { 
+              if (nomeAmigavel.includes(key)) nomeAmigavel = nomeAmigavel.replace(key, correcoesPT[key]); 
+          }
+          return nomeAmigavel.toUpperCase();
+      }
+
+      let html = `
+      <html>
+      <head>
+          <title>Relatório - ${nomeAba}</title>
+          <style>
+          body { font-family: Arial, sans-serif; color: #333; margin: 40px; }
+          .tabela-cabecalho { width: 100%; border-bottom: 2px solid #0081B8; margin-bottom: 20px; border-collapse: collapse; }
+          .tabela-cabecalho td { padding: 0 0 10px 0; vertical-align: middle; }
+          .tabela-dados { width: 100%; border-collapse: collapse; font-size: 11px; }
+          .tabela-dados th, .tabela-dados td { border: 1px solid #ddd; padding: 6px; text-align: left; word-wrap: break-word; vertical-align: top; }
+          .tabela-dados th { background-color: #f4f4f4; color: #0081B8; text-transform: uppercase; }
+          </style>
+      </head>
+      <body>
+          <table class="tabela-cabecalho">
+              <tr>
+                  <td style="vertical-align: middle; text-align: left;">
+                      <h1 style="font-size: 24px; color: #0081B8; margin: 0; white-space: nowrap;">Relatório de ${nomeAba.replace(/([A-Z])/g, ' $1').trim()}</h1>
+                  </td>
+                  <td style="text-align: right; font-size: 12px; color: #666; vertical-align: bottom; white-space: nowrap; width: 150px;">
+                      Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}
+                  </td>
+              </tr>
+          </table>
+          <table class="tabela-dados">
+          <thead>
+              <tr>${colunas.map(c => `<th>${formatarCabecalho(c)}</th>`).join('')}</tr>
+          </thead>
+          <tbody>
+      `;
+
+      const camposDeLista = ['criado_por', 'validado_por', 'revisado_por', 'aprovado_por', 'revisao_aprovada_por', 'participantes'];
+
+      dados.forEach(d => {
+          html += `<tr>`;
+          colunas.forEach(c => {
+              let val = d[c] || '-';
+              if (c.includes('data') || c.includes('prazo') || c.includes('inicio') || c.includes('revisao') || c.includes('validade') || c.includes('atualizacao') || c.includes('entrega')) { 
+                  if (typeof formatarDataBR === "function") val = formatarDataBR(val); 
+              }
+              
+              if (camposDeLista.includes(c) && val !== '-') {
+                  val = val.toString().split('\n').map(v => v.trim().startsWith('•') ? v : `• ${v}`).join('<br>');
+              } else if (typeof val === 'string' && val.includes('\n')) { 
+                  val = val.split('\n').map(v => `• ${v}`).join('<br>'); 
+              } else if (typeof val === 'string') {
+                  val = val.replace(/\n/g, '<br>');
+              }
+              
+              html += `<td>${val}</td>`;
+          });
+          html += `</tr>`;
+      });
+
+      html += `</tbody></table>
+      <script>
+      setTimeout(() => { window.print(); }, 200);
+      <\/script></body></html>`;
+      
+      let win = window.open('', '_blank'); 
+      if (win) {
+          win.document.write(html); 
+          win.document.close();
+      } else {
+          exibirAviso("Atenção: O bloqueador de pop-ups do seu navegador impediu a abertura do PDF.", true);
+      }
+  }
+</script>
+
+</div></div></body></html>

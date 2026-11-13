@@ -1,0 +1,22 @@
+RILDON GESTAO COMERCIAL V5.6 - IMPORTACAO FINANCEIRA X2
+
+CORRECOES
+- Importação HTML mostra prévia não salva, com total bruto, devoluções e líquido.
+- Após clicar CONFIRMAR IMPORTAÇÃO, o servidor salva clientes e resumo de valores devolvidos por vendedor/loja.
+- Painel Meus Atendimentos: Vendas brutas, Devoluções, Vendas líquidas, Registros de clientes, Média bruta por registro.
+- Os valores de devolução não estão vinculados ao cliente individual no X2; pesquisa por cliente não calcula líquido.
+- Dados importados em versões antigas não possuem devoluções armazenadas; reimporte o HTML correspondente para obter valores líquidos.
+- Quando uma prévia mostra valor maior que o painel, isso não significa falha: prévia só atualiza painel após confirmação. Grupos fora dos 10 vendedores oficiais também podem estar no total integral do X2.
+- A data no cabeçalho do HTML identifica o intervalo acumulado, não a data de cada compra. Para filtro exato por dia, exporte HTML daquele dia.
+
+INSTALACAO WINDOWS 11
+1. Feche o servidor antigo da porta 8789.
+2. Extraia o ZIP completo em NOVA pasta.
+3. Faça BACKUP do seu rildon_sync.sqlite3 atual. Copie o banco atual para a nova pasta antes de iniciar.
+4. Execute INICIAR_SITE.bat.
+5. Confira http://localhost:8789/api/build — deve exibir 5.6.
+6. Acesse a gerência e clique em Meus Atendimentos. Importe o HTML e CONFIRME os valores.
+7. Não precisa instalar Tesseract: leitura é diretamente do HTML.
+
+NOTA: O pacote não inclui banco de dados de testes. Uma instalação nova criará o banco automaticamente.
+SEGURANÇA: uso piloto em rede interna. Não abra a porta 8789 para internet.

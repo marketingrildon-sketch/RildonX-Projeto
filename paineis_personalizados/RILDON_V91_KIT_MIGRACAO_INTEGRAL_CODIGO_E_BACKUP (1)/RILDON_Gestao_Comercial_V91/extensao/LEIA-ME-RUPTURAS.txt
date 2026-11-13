@@ -1,0 +1,6 @@
+1. Desative a extensão anterior e instale esta pasta via chrome://extensions.
+2. Abra o carrinho com itens vermelhos no X2.
+3. Clique na extensão > Capturar itens em falta do carrinho aberto.
+4. Importe o JSON baixado na aba Vendas perdidas do aplicativo V12.
+5. Confirme vendedor e registro.
+ATENÇÃO: Apenas falta total é importada; falta parcial requer conferência. Não há busca remota por número nem sincronização com celulares.

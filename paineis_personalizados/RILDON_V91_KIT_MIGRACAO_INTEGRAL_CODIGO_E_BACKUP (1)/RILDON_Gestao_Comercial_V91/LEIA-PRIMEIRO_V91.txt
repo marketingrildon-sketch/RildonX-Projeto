@@ -1,0 +1,7 @@
+RILDON V9.1 — V8.9 COMPLETA RESTAURADA + DIAS EM MASSA
+
+1. Vendas Perdidas novamente disponível na Gerência e Vendedor.
+2. Gestão de Metas: caixas para aplicar Dias Trabalhados ou Dias Restantes a TODOS os vendedores do mês.
+3. Após Aplicar a todos, pressione Salvar metas no PostgreSQL (os valores ainda podem ser editados individualmente).
+4. Não executar importação/reset do banco. Preserve PostgreSQL existente.
+5. Encerre servidor, extraia pasta e inicie INICIAR_SITE.bat. Ctrl+Shift+R nos navegadores.

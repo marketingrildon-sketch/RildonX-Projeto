@@ -5,7 +5,14 @@
     'adson.ri': 'adson.ri@rildonx.local'
   };
   var SESSION_LIMIT_MS = 8 * 60 * 60 * 1000;
+  var IDLE_LIMIT_MS = 60 * 60 * 1000;
+  var ACTIVITY_STORAGE_INTERVAL_MS = 5000;
   var sessionExpiryTimer = null;
+  var sessionActivityHandler = null;
+  var activeSessionKey = null;
+  var activeSessionStartedAt = 0;
+  var activeSessionLastActivityAt = 0;
+  var lastActivityStoredAt = 0;
 
   function loginToEmail(login) {
     var normalizedLogin = String(login || '').trim().toLowerCase();
@@ -96,30 +103,96 @@
   function getSessionStartedAt(session, reset) {
     var key = getSessionStorageKey(session);
     if (!key) throw new Error('Não foi possível identificar a sessão autenticada.');
-    var storage = window.localStorage;
-    try {
-      var startedAt = Number(reset ? 0 : storage.getItem(key));
-      if (!Number.isFinite(startedAt) || startedAt <= 0 || startedAt > Date.now()) {
-        startedAt = Date.now();
-        storage.setItem(key, String(startedAt));
-      }
-      return startedAt;
-    } catch (error) {
-      console.error('Não foi possível salvar o horário de início da sessão no armazenamento compartilhado:', error);
-      storage = window.sessionStorage;
-      var sessionStartedAt = Number(reset ? 0 : storage.getItem(key));
-      if (!Number.isFinite(sessionStartedAt) || sessionStartedAt <= 0 || sessionStartedAt > Date.now()) {
-        sessionStartedAt = Date.now();
-        storage.setItem(key, String(sessionStartedAt));
-      }
-      return sessionStartedAt;
+    var startedAt = Number(reset ? 0 : window.sessionStorage.getItem(key));
+    var activityKey = key + ':last_activity';
+    var lastActivityAt = Number(reset ? 0 : window.sessionStorage.getItem(activityKey));
+    if (!Number.isFinite(startedAt) || startedAt <= 0 || startedAt > Date.now()) {
+      startedAt = Date.now();
     }
+    if (!Number.isFinite(lastActivityAt) || lastActivityAt <= 0 || lastActivityAt > Date.now()) {
+      lastActivityAt = Date.now();
+    }
+    try {
+      window.sessionStorage.setItem(key, String(startedAt));
+      window.sessionStorage.setItem(activityKey, String(lastActivityAt));
+    } catch (error) {
+      console.error('Não foi possível salvar os limites da sessão nesta aba:', error);
+      throw new Error('O armazenamento da sessão desta aba não está disponível.');
+    }
+    return { key: key, startedAt: startedAt, lastActivityAt: lastActivityAt };
+  }
+
+  function clearSessionTimestamps(session) {
+    var key = getSessionStorageKey(session);
+    if (!key) key = activeSessionKey;
+    if (!key) return;
+    window.sessionStorage.removeItem(key);
+    window.sessionStorage.removeItem(key + ':last_activity');
+    if (activeSessionKey === key) activeSessionKey = null;
+  }
+
+  function scheduleSessionExpiry(session) {
+    if (sessionExpiryTimer) window.clearTimeout(sessionExpiryTimer);
+    var hardRemaining = SESSION_LIMIT_MS - (Date.now() - activeSessionStartedAt);
+    var idleRemaining = IDLE_LIMIT_MS - (Date.now() - activeSessionLastActivityAt);
+    var remainingMs = Math.min(hardRemaining, idleRemaining);
+    if (remainingMs <= 0) {
+      expireSession().catch(function (error) {
+        console.error('Não foi possível encerrar a sessão expirada:', error);
+        window.location.replace('login.html?sessionExpired=true');
+      });
+      return;
+    }
+    sessionExpiryTimer = window.setTimeout(function () {
+      var now = Date.now();
+      if (now - activeSessionStartedAt >= SESSION_LIMIT_MS ||
+          now - activeSessionLastActivityAt >= IDLE_LIMIT_MS) {
+        expireSession().catch(function (error) {
+          console.error('Não foi possível encerrar a sessão expirada:', error);
+          window.location.replace('login.html?sessionExpired=true');
+        });
+        return;
+      }
+      scheduleSessionExpiry(session);
+    }, remainingMs);
+  }
+
+  function trackSessionActivity(session) {
+    if (sessionActivityHandler) {
+      ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'scroll'].forEach(function (eventName) {
+        window.removeEventListener(eventName, sessionActivityHandler);
+      });
+      document.removeEventListener('visibilitychange', sessionActivityHandler);
+    }
+    sessionActivityHandler = function () {
+      if (document.hidden) return;
+      var now = Date.now();
+      if (now - activeSessionStartedAt >= SESSION_LIMIT_MS ||
+          now - activeSessionLastActivityAt >= IDLE_LIMIT_MS) {
+        expireSession().catch(function (error) {
+          console.error('Não foi possível encerrar a sessão inativa:', error);
+          window.location.replace('login.html?sessionExpired=true');
+        });
+        return;
+      }
+      activeSessionLastActivityAt = now;
+      if (now - lastActivityStoredAt >= ACTIVITY_STORAGE_INTERVAL_MS) {
+        window.sessionStorage.setItem(activeSessionKey + ':last_activity', String(now));
+        lastActivityStoredAt = now;
+      }
+      scheduleSessionExpiry(session);
+    };
+    ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'scroll'].forEach(function (eventName) {
+      window.addEventListener(eventName, sessionActivityHandler, { passive: true });
+    });
+    document.addEventListener('visibilitychange', sessionActivityHandler);
   }
 
   async function expireSession() {
     if (sessionExpiryTimer) window.clearTimeout(sessionExpiryTimer);
     sessionExpiryTimer = null;
     var client = getClient();
+    clearSessionTimestamps();
     if (client) {
       try {
         var result = await client.auth.signOut({ scope: 'local' });
@@ -134,19 +207,18 @@
   }
 
   async function enforceSessionLimit(session, reset) {
-    if (sessionExpiryTimer) window.clearTimeout(sessionExpiryTimer);
-    var startedAt = getSessionStartedAt(session, reset);
-    var remainingMs = SESSION_LIMIT_MS - (Date.now() - startedAt);
-    if (remainingMs <= 0) {
+    var limits = getSessionStartedAt(session, reset);
+    activeSessionKey = limits.key;
+    activeSessionStartedAt = limits.startedAt;
+    activeSessionLastActivityAt = limits.lastActivityAt;
+    lastActivityStoredAt = limits.lastActivityAt;
+    if (Date.now() - activeSessionStartedAt >= SESSION_LIMIT_MS ||
+        Date.now() - activeSessionLastActivityAt >= IDLE_LIMIT_MS) {
       await expireSession();
       return false;
     }
-    sessionExpiryTimer = window.setTimeout(function () {
-      expireSession().catch(function (error) {
-        console.error('Não foi possível encerrar a sessão após o prazo máximo:', error);
-        window.location.replace('login.html?sessionExpired=true');
-      });
-    }, remainingMs);
+    trackSessionActivity(session);
+    scheduleSessionExpiry(session);
     return true;
   }
 
@@ -453,7 +525,7 @@
       }
       var sessionExpired = new URLSearchParams(window.location.search).get('sessionExpired') === 'true';
       if (sessionExpired) {
-        showError('Sua sessão foi encerrada após o limite de 8 horas. Entre novamente para continuar.');
+        showError('Sua sessão foi encerrada após 8 horas ou 1 hora de inatividade. Entre novamente para continuar.');
       }
       if (authError) {
         showError('O link de recuperação expirou ou não é válido. Solicite um novo link.');
@@ -482,6 +554,17 @@
         return;
       }
       if (session && !sessionExpired) {
+        try {
+          if (!await enforceSessionLimit(session, false)) return;
+        } catch (error) {
+          console.error('Não foi possível verificar os limites da sessão:', error);
+          await getClient().auth.signOut({ scope: 'local' });
+          showServiceUnavailable();
+          document.getElementById('login-form').addEventListener('submit', handleLogin);
+          document.getElementById('forgot-password').addEventListener('click', handleForgotPassword);
+          bindPasswordVisibility();
+          return;
+        }
         if (callbackType === 'invite' ||
             session.user && session.user.user_metadata && session.user.user_metadata.must_change_password === true) {
           sessionStorage.setItem('rildonx_force_password_change', 'true');
@@ -513,6 +596,7 @@
         event.preventDefault();
         var client = getClient();
         if (client) {
+          clearSessionTimestamps();
           var result = await client.auth.signOut({ scope: 'local' });
           if (result.error) {
             console.error('Não foi possível encerrar a sessão:', result.error);

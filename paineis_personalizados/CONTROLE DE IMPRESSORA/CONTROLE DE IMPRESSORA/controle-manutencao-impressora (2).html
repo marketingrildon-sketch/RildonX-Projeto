@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Manutenção · Contador de Cópias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg: #101215;
+    --panel: #191c20;
+    --panel-2: #20242a;
+    --panel-3: #262a31;
+    --line: rgba(255,255,255,0.08);
+    --line-soft: rgba(255,255,255,0.05);
+    --text: #f2f3ef;
+    --text-dim: #878e96;
+    --text-faint: #565c63;
+    --amber: #f2a93c;
+    --amber-soft: rgba(242,169,60,0.12);
+    --green: #5ecb92;
+    --green-soft: rgba(94,203,146,0.12);
+    --red: #ef5b52;
+    --red-soft: rgba(239,91,82,0.13);
+    --red-glow: rgba(239,91,82,0.28);
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+    --display: 'Space Grotesk', sans-serif;
+    --body: 'Inter', system-ui, sans-serif;
+    --radius: 10px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    padding:0;
+    background:
+      radial-gradient(1100px 520px at 12% -8%, rgba(242,169,60,0.06), transparent 55%),
+      radial-gradient(900px 500px at 92% 8%, rgba(94,203,146,0.05), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    min-height:100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 28px 90px;
+  }
+
+  /* ---------- Hero ---------- */
+  header.hero{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 32px;
+    padding-bottom: 32px;
+    margin-bottom: 36px;
+    border-bottom: 1px solid var(--line);
+  }
+  .hero-left{ max-width: 600px; }
+  .status-led{
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+  .led-dot{
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 3px var(--green-soft);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%, 100%{ opacity: 1; } 50%{ opacity: 0.45; } }
+
+  h1{
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(28px, 3.6vw, 38px);
+    line-height: 1.1;
+    margin: 0 0 14px;
+    letter-spacing: -0.015em;
+  }
+  h1 em{ font-style: normal; color: var(--amber); }
+
+  .hero-sub{
+    color: var(--text-dim);
+    font-size: 14.5px;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 480px;
+  }
+
+  .hero-badge{
+    flex-shrink: 0;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position: relative;
+  }
+  .hero-badge svg{ width: 36px; height: 36px; color: var(--amber); }
+  .hero-badge::after{
+    content:'';
+    position:absolute;
+    inset: -1px;
+    border-radius: 50%;
+    border: 1px dashed rgba(242,169,60,0.35);
+    animation: spin 22s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .toolbar-left{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, transform .1s ease;
+    position: relative;
+  }
+  .btn svg{ width: 15px; height: 15px; flex-shrink: 0; }
+  .btn:hover{ border-color: rgba(255,255,255,0.22); background: var(--panel-2); }
+  .btn:active{ transform: translateY(1px); }
+  .btn.primary{
+    background: var(--amber);
+    border-color: var(--amber);
+    color: #23180a;
+  }
+  .btn.primary:hover{ background: #f5b658; }
+  .btn input[type="file"]{
+    position:absolute;
+    inset:0;
+    opacity:0;
+    cursor:pointer;
+    width:100%;
+    height:100%;
+  }
+  .toolbar-hint{
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-faint);
+  }
+
+  /* ---------- Status messages ---------- */
+  .status-msg{
+    margin-bottom: 18px;
+    padding: 13px 16px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-family: var(--mono);
+    display:none;
+    border: 1px solid var(--line);
+    line-height: 1.6;
+  }
+  .status-msg.show{ display:block; animation: fadeUp .3s ease both; }
+  .status-msg.error{
+    border-color: rgba(239,91,82,0.4);
+    color: #f5a09b;
+    background: var(--red-soft);
+  }
+  .status-msg.info{
+    border-color: rgba(94,203,146,0.3);
+    color: #9fdcbb;
+    background: var(--green-soft);
+  }
+
+  @keyframes fadeUp{
+    from{ opacity: 0; transform: translateY(6px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  .section-label{
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  /* ---------- Editable table ---------- */
+  .sheet-wrap{
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 44px;
+  }
+  .sheet-scroll{
+    overflow-x: auto;
+  }
+  table.sheet{
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 980px;
+  }
+  table.sheet thead th{
+    position: sticky;
+    top: 0;
+    background: var(--panel-2);
+    text-align:left;
+    padding: 11px 12px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  table.sheet thead th.num{ text-align:right; }
+  table.sheet thead th.rownum{ width: 40px; }
+  table.sheet thead th.actions{ width: 44px; }
+
+  table.sheet tbody td{
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--panel);
+    padding: 0;
+  }
+  table.sheet tbody tr:hover td{ background: rgba(242,169,60,0.035); }
+
+  .rownum-cell{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align:center;
+    padding: 10px 6px !important;
+    background: var(--panel-2) !important;
+  }
+
+  table.sheet input{
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 0;
+  }
+  table.sheet input:focus{
+    background: rgba(242,169,60,0.08);
+    box-shadow: inset 0 0 0 1px rgba(242,169,60,0.4);
+  }
+  table.sheet input[type="number"]{
+    font-family: var(--mono);
+    text-align: right;
+  }
+  table.sheet input::placeholder{ color: var(--text-faint); }
+
+  .total-cell{
+    font-family: var(--mono);
+    font-weight: 700;
+    text-align: right;
+    padding: 10px 14px !important;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .total-cell.over{ color: var(--red); }
+
+  .del-btn{
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-faint);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    margin: 0 auto;
+    transition: all .15s ease;
+  }
+  .del-btn:hover{
+    color: var(--red);
+    border-color: rgba(239,91,82,0.4);
+    background: var(--red-soft);
+  }
+  .del-btn svg{ width: 13px; height: 13px; }
+
+  .add-row-btn{
+    width: 100%;
+    padding: 13px;
+    background: var(--panel);
+    border: none;
+    border-top: 1px dashed var(--line);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 8px;
+    transition: background .15s ease, color .15s ease;
+  }
+  .add-row-btn:hover{ background: var(--panel-2); color: var(--amber); }
+
+  /* ---------- Summary strip ---------- */
+  .summary-strip{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .summary-strip .grand-total{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text-dim);
+    display:flex;
+    align-items:baseline;
+    gap: 10px;
+  }
+  .summary-strip .grand-total b{
+    color: var(--text);
+    font-size: 22px;
+    font-family: var(--display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .summary-strip .alert-count{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid rgba(239,91,82,0.3);
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+
+  /* ---------- Setor cards ---------- */
+  .setor-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+  }
+  .empty-state{
+    padding: 40px 20px;
+    text-align:center;
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+  }
+  .setor-card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px;
+    display:flex;
+    align-items:center;
+    gap: 18px;
+    transition: transform .18s ease, border-color .18s ease;
+    animation: fadeUp .35s ease both;
+  }
+  .setor-card:hover{ transform: translateY(-2px); border-color: rgba(255,255,255,0.16); }
+  .setor-card.alert{
+    border-color: rgba(239,91,82,0.45);
+    background: linear-gradient(160deg, rgba(239,91,82,0.06), var(--panel) 55%);
+    box-shadow: 0 0 0 1px rgba(239,91,82,0.12), 0 8px 24px -12px var(--red-glow);
+  }
+  .gauge{ flex-shrink: 0; width: 68px; height: 68px; position: relative; }
+  .gauge svg{ width:100%; height:100%; transform: rotate(-90deg); }
+  .gauge-track{ fill:none; stroke: var(--panel-2); stroke-width: 7; }
+  .gauge-fill{
+    fill:none; stroke: var(--green); stroke-width: 7; stroke-linecap: round;
+    transition: stroke-dashoffset .8s cubic-bezier(.16,1,.3,1), stroke .3s ease;
+  }
+  .setor-card.alert .gauge-fill{ stroke: var(--red); }
+  .setor-card.warn .gauge-fill{ stroke: var(--amber); }
+  .gauge-pct{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--text-dim);
+  }
+  .setor-card.alert .gauge-pct{ color: var(--red); }
+  .setor-info{ min-width: 0; flex: 1; }
+  .setor-name{ font-family: var(--display); font-size: 14.5px; font-weight: 600; margin: 0 0 6px; line-height: 1.3; overflow-wrap: break-word; }
+  .setor-total{ font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--text); line-height: 1; }
+  .setor-total span{ font-size: 11px; font-weight: 500; color: var(--text-faint); margin-left: 4px; }
+  .setor-meta{ margin-top: 8px; font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); }
+  .setor-card.alert .setor-meta{ color: #e59a95; }
+  .setor-tag{
+    display:inline-block; margin-top: 8px; font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+    background: var(--green-soft); color: var(--green); border: 1px solid rgba(94,203,146,0.25);
+  }
+  .setor-card.alert .setor-tag{ background: var(--red-soft); color: var(--red); border-color: rgba(239,91,82,0.3); }
+  .setor-card.warn .setor-tag{ background: var(--amber-soft); color: var(--amber); border-color: rgba(242,169,60,0.3); }
+
+  /* ---------- Alert banner ---------- */
+  .alert-banner{
+    display:none; margin-top: 22px; padding: 18px 20px;
+    background: linear-gradient(90deg, rgba(239,91,82,0.12), rgba(239,91,82,0.02));
+    border: 1px solid rgba(239,91,82,0.4); border-left: 4px solid var(--red); border-radius: 8px;
+    align-items:flex-start; gap: 14px;
+  }
+  .alert-banner.show{ display:flex; animation: fadeUp .4s ease both; }
+  .alert-banner svg{ flex-shrink:0; margin-top:2px; color: var(--red); }
+  .alert-banner strong{ font-family: var(--display); font-size: 15px; display:block; margin-bottom: 3px; }
+  .alert-banner p{ margin:0; font-size: 13px; color: var(--text-dim); line-height: 1.55; }
+
+  footer{
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
+    font-size: 11.5px; color: var(--text-faint); font-family: var(--mono);
+    display:flex; align-items:center; gap: 8px;
+  }
+
+  @media (max-width: 620px){
+    header.hero{ flex-direction:column-reverse; }
+    .hero-badge{ margin-bottom: 6px; }
+    .setor-grid{ grid-template-columns: 1fr; }
+    .toolbar{ flex-direction:column; align-items:stretch; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-left">
+      <p class="status-led"><span class="led-dot"></span>painel pronto</p>
+      <h1>Controle de manutenção<br>por <em>setor</em></h1>
+      <p class="hero-sub">Digite direto na tabela, ou importe/exporte sua planilha. Os indicadores por setor são recalculados automaticamente, com alerta quando alguma impressora passa de 20.000 cópias.</p>
+    </div>
+    <div class="hero-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M6 9V3h12v6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="6" y="14" width="12" height="7" rx="1" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn" id="importBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12" stroke-linecap="round"/><path d="M7 10l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 19h16" stroke-linecap="round"/></svg>
+        Importar planilha
+        <input type="file" id="fileInput" accept=".xlsx,.xls" />
+      </button>
+      <button class="btn primary" id="exportBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3" stroke-linecap="round"/><path d="M7 8l5-5 5 5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 19h16" stroke-linecap="round"/></svg>
+        Exportar planilha
+      </button>
+    </div>
+    <span class="toolbar-hint" id="fileHint">.xlsx / .xls · aba "Manutenção"</span>
+  </div>
+
+  <div class="status-msg" id="statusMsg"></div>
+
+  <p class="section-label">Tabela de manutenção — edite diretamente</p>
+
+  <div class="sheet-wrap">
+    <div class="sheet-scroll">
+      <table class="sheet">
+        <thead>
+          <tr>
+            <th class="rownum">#</th>
+            <th>Setor</th>
+            <th>Equipamento</th>
+            <th>IP</th>
+            <th>Data</th>
+            <th class="num">Cópias início</th>
+            <th class="num">Cópias fim</th>
+            <th class="num">Total</th>
+            <th>Obs</th>
+            <th class="actions"></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <button class="add-row-btn" id="addRowBtn" type="button">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+      Adicionar linha
+    </button>
+  </div>
+
+  <p class="section-label">Indicadores por setor</p>
+
+  <div class="summary-strip">
+    <div class="grand-total">
+      Total geral <b id="grandTotal">0</b>
+    </div>
+    <div class="alert-count" id="alertCount" style="display:none;"></div>
+  </div>
+
+  <div class="setor-grid" id="setorGrid"></div>
+
+  <div class="alert-banner" id="alertBanner">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div>
+      <strong>Manutenção preventiva recomendada</strong>
+      <p id="alertBannerText">Um ou mais setores ultrapassaram 20.000 cópias.</p>
+    </div>
+  </div>
+
+  <footer>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="16" r="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    processamento local no navegador · nenhum dado é enviado a servidores
+  </footer>
+</div>
+
+<script>
+const LIMITE = 20000;
+
+/* ---------------- Estado ---------------- */
+// cada linha: { setor, equipamento, ip, data, inicio, fim, obs }
+let rows = [
+  { setor:'COMPRAS (OMRE)',     equipamento:'BROTHER 2540DW', ip:'OMRE',          data:'22/08/2022', inicio:9012,   fim:26026,  obs:'MANUTENÇÃO PREVENTIVA' },
+  { setor:'CONTABILIDADE',      equipamento:'BROTHER 2540DW', ip:'192.168.0.27',  data:'05/03/2026', inicio:124168, fim:133349, obs:'MANUTENÇÃO PREVENTIVA' },
+  { setor:'FATURAMENTO',        equipamento:'BROTHER 5502DW', ip:'192.168.0.164', data:'05/03/2026', inicio:186849, fim:191344, obs:'MANUTENÇÃO PREVENTIVA' },
+  { setor:'EXPEDIÇÃO',          equipamento:'BROTHER 2540DW', ip:'192.168.0.26',  data:'07/01/2025', inicio:58208,  fim:70342,  obs:'MANUTENÇÃO PREVENTIVA' },
+  { setor:'CAIXA',              equipamento:'BROTHER 5102DW', ip:'LOCAL',         data:'20/06/2025', inicio:122237, fim:122237, obs:'MANUTENÇÃO PREVENTIVA' },
+  { setor:'EXPEDIÇÃO (OMRE)',   equipamento:'BROTHER 2740DW', ip:'OMRE',          data:'29/01/2025', inicio:147438, fim:172319, obs:'MANUTENÇÃO PREVENTIVA' },
+  { setor:'RH / DP',            equipamento:'BROTHER 2540DW', ip:'LOCAL',         data:'18/04/2025', inicio:0,      fim:5965,   obs:'MANUTENÇÃO PREVENTIVA' },
+  { setor:'DIR. FINANCEIRA',    equipamento:'BROTHER 1212DW', ip:'LOCAL',         data:'25/02/2025', inicio:0,      fim:0,      obs:'MANUTENÇÃO PREVENTIVA' },
+];
+
+/* ---------------- Utilitários ---------------- */
+function normalize(str){
+  return String(str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+function calcTotal(row){
+  const ini = Number(row.inicio) || 0;
+  const fim = Number(row.fim) || 0;
+  return fim - ini;
+}
+
+function excelDateToStr(serial){
+  const utc_days = Math.floor(serial - 25569);
+  const date = new Date(utc_days * 86400 * 1000);
+  const dd = String(date.getUTCDate()).padStart(2,'0');
+  const mm = String(date.getUTCMonth()+1).padStart(2,'0');
+  const yyyy = date.getUTCFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function setStatus(msg, type){
+  const el = document.getElementById('statusMsg');
+  el.className = 'status-msg show ' + type;
+  el.textContent = msg;
+}
+function clearStatus(){
+  const el = document.getElementById('statusMsg');
+  el.className = 'status-msg';
+  el.textContent = '';
+}
+
+/* ---------------- Renderização da tabela ---------------- */
+const tableBody = document.getElementById('tableBody');
+
+function renderTable(){
+  tableBody.innerHTML = rows.map((row, i)=>{
+    const total = calcTotal(row);
+    const over = total > LIMITE;
+    return `
+      <tr>
+        <td class="rownum-cell">${i+1}</td>
+        <td><input type="text" data-i="${i}" data-f="setor" value="${escapeAttr(row.setor)}" placeholder="Setor"></td>
+        <td><input type="text" data-i="${i}" data-f="equipamento" value="${escapeAttr(row.equipamento)}" placeholder="Equipamento"></td>
+        <td><input type="text" data-i="${i}" data-f="ip" value="${escapeAttr(row.ip)}" placeholder="IP"></td>
+        <td><input type="text" data-i="${i}" data-f="data" value="${escapeAttr(row.data)}" placeholder="dd/mm/aaaa"></td>
+        <td><input type="number" data-i="${i}" data-f="inicio" value="${row.inicio ?? ''}" placeholder="0"></td>
+        <td><input type="number" data-i="${i}" data-f="fim" value="${row.fim ?? ''}" placeholder="0"></td>
+        <td class="total-cell ${over ? 'over' : ''}" data-total-cell="${i}">${total.toLocaleString('pt-BR')}</td>
+        <td><input type="text" data-i="${i}" data-f="obs" value="${escapeAttr(row.obs)}" placeholder="Observação"></td>
+        <td><button class="del-btn" data-del="${i}" type="button" title="Remover linha">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/></svg>
+        </button></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function escapeAttr(val){
+  return String(val ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+}
+
+// edição via delegação de eventos (não perde o foco durante a digitação)
+tableBody.addEventListener('input', (e)=>{
+  const target = e.target;
+  const i = target.getAttribute('data-i');
+  const f = target.getAttribute('data-f');
+  if(i === null || !f) return;
+  const idx = Number(i);
+  let val = target.value;
+  if(f === 'inicio' || f === 'fim'){
+    val = val === '' ? '' : Number(val);
+  }
+  rows[idx][f] = val;
+
+  if(f === 'inicio' || f === 'fim'){
+    const total = calcTotal(rows[idx]);
+    const cell = tableBody.querySelector(`[data-total-cell="${idx}"]`);
+    if(cell){
+      cell.textContent = total.toLocaleString('pt-BR');
+      cell.classList.toggle('over', total > LIMITE);
+    }
+  }
+  computeIndicators();
+});
+
+tableBody.addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-del]');
+  if(!btn) return;
+  const idx = Number(btn.getAttribute('data-del'));
+  rows.splice(idx, 1);
+  renderTable();
+  computeIndicators();
+});
+
+document.getElementById('addRowBtn').addEventListener('click', ()=>{
+  rows.push({ setor:'', equipamento:'', ip:'', data:'', inicio:'', fim:'', obs:'' });
+  renderTable();
+  computeIndicators();
+  const inputs = tableBody.querySelectorAll('tr:last-child input');
+  if(inputs[0]) inputs[0].focus();
+});
+
+/* ---------------- Indicadores por setor ---------------- */
+function gaugeSvg(pct){
+  const r = 28;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - Math.min(1, pct));
+  return `
+    <div class="gauge">
+      <svg viewBox="0 0 68 68">
+        <circle class="gauge-track" cx="34" cy="34" r="${r}"></circle>
+        <circle class="gauge-fill" cx="34" cy="34" r="${r}"
+          stroke-dasharray="${c}" stroke-dashoffset="${c}"
+          data-target-offset="${offset}"></circle>
+      </svg>
+      <div class="gauge-pct">${Math.round(pct*100)}%</div>
+    </div>
+  `;
+}
+
+function computeIndicators(){
+  const grupos = {};
+  rows.forEach(row=>{
+    const setor = (row.setor || '').trim() || '(sem setor)';
+    const total = calcTotal(row);
+    if(!grupos[setor]) grupos[setor] = { total: 0, linhas: 0 };
+    grupos[setor].total += total;
+    grupos[setor].linhas += 1;
+  });
+
+  const setores = Object.keys(grupos).sort((a,b)=> grupos[b].total - grupos[a].total);
+  const grandTotal = setores.reduce((acc, s)=> acc + grupos[s].total, 0);
+  const setoresAlerta = setores.filter(s => grupos[s].total > LIMITE);
+
+  document.getElementById('grandTotal').textContent = Math.round(grandTotal).toLocaleString('pt-BR');
+
+  const alertCountEl = document.getElementById('alertCount');
+  if(setoresAlerta.length){
+    alertCountEl.style.display = 'inline-block';
+    alertCountEl.textContent = `⚠ ${setoresAlerta.length} setor(es) acima do limite`;
+  } else {
+    alertCountEl.style.display = 'none';
+  }
+
+  const grid = document.getElementById('setorGrid');
+
+  if(!setores.length){
+    grid.innerHTML = `<div class="empty-state">Nenhuma linha na tabela ainda. Adicione uma linha ou importe uma planilha.</div>`;
+  } else {
+    grid.innerHTML = setores.map((setor, i)=>{
+      const total = grupos[setor].total;
+      const linhas = grupos[setor].linhas;
+      const acima = total > LIMITE;
+      const proximo = !acima && total >= LIMITE * 0.85;
+      const pct = total / LIMITE;
+      const stateClass = acima ? 'alert' : (proximo ? 'warn' : '');
+      return `
+        <div class="setor-card ${stateClass}" style="animation-delay:${i * 40}ms">
+          ${gaugeSvg(pct)}
+          <div class="setor-info">
+            <p class="setor-name">${setor}</p>
+            <div class="setor-total">${Math.round(total).toLocaleString('pt-BR')} <span>cópias</span></div>
+            <p class="setor-meta">${linhas} registro(s) ${acima ? `· +${Math.round(total - LIMITE).toLocaleString('pt-BR')} acima do limite` : `· ${Math.round(LIMITE - total).toLocaleString('pt-BR')} até o limite`}</p>
+            <span class="setor-tag">${acima ? 'manutenção necessária' : (proximo ? 'atenção' : 'ok')}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('.gauge-fill').forEach(el=>{
+      const target = el.getAttribute('data-target-offset');
+      requestAnimationFrame(()=>{ el.style.strokeDashoffset = target; });
+    });
+  });
+
+  const banner = document.getElementById('alertBanner');
+  const bannerText = document.getElementById('alertBannerText');
+  if(setoresAlerta.length){
+    banner.classList.add('show');
+    bannerText.textContent = `Os setores a seguir ultrapassaram 20.000 cópias e precisam de manutenção preventiva: ${setoresAlerta.join(', ')}.`;
+  } else {
+    banner.classList.remove('show');
+  }
+
+  return { grupos, setoresAlerta };
+}
+
+/* ---------------- Importar planilha ---------------- */
+const fileInput = document.getElementById('fileInput');
+fileInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) handleImport(file);
+  fileInput.value = '';
+});
+
+function handleImport(file){
+  clearStatus();
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      importWorkbook(workbook, file.name);
+    }catch(err){
+      console.error(err);
+      setStatus('Não foi possível ler este arquivo. Confirme se é um .xlsx ou .xls válido.', 'error');
+    }
+  };
+  reader.onerror = () => setStatus('Erro ao carregar o arquivo.', 'error');
+  reader.readAsArrayBuffer(file);
+}
+
+function findManutencaoSheet(workbook){
+  return workbook.SheetNames.find(name => normalize(name).includes('manutenc')) || workbook.SheetNames[0];
+}
+
+function importWorkbook(workbook, fileName){
+  const sheetName = findManutencaoSheet(workbook);
+  if(!sheetName){
+    setStatus('Não encontrei nenhuma aba nesta planilha.', 'error');
+    return;
+  }
+
+  const sheet = workbook.Sheets[sheetName];
+  const grid = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
+
+  // localizar a linha de cabeçalho (a que contém "SETOR")
+  let headerRowIdx = grid.findIndex(r => r.some(cell => normalize(cell) === 'setor'));
+  if(headerRowIdx === -1){
+    setStatus(`Não encontrei uma linha de cabeçalho com a coluna "SETOR" na aba "${sheetName}".`, 'error');
+    return;
+  }
+
+  const header = grid[headerRowIdx];
+  const colIndex = (matcher) => header.findIndex(h => matcher(normalize(h)));
+
+  const idx = {
+    setor: colIndex(h => h === 'setor'),
+    equipamento: colIndex(h => h.includes('equipamento') || h.includes('modelo') || h.includes('impressora')),
+    ip: colIndex(h => h === 'ip'),
+    data: colIndex(h => h.includes('data')),
+    inicio: colIndex(h => h.includes('inicio')),
+    fim: colIndex(h => h.includes('fim')),
+    obs: colIndex(h => h.includes('obs')),
+  };
+
+  const newRows = [];
+  for(let r = headerRowIdx + 1; r < grid.length; r++){
+    const line = grid[r];
+    const isEmpty = !line || line.every(c => c === '' || c === undefined || c === null);
+    if(isEmpty) continue;
+
+    const get = (i) => (i >= 0 && line[i] !== undefined) ? line[i] : '';
+    let dataVal = get(idx.data);
+    if(typeof dataVal === 'number') dataVal = excelDateToStr(dataVal);
+
+    newRows.push({
+      setor: String(get(idx.setor)),
+      equipamento: String(get(idx.equipamento)),
+      ip: String(get(idx.ip)),
+      data: String(dataVal),
+      inicio: get(idx.inicio) === '' ? '' : Number(get(idx.inicio)) || 0,
+      fim: get(idx.fim) === '' ? '' : Number(get(idx.fim)) || 0,
+      obs: String(get(idx.obs)),
+    });
+  }
+
+  if(!newRows.length){
+    setStatus(`A aba "${sheetName}" foi encontrada, mas não há linhas de dados abaixo do cabeçalho.`, 'error');
+    return;
+  }
+
+  rows = newRows;
+  renderTable();
+  computeIndicators();
+  setStatus(`Importado "${fileName}" · aba "${sheetName}" · ${newRows.length} linha(s).`, 'info');
+}
+
+/* ---------------- Exportar planilha ---------------- */
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  if(!rows.length){
+    setStatus('Não há linhas para exportar. Adicione ao menos uma linha.', 'error');
+    return;
+  }
+
+  const header = ['SETOR','EQUIPAMENTO','IP','DATA','CÓPIAS INICIO','CÓPIAS FIM','TOTAL','OBS'];
+  const body = rows.map(r => [
+    r.setor || '', r.equipamento || '', r.ip || '', r.data || '',
+    r.inicio === '' ? '' : Number(r.inicio) || 0,
+    r.fim === '' ? '' : Number(r.fim) || 0,
+    calcTotal(r),
+    r.obs || ''
+  ]);
+
+  const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+  ws['!cols'] = [{wch:20},{wch:18},{wch:15},{wch:12},{wch:14},{wch:12},{wch:10},{wch:24}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'manutencao');
+
+  const stamp = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `controle-manutencao-impressoras-${stamp}.xlsx`);
+  setStatus(`Planilha exportada com ${rows.length} linha(s).`, 'info');
+});
+
+/* ---------------- Início ---------------- */
+renderTable();
+computeIndicators();
+</script>
+</body>
+</html>

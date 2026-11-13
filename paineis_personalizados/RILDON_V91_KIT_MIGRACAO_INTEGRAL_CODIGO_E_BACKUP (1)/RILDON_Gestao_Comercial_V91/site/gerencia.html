@@ -1,0 +1,844 @@
+<!doctype html><html lang="pt-BR"><head><meta http-equiv="Cache-Control" content="no-store"><meta name="rildon-build" content="6.1.0"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07325b"><meta name="description" content="Painel de metas de vendas Rildon"><link rel="manifest" href="manifest.webmanifest"><title>RILDON | Gestão Comercial V8.6</title><style>
+.goalInput{font-variant-numeric:tabular-nums;text-align:right;max-width:185px;border:1px solid #c6d9ed;border-radius:12px;background:#f8fbff;padding:12px;font-size:15px;font-weight:700;color:#07345c} .card,.metric{border-radius:20px!important} button,.btn{transition:transform .15s ease,box-shadow .15s ease}button:hover,.btn:hover{transform:translateY(-1px)}
+
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#142e4c;background:#f1f5fa}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer}.layout{display:flex;min-height:100vh}.sidebar{width:240px;flex-shrink:0;background:linear-gradient(155deg,#062b51,#074a83);color:#fff;padding:24px 17px}.brand{background:white;border-radius:16px;padding:10px;display:block;width:100%;max-height:120px;object-fit:contain}.side-title{font-size:12px;letter-spacing:2px;opacity:.7;margin:20px 6px 15px}.nav{display:flex;flex-direction:column;gap:8px}.nav button{border:0;background:transparent;color:#d8eaff;text-align:left;padding:13px 15px;border-radius:12px;font-weight:650}.nav button.active{background:#0879d2;color:#fff}.content{flex:1;min-width:0}.top{background:#fff;padding:23px 30px;border-bottom:1px solid #e3eaf1;display:flex;justify-content:space-between;align-items:center;gap:10px}.top h1{margin:0;font-size:23px;color:#07345c}.top small{color:#6c8093}.pill{border-radius:99px;padding:8px 12px;background:#e8f7f0;color:#11794c;font-size:12px;font-weight:700}.main{padding:25px 30px;max-width:1440px;margin:auto}.filters,.card{background:#fff;border:1px solid #e3eaf3;border-radius:18px;padding:20px;box-shadow:0 4px 18px #0b396108}.filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}label{display:block;color:#536b80;font-size:12px;font-weight:700;margin-bottom:7px}input,select{width:100%;border:1px solid #d3e0ec;border-radius:10px;padding:11px;background:#fff;color:#123451;min-width:0}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:17px}.metric{border-radius:16px;padding:19px;background:#fff;box-shadow:0 3px 15px #0b396109;border:1px solid #e5edf4;border-top:4px solid #1282dd}.metric:nth-child(2){border-top-color:#13a66b}.metric:nth-child(3){border-top-color:#e45d59}.metric:nth-child(4){border-top-color:#8354e9}.metric small{display:block;color:#61758b;margin-bottom:9px}.metric strong{font-size:clamp(17px,2vw,25px);overflow-wrap:anywhere}.columns{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}.card{margin-bottom:16px}.card h2{font-size:18px;margin:0 0 14px}.sub{color:#71859a;font-size:13px}.progress{background:#e6edf5;height:13px;border-radius:12px;overflow:hidden;margin:16px 0}.progress>div{background:linear-gradient(90deg,#0d77c8,#16a8ef);height:100%;transition:width .25s}.big{font-size:30px;font-weight:800;color:#0c5e9e}.statrow{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}.stat{background:#f2f7fb;padding:13px;border-radius:12px}.stat span{font-size:12px;color:#687e93;display:block}.stat b{display:block;margin-top:6px}.rank{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #edf1f5;padding:12px 0;font-size:13px}.rank:last-child{border:0}.rank b{color:#0b5e9e}.btn{border:0;border-radius:11px;background:#0878ce;color:white;font-weight:700;padding:12px 15px}.btn.light{background:#e8f3fb;color:#07578e}.btn.danger{background:#fff0f0;color:#aa3535}.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px}.hidden{display:none!important}.notice{background:#fff8e8;border:1px solid #f4dfaa;border-radius:12px;color:#765e22;padding:13px;font-size:13px;margin-top:14px}table{width:100%;border-collapse:collapse}th,td{padding:11px;text-align:left;border-bottom:1px solid #eaf0f5;font-size:13px}th{color:#677e92}td input{max-width:160px}.scroll{overflow:auto}.bottomnav{display:none}.empty{color:#7a8ca0;font-size:13px;padding:16px 0}#viewManagement,#viewData,#viewRupture{display:none}body[data-view="management"] #viewManagement,body[data-view="data"] #viewData,body[data-view="rupture"] #viewRupture{display:block}body[data-view="management"] #viewDashboard,body[data-view="data"] #viewDashboard,body[data-view="rupture"] #viewDashboard{display:none}body[data-view="management"] section.filters[data-manager]{display:grid!important}#file{max-width:100%}@media(max-width:1000px){.sidebar{width:190px}.filters{grid-template-columns:repeat(2,1fr)}.metrics{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}}@media(max-width:700px){.sidebar{display:none}.top{padding:16px;align-items:center}.top h1{font-size:19px}.main{padding:15px 13px 85px}.filters{padding:14px;gap:10px}.metrics{gap:9px}.metric{padding:13px}.metric strong{font-size:18px}.card{padding:16px}.bottomnav{display:flex;position:fixed;bottom:0;left:0;right:0;padding:8px 8px max(8px,env(safe-area-inset-bottom));background:#fff;box-shadow:0 -4px 24px #002b4b17;justify-content:space-around;z-index:5}.bottomnav button{border:0;background:transparent;color:#5a7892;font-size:12px;padding:9px;min-width:62px;font-weight:700}.bottomnav button.active{color:#0878ce}.top .pill{font-size:10px}.statrow .big{font-size:24px}}
+.loginScreen{min-height:100vh;display:grid;place-items:center;padding:20px;background:#eaf2f9}.loginCard{width:min(430px,100%);background:white;border-radius:18px;padding:26px;box-shadow:0 15px 45px #07345c1a}.loginCard h2{text-align:center}.loginCard label{margin-top:13px}.reportFilters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0}@media(max-width:850px){.reportFilters{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:550px){.reportFilters{grid-template-columns:1fr}.top{flex-wrap:wrap}}
+
+/* RILDON Premium UI v2.3 */
+:root{--rildon-navy:#092b4b;--rildon-blue:#087acb;--rildon-soft:#f3f7fb;--rildon-line:#e1eaf3}
+body{background:linear-gradient(145deg,#e9f2fa,#f7faff 45%,#edf5fa);color:#17324f}
+.side{background:linear-gradient(165deg,#082747 0%,#0b426b 58%,#07304f 100%)!important;box-shadow:6px 0 30px #0b31521a}
+.side a,.side button{transition:background .2s,transform .2s}.side a:hover,.side button:hover{transform:translateX(3px)}
+main, .main{min-width:0}
+.card,.panel,.loginCard,.reportFilters,.metric{border:1px solid var(--rildon-line)!important;box-shadow:0 12px 35px #0a385512!important;border-radius:18px!important}
+button,.btn{border-radius:11px!important;transition:filter .18s,transform .18s,box-shadow .18s}
+button:hover,.btn:hover{filter:brightness(1.04);box-shadow:0 6px 16px #0a49751c}
+input,select{border-radius:10px!important;border-color:#d3e1ee!important;min-height:42px}
+input:focus,select:focus{outline:2px solid #4bb7ff88;outline-offset:1px}
+#managerFilters{border:1px solid #d7e7f5;border-radius:18px;padding:20px;background:linear-gradient(135deg,#fff,#f8fbff)}
+#managerFilters h2{font-size:20px;letter-spacing:-.4px}
+table{border-collapse:separate;border-spacing:0;width:100%}th{background:#f1f6fb;color:#4c6984;font-size:12px;text-transform:uppercase;letter-spacing:.03em}th,td{padding:12px 10px!important;border-bottom:1px solid #eaf0f5}tbody tr:hover{background:#f6faff}
+.loginScreen{background:radial-gradient(circle at 20% 20%,#1c6699 0,#0b3253 45%,#071f38 100%)}
+.loginCard{padding:32px!important;box-shadow:0 25px 80px #0004!important}
+#bridgeResults p{padding:13px!important;border:1px solid #e2edf5!important;border-radius:12px;background:#f7fbff;font-size:13px!important}
+@media(max-width:720px){#managerFilters{padding:12px}th,td{padding:8px 5px!important;font-size:11px}.loginCard{padding:20px!important}}
+
+/* RILDON NOVA GERACAO 2.4 - DESIGN SYSTEM */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{font-family:'DM Sans',system-ui,sans-serif!important;color:#152a43!important;background:#f2f6fc!important;--ink:#102943;--blue:#057bdf;--border:#e3ebf4;--muted:#72849a;--shadow:0 15px 50px rgba(16,52,89,.065)}
+body{background:#f2f6fc!important;font-family:'DM Sans',system-ui,sans-serif!important}h1,h2,h3,strong,.big{font-family:Manrope,'DM Sans',sans-serif;letter-spacing:-.025em}h2{font-weight:800!important}.layout{background:#f2f6fc!important}.sidebar{width:268px!important;background:linear-gradient(172deg,#071a32 0%,#092d4e 58%,#0a4769 100%)!important;padding:30px 19px!important;position:sticky;top:0;height:100vh;box-shadow:12px 0 38px rgba(13,40,76,.12);border-right:1px solid rgba(255,255,255,.08)}.sidebar:before{content:'';position:absolute;width:170px;height:170px;border-radius:50%;top:55%;left:-95px;background:radial-gradient(circle,rgba(0,179,255,.17),transparent 70%);pointer-events:none}.brand{background:#fff!important;padding:20px!important;border-radius:22px!important;max-height:125px!important;box-shadow:0 12px 30px rgba(0,0,0,.16)}.side-title{font-size:10px!important;letter-spacing:3px!important;color:#9ac9e9!important;font-weight:800!important;margin:30px 11px 17px!important}.nav{gap:9px!important}.nav button{padding:15px 17px!important;border-radius:13px!important;font-size:14px!important;font-weight:700!important;color:#bbd2e9!important;transition:background .2s,transform .2s}.nav button:hover{background:rgba(255,255,255,.09)!important;transform:translateX(3px)}.nav button.active{background:linear-gradient(105deg,#047fe4,#08a4ed)!important;color:#fff!important;box-shadow:0 8px 24px rgba(0,133,255,.24)}.content{min-width:0!important}.top{padding:25px 35px!important;background:rgba(255,255,255,.92)!important;border-bottom:1px solid var(--border)!important;box-shadow:0 4px 18px rgba(23,64,109,.025)}.top h1{font-size:24px!important;letter-spacing:-.8px!important;color:#102d4b!important;font-weight:800!important}.top small{font-size:12px!important;color:#7a8ba0!important}.top .pill{background:#e5f8f1!important;color:#148760!important;border-radius:99px!important;padding:8px 12px!important;font-size:11px!important}.main{padding:30px 34px 65px!important;max-width:1720px!important;margin:auto}.card,.filters,.metric{background:#fff!important;border:1px solid var(--border)!important;border-radius:22px!important;box-shadow:var(--shadow)!important}.card{padding:25px!important;margin-bottom:21px!important}.filters{padding:21px!important;margin-bottom:24px!important;gap:14px!important}.filters label,label{font-size:11px!important;font-weight:800!important;letter-spacing:.025em!important;color:#607891!important}.metric{position:relative;overflow:hidden;padding:23px 22px!important;min-height:136px;transition:transform .2s,box-shadow .2s}.metric:hover{transform:translateY(-3px);box-shadow:0 22px 40px rgba(22,73,120,.11)!important}.metric:after{content:'';position:absolute;right:-24px;top:-24px;width:94px;height:94px;border-radius:50%;background:radial-gradient(circle,rgba(0,143,235,.13),transparent 70%)}.metric small{font-size:12px!important;font-weight:700!important;color:#71859d!important}.metric strong{font-size:clamp(22px,2.15vw,31px)!important;color:#0c3155!important;font-weight:800!important}.metric:nth-child(2){border-top:3px solid #11bb8a!important}.metric:nth-child(3){border-top:3px solid #f2a84a!important}.metric:nth-child(4){border-top:3px solid #0788f5!important}.metric:nth-child(1){border-top:3px solid #345fe0!important}.btn{border-radius:12px!important;font-weight:800!important;transition:transform .18s,box-shadow .18s!important}.btn:hover{transform:translateY(-1px)}.btn:not(.light):not(.danger){background:linear-gradient(105deg,#0079dc,#079cf0)!important;box-shadow:0 8px 20px rgba(0,131,225,.17)}.btn.light{background:#eaf3fc!important;color:#11659f!important}input,select{background:#f9fbff!important;border:1px solid #d9e5f1!important;border-radius:12px!important;padding:13px 14px!important;outline:none!important;color:#16334f!important;transition:border .18s,box-shadow .18s}input:focus,select:focus{border-color:#0798ee!important;box-shadow:0 0 0 4px rgba(0,153,237,.10)!important}.progress{border-radius:99px!important;background:#eaf1f9!important;height:13px!important}.progress>div{background:linear-gradient(90deg,#087ce3,#12c5d9)!important;border-radius:99px!important}.stat{background:#f2f7fc!important;border-radius:14px!important}.scroll{border:1px solid #e5edf5;border-radius:15px;overflow:auto}table{border-collapse:collapse;width:100%}thead{background:#f3f8fd}th{color:#668098!important;font-size:11px!important;letter-spacing:.06em;text-transform:uppercase}td,th{padding:15px 14px!important;border-bottom:1px solid #edf2f8!important}tbody tr:hover{background:#f8fbff}.loginScreen{background:radial-gradient(ellipse at 14% 20%,rgba(4,168,244,.23),transparent 38%),radial-gradient(ellipse at 86% 80%,rgba(23,81,174,.30),transparent 35%),linear-gradient(145deg,#06182f,#103d66)!important}.loginCard{border:1px solid rgba(255,255,255,.6)!important;border-radius:27px!important;box-shadow:0 34px 100px rgba(0,0,0,.23)!important;padding:38px!important}.loginCard h2{font-size:25px!important}.loginCard .notice{font-size:11px!important}.premium-kicker{font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:#159ee9;font-weight:800;margin:0 0 8px}.premium-hero{display:flex;justify-content:space-between;align-items:center;gap:18px;border:1px solid #d5e7f8;border-radius:23px;padding:25px 28px;margin-bottom:22px;background:linear-gradient(115deg,#092e52,#075c99 72%,#079fdf);color:#fff;box-shadow:0 17px 38px rgba(9,73,130,.15)}.premium-hero h2{margin:0 0 7px;color:#fff;font-size:24px}.premium-hero p{margin:0;color:#d3e8f8;font-size:13px}.premium-hero .premium-kicker{color:#80d9ff}.premium-hero .hero-symbol{font-size:43px;opacity:.75}.section-eyebrow{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#0b92e5;margin:0 0 8px}.card h2{font-size:17px!important;color:#153552!important}.sub{color:#7b8da1!important}#viewRupture #localBridge{border:1px solid #d9e9f6!important;background:linear-gradient(180deg,#fff,#fbfdff)!important}.notice{border-radius:13px!important}#viewManagement>.card:first-child{border-top:3px solid #098ae9!important}.portal-label{display:inline-block;border-radius:99px;padding:7px 12px;background:#e9f4ff;color:#1675b5;font-size:11px;font-weight:800;letter-spacing:.05em}.premium-foot{margin-top:28px;color:#92a3b7;font-size:11px;text-align:right}
+@media(max-width:1000px){.sidebar{width:218px!important}.main{padding:20px!important}.top{padding:20px!important}.premium-hero{padding:20px!important}.premium-hero h2{font-size:20px}}@media(max-width:700px){.sidebar{width:100%!important;height:auto!important;position:relative!important;padding:14px!important}.layout{display:block!important}.brand{max-width:130px!important;max-height:72px!important;padding:8px!important}.side-title{margin:12px 5px!important}.nav{flex-direction:row!important;overflow-x:auto}.nav button{white-space:nowrap;padding:11px!important}.top{flex-wrap:wrap!important}.main{padding:15px!important}.premium-hero .hero-symbol{display:none}.metric{min-height:100px!important}.loginCard{padding:24px!important}}
+.brand-item{border:1px solid #dce8f4;background:#f8fbff;border-radius:12px;padding:12px;margin:10px 0}.brand-item label{display:block;margin:9px 0 5px;font-size:12px;color:#52718c}.rildon-brand-select{display:block;width:100%;padding:11px;border:1px solid #c8d9ea;border-radius:10px;background:#fff;color:#173858}.brand-overlay{position:fixed;inset:0;z-index:99999;background:rgba(5,21,41,.62);display:flex;align-items:center;justify-content:center;padding:18px}.brand-dialog{width:min(580px,100%);padding:26px;border-radius:20px;background:white;color:#173858;box-shadow:0 24px 90px #0005}.brand-dialog p{overflow-wrap:anywhere}.brand-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}.brand-actions button{width:auto!important}
+/* RILDON 6.6 — interface funcional, menos ruído visual */
+:root{--r66-line:#e0e9f3;--r66-paper:#fff;--r66-bg:#f4f7fc;--r66-accent:#007fcf}
+body,body .layout{background:var(--r66-bg)!important;font-family:Inter,"DM Sans",system-ui,Arial,sans-serif!important}
+.sidebar{width:235px!important;padding:19px 14px!important;box-shadow:none!important;background:linear-gradient(180deg,#092c4c,#0b4167)!important}
+.sidebar .brand{max-height:102px!important;padding:12px!important;border-radius:15px!important;box-shadow:none!important}
+.sidebar .side-title{margin:18px 7px 12px!important;letter-spacing:1.6px!important}
+.sidebar .nav{gap:4px!important}.sidebar .nav button{font-size:13px!important;line-height:1.45!important;border-radius:9px!important;padding:11px 12px!important;box-shadow:none!important}
+.sidebar .nav button:hover{transform:none!important}
+.sidebar>p.sub,.premium-foot{display:none!important}
+.top{padding:16px 23px!important;min-height:72px!important;gap:8px!important;flex-wrap:wrap!important;box-shadow:none!important}
+.top h1{font-size:20px!important;letter-spacing:-.4px!important}.top small{font-size:11px!important}
+.top .btn{padding:9px 11px!important;font-size:12px!important;box-shadow:none!important}
+.main{padding:20px 23px 35px!important;max-width:1500px!important}
+.card,.filters,.metric,.att-panel,.att-kpi{border:1px solid var(--r66-line)!important;background:#fff!important;border-radius:13px!important;box-shadow:0 2px 8px rgba(18,55,87,.035)!important}
+.card{padding:18px!important;margin-bottom:14px!important}.filters{padding:15px!important;margin-bottom:13px!important;gap:10px!important}
+.card h2{font-size:16px!important;margin-bottom:9px!important}.sub,.att-muted{line-height:1.45!important}
+.metrics{gap:10px!important;margin-bottom:14px!important}.metric{padding:16px!important;border-top-width:3px!important}.metric strong{font-size:clamp(18px,1.65vw,24px)!important}
+.premium-hero{padding:17px 20px!important;min-height:0!important;margin-bottom:14px!important;border-radius:13px!important;box-shadow:none!important}
+.premium-hero h2{font-size:21px!important}.premium-hero p{margin:4px 0!important}.premium-hero .hero-symbol{display:none!important}
+input,select,textarea{min-height:39px!important;padding:9px 10px!important;border-radius:8px!important;font-size:13px!important}
+button,.btn{border-radius:9px!important;box-shadow:none!important}button:hover,.btn:hover{transform:none!important}
+th,td{padding:10px!important;font-size:12px!important}th{font-size:10px!important}table{box-shadow:none!important}
+.att-cards{gap:10px!important}.att-kpi{padding:15px!important}.att-kpi strong{font-size:21px!important}
+.att-head{margin-bottom:12px!important}.att-tools{gap:9px!important}.att-note{font-size:12px!important}
+#rildonExtensionSetup{padding:6px 17px!important;font-size:11px!important;gap:7px!important;min-height:0!important}
+#rildonExtensionSetup input{max-width:245px!important;min-height:32px!important}#rildonExtensionSetup button{padding:7px 10px!important;font-size:11px!important}
+#rildonExtensionSetup[data-connected="true"] input,#rildonExtensionSetup[data-connected="true"] button,#rildonExtensionSetup[data-connected="true"] label{display:none!important}
+#rildonExtensionSetup[data-connected="true"]{justify-content:flex-end!important;background:#f4f8fc!important}
+#rildonExtensionSetup[data-connected="true"] strong{font-size:0!important}#rildonExtensionSetup[data-connected="true"] strong:after{content:'Extensão X2';font-size:11px!important}
+#rildonExtensionSetup[data-connected="true"] #rildonExtensionFeedback{color:#16855b!important}
+/* elementos de sincronização de demonstração não são parte operacional */
+#viewDashboard .card #importStatus2{display:none!important}
+@media(max-width:850px){.sidebar{width:185px!important}.main{padding:14px!important}.top{padding:12px!important}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:700px){.sidebar{display:none!important}.top h1{font-size:17px!important}.main{padding:12px 10px 80px!important}.att-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style><style>
+#viewAttendance{display:none}#viewAttendance .att-head{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:18px}#viewAttendance .att-tools{display:flex;gap:10px;flex-wrap:wrap}#viewAttendance .att-tools input,#viewAttendance .att-tools select{padding:11px;border:1px solid #d8e5f2;border-radius:10px;min-width:145px;max-width:220px}#viewAttendance .att-table{width:100%;border-collapse:collapse;font-size:13px}#viewAttendance th,#viewAttendance td{padding:12px 10px;text-align:left;border-bottom:1px solid #e8eff6}#viewAttendance th{background:#eef5fc;color:#305678}#viewAttendance .att-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}#viewAttendance .att-kpi{padding:18px;background:#f0f7ff;border-radius:14px}#viewAttendance .att-kpi strong{display:block;font-size:24px;margin-top:8px}#viewAttendance .att-btn{background:#0588dc;color:white;border:0;border-radius:10px;padding:11px 16px;font-weight:700}#viewAttendance .att-muted{color:#6c8093;font-size:13px}#viewAttendance .att-import{border:1px solid #cfe1f2;background:#f8fbff;border-radius:12px;padding:15px;margin-bottom:18px}#viewAttendance .att-scroll{overflow-x:auto}#viewAttendance .att-preview{max-height:320px;overflow:auto}#viewAttendance .att-error{color:#b42318}#viewAttendance .att-note{background:#fff6e7;border-radius:10px;padding:10px;font-size:12px;margin-top:10px}@media(max-width:700px){#viewAttendance .att-cards{grid-template-columns:1fr}#viewAttendance .att-tools input,#viewAttendance .att-tools select{width:100%;max-width:none}}
+@media print{body *{visibility:hidden!important}#viewAttendance,#viewAttendance *{visibility:visible!important}#viewAttendance{position:absolute;top:0;left:0;width:100%;display:block!important}#attImport,#attPrint,.sidebar,.att-tools{display:none!important}}
+body[data-view="rupture"] main.main > section.filters[data-manager]{display:none!important}
+/* V5.4 — sistema comercial responsivo */
+:root{--rildon-royal:#0878d8;--rildon-navy:#092e50;--rildon-edge:#deebf7}
+html{scroll-behavior:smooth}body{color:#183551!important;background:linear-gradient(180deg,#f0f6fc,#eaf2fb)!important}
+.sidebar{background:linear-gradient(150deg,#061a33,#08395e 60%,#064d7b)!important}
+.top{position:sticky;top:0;z-index:12;backdrop-filter:blur(12px)}
+.premium-hero{border-radius:24px!important;box-shadow:0 18px 42px rgba(3,60,120,.17)!important}
+.card,.metric,.filters{border-radius:20px!important;box-shadow:0 10px 35px rgba(8,42,82,.055)!important}
+.metric{transition:transform .2s,box-shadow .2s;min-height:140px}.metric:hover{transform:translateY(-3px);box-shadow:0 17px 32px rgba(8,42,82,.10)!important}
+label{font-size:12px!important;font-weight:750!important;color:#55718e!important}
+.btn,.att-btn{background:linear-gradient(115deg,#056bc1,#05a5e8)!important;color:white!important;border:none!important;box-shadow:0 6px 14px rgba(6,116,205,.12)!important}
+.btn.light{background:#eaf4fe!important;color:#065a9f!important}.btn.danger{background:#fff1f0!important;color:#ad3535!important}
+input:focus,select:focus{outline:3px solid #bde4ff!important;outline-offset:1px}
+.goal-currency{display:flex;align-items:center;gap:6px;padding-left:11px;background:#f7fbff;border:1px solid #cadced;border-radius:12px;max-width:230px}
+.goal-currency>span{font-weight:800;color:#3980ae;font-size:13px}
+.goal-currency .goalInput{border:none!important;background:transparent!important;min-width:95px;flex:1;box-shadow:none!important;max-width:unset;text-align:left;font-variant-numeric:tabular-nums;padding:12px 7px}
+#viewAttendance .att-head{padding:20px 3px 6px}#viewAttendance h2{font-size:26px!important;letter-spacing:-.6px}
+#viewAttendance .att-tools{background:white;padding:18px;border:1px solid var(--rildon-edge);border-radius:18px;box-shadow:0 10px 32px rgba(8,42,82,.045)}
+#viewAttendance .att-import{background:#fff!important;padding:21px!important;border:1px solid var(--rildon-edge)!important;border-radius:20px!important;box-shadow:0 10px 34px rgba(8,42,82,.045)}
+#viewAttendance .att-import strong{font-size:17px;color:#092e50}
+#viewAttendance .att-kpi{background:#fff!important;border:1px solid #dce8f4;border-top:4px solid #1494e4;padding:21px!important;box-shadow:0 10px 30px rgba(8,42,82,.045)}
+#viewAttendance .att-kpi:nth-child(2){border-top-color:#09b985}#viewAttendance .att-kpi:nth-child(3){border-top-color:#8666d9}
+#viewAttendance .att-kpi strong{color:#103757;font-size:clamp(20px,2.6vw,31px)!important;font-variant-numeric:tabular-nums}
+#viewAttendance .att-kpi small{font-size:12px;color:#66809c;font-weight:650}
+#viewAttendance .att-table tbody tr:hover{background:#f3f9ff}
+#viewAttendance .att-note{border:1px solid #f0d6a5;color:#70551e;background:#fff8e9}
+.extension-panel summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:15px;color:#0c426d;font-weight:800;padding:3px 0}
+.extension-panel[open] summary{margin-bottom:16px}.extension-row{display:flex;gap:10px;align-items:center}.extension-row input{flex:1}
+#viewManagement .scroll,#viewRupture .scroll{border-radius:14px;overflow:auto}
+@media(max-width:850px){.extension-panel summary{flex-direction:column;align-items:flex-start}.extension-row{flex-direction:column}.extension-row>*{width:100%}}
+
+#viewManagement .mini-goal-progress{width:100%;height:8px;background:#e6eff8;border-radius:999px;margin-top:8px;overflow:hidden;max-width:160px}
+#viewManagement .mini-goal-progress span{display:block;height:100%;background:linear-gradient(90deg,#047bcc,#10bd9a);border-radius:999px;transition:width .35s}
+#viewManagement .progress-number{font-weight:800;color:#0e5389;font-size:13px}
+#viewRupture #managerFilters .reportFilters{background:#f8fbff;border-radius:15px;padding:12px}
+#viewRupture .metrics strong{font-variant-numeric:tabular-nums}
+#viewRupture .extension-panel{border-left:4px solid #0b92db!important}
+#viewManagement table td,#viewRupture table td{vertical-align:middle!important}
+
+/* V8.6 — identidade visual refinada, aplicada sem alterar a estrutura funcional. */
+:root{--rildon-blue:#087ddb;--rildon-dark:#082d4f;--rildon-line:#d7e5f1}
+body{background:linear-gradient(135deg,#f6faff,#e9f2fa 65%,#f7fafc)}
+.sidebar{background:linear-gradient(175deg,#061e39,#07365d 61%,#084c84)!important;box-shadow:6px 0 28px #002b5910}
+.nav button{min-height:48px;transition:background .17s,transform .17s}.nav button:hover{background:#ffffff19;transform:translateX(2px)}
+.nav button.active{background:linear-gradient(90deg,#0583e6,#11ade6)!important;box-shadow:0 6px 19px #009bfc29}
+.top{background:#ffffffed!important;border-bottom:1px solid var(--rildon-line)!important;backdrop-filter:blur(8px)}
+.top h1{letter-spacing:-.7px}.top .pill{white-space:nowrap;background:#e3f4eb;color:#0f6843;border:1px solid #b5e6cb}
+.main{padding-top:25px!important}.premium-hero{background:linear-gradient(115deg,#07345d,#076da7 68%,#02a5dc)!important;box-shadow:0 15px 34px #0a679727;border-radius:22px!important;padding:28px!important}
+.metric{position:relative;background:#fff!important;border:1px solid var(--rildon-line)!important;box-shadow:0 8px 27px #1346750b!important;padding:23px!important;min-height:121px}
+.metric::before{content:'';position:absolute;left:0;top:24px;bottom:24px;width:4px;background:linear-gradient(#1475ed,#00afd9);border-radius:0 5px 5px 0}
+.metric strong{letter-spacing:-.6px}.card{border:1px solid var(--rildon-line)!important;box-shadow:0 12px 30px #0d3b6610!important;padding:24px!important}
+.card h2{color:#092e50;letter-spacing:-.4px}table{border-collapse:separate;border-spacing:0;width:100%}th{background:#eaf3fc!important;color:#315b7f!important;text-transform:uppercase;font-size:11px!important;letter-spacing:.6px}td{border-bottom:1px solid #eaf0f7;line-height:1.5}tbody tr:hover td{background:#f3faff}
+.btn,.att-btn{border-radius:11px!important;font-weight:700!important;box-shadow:0 3px 12px #047ccd1a}
+input,select{border:1px solid #cbdced!important;border-radius:11px!important;min-height:43px}
+input:focus,select:focus{outline:2px solid #0b9cdf50;outline-offset:1px;border-color:#0698ea!important}
+.goal-currency{display:flex;align-items:center;max-width:220px;background:#f5faff;border:1px solid #cbdced;border-radius:11px;overflow:hidden}
+.goal-currency>span{padding-left:13px;color:#28668c;font-weight:800;font-size:14px}.goal-currency input{border:0!important;background:transparent!important;min-width:100px;max-width:175px;text-align:right!important;box-shadow:none!important}
+.extension-panel{border-left:4px solid #06a1d8!important;background:linear-gradient(90deg,#edf8ff,#fff 65%)!important}
+.extension-title{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:7px;margin-bottom:12px;font-size:15px}
+.extension-panel input{background:#fff!important}.extension-row{display:flex;gap:10px;flex-wrap:wrap}.extension-row input{flex:1;min-width:210px}
+.att-filter-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin:8px 0 12px;color:#093a65}
+.att-filter-heading span{color:#5a7896;font-size:12px;max-width:560px}
+#viewAttendance .att-metrics>div,#viewAttendance .metric{box-shadow:0 7px 20px #0b396114}
+@media(max-width:900px){.main{padding:15px!important}.premium-hero{padding:20px!important}.metric{min-height:100px}.top h1{font-size:18px!important}}
+@media(max-width:680px){.extension-row{flex-direction:column}.extension-row input{width:100%}.goal-currency{max-width:190px}}
+</style><style>
+#viewAttendance .att-cards{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))!important;gap:12px!important}
+#viewAttendance .att-kpi:nth-child(2){border-top-color:#f29a38!important}
+#viewAttendance .att-kpi:nth-child(3){border-top-color:#0dbd88!important}
+#viewAttendance .att-kpi:nth-child(4){border-top-color:#8164db!important}
+#viewAttendance .att-kpi:nth-child(5){border-top-color:#5d8dd7!important}
+#viewAttendance .att-preview-totals{padding:16px;background:#eaf5ff;border:1px solid #c8dff5;border-radius:12px;margin:12px 0;color:#103757}
+#viewAttendance .att-preview-finance{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:12px 0}
+#viewAttendance .att-preview-finance span{padding:10px;border-radius:10px;background:white;font-size:12px;display:flex;flex-direction:column;gap:5px}
+#viewAttendance .att-preview-finance strong{font-size:20px;font-weight:800}
+#viewAttendance .att-preview-totals small{font-size:12px;color:#4e7294}
+#viewAttendance .att-kpi strong{font-variant-numeric:tabular-nums}
+</style><style>
+.extension-mini{margin:0 0 12px;padding:0;background:#fff;border:1px solid #cbdff0;border-radius:12px;max-width:900px;box-shadow:0 4px 14px rgba(15,48,75,.04)}
+.extension-mini summary{list-style:none;cursor:pointer;padding:9px 13px;font-size:12px;font-weight:750;color:#173e67;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.extension-mini summary::-webkit-details-marker{display:none}
+.extension-mini summary span{font-size:11px;font-weight:400;color:#6b849a}
+.extension-mini-body{padding:4px 12px 10px;max-width:620px}
+.extension-mini-body .extension-title{display:none}
+.extension-mini-body label{font-size:11px;margin-bottom:3px}
+.extension-mini-body .extension-row{display:flex;gap:8px;align-items:center}
+.extension-mini-body input{height:36px;font-size:12px;padding:6px 9px;min-width:0;flex:1}
+.extension-mini-body button{height:36px;padding:6px 12px;font-size:12px;white-space:nowrap}
+.extension-mini-body #ruptExtStatus{font-size:11px;margin:4px 0 0}
+</style><style>
+#viewAttendance .att-estimate-toggle{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;padding:12px 15px;border:1px solid #e4d9b0;border-radius:12px;background:#fffcf3;color:#3f4d5c;cursor:pointer;font-size:13px}
+#viewAttendance .att-estimate-toggle input{margin-top:3px;width:16px;height:16px;accent-color:#0878d8;flex:none}
+#viewAttendance .att-estimate-toggle span{display:flex;flex-direction:column;gap:4px}
+#viewAttendance .att-estimate-toggle small{font-size:12px;color:#78653b;font-weight:400}
+</style>
+<style id="v86-compact-styling">
+#viewAttendance .att-kpi strong,#viewAttendance .metric strong{font-size:clamp(13px,1.45vw,21px)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;overflow-wrap:normal!important;letter-spacing:-.04em!important}
+#viewAttendance .att-kpi,#viewAttendance .metric{min-width:0!important}
+.premium-hero{display:none!important}
+#viewAttendance>.att-head h2{display:none!important}
+#viewAttendance>.att-head{padding-top:0!important}
+</style><style id="v87-design">
+/* V8.8: limpeza visual sem perda de informacoes */
+#viewRupture #managerFilters .reportFilters:has(.stat){display:none!important}
+/* Resumo ao lado do grafico duplicava os indicadores do topo. */
+#v75Manager .v75-side{display:none!important}
+#v75Manager .v75-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important}
+#v75Manager .v75-grid>.v75-panel{width:100%!important;min-width:0!important}
+/* Valor integral com menor fonte e sem reticencias; ajustar grade para evitar recorte. */
+#viewAttendance .att-cards{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+#viewAttendance .att-kpi{min-width:0!important;padding:14px 11px!important}
+#viewAttendance .att-kpi strong{display:block!important;font-family:Manrope,'DM Sans',Arial,sans-serif!important;font-size:clamp(12px,1.18vw,17px)!important;font-weight:800!important;letter-spacing:-.055em!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:normal!important;word-break:normal!important;line-height:1.45!important;font-variant-numeric:tabular-nums}
+#viewAttendance .att-kpi small{font-size:11px!important;line-height:1.35;min-height:30px}
+#v75Manager .v75-kpi strong{font-size:clamp(16px,1.45vw,23px)!important;letter-spacing:-.035em!important;overflow-wrap:normal!important;white-space:nowrap!important}
+@media(max-width:1180px){#viewAttendance .att-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:720px){#viewAttendance .att-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style><style id="v88-cards">
+/* V8.8: cards com valores monetarios completos, em uma linha */
+#viewAttendance .att-cards{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:10px!important}
+#viewAttendance .att-cards .att-kpi{min-width:0!important;overflow:visible!important;padding:12px 9px!important}
+#viewAttendance .att-cards .att-kpi strong{font-size:clamp(10px,1.05vw,17px)!important;letter-spacing:-.055em!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;word-break:normal!important;overflow-wrap:normal!important;font-variant-numeric:tabular-nums!important}
+#managerFilters #brandSummary{display:none!important}
+@media(max-width:1120px){#viewAttendance .att-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:720px){#viewAttendance .att-cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style></head><body data-view="dashboard"><section id="loginScreen" class="loginScreen"><form id="loginForm" class="loginCard"><img src="logo.png" alt="Rildon" style="width:170px;display:block;margin:0 auto 15px"><h2>RILDON GERÊNCIA</h2><p class="sub">GESTÃO COMERCIAL · Acesso da gerência</p><label>Usuário</label><select id="loginUser"></select><label>Senha</label><input type="password" id="loginPass" required autocomplete="current-password"><button class="btn" style="width:100%;margin-top:15px" type="submit">Entrar</button><p id="loginError" role="alert" class="sub"></p><p class="notice">Operação piloto local: o login ainda não oferece segurança de servidor. Não publique dados reais na internet.</p></form></section><div id="appRoot" class="hidden"><div id="rildonGlobalExt"></div><div class="layout"><aside class="sidebar"><img src="logo.png" class="brand" alt="Rildon Eletro Peças"><div class="side-title">RILDON / GESTÃO COMERCIAL</div><nav class="nav"><button data-manager data-go="dashboard" class="active">◈ &nbsp; Visão executiva</button><button data-manager data-go="management">▤ &nbsp; Gestão de metas</button><button data-go="rupture">⚠ &nbsp; Vendas perdidas</button><button type="button" id="attNav" class="att-nav">▦ &nbsp; Meus Atendimentos</button><button type="button" id="solNav">📦 &nbsp; Solicitação de Itens Novos</button></nav><p class="sub" style="color:#a9c9e4;margin-top:35px">Vendas, oportunidades e resultados</p></aside><div class="content"><header class="top"><div><h1><span id="v86SectionTitle">Visão Executiva</span> <span style="font-size:13px;background:#dff4ff;color:#064e83;border-radius:8px;padding:6px 9px;vertical-align:middle">V9.1</span></h1><small>Vendas · Metas · Atendimentos</small></div><div><span id="whoAmI" class="sub"></span> <button class="btn light" id="changePassBtn">Alterar senha</button> <button class="btn light" id="logoutBtn">Sair</button> <span class="pill">● V9.1 · Rede local</span></div></header><main class="main"><section class="filters" data-manager><div><label for="month">Mês de referência</label><input type="month" id="month"></div><div><label for="seller">Vendedor</label><select id="seller"></select></div><div><label for="workdays">Dias úteis do mês</label><input type="number" id="workdays" min="1" max="31" value="21"></div><div><label for="elapsed">Dias úteis transcorridos</label><input type="number" id="elapsed" min="0" max="31" value="12"></div></section><section id="viewDashboard"><div class="premium-hero"><div><p class="premium-kicker">VISÃO EXECUTIVA / TEMPO DE OPERAÇÃO</p><h2>Desempenho comercial em um só lugar.</h2><p>Metas, vendas acumuladas, produtividade e indicadores para decisões mais rápidas.</p></div><span class="hero-symbol">◈</span></div><div class="metrics"><div class="metric"><small>🎯 Meta mensal</small><strong id="goal">—</strong></div><div class="metric"><small>📈 Vendas acumuladas</small><strong id="sales">—</strong></div><div class="metric"><small>◷ Falta vender</small><strong id="remaining">—</strong></div><div class="metric"><small>⚡ Meta diária atualizada</small><strong id="daily">—</strong></div></div><div class="columns"><div><div class="card"><h2>Progresso da meta mensal</h2><div class="statrow"><span class="big" id="pct">0%</span><span class="sub" id="fraction"></span></div><div class="progress"><div id="bar" style="width:0"></div></div><div class="stats"><div class="stat"><span>Meta diária fixa</span><b id="fixed">—</b></div><div class="stat"><span>Dias úteis restantes</span><b id="daysLeft">—</b></div></div></div><div class="card"><h2>Sincronização de vendas</h2><p class="sub" id="importStatus">Aguardando relatório do X2.</p><p class="sub" id="salesSyncStatus" role="status">Aguardando conexão com a extensão.</p><button class="btn light" id="syncSales">Verificar vendas agora</button></div></div><div><div class="card"><h2>Ranking do mês</h2><div id="ranking" class="empty">Importe dados para ver o ranking.</div></div><div class="card"><h2>Resumo</h2><p id="summary" class="sub"></p></div></div></div></section><section id="viewManagement"><div id="managementDaysHost"></div><div class="premium-hero"><div><p class="premium-kicker">PLANEJAMENTO / EQUIPE</p><h2>Gestão inteligente de metas.</h2><p>Defina objetivos por vendedor e acompanhe o atingimento com transparência.</p></div><span class="hero-symbol">◎</span></div><div id="rildonBulkDays" class="rildon-bulk-days" aria-label="Atualizar dias de todos os vendedores">
+ <div class="rildon-bulk-head"><strong>Atualização em massa dos dias</strong><span>Aplica a todos os vendedores deste mês. Depois, clique em <b>Salvar metas no PostgreSQL</b>.</span></div>
+ <div class="rildon-bulk-row">
+  <label for="rildonBulkWorked">Dias trabalhados<input id="rildonBulkWorked" type="number" min="0" max="31" step="1" placeholder="Ex.: 14"></label>
+  <button class="btn light" type="button" id="rildonApplyWorked">Aplicar a todos</button>
+  <label for="rildonBulkRemaining">Dias restantes<input id="rildonBulkRemaining" type="number" min="0" max="31" step="1" placeholder="Ex.: 6"></label>
+  <button class="btn light" type="button" id="rildonApplyRemaining">Aplicar a todos</button>
+ </div><p id="rildonBulkFeedback" class="sub" role="status" aria-live="polite"></p>
+</div><div class="card"><h2>Gerência · Metas por vendedor</h2><p class="sub">Digite a meta em reais; ao sair do campo ela será exibida no formato <b>140.000,00</b>. As vendas do mês são obtidas dos Atendimentos importados, quando disponíveis.</p><div class="scroll"><table><thead><tr><th>Vendedor</th><th>Meta mensal</th><th>Vendas realizadas</th><th>Progresso da meta</th></tr></thead><tbody id="rows"></tbody></table></div><div class="actions"><button class="btn" id="save">Salvar metas no PostgreSQL</button><span class="sub" id="centralGoalStatus" role="status">Aguardando conexão com o banco central.</span></div></div></section><section id="viewData" class="hidden"><div class="card"><h2>Dados do X2</h2><p class="sub">Importe o JSON exportado pela extensão RILDON METAS v1.0. Os dados ficam somente neste navegador nesta etapa.</p><label for="file">Selecionar arquivo de vendas (.json)</label><input id="file" type="file" accept=".json,application/json"><p class="sub" id="importStatus2"></p><div class="actions"><button class="btn danger" id="clear">Limpar dados importados</button></div></div><div class="notice"><b>Versão de desenvolvimento.</b> Ainda não há autenticação, servidor, sincronização entre celulares ou restrição real de acesso. Não publique dados reais na internet antes de configurar esses recursos.</div></section><section id="viewRupture"><details class="extension-mini" id="extensionSettings" data-manager><summary>🔌 Extensão X2 · Configuração do ID <span>Mostrar / ocultar</span></summary><div class="extension-mini-body">
+<div class="extension-title"><strong>🔌 Integração X2 — Vendas Perdidas</strong><span class="sub">Configurar uma vez em cada navegador Chrome</span></div>
+
+<label for="ruptExtId">ID da extensão instalada neste Chrome</label><div class="extension-row"><input id="ruptExtId" maxlength="32" placeholder="Cole aqui o ID da extensão (32 letras)"><button class="btn" id="ruptExtSave" type="button">Salvar ID</button></div>
+<p id="ruptExtStatus" class="sub" role="status"></p>
+</div></details><div style="text-align:right;margin:10px 0"><button class="btn danger" onclick="rildonResetHistory()">Zerar histórico de todos os vendedores</button></div><div class="premium-hero"><div><p class="premium-kicker">INTELIGÊNCIA DE ESTOQUE</p><h2>Oportunidades de venda não atendidas.</h2><p>Analise rupturas por vendedor, fabricante e período e identifique demanda reprimida.</p></div><span class="hero-symbol">◫</span></div><section id="localBridge" class="card" style="display:none!important"><strong>🔗 Consultar carrinho no X2</strong><label style="margin-top:10px">ID da extensão (configurar uma vez)</label><input id="bridgeId" placeholder="Cole o ID da extensão"><label style="margin-top:8px">Número do carrinho</label><input id="bridgeOrder" inputmode="numeric" placeholder="Ex.: 887408"><button id="bridgeGo" class="btn" style="margin-top:10px;width:100%">Consultar no X2</button><div id="bridgeStatus" role="status" style="font-size:13px;margin-top:8px;white-space:pre-wrap"></div><div id="bridgeResults"></div></section><div class="card hidden"><h2>⚠ Vendas perdidas · Falta no estoque</h2><p class="sub">Informe o número do carrinho X2 e registre os produtos indisponíveis. Consulte o carrinho no próprio site ou registre manualmente.</p><div class="filters" style="grid-template-columns:repeat(2,minmax(0,1fr));box-shadow:none;margin-top:14px"><div><label for="rpOrder">Número do pedido X2</label><input id="rpOrder" inputmode="numeric" placeholder="Ex.: 154872"></div><div><label for="rpSeller">Vendedor</label><select id="rpSeller"></select></div><div><label for="rpCode">Código / referência da peça</label><input id="rpCode" placeholder="Referência do X2"></div><div><label for="rpDesc">Descrição da peça</label><input id="rpDesc" placeholder="Nome da peça"></div><div><label for="rpQty">Quantidade em falta</label><input id="rpQty" type="number" min="1" step="1" value="1"></div><div><label for="rpPrice">Preço unitário (R$)</label><input id="rpPrice" type="number" min="0" step="0.01" placeholder="0,00"></div></div><div style="margin:14px 0"><label for="rpFile">Importar itens em falta capturados pela extensão (.json)</label><input id="rpFile" type="file" accept=".json,application/json"><p class="sub">Confira os itens antes de registrar. Arquivo local, sem sincronização entre celulares.</p></div><div class="actions"><button class="btn" id="rpSave">Registrar falta</button><button class="btn light" id="rpExport">Exportar registros CSV</button></div><p id="rpMsg" class="sub" role="status"></p><div class="notice"><b>Integração local:</b> a consulta do carrinho aberto no X2 funciona pelo painel de teste no mesmo Chrome. Consulta remota por número e sincronização entre aparelhos ainda não existem.</div></div><div class="card" style="display:none!important"><strong>Captura automática do X2 · v2.9</strong><p class="sub" id="rildonProcuraStatus">Aguardando sinalizações confirmadas. Informe o ID da extensão para conectar.</p><p class="sub">A captura depende do Chrome e dos campos que o X2 disponibiliza. Dados incompletos permanecem na fila da extensão. Os registros ainda são locais deste navegador; não há sincronização entre PCs.</p></div><div id="managerFilters" class="card"></div><div class="metrics" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="metric"><small>Valor potencial perdido</small><strong id="rpTotal">R$ 0,00</strong></div><div class="metric"><small>Quantidade em falta</small><strong id="rpCount">0</strong></div></div><div class="card"><h2>Histórico de rupturas</h2><div class="scroll"><table><thead><tr><th>Data</th><th>Carrinho</th><th>Vendedor</th><th>Fabricante</th><th>Produto</th><th>Qtd.</th><th>Valor</th><th>Ação</th></tr></thead><tbody id="rpRows"></tbody></table></div></div></section><div class="premium-foot">RILDON | Gestão Comercial · V8.8</div></main><section id="viewAttendance" class="main"><div class="att-head"><div><h2 style="margin:0;color:#07345c">Meus Atendimentos</h2><p class="att-muted">Clientes e valores comprados • Relatórios do X2 (períodos acumulados)</p></div><button id="attPrint" class="att-btn" type="button">▤ Gerar PDF dos filtros</button></div>
+ <div id="attImport" class="att-import" style="display:none"><strong>Importar relatório HTML de vendas pagas</strong><p class="att-muted">Somente gerência. Aceita relatórios de um dia ou períodos anteriores. Ao confirmar um relatório acumulado, os dias já importados dentro dele serão substituídos.</p><input id="attFile" type="file" accept=".html,.htm,text/html"><button id="attLoad" type="button" class="att-btn">Carregar HTML</button><p id="attStatus" class="att-muted"></p><div id="attPreviewTotals" class="att-preview-totals" style="display:none"></div><div id="attPreview" class="att-preview"></div><button id="attConfirm" type="button" class="att-btn" style="display:none">Confirmar importação</button></div>
+ <div class="att-filter-heading"><strong>Filtros de atendimentos</strong><span>Datas por venda serão filtradas individualmente; relatórios sem data por venda exigem o período completo.</span></div><div class="att-tools" style="margin-bottom:16px"><input id="attStart" type="date" aria-label="Data inicial"><input id="attEnd" type="date" aria-label="Data final"><select id="attSeller" aria-label="Vendedor"><option value="">Todos os vendedores</option></select><select id="attBranch" aria-label="Loja"><option value="">Todas as origens</option><option value="Matriz">Matriz</option><option value="DIST">OMRE (DIST)</option><option value="B2B">Online (B2B)</option><option value="Internas">Vendas Internas</option></select><input id="attSearch" placeholder="Pesquisar cliente" aria-label="Pesquisar cliente"><button id="attClear" type="button" class="att-btn">Limpar</button></div>
+
+ <div id="attDateNotice" class="att-note" style="display:none;margin:10px 0 18px"></div><div class="att-cards"><div class="att-kpi"><small id="attNetLabel">TOTAL (Vendidos - Devolvidos)</small><strong id="attNet">—</strong></div><div class="att-kpi"><small>Total vendido (bruto)</small><strong id="attTotal">R$ 0,00</strong></div><div class="att-kpi"><small id="attReturnsLabel">Total devolvido</small><strong id="attReturns">—</strong></div><div class="att-kpi"><small>Registros de clientes</small><strong id="attCount">0</strong></div><div class="att-kpi"><small id="attTicketLabel">Média líquida por registro</small><strong id="attTicket">R$ 0,00</strong></div></div><div class="card att-scroll"><table class="att-table"><thead><tr><th>Período</th><th>Vendedor</th><th>Loja</th><th>Cliente</th><th>Valor</th></tr></thead><tbody id="attRows"><tr><td colspan="5">Nenhum relatório importado.</td></tr></tbody></table></div><p id="attMessage" class="att-muted"></p></section></div></div><nav class="bottomnav"><button data-manager data-go="dashboard" class="active">▣<div>Painel</div></button><button data-manager data-go="management">▤<div>Gerência</div></button><button data-go="rupture">⚠<div>Faltas</div></button></nav></div><script>
+const defaults=['DUDU','CARLOS RAFAEL','CLAUDISTON','DONIZETE','ELIS ANTHONNY','GISLEI','GUSTAVO','HALISON','IRAN','ISAIAS','LUANA','VALDINETE','VENDAS INTERNAS'];const $=id=>document.getElementById(id),money=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});const safeParse=(key)=>{try{return JSON.parse(localStorage.getItem(key)||'{}')}catch{return {}}};let imported=safeParse('rildon_import'),goals=safeParse('rildon_goals'),days=safeParse('rildon_days');$('month').value=new Date().toLocaleDateString('en-CA').slice(0,7);const norm=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();function names(){return [...defaults]}function goalSellerName(v){const x=norm(v).replace(/(?:DIST|B2B|EXTERNO)/g,' ').replace(/[^A-Z ]/g,' ').replace(/\s+/g,' ').trim();const pairs=[['DUDU','DUDU'],['CARLOS EDUARDO','DUDU'],['CARLOS RAFAEL','CARLOS RAFAEL'],['CLAUDISTON','CLAUDISTON'],['DONIZETE','DONIZETE'],['GUSTAVO','GUSTAVO'],['VENDAS INTERNAS','VENDAS INTERNAS'],['ELIS ANTHONNY','ELIS ANTHONNY'],['GISLEI','GISLEI'],['HALISON','HALISON'],['IRAN','IRAN'],['ISAIAS','ISAIAS'],['LUANA','LUANA'],['VALDINETE','VALDINETE'],['NETE','VALDINETE']];return pairs.find(([key])=>x===key||x.startsWith(key+' '))?.[1]||''}
+const sellerUiLabels={'DUDU':'Carlos Eduardo (Dudu)','CARLOS RAFAEL':'Carlos Rafael','CLAUDISTON':'Claudiston','DONIZETE':'Donizete','GUSTAVO':'Gustavo Santos','VENDAS INTERNAS':'Vendas Internas','ELIS ANTHONNY':'Elis Anthonny','GISLEI':'Gislei','HALISON':'Halison','IRAN':'Iran','ISAIAS':'Isaias','LUANA':'Luana','VALDINETE':'Valdinete'};
+function attendanceMonthRows(month){const att=window.rildonAttendanceForGoals;return Array.isArray(att)?att.filter(r=>(r.sale_day?r.sale_day.startsWith(month):r.day.startsWith(month)&&(r.end_day||r.day).startsWith(month))):[]}
+function attendanceMonthGroups(month){const groups=window.rildonAttendanceGroupTotals;return Array.isArray(groups)?groups.filter(g=>String(g.day||'').startsWith(month)||String(g.end_day||g.day||'').startsWith(month)):[]}
+function salesOf(name){
+ const month=$('month').value;
+ const monthRows=attendanceMonthRows(month);
+ const monthGroups=attendanceMonthGroups(month);
+ if(monthRows.length){
+  const selected=name?[name]:names();
+  const gross=monthRows.filter(r=>selected.includes(goalSellerName(r.seller))).reduce((sum,r)=>sum+Number(r.value_cents||0),0);
+  const refunds=monthGroups.filter(g=>selected.includes(goalSellerName(g.seller))).reduce((sum,g)=>sum+Number(g.refund_cents||0),0);
+  return (gross-refunds)/100;
+ }
+ const filtered=Object.entries(imported.consolidado||{}).filter(([raw])=>!name||goalSellerName(raw)===name);
+ return filtered.reduce((sum,[,rec])=>sum+Object.entries(rec.dias||{}).filter(([day])=>day.startsWith(month)).reduce((a,[,c])=>a+Number(c||0),0),0)/100;
+}
+function parseBrl(v){const clean=String(v||'').replace(/[^0-9,.-]/g,'');return Math.max(0,Number(clean.replace(/\./g,'').replace(',','.'))||0)}
+function formatBrlInput(e){e.value=parseBrl(e.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function goalOf(n){return Number(goals[$('month').value]?.[n]||0)}
+function totalGoal(){return names().reduce((sum,name)=>sum+goalOf(name),0)}
+function setMonth(){const d=days[$('month').value];$('workdays').value=d?.total??21;$('elapsed').value=d?.elapsed??12}
+function render(){
+ const list=names(),old=$('seller').value;
+ $('seller').replaceChildren(new Option('Todos os vendedores',''),...list.map(n=>new Option(sellerUiLabels[n]||n,n)));
+ $('seller').value=(old===''||list.includes(old))?old:'';
+ const selected=$('seller').value;
+ const g=selected?goalOf(selected):totalGoal();
+ const s=salesOf(selected);
+ const left=Math.max(0,g-s),total=Math.max(1,Number($('workdays').value)||1),elapsed=Math.max(0,Number($('elapsed').value)||0),remain=Math.max(0,total-elapsed),pct=g?s/g*100:0;
+ $('goal').textContent=money(g);$('sales').textContent=money(s);$('remaining').textContent=money(left);$('daily').textContent=remain?money(left/remain):left?'Sem dias restantes':money(0);
+ $('pct').textContent=pct.toFixed(1).replace('.',',')+'%';$('fraction').textContent=money(s)+' de '+money(g);$('bar').style.width=Math.min(100,pct)+'%';$('fixed').textContent=money(g/total);$('daysLeft').textContent=String(remain);
+ $('summary').textContent=selected?`${sellerUiLabels[selected]||selected}: ${money(s)} líquidos vendidos, ${money(left)} restantes para atingir a meta.`:`Equipe total: ${money(s)} líquidos vendidos, ${money(left)} restantes para atingir a meta consolidada.`;
+ const sorted=list.map(name=>({name,s:salesOf(name)})).sort((a,b)=>b.s-a.s);
+ $('ranking').replaceChildren(...sorted.slice(0,7).map((o,i)=>{const r=document.createElement('div');r.className='rank';const a=document.createElement('span');a.textContent=`${i+1}º  ${sellerUiLabels[o.name]||o.name}`;const b=document.createElement('b');b.textContent=money(o.s);r.append(a,b);return r}));
+ $('rows').replaceChildren(...list.map(name=>{const tr=document.createElement('tr'),target=goalOf(name),sold=salesOf(name);const cell=t=>{const td=document.createElement('td');td.textContent=t;return td};const inp=document.createElement('input');inp.type='text';inp.inputMode='decimal';inp.placeholder='0,00';inp.value=target.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});inp.dataset.name=name;inp.className='goalInput';inp.addEventListener('blur',()=>formatBrlInput(inp));inp.addEventListener('focus',()=>inp.select());inp.setAttribute('aria-label','Meta mensal de '+name+' em reais');const td=document.createElement('td');const wrap=document.createElement('div');wrap.className='goal-currency';const prefix=document.createElement('span');prefix.textContent='R$';wrap.append(prefix,inp);td.append(wrap);const progress=document.createElement('td');const value=document.createElement('b');value.className='progress-number';value.textContent=target?(sold/target*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'Defina a meta';const track=document.createElement('div');track.className='mini-goal-progress';const bar=document.createElement('span');bar.style.width=Math.max(0,Math.min(100,target?sold/target*100:0))+'%';track.append(bar);progress.append(value,track);tr.append(cell(sellerUiLabels[name]||name),td,cell(money(sold)),progress);return tr}));
+ const status=imported.consolidado?`Arquivo carregado: ${Object.keys(imported.capturas||{}).length} dia(s), ${Object.keys(imported.consolidado).length} vendedor(es).`:'Nenhum relatório importado.';$('importStatus').textContent=status;$('importStatus2').textContent=status
+}
+function saveDays(){days[$('month').value]={total:Number($('workdays').value),elapsed:Number($('elapsed').value)};localStorage.setItem('rildon_days',JSON.stringify(days))}
+// V8.6: configuracoes dos dias pertencem somente a Gestao de Metas.
+const managementHost=document.getElementById('managementDaysHost');
+const dayFilters=document.querySelector('section.filters[data-manager]');
+if(managementHost&&dayFilters){managementHost.appendChild(dayFilters);dayFilters.classList.add('v83-management-days');}
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const view=b.dataset.go;document.body.dataset.view=view;document.querySelectorAll('[data-go]').forEach(x=>x.classList.toggle('active',x.dataset.go===view));window.scrollTo(0,0)});
+$('save').onclick=()=>{goals[$('month').value]??={};document.querySelectorAll('.goalInput').forEach(el=>goals[$('month').value][el.dataset.name]=Math.max(0,parseBrl(el.value)));localStorage.setItem('rildon_goals',JSON.stringify(goals));render();alert('Metas salvas neste navegador.')};$('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!data.consolidado||typeof data.consolidado!=='object'||!data.capturas)throw Error('Formato incompatível com a exportação v1.0');imported=data;localStorage.setItem('rildon_import',JSON.stringify(data));render();alert('Vendas importadas com sucesso.')}catch(err){alert('Não foi possível importar: '+err.message)}};$('clear').onclick=()=>{if(confirm('Limpar vendas importadas deste navegador?')){imported={};localStorage.removeItem('rildon_import');render()}};$('month').onchange=()=>{setMonth();render()};$('workdays').onchange=$('elapsed').onchange=()=>{saveDays();render()};$('seller').onchange=render;setMonth();render();if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).catch(()=>{});}
+
+// Ponte de vendas: consulta automaticamente as capturas da extensão no mesmo Chrome.
+const salesAliases=[['CARLOS EDUARDO','DUDU'],['CARLOS RAFAEL','CARLOS RAFAEL'],['CLAUDISTON','CLAUDISTON'],['DONIZETE','DONIZETE'],['GUSTAVO','GUSTAVO'],['VENDAS INTERNAS','VENDAS INTERNAS'],['ELIS ANTHONNY','ELIS ANTHONNY'],['GISLEI','GISLEI'],['HALISON','HALISON'],['IRAN','IRAN'],['ISAIAS','ISAIAS'],['LUANA','LUANA'],['VALDINETE','VALDINETE'],['NETE','VALDINETE']];
+let lastSalesSignature='', salesSyncBusy=false;
+function consolidateSales(capturas){
+ const out={};
+ for(const [day,c] of Object.entries(capturas||{}))for(const r of c.registros||[]){
+  const raw=norm(r.nomeX2).replace(/\s*-?\s*\(DIST\)/g,'').replace(/\bB2B\b/g,'').trim();
+  const alias=salesAliases.find(([a])=>raw.startsWith(a));const name=alias?alias[1]:raw;
+  const entry=out[name]??={totalCentavos:0,dias:{},origens:[]};
+  const cents=Number(r.totalCentavos)||0;
+  entry.totalCentavos+=cents;entry.dias[day]=(entry.dias[day]||0)+cents;
+  if(!entry.origens.includes(r.nomeX2))entry.origens.push(r.nomeX2);
+ }
+ return out;
+}
+function salesSync(manual=false){
+ const status=$('salesSyncStatus');const id=localStorage.getItem('rildon_ext_id')||$('bridgeId').value.trim();
+ if(!/^[a-p]{32}$/.test(id)){status.textContent='Configure o ID da extensão em Vendas perdidas para ativar a sincronização.';return;}
+ if(!globalThis.chrome?.runtime?.sendMessage){status.textContent='Sincronização disponível no Chrome com a extensão instalada.';return;}
+ if(salesSyncBusy)return;salesSyncBusy=true;
+ try{chrome.runtime.sendMessage(id,{type:'RILDON_SALES_SNAPSHOT'},reply=>{
+  salesSyncBusy=false;
+  if(chrome.runtime.lastError||!reply?.ok){status.textContent='Extensão desconectada. Confira o ID e se está ativada.';return;}
+  const capturas=reply.capturas||{};const days=Object.keys(capturas).sort();
+  if(!days.length){status.textContent='Conectado. Abra Relatório de Vendas no X2, selecione UM dia e clique em Pesquisar.';return;}
+  const sig=JSON.stringify(capturas);
+  if(sig!==lastSalesSignature){
+   lastSalesSignature=sig;
+   imported={versao:2,capturas,consolidado:consolidateSales(capturas)};
+   try{localStorage.setItem('rildon_import',JSON.stringify(imported));}catch(e){status.textContent='Erro ao salvar vendas neste navegador: '+e.message;return;}
+   render();
+  }
+  const latest=capturas[days.at(-1)];
+  status.textContent='Sincronizado: '+days.length+' dia(s) | último '+days.at(-1)+' | '+money((latest?.totalCentavos||0)/100)+'. '+(reply.erroCaptura?'ATENÇÃO: '+reply.erroCaptura:'');
+ });}catch(e){salesSyncBusy=false;status.textContent='Erro: '+e.message;}
+}
+$('syncSales').onclick=()=>salesSync(true);
+$('bridgeId').addEventListener('change',()=>{lastSalesSignature='';salesSync(true)});
+(()=>{const field=$('ruptExtId'),status=$('ruptExtStatus');field.value=localStorage.getItem('rildon_ext_id')||'';
+ const update=()=>{status.textContent=field.value?'ID configurado neste navegador. A sincronização das sinalizações depende da extensão instalada e ativa.':'Ainda não configurado. Sem o ID, este navegador não lê a fila da extensão.'};
+ $('ruptExtSave').onclick=()=>{const id=field.value.trim();if(!/^[a-p]{32}$/.test(id)){status.textContent='ID inválido. Consulte chrome://extensions e copie as 32 letras do ID.';return;}
+  localStorage.setItem('rildon_ext_id',id);$('bridgeId').value=id;lastSalesSignature='';status.textContent='ID salvo neste navegador. Verificando comunicação…';salesSync(true);
+ };
+ update();
+})();
+
+setInterval(()=>salesSync(),4000);
+setTimeout(()=>salesSync(),600);
+
+// Módulo local de rupturas: protótipo, sem consulta ao X2 ou sincronização.
+
+const RILDON_FABRICANTES = ["12M MEDIDORES", "3-RHO", "AEC ARRANQUES E ALTERNADORES", "AEROFLEX", "ALMAPY", "ALTERNATIVE", "AMEFIL", "AMS", "ARIELO", "ARTEB", "ASX", "AUTOMAXX", "AUTOPOLI", "BASTOS JUNTAS", "BC CABOS", "BERGSON", "BEST SOLDAS", "BILBAO", "BOBINAUTO", "BOSCH", "BRITE", "BUILDING", "BZM", "CAR80", "CARTO", "CAST SOLDAS", "CAV", "CEMAK", "CECOSAR", "CINAP", "CINOV", "CONIMEL", "CONTACT", "CONTINENTAL", "DAYLUX", "DELCO REMY", "DELPHI", "DIAL INTERRUPTORES", "DIRETEC", "DIVERSOS P/ USO E CONSUMO", "DML", "DNI", "D PAULA", "DPL", "DRIFT DO BRASIL", "DSC", "D.S. SCHIAVETTO", "EDANTI", "ELETRICWAY", "ELLEN", "ENGATCAR", "ETESSADAHNIAR", "EUROMOLD", "EXCELITE", "FACOBRAS", "FACOEX", "FEK", "FERIAT", "FIAMM", "FILTROS BRASIL", "FORNECEDORES DIVERSOS", "FORTLUZ", "FRONTEC", "GAPBR", "GAUSS", "GBM", "G BUSCH", "GE", "GLK", "GM", "HBR BRASIL", "IGUACU", "IKRO", "ILG", "INDEBRAS", "INDIEL", "INDUTEC", "INTERMEC", "JLC", "KATHO COMPONENTES DE FREIOS", "KAUAI AUTOMOTIVO", "KHELLER", "KOSTAL", "KTR", "LCG", "LUCAS", "MARFLEX", "MARILIA", "MARVIN", "MARZU", "MCM BOBINAS", "MECABRAZIL", "MG MANGUEIRAS", "MOBENSANI", "MTE", "MULTILIGHT", "MULTI QUALITA", "NEGRÃO", "NEOLUX", "NEW COIL", "NGK", "NINO FARÓIS", "NSK", "OLIMPIC", "ORBI", "OSPINA", "OSRAM", "PARKER", "PERFECT", "PHILIPS", "PLATINAC", "POLO", "PRADOLUX", "PREMIER BOBINAS", "PRIME PARTS", "PROGERAL", "RECRIN ORIGINAL", "REXON", "SEG AUTOMOTIVE", "SHERMAN", "SIEMENS", "SINDAL", "SKF", "SPEED BRAKE", "SULCARBON", "SUPRENS", "TANCLICK", "TC CHICOTES", "TECFIL FILTROS", "THERMOVAL VALVULAS", "TIGER AUTO", "TORPA", "TOTAL SUL", "TROMAR", "TSA", "UEDA", "UETA", "UNIAO JM", "UNIFAP", "USIFIO", "VALEO", "VANZO", "VARVINI", "VENKA", "VETOR", "VETTORE E BRAGA", "VOLDA", "VOX FILTROS", "VP", "WEGA MOTORS", "WILLTEC", "WISA", "YMAX", "ZEN", "ZM", "ZWF"];
+const RILDON_ALIASES = {"SEG": "SEG AUTOMOTIVE", "POLO": "POLO", "DNI": "DNI", "MARÍLIA": "MARILIA", "MTE THOMSON": "MTE", "MTE-THOMSON": "MTE", "DS": "D.S. SCHIAVETTO"};
+function rildonFabricante(desc,ref){
+ const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+ const chunks=normalize(desc).split(/\s+-\s+/).map(s=>s.trim()).filter(Boolean);
+ const options=Object.keys(RILDON_ALIASES).concat(RILDON_FABRICANTES).sort((a,b)=>b.length-a.length);
+ // Check only trailing manufacturer segments, not car make/model names earlier in description.
+ for(const chunk of chunks.slice(-3).reverse()){
+  for(const candidate of options){
+   const name=normalize(candidate);
+   if(chunk===name || chunk.startsWith(name+' ') || chunk.startsWith(name+'/')){
+    return RILDON_ALIASES[candidate]||candidate;
+   }
+  }
+ }
+ // Do not guess manufacturer from an arbitrary supplier code.
+ return 'Não identificado';
+}
+
+function manufacturerOf(desc,ref){return rildonFabricante(desc,ref)}
+function recordManufacturer(r){return (r.manufacturerManual||r.manufacturer||manufacturerOf(r.desc,r.reference)||'Não identificado')}
+function manufacturerChoices(current=''){
+ const list=[...new Set([...RILDON_FABRICANTES, 'Não identificado',current].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+ return list.map(name=>new Option(name,name));
+}
+function selectManufacturer(initial){const select=document.createElement('select');select.className='rildon-brand-select';select.replaceChildren(...manufacturerChoices(initial));select.value=initial||'Não identificado';return select;}
+function editManufacturer(r){
+ if(activeUser?.role==='vendedor'&&normName(r.seller)!==normName(activeUser.name)){alert('Você só pode alterar seus registros.');return;}
+ const select=selectManufacturer(recordManufacturer(r));
+ const overlay=document.createElement('div');overlay.className='brand-overlay';
+ const dialog=document.createElement('div');dialog.className='brand-dialog';
+ const heading=document.createElement('h3');heading.textContent='Corrigir fabricante';
+ const info=document.createElement('p');info.textContent=`Carrinho ${r.order} · ${r.code} — ${r.desc}`;
+ const hint=document.createElement('p');hint.textContent='Selecione o fabricante correto. A alteração será usada nos filtros e no PDF.';
+ const actions=document.createElement('div');actions.className='brand-actions';
+ const cancel=document.createElement('button');cancel.className='btn light';cancel.textContent='Cancelar';cancel.onclick=()=>overlay.remove();
+ const save=document.createElement('button');save.className='btn';save.textContent='Salvar fabricante';save.onclick=()=>{r.manufacturerManual=select.value;r.manufacturerSource='manual';saveRuptures();overlay.remove();renderRuptures();};
+ actions.append(cancel,save);dialog.append(heading,info,hint,select,actions);overlay.append(dialog);document.body.append(overlay);
+}
+
+const USERS=[['GERENCIA','gerencia'],['DUDU','vendedor'],['CLAUDISTON','vendedor'],['HALISON','vendedor'],['LUANA','vendedor'],['NETE','vendedor'],['GISLEI','vendedor'],['ISAIAS','vendedor'],['IRAN','vendedor'],['FERNANDO','vendedor']];
+let activeUser=null;let solCredentials=null;
+function loginInit(){
+ const sel=document.getElementById('loginUser');
+ sel.replaceChildren(...USERS.filter(([,role])=>role==='gerencia').map(([name])=>{const o=document.createElement('option');o.value=name;o.textContent=name;return o}));
+ document.getElementById('loginForm').onsubmit=e=>{
+  e.preventDefault();const name=sel.value,pass=document.getElementById('loginPass').value;
+  const stored=JSON.parse(localStorage.getItem('rildon_demo_passwords')||'{}');
+  if(pass!==(stored[name]||'12345')){document.getElementById('loginError').textContent='Senha incorreta.';return;}
+  solCredentials={user:name,password:pass};activeUser={name,role:'gerencia'};
+  document.getElementById('loginScreen').classList.add('hidden');document.getElementById('appRoot').classList.remove('hidden');
+  document.getElementById('whoAmI').textContent=name+' · '+(activeUser.role==='gerencia'?'Gerência':'Vendedor');
+  document.querySelectorAll('[data-manager]').forEach(el=>el.classList.toggle('hidden',activeUser.role!=='gerencia'));
+  document.querySelectorAll('[data-go="rupture"]').forEach(el=>el.click());
+  renderRuptures();
+ };
+ document.getElementById('logoutBtn').onclick=()=>{solCredentials=null;document.getElementById('solFrame')?.remove();document.getElementById('solView')?.remove();activeUser=null;document.getElementById('appRoot').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden');document.getElementById('loginPass').value='';};
+ document.getElementById('changePassBtn').onclick=()=>{
+  if(!activeUser)return;const pwd=prompt('Nova senha (opcional; mínimo 6 caracteres):');if(pwd===null)return;
+  if(pwd.length<6){alert('A senha precisa ter pelo menos 6 caracteres.');return;}
+  const stored=JSON.parse(localStorage.getItem('rildon_demo_passwords')||'{}');stored[activeUser.name]=pwd;localStorage.setItem('rildon_demo_passwords',JSON.stringify(stored));alert('Senha alterada neste navegador.');
+ };
+}
+function setupRuptureFilters(){
+ const box=document.getElementById('managerFilters');
+ box.innerHTML=`<h2>Filtros de Vendas Perdidas</h2><p class='sub'>Fabricante não identificado? Clique em <b>Fabricante</b> no histórico para corrigir.</p><div class="reportFilters"><div><label>Vendedor</label><select id="filterSeller"></select></div><div><label>Fabricante</label><select id="filterManufacturer"></select></div><div><label>Data inicial</label><input id="filterStart" type="date"></div><div><label>Data final</label><input id="filterEnd" type="date"></div></div><div class="reportFilters"><div class="stat"><span>Valor filtrado</span><b id="filterTotal">—</b></div><div class="stat"><span>Unidades faltantes</span><b id="filterQty">—</b></div><div class="stat"><span>Registros</span><b id="filterCount">—</b></div><div class="stat"><span>Fabricantes</span><b id="filterBrands">—</b></div></div><div id="brandSummary" hidden aria-hidden="true" style="display:none!important"></div><div class="actions"><button class="btn" id="filterPdf">Gerar relatório PDF</button><button class="btn light" id="filterExport">Exportar relatório filtrado (CSV)</button></div>`;
+ ['filterSeller','filterManufacturer','filterStart','filterEnd'].forEach(id=>document.getElementById(id).addEventListener('change',renderRuptures));
+ document.getElementById('filterExport').onclick=()=>exportRuptures(getFilteredRuptures());
+ document.getElementById('filterPdf').onclick=()=>generateRupturesPdf();
+}
+function getFilteredRuptures(){
+ if(!activeUser)return [];
+ if(activeUser.role==='vendedor')return ruptures.filter(r=>normName(r.seller)===normName(activeUser.name));
+ const seller=document.getElementById('filterSeller')?.value||'',brand=document.getElementById('filterManufacturer')?.value||'',start=document.getElementById('filterStart')?.value||'',end=document.getElementById('filterEnd')?.value||'';
+ return ruptures.filter(r=>{
+  const d=String(r.updated||'').slice(0,10);const m=recordManufacturer(r);
+  return (!seller||r.seller===seller)&&(!brand||m===brand)&&(!start||d>=start)&&(!end||d<=end);
+ });
+}
+function normName(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'').trim()}
+function exportRuptures(rows){
+ const data=[['data','carrinho','vendedor','fabricante','codigo','referencia','descricao','quantidade_faltante','preco_unitario','valor'],...rows.map(r=>[(r.updated||'').slice(0,10),r.order,r.seller,recordManufacturer(r),r.code,r.reference||'',r.desc,r.qty,r.price,r.qty*r.price])];
+ const csv='\ufeff'+data.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(';')).join('\r\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='rildon_relatorio_vendas_perdidas.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+
+
+function generateRupturesPdf(){
+ if(activeUser?.role!=='gerencia'){alert('Relatório disponível apenas para a gerência.');return;}
+ const start=$('filterStart').value,end=$('filterEnd').value;
+ if(start&&end&&start>end){alert('Data inicial maior que a final.');return;}
+ const rows=getFilteredRuptures();
+ const total=rows.reduce((n,r)=>n+Number(r.qty||0)*Number(r.price||0),0);
+ const qty=rows.reduce((n,r)=>n+Number(r.qty||0),0);
+ const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+ const date=d=>d?String(d).slice(0,10).split('-').reverse().join('/'):'Todos';
+ const textQty=v=>Number.isFinite(Number(v))&&v!==null&&v!==undefined?String(v):'—';
+ const details=rows.slice().sort((a,b)=>String(a.updated||'').localeCompare(String(b.updated||''))).map(r=>{
+  const requested=r.requestedQty??null,available=r.availableQty??null;
+  return `<tr><td>${esc(date(r.updated))}</td><td>${esc(r.order)}</td><td>${esc(r.seller)}</td><td><b>${esc(r.code)}</b> · ${esc(r.desc)}</td><td>${esc(recordManufacturer(r))}</td><td class="num">${esc(textQty(requested))}</td><td class="num">${esc(textQty(available))}</td><td class="num">${esc(r.qty)}</td><td class="num strong">${esc(money(Number(r.qty||0)*Number(r.price||0)))}</td></tr>`;
+ }).join('');
+ const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>RILDON | Vendas Perdidas</title><style>
+ @page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font:11px Arial,sans-serif;color:#16314b;margin:0}header{display:flex;justify-content:space-between;align-items:end;border-bottom:3px solid #0786d1;padding-bottom:10px}h1{font-size:20px;margin:4px 0}.brand{color:#008cce;font-weight:700;letter-spacing:1px}.muted{color:#60768c;font-size:10px}.summary{display:flex;gap:10px;margin:15px 0}.metric{flex:1;background:#f0f6fb;border:1px solid #dce8f3;padding:12px;border-radius:7px}.metric span{display:block;color:#526a80;font-size:10px}.metric strong{display:block;margin-top:5px;font-size:18px;color:#0a4069}table{border-collapse:collapse;width:100%;table-layout:fixed}th{background:#0a4776;color:#fff;text-align:left;padding:9px 6px;font-size:10px}td{padding:8px 6px;border-bottom:1px solid #e1e9f0;vertical-align:top;overflow-wrap:anywhere}tbody tr:nth-child(even){background:#f5f9fd}.num{text-align:right;white-space:nowrap}.strong{font-weight:700}thead{display:table-header-group}tr{break-inside:avoid}.foot{margin-top:13px;font-size:9px;color:#64768a}h2{font-size:13px;margin:16px 0 9px}
+ 
+/* V8.6 — identidade visual refinada, aplicada sem alterar a estrutura funcional. */
+:root{--rildon-blue:#087ddb;--rildon-dark:#082d4f;--rildon-line:#d7e5f1}
+body{background:linear-gradient(135deg,#f6faff,#e9f2fa 65%,#f7fafc)}
+.sidebar{background:linear-gradient(175deg,#061e39,#07365d 61%,#084c84)!important;box-shadow:6px 0 28px #002b5910}
+.nav button{min-height:48px;transition:background .17s,transform .17s}.nav button:hover{background:#ffffff19;transform:translateX(2px)}
+.nav button.active{background:linear-gradient(90deg,#0583e6,#11ade6)!important;box-shadow:0 6px 19px #009bfc29}
+.top{background:#ffffffed!important;border-bottom:1px solid var(--rildon-line)!important;backdrop-filter:blur(8px)}
+.top h1{letter-spacing:-.7px}.top .pill{white-space:nowrap;background:#e3f4eb;color:#0f6843;border:1px solid #b5e6cb}
+.main{padding-top:25px!important}.premium-hero{background:linear-gradient(115deg,#07345d,#076da7 68%,#02a5dc)!important;box-shadow:0 15px 34px #0a679727;border-radius:22px!important;padding:28px!important}
+.metric{position:relative;background:#fff!important;border:1px solid var(--rildon-line)!important;box-shadow:0 8px 27px #1346750b!important;padding:23px!important;min-height:121px}
+.metric::before{content:'';position:absolute;left:0;top:24px;bottom:24px;width:4px;background:linear-gradient(#1475ed,#00afd9);border-radius:0 5px 5px 0}
+.metric strong{letter-spacing:-.6px}.card{border:1px solid var(--rildon-line)!important;box-shadow:0 12px 30px #0d3b6610!important;padding:24px!important}
+.card h2{color:#092e50;letter-spacing:-.4px}table{border-collapse:separate;border-spacing:0;width:100%}th{background:#eaf3fc!important;color:#315b7f!important;text-transform:uppercase;font-size:11px!important;letter-spacing:.6px}td{border-bottom:1px solid #eaf0f7;line-height:1.5}tbody tr:hover td{background:#f3faff}
+.btn,.att-btn{border-radius:11px!important;font-weight:700!important;box-shadow:0 3px 12px #047ccd1a}
+input,select{border:1px solid #cbdced!important;border-radius:11px!important;min-height:43px}
+input:focus,select:focus{outline:2px solid #0b9cdf50;outline-offset:1px;border-color:#0698ea!important}
+.goal-currency{display:flex;align-items:center;max-width:220px;background:#f5faff;border:1px solid #cbdced;border-radius:11px;overflow:hidden}
+.goal-currency>span{padding-left:13px;color:#28668c;font-weight:800;font-size:14px}.goal-currency input{border:0!important;background:transparent!important;min-width:100px;max-width:175px;text-align:right!important;box-shadow:none!important}
+.extension-panel{border-left:4px solid #06a1d8!important;background:linear-gradient(90deg,#edf8ff,#fff 65%)!important}
+.extension-title{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:7px;margin-bottom:12px;font-size:15px}
+.extension-panel input{background:#fff!important}.extension-row{display:flex;gap:10px;flex-wrap:wrap}.extension-row input{flex:1;min-width:210px}
+.att-filter-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin:8px 0 12px;color:#093a65}
+.att-filter-heading span{color:#5a7896;font-size:12px;max-width:560px}
+#viewAttendance .att-metrics>div,#viewAttendance .metric{box-shadow:0 7px 20px #0b396114}
+@media(max-width:900px){.main{padding:15px!important}.premium-hero{padding:20px!important}.metric{min-height:100px}.top h1{font-size:18px!important}}
+@media(max-width:680px){.extension-row{flex-direction:column}.extension-row input{width:100%}.goal-currency{max-width:190px}}
+</style></head><body><header><div><div class="brand">RILDON ELETRO PEÇAS</div><h1>Relatório de Vendas Perdidas</h1><div class="muted">Período: ${esc(date(start))} a ${esc(date(end))} · Vendedor: ${esc($('filterSeller').selectedOptions[0]?.textContent||'Todos')} · Fabricante: ${esc($('filterManufacturer').selectedOptions[0]?.textContent||'Todos')}</div></div><div class="muted">Emitido em ${esc(new Date().toLocaleString('pt-BR'))}</div></header>
+ <div class="summary"><div class="metric"><span>Valor potencial perdido</span><strong>${esc(money(total))}</strong></div><div class="metric"><span>Unidades em falta</span><strong>${qty}</strong></div><div class="metric"><span>Peças registradas</span><strong>${rows.length}</strong></div></div>
+ <h2>Peças solicitadas sem estoque suficiente</h2><table><thead><tr><th style="width:8%">Data</th><th style="width:8%">Pedido</th><th style="width:10%">Vendedor</th><th style="width:31%">Peça / código</th><th style="width:11%">Fabricante</th><th style="width:7%">Solic.</th><th style="width:7%">Estoque</th><th style="width:7%">Falta</th><th style="width:11%">Valor perdido</th></tr></thead><tbody>${details||'<tr><td colspan="9">Nenhum registro no período selecionado.</td></tr>'}</tbody></table>
+ <div class="foot">Solic. = quantidade solicitada · Estoque = quantidade disponível no momento da consulta · Falta = quantidade não atendida. “—” indica informação não registrada em versões anteriores. Valores representam oportunidades potenciais de venda, não perdas comprovadas.</div>
+ <script>window.addEventListener('load',()=>setTimeout(()=>window.print(),350));<\/script><style>
+/* Navegacao exclusiva, inclusive iframe de solicitacoes dinamico. */
+#solView{display:none!important}
+body[data-view="solicitacoes"] #solView{display:block!important}
+body[data-view="solicitacoes"] #viewDashboard,
+body[data-view="solicitacoes"] #viewManagement,
+body[data-view="solicitacoes"] #viewRupture,
+body[data-view="solicitacoes"] #viewData,
+body[data-view="solicitacoes"] #viewAttendance{display:none!important}
+body:not([data-view="solicitacoes"]) #solView{display:none!important}
+/* Days belong in management only */
+body[data-view="management"] .v83-management-days{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:18px}
+body:not([data-view="management"]) .v83-management-days{display:none!important}
+@media(max-width:800px){body[data-view="management"] .v83-management-days{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style><style id="r89-cleanup">
+/* Hide redundant dashboard modules while retaining their script targets. */
+.v75-panel:has(> h3:first-child):has(> .v75-progress):has(> .v75-summary){display:none!important}
+/* The separate manager spreadsheet repeats the executive statistics already above. */
+#v86SheetTable{display:none!important}
+.v75-side{display:none!important}
+.v75-grid{grid-template-columns:minmax(0,1fr)!important}
+#managementDaysHost{display:none!important}
+</style>
+<style id="rildon-bulk-days-style">
+.rildon-bulk-days{background:#fff;border:1px solid #d6e3f2;border-radius:16px;padding:18px 22px;margin:0 0 16px;box-shadow:0 3px 14px #123f7110}
+.rildon-bulk-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;color:#103251;margin-bottom:15px}
+.rildon-bulk-head strong{font-size:16px}.rildon-bulk-head span{font-size:12px;color:#6382a0}
+.rildon-bulk-row{display:flex;align-items:end;gap:10px;flex-wrap:wrap}.rildon-bulk-row label{font-size:12px;font-weight:700;color:#315779;display:flex;flex-direction:column;gap:6px}.rildon-bulk-row input{padding:10px 12px;border:1px solid #bed3ea;border-radius:9px;width:115px;min-height:40px;background:#f7fbff;color:#103251;font-size:15px}.rildon-bulk-row button{min-height:40px;margin-right:16px}.rildon-bulk-days .sub{margin:11px 0 0}
+body:not([data-view="management"]) #rildonBulkDays{display:none!important}
+</style></body></html>`;
+ const w=window.open('','_blank');if(!w){alert('Permita pop-ups do localhost para gerar o PDF.');return;}w.document.open();w.document.write(html);w.document.close();
+}
+
+let ruptures=(()=>{try{const x=JSON.parse(localStorage.getItem('rildon_ruptures_v1')||'[]');return Array.isArray(x)?x:[]}catch{return []}})();
+function saveRuptures(){localStorage.setItem('rildon_ruptures_v1',JSON.stringify(ruptures))}
+function renderRuptures(){
+ const previous=$('rpSeller').value;
+ $('rpSeller').replaceChildren(...names().map(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;return o}));
+ $('rpSeller').value=names().includes(previous)?previous:($('seller').value||names()[0]);
+ const admin=activeUser?.role==='gerencia';
+ $('managerFilters').classList.toggle('hidden',!admin);
+ if(admin){
+  for(const [id,values] of [['filterSeller',[...new Set(ruptures.map(r=>r.seller).filter(Boolean))]],['filterManufacturer',[...new Set(ruptures.map(r=>recordManufacturer(r)))]]]){
+   const el=$(id),old=el.value;el.replaceChildren(new Option('Todos',''),...values.sort().map(v=>new Option(v,v)));el.value=values.includes(old)?old:'';
+  }
+ }
+ const rows=getFilteredRuptures();
+ $('rpTotal').textContent=money(rows.reduce((a,r)=>a+r.qty*r.price,0));
+ $('rpCount').textContent=String(rows.reduce((a,r)=>a+r.qty,0));
+ $('rpRows').replaceChildren(...rows.slice().reverse().map(r=>{
+  const tr=document.createElement('tr');
+  [(r.updated||'').slice(0,10).split('-').reverse().join('/'),r.order,r.seller,recordManufacturer(r),r.code+' — '+r.desc,String(r.qty),money(r.qty*r.price)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td)});
+  const td=document.createElement('td');const edit=document.createElement('button');edit.className='btn light';edit.textContent='Fabricante';edit.title='Corrigir fabricante deste registro';edit.onclick=()=>editManufacturer(r);td.append(edit);if(admin){const btn=document.createElement('button');btn.className='btn danger';btn.textContent='Excluir';btn.onclick=()=>{if(confirm('Excluir este registro?')){ruptures=ruptures.filter(x=>x.id!==r.id);saveRuptures();renderRuptures()}};td.append(btn)}tr.append(td);return tr;
+ }));
+ if(admin){
+  $('filterTotal').textContent=money(rows.reduce((a,r)=>a+r.qty*r.price,0));$('filterQty').textContent=rows.reduce((a,r)=>a+r.qty,0);$('filterCount').textContent=rows.length;
+  const grouped={};for(const r of rows){const brand=recordManufacturer(r);grouped[brand]??={qty:0,total:0};grouped[brand].qty+=r.qty;grouped[brand].total+=r.qty*r.price}
+  $('filterBrands').textContent=Object.keys(grouped).length;
+  /* Resumo por fabricante removido: o historico filtrado ja exibe os registros. */
+ }
+}
+$('rpSave').onclick=()=>{const order=$('rpOrder').value.trim(),seller=$('rpSeller').value,code=$('rpCode').value.trim(),desc=$('rpDesc').value.trim(),qty=Number($('rpQty').value),price=Number($('rpPrice').value);if(!order||!code||!desc||!Number.isInteger(qty)||qty<1||!Number.isFinite(price)||price<0){$('rpMsg').textContent='Preencha pedido, referência, descrição, quantidade inteira positiva e preço válido.';return}const key=order+'|'+seller+'|'+code;const found=ruptures.find(r=>r.key===key);if(found){if(!confirm('Este produto já foi registrado neste pedido. Substituir quantidade e preço?'))return;Object.assign(found,{desc,qty,price,updated:new Date().toISOString()})}else{ruptures.push({id:crypto.randomUUID?.()||String(Date.now()),key,order,seller,code,desc,qty,price,updated:new Date().toISOString()})}saveRuptures();renderRuptures();$('rpMsg').textContent='Registro salvo somente neste dispositivo (protótipo).'};
+$('rpFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(data.format!=='rildon-rupturas-v1'||!/^\d+$/.test(String(data.order||''))||!Array.isArray(data.items))throw Error('Arquivo de carrinho inválido');const seller=prompt('Confirme o vendedor responsável:',data.seller||$('rpSeller').value);if(!seller)return;const eligible=data.items.filter(x=>x.type==='sem_estoque'&&Number.isFinite(x.qty)&&x.qty>0&&Number.isFinite(x.price)&&x.price>=0&&x.code);if(!eligible.length)throw Error('Nenhuma peça sem estoque total válida encontrada. Estoque parcial exige conferência manual.');const total=eligible.reduce((sum,x)=>sum+x.qty*x.price,0);if(!confirm(`Pedido ${data.order}: registrar ${eligible.length} produto(s) sem estoque, total potencial ${money(total)}? Verifique se a venda realmente foi perdida.`))return;for(const x of eligible){const code=x.code, key=data.order+'|'+seller+'|'+code,desc=x.description,qty=x.qty,price=x.price;const found=ruptures.find(r=>r.key===key);if(found)Object.assign(found,{desc,qty,price,updated:new Date().toISOString()});else ruptures.push({id:crypto.randomUUID?.()||String(Date.now()+Math.random()),key,order:data.order,seller,code,desc,qty,price,updated:new Date().toISOString()})}saveRuptures();renderRuptures();$('rpMsg').textContent=`Pedido ${data.order}: ${eligible.length} produto(s) registrado(s) ou atualizado(s).`;}catch(err){$('rpMsg').textContent='Falha ao importar: '+err.message}finally{e.target.value=''}};
+window.addEventListener('rildon:confirm-cart',event=>{
+  const {order,seller,items}=event.detail;
+  if(!activeUser)throw Error("Faça login antes de registrar.");
+  if(activeUser.role!=="gerencia"&&normName(seller)!==normName(activeUser.name))throw Error("Este carrinho pertence a outro vendedor. Registro bloqueado.");
+  for(const x of items){
+    const key=order+'|'+seller+'|'+x.code;
+    const existing=ruptures.find(r=>r.key===key);
+    const record={id:existing?.id||(crypto.randomUUID?.()||String(Date.now())+'-'+Math.random()),key,order,seller,code:x.code,desc:x.desc,manufacturer:x.manufacturer||manufacturerOf(x.desc,x.reference),manufacturerManual:x.manufacturerManual||(existing?.manufacturerManual||''),reference:x.reference||"",requestedQty:Number.isFinite(x.requestedQty)?x.requestedQty:(existing?.requestedQty??null),availableQty:Number.isFinite(x.availableQty)?x.availableQty:(existing?.availableQty??null),qty:x.qty,price:x.price,updated:new Date().toISOString()};
+    if(existing)Object.assign(existing,record);else ruptures.push(record);
+  }
+  saveRuptures();renderRuptures();
+  $('rpMsg').textContent='Carrinho '+order+': '+items.length+' produto(s) registrado(s) no histórico.';
+  document.body.dataset.view='rupture';
+  $('rpRows').closest('.card')?.scrollIntoView({behavior:'smooth',block:'start'});
+});
+$('rpExport').onclick=()=>{const lines=[['pedido','vendedor','referencia','descricao','quantidade','preco_unitario','valor_total','atualizado'],...ruptures.map(r=>[r.order,r.seller,r.code,r.desc,r.qty,r.price,r.qty*r.price,r.updated])];const csv='\ufeff'+lines.map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(';')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='rildon_vendas_perdidas.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+setupRuptureFilters();loginInit();renderRuptures();
+</script><script>
+(()=>{
+const $=id=>document.getElementById(id), moneyLocal=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+$('bridgeId').value=localStorage.getItem('rildon_ext_id')||'';
+$('bridgeGo').onclick=()=>{
+ const id=$('bridgeId').value.trim(),order=$('bridgeOrder').value.trim();
+ $('bridgeStatus').textContent='Consultando carrinho aberto no X2...';$('bridgeResults').replaceChildren();
+ if(!/^[a-p]{32}$/.test(id)){ $('bridgeStatus').textContent='Copie o ID da extensão em chrome://extensions (modo desenvolvedor).';return; }
+ if(!/^\d{1,12}$/.test(order)){ $('bridgeStatus').textContent='Informe um número de carrinho válido.';return; }
+ if(!globalThis.chrome?.runtime?.sendMessage){$('bridgeStatus').textContent='Abra este site no Chrome com a extensão instalada.';return;}
+ localStorage.setItem('rildon_ext_id',id);
+ try{chrome.runtime.sendMessage(id,{type:'RILDON_LOCAL_LOOKUP',order},reply=>{
+  const error=chrome.runtime.lastError;
+  if(error){$('bridgeStatus').textContent='Falha de comunicação: '+error.message+' Verifique se a extensão v1.3 está ativa.';return;}
+  if(!reply?.ok){$('bridgeStatus').textContent=reply?.error||'Sem resposta da extensão.';return;}
+  const data=reply.data; if(activeUser?.role==='vendedor'&&normName(data.seller)!==normName(activeUser.name)){$('bridgeStatus').textContent='Carrinho pertence a '+data.seller+'. Entre com o usuário correto.';return;} const eligible=data.items.map(x=>({...x,missingQty:Math.max(0,Number(x.qty||0)-Math.max(0,Number(x.stock||0)))})).filter(x=>x.missingQty>0&&Number.isFinite(x.price)&&x.code);
+  if(!eligible.length){$('bridgeStatus').textContent='Carrinho encontrado, mas sem quantidade em falta (vermelho ou amarelo).';return;}
+  const total=eligible.reduce((s,x)=>s+x.missingQty*x.price,0);
+  $('bridgeStatus').textContent=`Carrinho ${data.order}: ${eligible.length} produto(s) com falta total ou parcial. Total potencial ${moneyLocal(total)}. Confira antes de registrar.`;
+  const list=document.createElement('div');list.style='max-height:180px;overflow:auto;margin-top:8px';
+  for(const x of eligible){
+   const p=document.createElement('div');p.className='brand-item';
+   const title=document.createElement('div');title.textContent=`${x.code} — ${x.description} | ${x.missingQty} un. em falta (pedido ${x.qty}, disponível ${x.stock}) × ${moneyLocal(x.price)}`;
+   const label=document.createElement('label');label.textContent='Fabricante (pode corrigir antes de confirmar)';
+   const guess=manufacturerOf(x.description,x.reference);x.chosenManufacturer=guess!=='Não identificado'?guess:(x.manufacturer||'Não identificado');
+   const select=selectManufacturer(x.chosenManufacturer);select.onchange=()=>{x.chosenManufacturer=select.value};
+   p.append(title,label,select);list.append(p);
+  }$('bridgeResults').append(list);
+  const btn=document.createElement('button');btn.className='btn';btn.style='width:100%;margin-top:8px';btn.textContent='Confirmar e registrar venda perdida';
+  btn.onclick=()=>{
+    try {
+      btn.disabled=true;
+      const seller=(data.seller||document.getElementById('rpSeller')?.value||'').trim();
+      if(!seller)throw Error('Vendedor não identificado no carrinho. Selecione o vendedor na aba Vendas perdidas e consulte novamente.');
+      window.dispatchEvent(new CustomEvent('rildon:confirm-cart',{detail:{order,seller,items:eligible.map(x=>({code:x.code,desc:x.description,manufacturer:x.chosenManufacturer,manufacturerManual:x.chosenManufacturer,reference:x.reference||"",requestedQty:Number(x.qty),availableQty:Number(x.stock),qty:x.missingQty,price:x.price}))}}));
+      $('bridgeStatus').textContent='Registro enviado ao histórico.';
+      btn.textContent='Registrado com sucesso';
+      btn.remove();
+      $('bridgeResults').replaceChildren();
+
+    }catch(e){
+      btn.disabled=false;
+      $('bridgeStatus').textContent='Erro ao registrar: '+(e?.message||String(e));
+    }
+  };$('bridgeResults').append(btn);
+ });}catch(e){$('bridgeStatus').textContent=e.message}
+};
+})();
+
+// v2.8: recebe sinalizações confirmadas da extensão neste navegador.
+async function rildonSyncProcura(){
+ const id=localStorage.getItem('rildon_ext_id')||document.getElementById('bridgeId')?.value?.trim();
+ if(!id||!/^[a-p]{32}$/.test(id)||!window.chrome?.runtime?.sendMessage)return;
+ const ask=(type,extra={})=>new Promise(resolve=>{try{chrome.runtime.sendMessage(id,{type,...extra},r=>resolve(chrome.runtime.lastError?null:r));}catch{resolve(null)}});
+ const reply=await ask('RILDON_PROCURA_QUEUE');if(!reply?.ok||!Array.isArray(reply.items))return;
+ const accepted=[];
+ for(const x of reply.items){
+  if(!x.id)continue;
+  if(ruptures.some(r=>r.eventId===x.id)){accepted.push(x.id);continue;}
+  // Captura incompleta fica pendente para conferência; nunca inventar vendedor, preço ou produto.
+  if(!x.code||!x.desc||!x.seller||!Number.isFinite(x.qty)||x.qty<=0||!Number.isFinite(x.price)||x.price<0)continue;
+  const now=x.capturedAt||new Date().toISOString();
+  ruptures.push({id:x.id,eventId:x.id,key:'procura|'+x.id,source:'Sinalização X2',order:'',seller:x.seller,code:x.code,desc:x.desc,reference:x.reference||'',manufacturer:manufacturerOf(x.desc,x.reference),qty:x.qty,requestedQty:x.qty,availableQty:x.availableQty??null,price:x.price,updated:now});
+  accepted.push(x.id);
+ }
+ if(accepted.length){try{saveRuptures();await ask('RILDON_PROCURA_ACK',{ids:accepted});renderRuptures();}catch(e){console.warn('RILDON: falha ao salvar sinalização',e)}}
+ const status=document.getElementById('rildonProcuraStatus');
+ if(status)status.textContent=`Capturas pendentes para validação: ${reply.items.length-accepted.length}. ${accepted.length} registro(s) importado(s) agora.`;
+}
+setInterval(rildonSyncProcura,6000);
+setTimeout(rildonSyncProcura,1600);
+
+</script><script>
+/* RILDON v3.5: sync with server reset generation. */
+(()=>{
+ let busy=false,dirty=false,epoch=null;
+ const banner=document.createElement('div');banner.style.cssText='position:fixed;bottom:12px;right:12px;z-index:2000;background:#102d4c;color:#fff;padding:9px 13px;border-radius:10px;font:12px Arial;max-width:290px';banner.textContent='Sincronização: conectando...';banner.style.display='none';document.body.append(banner);
+ const originalSave=saveRuptures;
+ function cleanLocal(){ruptures=[];originalSave();renderRuptures();}
+ function localEpoch(){let n=localStorage.getItem('rildon_lan_epoch');return n===null?null:Number(n)}
+ async function fetchState(){let res=await fetch('/api/ruptures',{cache:'no-store'});if(!res.ok)throw Error('Servidor indisponível');let d=await res.json();if(!d.ok||!Array.isArray(d.items))throw Error('Resposta inválida');return d}
+ function adoptEpoch(n){let old=localEpoch();if((old!==null&&old!==n)||(old===null&&n>0)){cleanLocal();dirty=false;}epoch=n;localStorage.setItem('rildon_lan_epoch',String(n));}
+ async function postAll(){if(epoch===null)throw Error('Aguardando servidor');let res=await fetch('/api/ruptures',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:ruptures,epoch})});if(res.status===409){let d=await res.json();adoptEpoch(d.epoch);throw Error('Histórico reiniciado no servidor')}if(!res.ok)throw Error('Falha no envio');}
+ saveRuptures=function(){originalSave();dirty=true;};
+ async function tick(){if(busy)return;busy=true;try{
+  let data=await fetchState();if(epoch===null||data.epoch!==epoch)adoptEpoch(data.epoch);
+  if(dirty || (localEpoch()===0 && ruptures.length && !data.items.length && !sessionStorage.getItem('rildon_sync_initial'))){await postAll();dirty=false;data=await fetchState();}
+  sessionStorage.setItem('rildon_sync_initial','1');
+  let remote=new Map(data.items.map(x=>[x.id,x]));let changed=false;
+  for(let r of data.items){let i=ruptures.findIndex(x=>x.id===r.id);if(i<0){ruptures.push(r);changed=true;}else if(!dirty&&JSON.stringify(ruptures[i])!==JSON.stringify(r)){ruptures[i]=r;changed=true;}}
+  if(changed){originalSave();renderRuptures();}
+  banner.textContent='Sincronização ativa · '+data.items.length+' registro(s)';
+ }catch(e){banner.textContent='Sincronização: '+e.message;}finally{busy=false;}}
+ window.rildonResetHistory=async function(){if(!activeUser||activeUser.role!=='gerencia')return;let code=prompt('Digite o código de reinício mostrado na janela preta do servidor:');if(!code)return;if(!confirm('ZERAR DEFINITIVAMENTE todas as vendas perdidas de TODOS os vendedores? Não será possível desfazer.'))return;try{let r=await fetch('/api/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code.trim().toUpperCase()})});let d=await r.json();if(!r.ok)throw Error(d.error||'Falha');adoptEpoch(d.epoch);cleanLocal();alert('Histórico central zerado. Atualize os portais dos vendedores.');await tick();}catch(e){alert('Não foi possível zerar: '+e.message)}};
+ setTimeout(tick,700);setInterval(tick,4000);
+})();
+</script><script>
+/* Meus Atendimentos: same visible login as the existing Rildon portal. */
+(()=>{
+ let token='',rows=[],groupTotals=[],reportTotals=[],pending=null,pendingSummary=null,periodStart='',periodEnd='',opened=false,loading=false;
+ const el=id=>document.getElementById(id);
+ const fmt=n=>(Number(n||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const official=['CARLOS EDUARDO ROBERTO DOS SANTOS','CARLOS RAFAEL DA SILVA PIMENTEL','CLAUDISTON SANTOS DA SILVA','ELIS ANTHONNY','GISLEI CEZARIO DA SILVA','HALISON MATIAS APOLINÁRIO','IRAN COUTO GALVÃO','ISAIAS DE JESUS ANDRADE','LUANA ANDRADE DOS ANJOS','VALDINETE GARCIA MONTEIRO'];
+ const labels={'CARLOS EDUARDO ROBERTO DOS SANTOS':'Carlos Eduardo (Dudu)','CARLOS RAFAEL DA SILVA PIMENTEL':'Carlos Rafael','CLAUDISTON SANTOS DA SILVA':'Claudiston','ELIS ANTHONNY':'Elis Anthonny','GISLEI CEZARIO DA SILVA':'Gislei','HALISON MATIAS APOLINÁRIO':'Halison','IRAN COUTO GALVÃO':'Iran','ISAIAS DE JESUS ANDRADE':'Isaias','LUANA ANDRADE DOS ANJOS':'Luana','VALDINETE GARCIA MONTEIRO':'Valdinete'};
+ const fold=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleUpperCase('pt-BR');
+ const displayDate=d=>d?.split('-').reverse().join('/')||'—';
+ const setStatus=(s,err=false)=>{el('attStatus').textContent=s;el('attStatus').style.color=err?'#ad3535':'#446985'};
+ async function request(path,body){
+  const opt={headers:{Authorization:'Bearer '+token},cache:'no-store'};
+  if(body!==undefined){opt.method='POST';if(body instanceof ArrayBuffer){opt.body=body;opt.headers['Content-Type']='application/octet-stream'}else{opt.headers['Content-Type']='application/json';opt.body=JSON.stringify(body)}}
+  let res;
+  try{res=await fetch('/api/attendance/'+path,opt)}catch(e){throw Error('Servidor local indisponível: '+e.message)}
+  let data;try{data=await res.json()}catch(e){throw Error('Servidor retornou uma resposta inválida (HTTP '+res.status+').')}
+  if(!res.ok)throw Error(data.error||'Erro HTTP '+res.status);
+  return data;
+ }
+ async function authenticate(){
+  if(token)return true;
+  if(!el('appRoot')||el('appRoot').classList.contains('hidden'))return false;
+  const user=(el('loginUser')?.value||'').trim();const password=el('loginPass')?.value||'';
+  if(!user||!password){el('attMessage').textContent='Não foi possível iniciar Meus Atendimentos. Saia e entre novamente com seu login habitual.';return false}
+  try{
+   const res=await fetch('/api/attendance/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user,password})});
+   const data=await res.json();if(!res.ok)throw Error(data.error||'Acesso não autorizado');
+   token=data.token;el('attImport').style.display=data.admin?'block':'none';el('attSeller').style.display=data.admin?'':'none';
+   return true;
+  }catch(e){el('attMessage').textContent='Não foi possível autenticar Meus Atendimentos: '+e.message+'. O restante do sistema permanece disponível.';setStatus('Falha na autenticação de Meus Atendimentos. Entre novamente no site.',true);return false}
+ }
+ async function load(){
+  if(!await authenticate())return;
+  try{
+   const out=await request('rows');rows=out.rows||[];groupTotals=out.group_totals||[];reportTotals=out.report_totals||[];
+   if(typeof render==='function' && el('viewManagement')){window.rildonAttendanceForGoals=rows;window.rildonAttendanceGroupTotals=groupTotals;window.rildonAttendanceReportTotals=reportTotals;render();}
+   const select=el('attSeller'),old=select.value;
+   const allSellers=[...new Set([...official,...rows.map(r=>r.seller)])];
+   select.replaceChildren(new Option('Todos os vendedores',''),...allSellers.map(n=>new Option(labels[n]||n,n)));
+   select.value=allSellers.includes(old)?old:'';
+   render();
+  }catch(e){el('attMessage').textContent='Erro ao consultar atendimentos: '+e.message}
+ }
+ function filtered(){
+  const start=el('attStart').value,end=el('attEnd').value,seller=el('attSeller').value,branch=el('attBranch').value,query=fold(el('attSearch').value);
+  const relevant=rows.filter(r=>(!seller||r.seller===seller)&&(!branch||r.branch===branch)&&(!query||fold(r.client).includes(query)));
+  const results=relevant.filter(r=>{
+   if(r.sale_day)return(!start||r.sale_day>=start)&&(!end||r.sale_day<=end);
+   return (!start||r.day>=start)&&(!end||(r.end_day||r.day)<=end);
+  });
+  const omitted=relevant.filter(r=>!results.includes(r));
+  return {results,omitted};
+ }
+ function render(){
+  const start=el('attStart').value,end=el('attEnd').value,branch=el('attBranch').value,seller=el('attSeller').value,query=el('attSearch').value.trim();
+  const banner=el('attDateNotice');
+  if(start&&end&&start>end){
+   banner.style.display='block';banner.textContent='Data inicial maior que a data final. Ajuste os filtros.';
+   el('attTotal').textContent=fmt(0);el('attReturns').textContent='—';el('attNet').textContent='—';el('attCount').textContent='0';el('attTicket').textContent='—';
+   el('attRows').innerHTML='<tr><td colspan="5">Corrija o intervalo de datas.</td></tr>';return;
+  }
+  const {results,omitted}=filtered();
+  const total=results.reduce((s,r)=>s+Number(r.value_cents||0),0);
+  const key=(r)=>[r.day,r.end_day||r.day,r.seller,r.branch].join('|');
+  const selectedGroups=groupTotals.filter(g=>(!seller||g.seller===seller)&&(!branch||g.branch===branch));
+  const completeGroups=selectedGroups.filter(g=>(!start||g.day>=start)&&(!end||g.end_day<=end));
+  const completeKeys=new Set(completeGroups.map(key));
+  const allSelectedAreComplete=results.every(r=>completeKeys.has(key(r)));
+  const refundsKnown=!query&&allSelectedAreComplete&&selectedGroups.length>0;
+  let refunds=0;
+  if(refundsKnown){
+   refunds=completeGroups.reduce((sum,g)=>sum+Number(g.refund_cents||0),0);
+   if(!seller&&!branch&&!query){
+    const adjustments=reportTotals.filter(g=>!start||g.end_day>=start).filter(g=>!end||g.day<=end);
+    for(const g of adjustments){
+     const delta=Number(g.rounding_delta_cents||0);
+     const fullReport=(!start||g.day>=start)&&(!end||g.end_day<=end);
+     if(delta && fullReport)refunds+=delta;
+    }
+   }
+  }
+  const net=total-refunds;
+  el('attTotal').textContent=fmt(total);
+  el('attReturns').textContent=refundsKnown?fmt(refunds):'—';
+  el('attNet').textContent=refundsKnown?fmt(net):'—';
+  el('attCount').textContent=results.length.toLocaleString('pt-BR');
+  el('attTicket').textContent=refundsKnown?fmt(results.length?Math.round(net/results.length):0):'—';
+  el('attReturnsLabel').textContent='Total devolvido';
+  el('attNetLabel').textContent='TOTAL (Vendidos - Devolvidos)';
+  el('attTicketLabel').textContent='Média líquida por registro';
+  const branchLabel=b=>b==='DIST'?'OMRE · Distribuidora':b==='B2B'?'Online · B2B':b==='Internas'?'Vendas Internas':'Matriz';
+  el('attRows').innerHTML=results.length?results.map(r=>'<tr><td>'+esc(r.sale_day?displayDate(r.sale_day):displayDate(r.day)+(r.end_day&&r.end_day!==r.day?' a '+displayDate(r.end_day):''))+'</td><td>'+esc(labels[r.seller]||r.seller)+'</td><td>'+esc(branchLabel(r.branch))+'</td><td>'+esc(r.client)+'</td><td style="text-align:right;white-space:nowrap;font-weight:700">'+fmt(r.value_cents)+'</td></tr>').join(''):'<tr><td colspan="5">Nenhum registro no período selecionado.</td></tr>';
+  let note='O X2 pode agrupar várias compras na mesma linha por cliente. Registros e média por registro não equivalem necessariamente a pedidos e ticket médio por pedido. Todas as origens do relatório entram no total geral.';
+  if(query)note+=' O X2 não identifica devoluções por cliente. Ao pesquisar cliente, somente o valor bruto é garantido.';
+  else if(!refundsKnown)note+=' Sem devoluções datadas no HTML, o líquido exato não está disponível para parte do período. Nesse caso, o painel exibe apenas o valor bruto confirmado.';
+  if(!rows.length)note+=' A prévia ainda não foi salva: clique em Confirmar importação.';
+  el('attMessage').textContent=note;
+  if(omitted.length&&(start||end)){
+   const undated=omitted.filter(r=>!r.sale_day).length;
+   banner.style.display='block';
+   banner.textContent=undated?'Há relatórios acumulados com registros sem data individual; para obter líquido exato, selecione os dias completos dos relatórios.':'';banner.style.display=undated?'block':'none';
+  }else if(!refundsKnown&&results.length&&(start||end)){
+   banner.style.display='block';banner.textContent='Este filtro seleciona apenas parte de um relatório. O valor bruto é exato; devoluções, líquido e média líquida só aparecem quando o HTML permite conferência exata.';
+  }else banner.style.display='none';
+ }
+ async function open(){
+  if(el('appRoot').classList.contains('hidden'))return;
+  opened=true;document.querySelectorAll('#appRoot .content .main').forEach(n=>{if(n!==el('viewAttendance'))n.style.display='none'});
+  el('viewAttendance').style.display='block';document.querySelectorAll('.sidebar .nav button').forEach(n=>n.classList.remove('active'));el('attNav').classList.add('active');
+  await load();
+ }
+ function close(){if(!opened)return;opened=false;el('viewAttendance').style.display='none';document.querySelectorAll('#appRoot .content .main').forEach(n=>{if(n!==el('viewAttendance'))n.style.display=''});el('attNav').classList.remove('active')}
+ el('attNav').addEventListener('click',open);
+ document.querySelectorAll('.sidebar .nav button:not(#attNav)').forEach(n=>n.addEventListener('click',close));
+ el('loginForm').addEventListener('submit',()=>setTimeout(()=>{if(!el('appRoot').classList.contains('hidden'))authenticate().then(ok=>{if(ok)load()})},30));
+ el('logoutBtn').addEventListener('click',()=>{token='';rows=[];groupTotals=[];reportTotals=[];pending=null;pendingSummary=null;close()});
+ ['attStart','attEnd','attSeller','attBranch','attSearch'].forEach(id=>el(id).addEventListener('input',render));
+ el('attClear').onclick=()=>{['attStart','attEnd','attSeller','attBranch','attSearch'].forEach(id=>el(id).value='');render()};
+ el('attPrint').onclick=()=>window.print();
+ el('attLoad').onclick=async()=>{
+  const file=el('attFile').files[0];if(!file){setStatus('Selecione o arquivo HTML salvo do X2.',true);return}
+  if(loading)return;
+  loading=true;el('attLoad').disabled=true;setStatus('Lendo o HTML e conferindo os valores do X2…');
+  el('attPreview').innerHTML='';el('attPreview').style.display='none';el('attConfirm').style.display='none';el('attPreviewTotals').style.display='none';pending=null;pendingSummary=null;
+  try{
+   if(!await authenticate())throw Error('Faça login novamente para autorizar a importação');
+   const data=await request('import',await file.arrayBuffer());
+   pending=data.rows;pendingSummary=data.totals;periodStart=data.day;periodEnd=data.end_day;
+   setStatus('PRÉVIA — '+data.count+' registros identificados de '+displayDate(periodStart)+' a '+displayDate(periodEnd)+'. '+(data.totals.dated_rows?data.totals.dated_rows+' linha(s) com data individual. ':'')+'ESTES VALORES AINDA NÃO ESTÃO SALVOS. Clique em Confirmar importação para atualizar os indicadores.'+(data.totals.audit_warnings?.length?' AVISO: '+data.totals.audit_warnings.join(' '):''));
+   el('attPreviewTotals').style.display='block';
+   el('attPreviewTotals').innerHTML='<b>Totais completos do X2 (todos os grupos):</b><div class="att-preview-finance"><span>Total líquido (vendido − devolvido) <strong>'+fmt(data.totals.net_cents)+'</strong></span><span>Vendido (bruto) <strong>'+fmt(data.totals.gross_cents)+'</strong></span><span>Devolvido <strong>'+fmt(data.totals.refund_cents)+'</strong></span></div><small>Matriz '+fmt(data.totals.Matriz)+' · OMRE '+fmt(data.totals.DIST)+' · Online B2B '+fmt(data.totals.B2B||0)+' · Vendas Internas '+fmt(data.totals.Internas||0)+'</small>';
+   el('attPreview').style.display='block';
+   el('attPreview').innerHTML='<table class="att-table"><thead><tr><th>Data</th><th>Vendedor</th><th>Loja</th><th>Cliente</th><th style="text-align:right">Valor</th></tr></thead><tbody>'+pending.map(r=>'<tr><td>'+esc(r.sale_day?displayDate(r.sale_day):'Período')+'</td><td>'+esc(labels[r.seller]||r.seller)+'</td><td>'+esc(r.branch)+'</td><td>'+esc(r.client)+'</td><td style="text-align:right">'+fmt(r.value_cents)+'</td></tr>').join('')+'</tbody></table>';
+   el('attConfirm').style.display='inline-block';
+  }catch(e){setStatus('Erro ao ler HTML: '+e.message,true)}
+  finally{loading=false;el('attLoad').disabled=false}
+ };
+ el('attConfirm').onclick=async()=>{
+  if(!pending)return;
+  if(!confirm('Confirmar importação do período '+displayDate(periodStart)+' a '+displayDate(periodEnd)+'? Relatórios anteriores totalmente contidos nesse período serão substituídos para evitar duplicidade.'))return;
+  el('attConfirm').disabled=true;setStatus('Salvando os registros no servidor…');
+  try{
+   const out=await request('confirm',{day:periodStart,end_day:periodEnd,rows:pending,group_totals:pendingSummary?.by_group||[],report_totals:pendingSummary,replace_overlaps:true});
+   const start=periodStart,end=periodEnd;
+   pending=null;pendingSummary=null;periodStart='';periodEnd='';el('attFile').value='';el('attPreview').replaceChildren();el('attPreview').style.display='none';el('attPreviewTotals').style.display='none';el('attConfirm').style.display='none';
+   // Show newly imported period, so results are visible immediately after confirmation.
+   el('attStart').value=start;el('attEnd').value=end;el('attSeller').value='';el('attBranch').value='';el('attSearch').value='';
+   await load();setStatus('IMPORTAÇÃO CONFIRMADA: '+out.saved+' registros salvos · Vendas brutas '+fmt(out.gross_cents)+' · Devoluções '+fmt(out.refund_cents)+' · Vendas líquidas '+fmt(out.net_cents)+'. O painel mostra os vendedores filtrados e o HTML completo também pode conter outros grupos.');
+  }catch(e){setStatus('Não foi possível confirmar: '+e.message,true);el('attConfirm').style.display='inline-block'}
+  finally{el('attConfirm').disabled=false}
+ };
+})();
+
+</script>
+<script>
+(()=>{
+ const nav=document.getElementById('solNav');if(!nav)return;
+ let active=false,frame=null,view=null;
+ nav.addEventListener('click',()=>{
+   if(!activeUser)return;
+   document.body.dataset.view='solicitacoes';
+   if(!view){view=document.createElement('section');view.id='solView';view.className='main';view.style.cssText='min-height:0;display:none';frame=document.createElement('iframe');frame.id='solFrame';frame.src='solicitacoes.html';frame.title='Solicitação de Itens Novos';frame.style.cssText='width:100%;height:850px;min-height:0;border:0;border-radius:14px;background:#f1f6fc;display:block;overflow:hidden';frame.scrolling='no';view.append(frame);document.querySelector('#appRoot .content').append(view);frame.addEventListener('load',()=>{if(solCredentials)frame.contentWindow.postMessage({type:'RILDON_REQUESTS_LOGIN',...solCredentials},location.origin)});window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==frame?.contentWindow||e.data?.type!=='RILDON_SOL_RESIZE')return;const height=Number(e.data.height);if(Number.isFinite(height)&&height>150&&height<30000)if(Math.abs(frame.getBoundingClientRect().height-height)>3)frame.style.height=Math.ceil(height)+'px'})}
+   active=true;document.querySelectorAll('#appRoot .content .main').forEach(n=>{if(n!==view)n.style.display='none'});view.style.display='block';document.querySelectorAll('.sidebar .nav button').forEach(n=>n.classList.remove('active'));nav.classList.add('active');
+ });
+ document.querySelectorAll('.sidebar .nav button:not(#solNav)').forEach(b=>b.addEventListener('click',()=>{if(!active)return;active=false;if(view)view.style.display='none';document.querySelectorAll('#appRoot .content .main').forEach(n=>{if(n!==view)n.style.display=''});nav.classList.remove('active')}));
+})();
+</script><style>#rildonGlobalExt{padding:0 20px;background:#f0f7ff}#rildonGlobalExt details.extension-mini{padding:5px 10px;margin:0;border:0;background:transparent;box-shadow:none}#rildonGlobalExt details.extension-mini summary{font-size:12px;cursor:pointer}#rildonGlobalExt details.extension-mini:not([open]){max-height:42px;overflow:hidden}</style>
+<script>(function(){const el=document.getElementById('extensionSettings'),host=document.getElementById('rildonGlobalExt');if(el&&host){host.appendChild(el);if(localStorage.getItem('rildon_ext_id'))el.open=false;const save=document.getElementById('ruptExtSave');if(save)save.addEventListener('click',()=>{if(localStorage.getItem('rildon_ext_id'))el.open=false});}})();</script><script>(function(){function compact(){const n=document.getElementById('rildonExtensionFeedback'),bar=document.getElementById('rildonExtensionSetup');if(!n||!bar)return;const msg=(n.textContent||'').toLowerCase();bar.dataset.connected=/conectad|validado|configurad/.test(msg)&&!/não |falha|erro/.test(msg)?'true':'false'}window.addEventListener('DOMContentLoaded',()=>{compact();const n=document.getElementById('rildonExtensionFeedback');if(n)new MutationObserver(compact).observe(n,{subtree:true,childList:true,characterData:true})})})();</script><script src="metas_dashboard_v75.js" defer></script><style>
+/* Navegacao exclusiva, inclusive iframe de solicitacoes dinamico. */
+#solView{display:none!important}
+body[data-view="solicitacoes"] #solView{display:block!important}
+body[data-view="solicitacoes"] #viewDashboard,
+body[data-view="solicitacoes"] #viewManagement,
+body[data-view="solicitacoes"] #viewRupture,
+body[data-view="solicitacoes"] #viewData,
+body[data-view="solicitacoes"] #viewAttendance{display:none!important}
+body:not([data-view="solicitacoes"]) #solView{display:none!important}
+/* Days belong in management only */
+body[data-view="management"] .v83-management-days{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:18px}
+body:not([data-view="management"]) .v83-management-days{display:none!important}
+@media(max-width:800px){body[data-view="management"] .v83-management-days{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style><style id="v84-compact-management">.v75-wrap .v75-hero{display:none!important}</style>
+<script id="v84-header-title">
+(()=>{const menu=document.querySelector('.sidebar .nav');if(!menu)return;
+ const title=document.querySelector('header.top small');
+ const labels={'Visão executiva':'Visão Executiva · Metas e Resultados','Gestão de metas':'Gestão de Metas · Cadastro','Vendas perdidas':'Vendas Perdidas','Meus Atendimentos':'Meus Atendimentos','Solicitação de Itens Novos':'Solicitação de Itens Novos'};
+ menu.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;const t=b.textContent.trim();if(title)title.textContent=Object.entries(labels).find(([k])=>t.toLowerCase().includes(k.toLowerCase()))?.[1]||t});
+})();
+</script>
+
+<style id="v85-manager-visual">
+#viewManagement .premium-hero,#viewDashboard .premium-hero{display:none!important}
+#viewAttendance .att-cards>*{min-width:0!important;overflow:hidden;box-sizing:border-box}
+#viewAttendance .att-kpi strong{font-size:clamp(18px,2vw,29px)!important;overflow-wrap:anywhere;display:block;line-height:1.3}
+#viewManagement .goal-currency input{min-width:0!important;max-width:100%!important}
+</style>
+<script id="v85-manager-heading">
+(()=>{
+ const nav=document.querySelector('.sidebar .nav'),header=document.querySelector('header.top h1');if(!nav||!header)return;
+ const names={dashboard:'Visão Executiva · Metas e Resultados',management:'Gestão de Metas',rupture:'Vendas Perdidas'};
+ function update(){const b=nav.querySelector('button.active');if(!b)return;const name=names[b.dataset.go]||(b.id==='attNav'?'Meus Atendimentos':b.id==='solNav'?'Solicitação de Itens Novos':null);if(name)header.textContent=name;}
+ nav.addEventListener('click',()=>setTimeout(update,150));setTimeout(update,250);
+})();
+</script>
+<script id="v86-section-titles">(function(){
+const titles={dashboard:'Visão Executiva',management:'Gestão de Metas',rupture:'Vendas Perdidas',attendance:'Meus Atendimentos',solicitacoes:'Solicitação de Itens Novos',data:'Relatórios', 'seller-goals':'Minhas Metas',warranty:'Prazo de Garantia'};
+function refresh(){const view=document.body.dataset.view||'dashboard',title=titles[view]||'Visão Executiva';const node=document.getElementById('v86SectionTitle')||document.querySelector('.top h1');if(node){if(node.id==='v86SectionTitle')node.textContent=title;else {let original=node.querySelector('span');node.textContent=title+' ';if(original)node.append(original)}}
+const subtitle=document.querySelector('.top small');if(subtitle)subtitle.textContent='RILDON • Gestão Comercial';}
+document.addEventListener('DOMContentLoaded',()=>{refresh();new MutationObserver(refresh).observe(document.body,{attributes:true,attributeFilter:['data-view']})});
+})();</script><style id="r89-cleanup">
+/* Hide redundant dashboard modules while retaining their script targets. */
+.v75-panel:has(> h3:first-child):has(> .v75-progress):has(> .v75-summary){display:none!important}
+/* The separate manager spreadsheet repeats the executive statistics already above. */
+#v86SheetTable{display:none!important}
+.v75-side{display:none!important}
+.v75-grid{grid-template-columns:minmax(0,1fr)!important}
+#managementDaysHost{display:none!important}
+</style>
+<style id="rildon-bulk-days-style">
+.rildon-bulk-days{background:#fff;border:1px solid #d6e3f2;border-radius:16px;padding:18px 22px;margin:0 0 16px;box-shadow:0 3px 14px #123f7110}
+.rildon-bulk-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;color:#103251;margin-bottom:15px}
+.rildon-bulk-head strong{font-size:16px}.rildon-bulk-head span{font-size:12px;color:#6382a0}
+.rildon-bulk-row{display:flex;align-items:end;gap:10px;flex-wrap:wrap}.rildon-bulk-row label{font-size:12px;font-weight:700;color:#315779;display:flex;flex-direction:column;gap:6px}.rildon-bulk-row input{padding:10px 12px;border:1px solid #bed3ea;border-radius:9px;width:115px;min-height:40px;background:#f7fbff;color:#103251;font-size:15px}.rildon-bulk-row button{min-height:40px;margin-right:16px}.rildon-bulk-days .sub{margin:11px 0 0}
+body:not([data-view="management"]) #rildonBulkDays{display:none!important}
+</style></body></html>

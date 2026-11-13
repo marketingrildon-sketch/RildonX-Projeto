@@ -1,0 +1,4 @@
+RILDON V6.5 - Revisão de usabilidade.
+Ajustes: resize estável do iframe; filtros de data inicial/final, ano e mês em solicitações; cadastro com data automática; janela de detalhes; ID de extensão sem repetição; tela do vendedor sem estimativa de devoluções.
+Atenção: para meses com importação diária, o líquido pode ser calculado exatamente quando houver fechamento das devoluções por dia no X2. Para intervalos parciais antigos não inventar valores.
+Faça backup do banco rildon_sync.sqlite3 antes de substituir a versão.

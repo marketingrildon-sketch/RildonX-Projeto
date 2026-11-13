@@ -1,0 +1,22 @@
+{
+  "name": "rildonx",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 4173",
+    "build": "vite build && node scripts/copy-marketing-ocr-assets.mjs",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "check": "node scripts/check-js-syntax.mjs"
+  },
+  "dependencies": {
+    "@e965/xlsx": "^0.20.3",
+    "@supabase/supabase-js": "^2.53.0",
+    "@tesseract.js-data/por": "^1.0.0",
+    "pdfjs-dist": "^6.4.299",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}

@@ -1,0 +1,1 @@
+RILDON V8.8: remove de fato o resumo por fabricante (mantem filtros e historico); mantem valores monetarios completos com fonte menor e distribuicao responsiva; Visao Executiva Toda a equipe usa dias restantes de cada vendedor. Se diferentes, mostra Por vendedor e meta diaria soma necessidades individuais. PostgreSQL sem alteracoes.

@@ -1,0 +1,12 @@
+RILDON Gestão Comercial V8.2 — Dias individuais das metas
+
+1. Feche a versão anterior e extraia este ZIP numa pasta nova.
+2. Inicie INICIAR_SITE.bat com a senha local do PostgreSQL.
+3. Na Gerência > Gestão de Metas, para cada vendedor informe: meta mensal; dias úteis previstos; dias úteis transcorridos; dias realmente trabalhados.
+4. Clique Salvar metas no PostgreSQL.
+5. Confira Visão Executiva e Minhas Metas em outro computador.
+
+Exemplo: 21 previstos, 12 transcorridos, 11 trabalhados = 9 restantes.
+Meta fixa = meta mensal / 21; esperado trabalhado = meta fixa * 11; meta diária necessária = (meta mensal - vendas realizadas) / 9.
+Sábados entram nas vendas reais, mas não aumentam os dias-base da meta.
+NÃO reinicialize o banco: tabelas existentes são preservadas; a atualização adiciona colunas opcionais de dias ao cadastro de metas.

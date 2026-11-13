@@ -1,0 +1,3 @@
+RILDON V8.5 — Correção de metas, navegação do vendedor e layout de Compras.
+Não reimportar dados nem executar reset do PostgreSQL.
+O cadastro de metas deve ser salvo na Gerência; recarregue a página após salvar.

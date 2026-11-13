@@ -5,6 +5,7 @@
   const HOME_CARDS_LIMIT = 3;
   const PANEL_MODULE_IDS = new Set([
     'marketing-insights',
+    'marketing-commemorations',
     'hr-birthdays',
     'purchase-dashboard',
     'purchase-comparison',
@@ -100,10 +101,12 @@
     {
       id: 'marketing-content-calendar', sector: 'Marketing', sectorKey: 'marketing', title: 'Calendário de Conteúdo', icon: 'calendar', tone: 'blue',
       defaultStatus: 'Banco de ideias',
-      description: 'Planejamento e acompanhamento de publicações e campanhas.', features: ['Visualizar calendário', 'Status das publicações', 'Anexos e briefing', 'Filtros por canal'],
+      description: 'Planejamento e acompanhamento de publicações e campanhas, com vínculo opcional à pauta de origem.',
+      features: ['Visualizar calendário', 'Status das publicações', 'Vínculo à pauta de origem sem cópia', 'Anexos, briefing e filtros por canal'],
       fields: [
         { key: 'title', label: 'Título do conteúdo', type: 'text', required: true },
         { key: 'status', label: 'Etapa', type: 'select', required: true, options: ['Banco de ideias', 'Em produção', 'Aguardando aprovação', 'Aprovado', 'Agendado', 'Publicado', 'Arquivo'] },
+        { key: 'ideaRecordId', label: 'Pauta de origem', type: 'businessRecord', moduleIds: ['marketing-ideas-agenda'] },
         { key: 'objective', label: 'Objetivo', type: 'text' },
         { key: 'theme', label: 'Tema ou categoria', type: 'text' },
         { key: 'campaign', label: 'Campanha relacionada', type: 'text' },
@@ -150,8 +153,8 @@
     },
     {
       id: 'marketing-insights', sector: 'Marketing', sectorKey: 'marketing', title: 'Indicadores de Marketing', icon: 'chart', tone: 'blue',
-      description: 'Importe relatórios para acompanhar visibilidade, engajamento e oportunidades comerciais em um só lugar.',
-      features: ['Relatórios recentes', 'Redes sociais e campanhas', 'Tráfego e conversões', 'Comparativo mensal e PDF'],
+      description: 'Importe relatórios e acompanhe as métricas presentes nos arquivos de origem.',
+      features: ['Relatórios recentes', 'Filtros por fonte e campanha', 'Métricas com unidade e período de origem', 'Comparações apenas entre métricas compatíveis'],
       fields: [
         { key: 'title', label: 'Nome do relatório', type: 'text', required: true }
       ]
@@ -159,7 +162,7 @@
     {
       id: 'marketing-materials', sector: 'Marketing', sectorKey: 'marketing', title: 'Branding e Id. Visual', icon: 'doc', tone: 'blue',
       description: 'Central de arquivos, identidade visual e materiais aprovados do Marketing.',
-      features: ['Banco de materiais', 'Identidade visual', 'Favoritos', 'Arquivos compartilhados com Documentos'],
+      features: ['Banco de materiais', 'Identidade visual', 'Favoritos', 'Arquivos disponíveis somente nesta Central'],
       fields: [
         { key: 'title', label: 'Nome do material', type: 'text', required: true },
         { key: 'category', label: 'Categoria', type: 'select', options: ['Logo', 'Identidade visual', 'Imagem', 'Vídeo', 'Apresentação', 'Documento', 'Outro'] },
@@ -170,7 +173,7 @@
     {
       id: 'marketing-internal-demands', sector: 'Marketing', sectorKey: 'marketing', title: 'Demandas internas', icon: 'task', tone: 'blue',
       description: 'Centralize pedidos de artes, campanhas, materiais e comunicações recebidos de outros setores.',
-      features: ['Solicitações recebidas', 'Demandas pendentes', 'Aprovações necessárias', 'Demandas por setor', 'Tempo de atendimento', 'Briefings incompletos'],
+      features: ['Solicitações recebidas', 'Prioridade, prazo e etapa', 'Setor solicitante', 'Situação da aprovação informada no registro', 'Briefing do pedido'],
       defaultStatus: 'Recebida',
       fields: [
         { key: 'title', label: 'Título da demanda', type: 'text', required: true },
@@ -216,8 +219,26 @@
       ]
     },
     {
+      id: 'it-service-requests', sector: 'TI', sectorKey: 'ti', title: 'Solicitações de Serviço', icon: 'support', tone: 'cyan', defaultStatus: 'Recebida',
+      description: 'Registre e acompanhe solicitações de serviço de TI sem misturá-las a incidentes ou prometer SLA não configurado.',
+      features: ['Tipo e serviço solicitado', 'Solicitante e responsável', 'Prioridade e prazo informado', 'Histórico e resolução'],
+      fields: [
+        { key: 'title', label: 'Solicitação', type: 'text', required: true },
+        { key: 'requestType', label: 'Tipo de solicitação', type: 'select', required: true, options: ['Acesso', 'Equipamento', 'Conta', 'Software', 'Outro'] },
+        { key: 'requestedFor', label: 'Solicitante / beneficiário', type: 'text', required: true },
+        { key: 'service', label: 'Serviço ou recurso solicitado', type: 'text', required: true },
+        { key: 'details', label: 'Detalhes e justificativa', type: 'textarea', required: true },
+        { key: 'priority', label: 'Prioridade', type: 'select', options: ['Baixa', 'Média', 'Alta', 'Urgente'] },
+        { key: 'owner', label: 'Responsável pelo atendimento', type: 'text' },
+        { key: 'dueDate', label: 'Prazo informado', type: 'date' },
+        { key: 'status', label: 'Situação', type: 'select', required: true, options: ['Recebida', 'Em triagem', 'Aguardando aprovação externa', 'Em atendimento', 'Concluída', 'Cancelada'] },
+        { key: 'resolution', label: 'Atendimento / resolução', type: 'textarea' }
+      ]
+    },
+    {
       id: 'it-knowledge-base', sector: 'TI', sectorKey: 'ti', title: 'Base de Conhecimento', icon: 'book', tone: 'cyan',
-      description: 'Centralize tutoriais, manuais, procedimentos e soluções técnicas.', features: ['Busca inteligente', 'Tutoriais em vídeo', 'Documentos técnicos', 'FAQ'],
+      description: 'Cadastre e consulte artigos, procedimentos e soluções técnicas.',
+      features: ['Busca por texto', 'Categoria e link de referência', 'Conteúdo do artigo', 'Consulta e exportação'],
       fields: [
         { key: 'title', label: 'Título do artigo', type: 'text', required: true },
         { key: 'category', label: 'Categoria', type: 'text' },
@@ -227,12 +248,14 @@
     },
     {
       id: 'hr-birthdays', sector: 'RH/DP', sectorKey: 'rh', title: 'Aniversariantes', icon: 'birthday', tone: 'purple',
-      description: 'Consulte os aniversariantes do mês e da equipe.', features: ['Lista por dia', 'Enviar parabéns', 'Filtrar por setor', 'Exportar lista'],
+      description: 'Consulte os aniversariantes do mês conforme o diretório de pessoas disponível ao seu perfil.',
+      features: ['Lista por data', 'Busca por nome', 'Exportação CSV', 'Respeito às permissões do diretório'],
       source: 'profiles', fields: []
     },
     {
       id: 'hr-leave-attendance', sector: 'RH/DP', sectorKey: 'rh', title: 'Férias do mês', icon: 'calendar', tone: 'purple',
-      description: 'Organize os períodos de férias dos colaboradores e acompanhe registros de ponto e banco de horas.', features: ['Férias por mês e colaborador', 'Integração com a Tabela de Folgas de Sábado', 'Banco de horas e ajustes de ponto', 'Histórico'],
+      description: 'Organize férias e registre solicitações de ajuste de ponto, ausências ou banco de horas.',
+      features: ['Férias por mês e colaborador', 'Integração com a Tabela de Folgas de Sábado', 'Registro com período, situação e observações', 'Histórico de solicitações'],
       fields: [
         { key: 'title', label: 'Colaborador', type: 'text', required: true },
         { key: 'kind', label: 'Tipo de registro', type: 'select', options: ['Férias', 'Banco de horas', 'Ajuste de ponto', 'Ausência'] },
@@ -273,6 +296,23 @@
       description: 'Consulte e gerencie o diretório central de pessoas, cadastros profissionais e acessos aos painéis.',
       features: ['Diretório central de Pessoas', 'Cadastro por convite de e-mail', 'Edição de dados profissionais', 'Permissões individuais de painéis'],
       source: 'profiles', fields: []
+    },
+    {
+      id: 'hr-onboarding', sector: 'RH/DP', sectorKey: 'rh', title: 'Onboarding e Offboarding', icon: 'users', tone: 'purple', defaultStatus: 'Planejado',
+      description: 'Acompanhe checklists de entrada e saída sem incluir dados pessoais ou de saúde desnecessários.',
+      features: ['Processo de entrada ou saída', 'Responsável, data e situação', 'Checklist de acessos, equipamentos e transição', 'Busca e exportação'],
+      fields: [
+        { key: 'title', label: 'Colaborador (nome de exibição)', type: 'text', required: true },
+        { key: 'processType', label: 'Processo', type: 'select', required: true, options: ['Onboarding', 'Offboarding'] },
+        { key: 'plannedDate', label: 'Data prevista', type: 'date', required: true },
+        { key: 'responsible', label: 'Responsável pelo processo', type: 'text', required: true },
+        { key: 'status', label: 'Situação', type: 'select', required: true, options: ['Planejado', 'Em andamento', 'Aguardando', 'Concluído', 'Cancelado'] },
+        { key: 'accessChecklist', label: 'Acessos (conceder na entrada / revogar na saída)', type: 'select', options: ['Pendente', 'Concluído', 'Não se aplica'] },
+        { key: 'equipmentChecklist', label: 'Equipamentos (entregar na entrada / recolher na saída)', type: 'select', options: ['Pendente', 'Concluído', 'Não se aplica'] },
+        { key: 'policyChecklist', label: 'Políticas e orientações', type: 'select', options: ['Pendente', 'Concluído', 'Não se aplica'] },
+        { key: 'handoverChecklist', label: 'Transição e transferência de atividades', type: 'select', options: ['Pendente', 'Concluído', 'Não se aplica'] },
+        { key: 'notes', label: 'Observações não sensíveis', type: 'textarea' }
+      ]
     },
     {
       id: 'sales-commercial-management', sector: 'Comercial', sectorKey: 'comercial', title: 'Gestão de Vendas', icon: 'chart', tone: 'green',
@@ -322,6 +362,22 @@
       fields: []
     },
     {
+      id: 'purchase-quotes', sector: 'Compras', sectorKey: 'compras', title: 'Cotações e Aprovações', icon: 'cart', tone: 'orange', defaultStatus: 'Solicitado',
+      description: 'Registre solicitações de cotação e use o fluxo de aprovação rastreável protegido pelo Supabase.',
+      features: ['Solicitante, justificativa e prazo', 'Fornecedor e valores informados', 'Aprovação, rejeição ou cancelamento com histórico', 'Filtro por situação da aprovação'],
+      fields: [
+        { key: 'title', label: 'Item ou serviço solicitado', type: 'text', required: true },
+        { key: 'requester', label: 'Solicitante', type: 'text', required: true },
+        { key: 'justification', label: 'Justificativa', type: 'textarea', required: true },
+        { key: 'requestedAt', label: 'Data da solicitação', type: 'date', required: true },
+        { key: 'dueDate', label: 'Prazo desejado', type: 'date' },
+        { key: 'supplier', label: 'Fornecedor cotado', type: 'text' },
+        { key: 'quotedAmount', label: 'Valor cotado (R$)', type: 'number' },
+        { key: 'quoteUrl', label: 'Link da cotação', type: 'url' },
+        { key: 'status', label: 'Etapa da cotação', type: 'select', required: true, options: ['Solicitado', 'Cotação em andamento', 'Pronto para aprovação', 'Aprovado'] }
+      ]
+    },
+    {
       id: 'purchase-suppliers', sector: 'Compras', sectorKey: 'compras', title: 'Gestão de Fornecedores', icon: 'truck', tone: 'orange',
       description: 'Mantenha o cadastro de fornecedores e compradores e consulte a rastreabilidade do módulo.',
       features: ['Cadastro e histórico de fornecedores', 'Cadastro de compradores', 'Situação dos cadastros', 'Rastreabilidade administrativa'],
@@ -329,7 +385,8 @@
     },
     {
       id: 'sales-clients', sector: 'Comercial', sectorKey: 'comercial', title: 'Clientes e Parceiros', icon: 'users', tone: 'green',
-      description: 'Consulte informações, contatos e histórico de relacionamento comercial.', features: ['Dados cadastrais', 'Histórico de compras', 'Contatos', 'Documentos'],
+      description: 'Mantenha informações cadastrais e contatos de clientes e parceiros.',
+      features: ['Nome e contato', 'E-mail e telefone', 'Situação do relacionamento', 'Observações comerciais'],
       fields: [
         { key: 'title', label: 'Cliente ou parceiro', type: 'text', required: true },
         { key: 'contact', label: 'Pessoa de contato', type: 'text' },
@@ -337,6 +394,22 @@
         { key: 'phone', label: 'Telefone', type: 'tel' },
         { key: 'status', label: 'Relacionamento', type: 'select', options: ['Prospecto', 'Ativo', 'Inativo', 'Parceiro'] },
         { key: 'notes', label: 'Histórico ou observações', type: 'textarea' }
+      ]
+    },
+    {
+      id: 'sales-crm-interactions', sector: 'Comercial', sectorKey: 'comercial', title: 'Relacionamento com Clientes', icon: 'activity', tone: 'green', defaultStatus: 'Registrado',
+      description: 'Registre contatos e próximas ações vinculados a clientes ou parceiros existentes.',
+      features: ['Vínculo ao cadastro do cliente', 'Histórico de contatos datados', 'Resultado e próxima ação', 'Responsável e prazo de retorno'],
+      fields: [
+        { key: 'clientRecordId', label: 'Cliente ou parceiro relacionado', type: 'businessRecord', moduleIds: ['sales-clients'], required: true },
+        { key: 'date', label: 'Data do contato', type: 'date', required: true },
+        { key: 'contactType', label: 'Tipo de contato', type: 'select', required: true, options: ['Reunião', 'Ligação', 'E-mail', 'Visita', 'Outro'] },
+        { key: 'summary', label: 'Resumo do contato', type: 'textarea', required: true },
+        { key: 'outcome', label: 'Resultado / encaminhamento', type: 'textarea' },
+        { key: 'nextAction', label: 'Próxima ação', type: 'text' },
+        { key: 'nextActionDate', label: 'Data da próxima ação', type: 'date' },
+        { key: 'owner', label: 'Responsável', type: 'text' },
+        { key: 'status', label: 'Situação', type: 'select', required: true, options: ['Registrado', 'Ação pendente', 'Concluído', 'Cancelado'] }
       ]
     },
     {
@@ -353,7 +426,8 @@
     },
     {
       id: 'finance-cashflow', sector: 'Financeiro / Fiscal', sectorKey: 'financeiro', title: 'Fluxo de Caixa', icon: 'chart', tone: 'orange',
-      description: 'Acompanhe a movimentação financeira da empresa.', features: ['Entradas e saídas', 'Projeção de saldo', 'Comparativo por período', 'Gráficos'],
+      description: 'Registre e consulte entradas e saídas financeiras informadas.',
+      features: ['Entradas e saídas', 'Data, categoria e observações', 'Resumo dos valores cadastrados', 'Gráfico por tipo de movimentação'],
       fields: [
         { key: 'title', label: 'Movimentação', type: 'text', required: true },
         { key: 'kind', label: 'Tipo', type: 'select', options: ['Entrada', 'Saída'] },
@@ -376,7 +450,8 @@
     },
     {
       id: 'logistics-inventory', sector: 'Logística', sectorKey: 'logistica', title: 'Estoque', icon: 'box', tone: 'cyan',
-      description: 'Acompanhe saldos, movimentações e alertas de estoque.', features: ['Saldo por produto', 'Entradas e saídas', 'Alertas de mínimo', 'Histórico'],
+      description: 'Cadastre saldos atuais de produtos e consulte alertas de estoque mínimo.',
+      features: ['Saldo atual por produto', 'Código e localização', 'Alerta por estoque mínimo', 'Resumo visual das quantidades'],
       fields: [
         { key: 'title', label: 'Produto', type: 'text', required: true },
         { key: 'sku', label: 'Código / SKU', type: 'text' },
@@ -386,8 +461,26 @@
       ]
     },
     {
+      id: 'logistics-inventory-movements', sector: 'Logística', sectorKey: 'logistica', title: 'Livro de Movimentações', icon: 'activity', tone: 'cyan', defaultStatus: 'Registrada',
+      description: 'Mantenha registros de entradas, saídas e ajustes vinculados a itens existentes; o saldo não é recalculado automaticamente.',
+      features: ['Vínculo ao cadastro de estoque', 'Tipo, quantidade, unidade e data', 'Origem ou documento de referência', 'Busca e exportação do histórico'],
+      fields: [
+        { key: 'inventoryRecordId', label: 'Item de estoque relacionado', type: 'businessRecord', moduleIds: ['logistics-inventory'], required: true },
+        { key: 'movementType', label: 'Tipo de movimentação', type: 'select', required: true, options: ['Entrada', 'Saída', 'Ajuste positivo', 'Ajuste negativo'] },
+        { key: 'quantity', label: 'Quantidade movimentada', type: 'number', required: true },
+        { key: 'unit', label: 'Unidade', type: 'text', required: true },
+        { key: 'date', label: 'Data da movimentação', type: 'date', required: true },
+        { key: 'location', label: 'Local', type: 'text' },
+        { key: 'source', label: 'Documento ou origem', type: 'text', required: true },
+        { key: 'responsible', label: 'Responsável pelo registro', type: 'text', required: true },
+        { key: 'notes', label: 'Observações', type: 'textarea' },
+        { key: 'status', label: 'Situação', type: 'select', required: true, options: ['Registrada'] }
+      ]
+    },
+    {
       id: 'logistics-deliveries', sector: 'Logística', sectorKey: 'logistica', title: 'Entregas e Transportes', icon: 'truck', tone: 'cyan',
-      description: 'Monitore entregas, coletas e status de transporte.', features: ['Rastreamento', 'Status da entrega', 'Motoristas', 'Comprovantes'],
+      description: 'Registre entregas e coletas e acompanhe os status informados pela equipe.',
+      features: ['Código de rastreio e transportadora', 'Destino e previsão', 'Atualização manual de status', 'Filtros e exportação'],
       fields: [
         { key: 'title', label: 'Entrega ou coleta', type: 'text', required: true },
         { key: 'tracking', label: 'Código de rastreio', type: 'text' },
@@ -399,7 +492,8 @@
     },
     {
       id: 'logistics-suppliers', sector: 'Logística', sectorKey: 'logistica', title: 'Fornecedores', icon: 'users', tone: 'cyan',
-      description: 'Gerencie informações e desempenho dos fornecedores.', features: ['Dados cadastrais', 'Pedidos e entregas', 'Avaliações', 'Histórico'],
+      description: 'Mantenha o cadastro logístico e a avaliação informada de fornecedores.',
+      features: ['Dados de contato', 'Situação cadastral', 'Avaliação registrada', 'Busca e exportação'],
       fields: [
         { key: 'title', label: 'Fornecedor', type: 'text', required: true },
         { key: 'contact', label: 'Contato', type: 'text' },
@@ -443,6 +537,23 @@
         { key: 'status', label: 'Situação', type: 'select', required: true, options: ['Aberto', 'Em Andamento', 'Concluído'] },
         { key: 'efficacyVerified', label: 'Eficácia verificada', type: 'select', options: ['Não', 'Sim'] },
         { key: 'efficacyNotes', label: 'Evidência / observações da eficácia', type: 'textarea' }
+      ]
+    },
+    {
+      id: 'quality-corrective-actions', sector: 'Qualidade', sectorKey: 'quality', title: 'Ações Corretivas e Preventivas', icon: 'check', tone: 'pink', defaultStatus: 'Aberta',
+      description: 'Acompanhe ações vinculadas a auditorias, riscos ou planos 5W2H, com evidência e verificação de eficácia registrada.',
+      features: ['Origem vinculada a registro existente', 'Análise de causa e ação definida', 'Responsável, prazo e evidências', 'Verificação de eficácia antes do encerramento'],
+      fields: [
+        { key: 'originRecordId', label: 'Auditoria, risco ou plano relacionado', type: 'businessRecord', moduleIds: ['quality-audits', 'quality-risks', 'quality-5w2h'], required: true },
+        { key: 'actionType', label: 'Tipo de ação', type: 'select', required: true, options: ['Corretiva', 'Preventiva'] },
+        { key: 'causeAnalysis', label: 'Análise da causa', type: 'textarea', required: true },
+        { key: 'action', label: 'Ação proposta', type: 'textarea', required: true },
+        { key: 'responsible', label: 'Responsável', type: 'text', required: true },
+        { key: 'dueDate', label: 'Prazo', type: 'date', required: true },
+        { key: 'evidence', label: 'Evidência ou referência', type: 'textarea' },
+        { key: 'efficacyVerified', label: 'Eficácia', type: 'select', required: true, options: ['Pendente', 'Eficaz', 'Ineficaz'] },
+        { key: 'efficacyNotes', label: 'Registro da verificação de eficácia', type: 'textarea' },
+        { key: 'status', label: 'Situação', type: 'select', required: true, options: ['Aberta', 'Em andamento', 'Aguardando verificação', 'Concluída', 'Cancelada'] }
       ]
     },
     {
@@ -521,7 +632,8 @@
     },
     {
       id: 'management-overview', sector: 'Gerência / Gestão', sectorKey: 'gerencia', title: 'Dashboard Geral', icon: 'chart', tone: 'red',
-      description: 'Visão consolidada dos principais indicadores da empresa.', features: ['Indicadores gerais', 'Gráficos e comparativos', 'Acesso rápido', 'Exportação de relatórios'],
+      description: 'Resumo de tarefas e projetos disponíveis ao perfil atual, sem comparar métricas heterogêneas.',
+      features: ['Totais de tarefas por situação', 'Total de projetos não arquivados', 'Acesso à página de tarefas', 'Dados operacionais existentes'],
       source: 'overview', fields: []
     },
     {
@@ -532,7 +644,8 @@
     },
     {
       id: 'management-sector-performance', sector: 'Gerência / Gestão', sectorKey: 'gerencia', title: 'Performance por Setor', icon: 'users', tone: 'red',
-      description: 'Compare resultados, metas e indicadores entre setores.', features: ['Metas e resultados', 'Ranking de setores', 'Indicadores personalizados', 'Comparativos'],
+      description: 'Registre metas e resultados por setor e período para consulta gerencial.',
+      features: ['Cadastro de indicador, meta e resultado', 'Setor e período informados', 'Busca e filtro dos registros', 'Exportação dos dados cadastrados'],
       fields: [
         { key: 'title', label: 'Indicador ou meta', type: 'text', required: true },
         { key: 'sector', label: 'Setor avaliado', type: 'select', options: ['Marketing', 'TI', 'RH', 'Comercial', 'Financeiro', 'Logística'] },
@@ -543,8 +656,9 @@
       ]
     },
     {
-      id: 'management-strategic-projects', sector: 'Gerência / Gestão', sectorKey: 'gerencia', title: 'Projetos Estratégicos', icon: 'target', tone: 'red',
-      description: 'Acompanhe iniciativas prioritárias da empresa.', features: ['Status e prazos', 'Responsáveis', 'Marcos e entregas', 'Riscos e pendências'],
+      id: 'management-strategic-projects', sector: 'Gerência / Gestão', sectorKey: 'gerencia', title: 'Portfólio de Projetos', icon: 'target', tone: 'red',
+      description: 'Consulte projetos marcados explicitamente como estratégicos na origem, respeitando a visibilidade do projeto.',
+      features: ['Classificação estratégica na origem', 'Patrocinador e responsável', 'Marcos, riscos e decisões informados', 'Acesso ao projeto de origem'],
       source: 'projects', fields: []
     }
   ];
@@ -1367,6 +1481,7 @@
       const projects = (data.projects || []).filter(function (project) {
         const showAllProjects = module.id === 'management-active-projects' && manager;
         if (!project || project.isDemo || project.archived || (!showAllProjects && !isProjectVisible(project, data))) return false;
+        if (module.id === 'management-strategic-projects') return project.isStrategic === true;
         if (module.id !== 'management-active-projects') return true;
         const status = projectStatus(project, data);
         return status === 'Em andamento' || status === 'Planejamento';
@@ -1380,8 +1495,10 @@
         }).join('–');
         return {
           title: project.name || 'Projeto',
-          meta: [status, dateRange, progress.progress + '% concluído'].filter(Boolean).join(' · '),
-          href: 'projetos.html'
+          meta: [project.isStrategic ? 'Estratégico' : '', project.sponsor ? 'Patrocinador: ' + project.sponsor : '',
+            project.strategicOwner ? 'Responsável: ' + project.strategicOwner : '', status, dateRange,
+            progress.progress + '% concluído'].filter(Boolean).join(' · '),
+          href: 'projetos.html?calendarSource=' + encodeURIComponent(project.id)
         };
       });
       if (items.length && module.id === 'management-active-projects') {
@@ -1482,13 +1599,7 @@
         return { title: record.title || 'Registro', meta: detail || 'Atualizado ' + dateLabel(record.updatedAt), href: 'meu-espaco.html', recordId: record.id };
         });
       }
-      const completed = records.filter(function (record) { return /conclu|resolvido|fechado|publicado|ganho|pago|recebido|entregue/i.test(String(record.status || '')); }).length;
-      const pending = Math.max(0, records.length - completed);
-      metrics = [
-        { value: records.length, label: 'Registros', icon: module.icon },
-        { value: pending, label: 'Em aberto', icon: 'clock' },
-        { value: completed, label: 'Concluídos', icon: 'check' }
-      ];
+      metrics = [];
       if (module.id === 'purchase-quotes') {
         const awaitingApproval = records.filter(function (record) {
           return record.data && record.data.approval && record.data.approval.status === 'pending';
@@ -1552,35 +1663,80 @@
         metrics = [];
         metricDataPresent = chart.length > 0;
       } else if (module.id === 'finance-payables-receivables') {
-        const openAmount = records.filter(function (record) { return !/pago|recebido|cancelado/i.test(String(record.status || '')); })
-          .reduce(function (sum, record) { return sum + (Number(record.data && record.data.amount) || 0); }, 0);
-        metrics[0] = { value: 'R$ ' + openAmount.toLocaleString('pt-BR'), label: 'Em aberto', icon: 'doc' };
-        const overdue = records.filter(function (record) {
-          const due = dateValue(record.data && record.data.dueDate);
-          return due && due < today && !/pago|recebido|cancelado/i.test(String(record.status || ''));
-        }).length;
-        metrics[1] = { value: overdue, label: 'Vencidas', icon: 'alert' };
-      } else if (module.id === 'finance-cashflow') {
-        const inflow = records.filter(function (record) { return /entrada/i.test(String(record.data && record.data.kind || '')); })
-          .reduce(function (sum, record) { return sum + (Number(record.data && record.data.amount) || 0); }, 0);
-        const outflow = records.filter(function (record) { return /saida/i.test(String(record.data && record.data.kind || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')); })
-          .reduce(function (sum, record) { return sum + (Number(record.data && record.data.amount) || 0); }, 0);
-        metrics = [
-          { value: 'R$ ' + inflow.toLocaleString('pt-BR'), label: 'Entradas', icon: 'check' },
-          { value: 'R$ ' + outflow.toLocaleString('pt-BR'), label: 'Saídas', icon: 'alert' },
-          { value: 'R$ ' + (inflow - outflow).toLocaleString('pt-BR'), label: 'Saldo', icon: 'chart' }
-        ];
-        chart = [{ label: 'Entradas', value: inflow }, { label: 'Saídas', value: outflow }];
-      } else if (module.id === 'logistics-inventory') {
-        const lowStock = records.filter(function (record) {
-          const amount = Number(record.data && record.data.quantity);
-          const minimum = Number(record.data && record.data.minimum);
-          return Number.isFinite(amount) && Number.isFinite(minimum) && amount <= minimum;
-        }).length;
-        metrics[1] = { value: lowStock, label: 'Abaixo do mínimo', icon: 'alert' };
-        chart = records.slice(0, 4).map(function (record) {
-          return { label: record.title, value: Number(record.data && record.data.quantity) || 0 };
+        const openRecords = records.filter(function (record) {
+          return !/pago|recebido|cancelado/i.test(String(record.status || ''));
         });
+        ['A pagar', 'A receber'].forEach(function (kind) {
+          const kindRecords = openRecords.filter(function (record) {
+            return record.data && record.data.kind === kind;
+          });
+          const amountRecords = kindRecords.filter(function (record) {
+            return record.data.amount != null && String(record.data.amount).trim() !== '' &&
+              Number.isFinite(Number(record.data.amount));
+          });
+          if (!amountRecords.length) return;
+          const openAmount = amountRecords.reduce(function (sum, record) {
+            const amount = Number(record.data.amount);
+            return sum + amount;
+          }, 0);
+          metrics.push({
+            value: 'R$ ' + openAmount.toLocaleString('pt-BR'),
+            label: kind + ' em aberto',
+            icon: kind === 'A pagar' ? 'alert' : 'check'
+          });
+        });
+        const datedOpenRecords = openRecords.filter(function (record) {
+          return dateValue(record.data && record.data.dueDate);
+        });
+        const overdue = datedOpenRecords.filter(function (record) {
+          return dateValue(record.data.dueDate) < today;
+        }).length;
+        if (datedOpenRecords.length) metrics.push({ value: overdue, label: 'Vencimentos em atraso', icon: 'alert' });
+      } else if (module.id === 'finance-cashflow') {
+        const validAmounts = records.filter(function (record) {
+          return record.data && record.data.amount != null && String(record.data.amount).trim() !== '' &&
+            Number.isFinite(Number(record.data.amount));
+        });
+        const inflowRecords = validAmounts.filter(function (record) {
+          return /entrada/i.test(String(record.data.kind || ''));
+        });
+        const outflowRecords = validAmounts.filter(function (record) {
+          return /saida/i.test(String(record.data.kind || '').normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+        });
+        const inflow = inflowRecords.reduce(function (sum, record) { return sum + Number(record.data.amount); }, 0);
+        const outflow = outflowRecords.reduce(function (sum, record) { return sum + Number(record.data.amount); }, 0);
+        metrics = [];
+        chart = [];
+        if (inflowRecords.length) {
+          metrics.push({ value: 'R$ ' + inflow.toLocaleString('pt-BR'), label: 'Entradas', icon: 'check' });
+          chart.push({ label: 'Entradas', value: inflow });
+        }
+        if (outflowRecords.length) {
+          metrics.push({ value: 'R$ ' + outflow.toLocaleString('pt-BR'), label: 'Saídas', icon: 'alert' });
+          chart.push({ label: 'Saídas', value: outflow });
+        }
+        if (inflowRecords.length && outflowRecords.length) {
+          metrics.push({ value: 'R$ ' + (inflow - outflow).toLocaleString('pt-BR'), label: 'Saldo', icon: 'chart' });
+        }
+      } else if (module.id === 'logistics-inventory') {
+        const stockWithMinimum = records.filter(function (record) {
+          const rawAmount = record.data && record.data.quantity;
+          const rawMinimum = record.data && record.data.minimum;
+          if (rawAmount == null || String(rawAmount).trim() === '' ||
+              rawMinimum == null || String(rawMinimum).trim() === '') return false;
+          return Number.isFinite(Number(rawAmount)) && Number.isFinite(Number(rawMinimum));
+        }).length;
+        if (stockWithMinimum) {
+          const lowStock = records.filter(function (record) {
+            const rawAmount = record.data && record.data.quantity;
+            const rawMinimum = record.data && record.data.minimum;
+            return rawAmount != null && String(rawAmount).trim() !== '' &&
+              rawMinimum != null && String(rawMinimum).trim() !== '' &&
+              Number.isFinite(Number(rawAmount)) && Number.isFinite(Number(rawMinimum)) &&
+              Number(rawAmount) <= Number(rawMinimum);
+          }).length;
+          metrics = [{ value: lowStock, label: 'Produtos no mínimo ou abaixo', icon: 'alert' }];
+        }
       }
     }
     return {
@@ -1593,7 +1749,7 @@
         module.source === 'overview' ? metrics.length > 0 :
           records.length > 0,
       summary: module.source === 'profiles' ? items.length + ' aniversário(s) neste mês' :
-        module.source === 'projects' ? items.length + (module.id === 'management-active-projects' ? ' projeto(s) ativo(s)' : ' projeto(s) estratégico(s)') :
+        module.source === 'projects' ? items.length + (module.id === 'management-active-projects' ? ' projeto(s) ativo(s)' : ' projeto(s) no portfólio') :
         module.source === 'events' ? items.length + ' data(s) no calendário' :
           module.source === 'overview' ? 'Indicadores consolidados' : records.length + ' registro(s)',
       heading: module.id === 'marketing-content-calendar' ? 'Próximas publicações' : '',
@@ -2221,14 +2377,11 @@
     const homeLimitReached = homeCards.length >= HOME_CARDS_LIMIT;
     const permitted = !module || canAccessBusinessCard(module, data);
     const pageHref = catalog.href || 'meu-espaco.html';
-    const moduleKindLabel = module ? module.kind === 'panel' ? 'Painel' : 'Processo' : '';
     return '<article class="dashboard-library-card' + (!permitted ? ' is-restricted' : '') + '" data-access="' + (permitted ? 'allowed' : 'restricted') +
-      (module ? ' data-module-kind="' + escapeHtml(module.kind) + '"' : '') + '" data-tone="' + escapeHtml(module ? tone || 'blue' : 'general') + '">' +
+      '" data-tone="' + escapeHtml(module ? tone || 'blue' : 'general') + '">' +
       '<div class="dashboard-library-card-header"><span class="dashboard-library-icon">' + iconMarkup(catalog.icon) + '</span>' +
       '<div class="dashboard-library-info"><h4>' + escapeHtml(catalog.label) + '</h4>' +
-      '<small>' + escapeHtml(sector || 'Geral') + '</small></div>' +
-      (moduleKindLabel ? '<span class="dashboard-library-type-badge">' + moduleKindLabel + '</span>' : '') +
-      '</div>' +
+      '<small>' + escapeHtml(sector || 'Geral') + '</small></div></div>' +
       '<p class="dashboard-library-description">' + escapeHtml(description || '') + '</p>' +
       '<div class="dashboard-library-card-actions">' +
       (module
@@ -2246,68 +2399,78 @@
   }
 
   function getLibrarySectors() {
+    const sectorTones = {
+      marketing: 'blue',
+      ti: 'cyan',
+      rh: 'purple',
+      comercial: 'green',
+      compras: 'orange',
+      financeiro: 'indigo',
+      logistica: 'amber',
+      quality: 'pink',
+      gerencia: 'red'
+    };
     const grouped = new Map();
     BUSINESS_CARD_MODULES.forEach(function (module) {
       if (!grouped.has(module.sectorKey)) grouped.set(module.sectorKey, []);
       grouped.get(module.sectorKey).push(module);
     });
     return Array.from(grouped.entries()).map(function (entry) {
-      return { key: entry[0], modules: entry[1] };
+      return {
+        key: entry[0],
+        tone: sectorTones[entry[0]] || 'blue',
+        modules: entry[1].map(function (module) {
+          return Object.assign({}, module, { libraryTone: sectorTones[entry[0]] || 'blue' });
+        })
+      };
     });
   }
 
-  function renderLibraryContent(root, config, data, homeCards, activeSector, activeKind) {
+  function renderLibraryContent(root, config, data, homeCards, activeSector) {
     if (!root) return;
     const selectedSector = activeSector || 'general';
-    const selectedKind = activeKind === 'panel' || activeKind === 'process' ? activeKind : 'all';
-    const sector = selectedSector === 'general'
-      ? null
-      : getLibrarySectors().find(function (item) { return item.key === selectedSector; });
+    const sectors = getLibrarySectors();
+    const sector = selectedSector === 'general' ? null :
+      sectors.find(function (item) { return item.key === selectedSector; });
     if (selectedSector !== 'general' && !sector) {
       root.innerHTML = '<div class="dashboard-data-empty">Nenhum card disponível.</div>';
       return;
     }
-    const allModules = (sector ? sector.modules : BUSINESS_CARD_MODULES).slice().sort(function (first, second) {
-      return first.title.localeCompare(second.title, 'pt-BR');
-    });
-    const modules = allModules.filter(function (module) {
-      return selectedKind === 'all' || module.kind === selectedKind;
-    });
-    const kindTabs = '<div class="dashboard-library-kind-tabs" role="group" aria-label="Tipo de módulo">' +
-      [['all', 'Todos'], ['panel', 'Painéis'], ['process', 'Processos']].map(function (item) {
-        return '<button type="button" data-library-kind="' + item[0] + '"' +
-          (selectedKind === item[0] ? ' class="active"' : '') + ' aria-pressed="' +
-          (selectedKind === item[0] ? 'true' : 'false') + '">' + item[1] + '</button>';
-      }).join('') + '</div>';
-    const moduleCards = modules.map(function (module) {
-      return libraryCardMarkup(module.id, module.description, module.sector, module.tone, config, data, module, homeCards);
+    const visibleSectors = sector ? [sector] : sectors;
+    root.innerHTML = visibleSectors.map(function (currentSector) {
+      const modules = currentSector.modules.slice().sort(function (first, second) {
+        return first.title.localeCompare(second.title, 'pt-BR');
+      });
+      const moduleCards = modules.map(function (module) {
+        return libraryCardMarkup(module.id, module.description, module.sector, module.libraryTone, config, data, module, homeCards);
+      }).join('');
+      const firstModule = modules[0];
+      return '<section class="dashboard-library-sector' + (sector ? '' : ' is-general') +
+        '" data-library-panel="' + escapeHtml(currentSector.key) + '" data-tone="' + escapeHtml(currentSector.tone) + '">' +
+        '<header><span>' + iconMarkup(firstModule.icon) + '</span><div><h3>' + escapeHtml(firstModule.sector) +
+        '</h3><small>' + modules.length + (modules.length === 1 ? ' módulo' : ' módulos') +
+        ' · acesso conforme as permissões do setor</small></div></header>' +
+        '<div class="dashboard-library-cards">' + moduleCards + '</div></section>';
     }).join('');
-    root.innerHTML = kindTabs + (moduleCards
-      ? '<section class="dashboard-library-sector' + (sector ? '' : ' is-general') + '" data-library-panel="' + escapeHtml(selectedSector) + '" data-tone="' + escapeHtml((modules[0] || allModules[0] || {}).tone || 'blue') + '">' +
-        '<header><span>' + iconMarkup(sector ? (modules[0] || allModules[0]).icon : 'star') + '</span><div><h3>' + escapeHtml(sector ? sector.modules[0].sector : 'Todos os módulos') +
-        '</h3><small>' + modules.length + (modules.length === 1 ? ' módulo' : ' módulos') + ' · ' +
-        (selectedKind === 'panel' ? 'consulta e indicadores' : selectedKind === 'process' ? 'cadastros e atualização de dados' : 'acesso conforme o setor') + '</small></div></header>' +
-        '<div class="dashboard-library-cards">' + moduleCards + '</div></section>'
-      : '<div class="dashboard-data-empty">Nenhum módulo disponível nesta categoria.</div>');
-    const section = root.querySelector('.dashboard-library-sector');
-    if (section) section.dataset.view = activeLibraryView;
+    Array.prototype.forEach.call(root.querySelectorAll('.dashboard-library-sector'), function (section) {
+      section.dataset.view = activeLibraryView;
+    });
   }
 
-  function hydrateLibrary(root, dashboardConfig, data, homeCards, activeSector, activeKind) {
+  function hydrateLibrary(root, dashboardConfig, data, homeCards, activeSector) {
     if (!root) return;
     const sectors = getLibrarySectors();
     const selectedSector = activeSector || 'general';
-    const selectedKind = activeKind === 'panel' || activeKind === 'process' ? activeKind : 'all';
     const sectorTabs = sectors.map(function (sector) {
       const module = sector.modules[0];
       return '<button type="button" class="dashboard-library-tab' + (selectedSector === sector.key ? ' active' : '') +
-        '" data-library-sector="' + escapeHtml(sector.key) + '" data-tone="' + escapeHtml(module.tone) + '" role="tab" aria-controls="dashboard-library-results" aria-selected="' + (selectedSector === sector.key) + '">' +
+        '" data-library-sector="' + escapeHtml(sector.key) + '" data-tone="' + escapeHtml(sector.tone) + '" role="tab" aria-controls="dashboard-library-results" aria-selected="' + (selectedSector === sector.key) + '">' +
         iconMarkup(module.icon) + '<span>' + escapeHtml(module.sector) + '</span></button>';
     }).join('');
     root.innerHTML = '<div class="dashboard-library-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-library-title">' +
       '<div class="dashboard-library-header"><div><span class="dashboard-library-eyebrow">RildonX · Componentes reutilizáveis</span>' +
-      '<h2 id="dashboard-library-title">Biblioteca de Módulos</h2><p>Explore os módulos por setor ou veja todos juntos em ordem alfabética. O acesso segue as permissões do seu perfil.</p></div>' +
-      '<div class="dashboard-library-header-actions"><button type="button" class="dashboard-library-close" data-library-close aria-label="Fechar biblioteca de módulos">×</button></div></div>' +
+      '<h2 id="dashboard-library-title">Biblioteca de Módulos</h2><p>Todos os módulos ficam organizados por setor. O acesso segue as permissões do seu perfil.</p></div>' +
+      '<div class="dashboard-library-header-actions"><button type="button" class="dashboard-library-close dashboard-business-exit" data-library-close aria-label="Fechar biblioteca de módulos" title="Fechar biblioteca">×</button></div></div>' +
       '<div class="dashboard-library-tabs" role="tablist" aria-label="Setores">' +
       '<button type="button" class="dashboard-library-tab' + (selectedSector === 'general' ? ' active' : '') +
       '" data-library-sector="general" data-tone="general" role="tab" aria-controls="dashboard-library-results" aria-selected="' + (selectedSector === 'general') + '"><span class="dashboard-library-general-icon">✦</span><span>Geral</span></button>' +
@@ -2318,13 +2481,33 @@
       (activeLibraryView === 'list' ? ' class="active"' : '') + '>Lista</button>' +
       '</div><div id="dashboard-library-results" class="dashboard-library-content" role="tabpanel"></div></div>';
     root.dataset.activeSector = selectedSector;
-    renderLibraryContent(root.querySelector('.dashboard-library-content'), dashboardConfig, data, homeCards, selectedSector, selectedKind);
+    renderLibraryContent(root.querySelector('.dashboard-library-content'), dashboardConfig, data, homeCards, selectedSector);
   }
 
   function businessFieldMarkup(field, value, disabledOptions) {
     const fieldValue = value == null ? '' : String(value);
     const required = field.required ? ' required' : '';
     const label = '<span>' + escapeHtml(field.label) + (field.required ? ' *' : '') + '</span>';
+    if (field.type === 'businessRecord') {
+      const modules = (field.moduleIds || []).map(function (moduleId) {
+        return BUSINESS_CARD_MODULES.find(function (module) { return module.id === moduleId; });
+      }).filter(Boolean);
+      const records = (dashboardState.businessCardRecords || []).filter(function (record) {
+        const sourceModule = record && modules.find(function (module) { return module.id === record.moduleKey; });
+        return record && (!record.archived || String(record.id) === fieldValue) && record.isDemo !== true &&
+          !(record.data && record.data.isDemo === true) &&
+          sourceModule && (canAccessBusinessCard(sourceModule, dashboardState) || String(record.id) === fieldValue);
+      }).sort(function (a, b) { return String(a.title || '').localeCompare(String(b.title || ''), 'pt-BR'); });
+      return '<label class="dashboard-business-field">' + label + '<select name="' + escapeHtml(field.key) + '"' + required + '>' +
+        '<option value="">Selecione um registro existente...</option>' + records.map(function (record) {
+          const sourceModule = modules.find(function (module) { return module.id === record.moduleKey; });
+          const canViewSource = sourceModule && canAccessBusinessCard(sourceModule, dashboardState);
+          return '<option value="' + escapeHtml(record.id) + '"' + (fieldValue === String(record.id) ? ' selected' : '') + '>' +
+            escapeHtml(canViewSource
+              ? (sourceModule ? sourceModule.title + ' · ' : '') + (record.title || 'Registro') + (record.archived ? ' (arquivado)' : '')
+              : 'Registro de origem atual (acesso restrito)') + '</option>';
+        }).join('') + '</select><small>O vínculo aponta para o registro de origem; nenhum dado será copiado.</small></label>';
+    }
     if (field.type === 'employees') {
       const selectedIds = new Set(Array.isArray(value) ? value.map(String) : []);
       const employees = trainingEmployees(dashboardState);
@@ -2343,6 +2526,10 @@
       return '<label class="dashboard-business-field">' + label + '<textarea name="' + escapeHtml(field.key) + '" rows="3"' + required + '>' + escapeHtml(fieldValue) + '</textarea></label>';
     }
     if (field.type === 'select') {
+      if ((disabledOptions || []).indexOf(fieldValue) !== -1) {
+        return '<input type="hidden" name="' + escapeHtml(field.key) + '" value="' + escapeHtml(fieldValue) + '">' +
+          '<label class="dashboard-business-field">' + label + '<input type="text" value="' + escapeHtml(fieldValue) + '" disabled></label>';
+      }
       return '<label class="dashboard-business-field">' + label + '<select name="' + escapeHtml(field.key) + '"' + required + '><option value="">Selecione...</option>' +
         (field.options || []).map(function (option) {
           return '<option value="' + escapeHtml(option) + '"' + (fieldValue === option ? ' selected' : '') +
@@ -2424,11 +2611,9 @@
     let businessReturnTo = '';
     let businessReturnLibrary = false;
     let businessReturnSector = 'general';
-    let businessReturnKind = 'all';
     let businessReturnScroll = 0;
     let businessReturnLibraryScroll = 0;
     let activeLibrarySector = 'general';
-    let activeLibraryKind = 'all';
     let businessSearch = '';
     let includeArchived = false;
     let businessFilterValue = '';
@@ -2693,7 +2878,17 @@
       if (module.id === 'quality-5s') headings.push('Pontuação total 5S');
       const rows = records.map(function (record) {
         const row = [record.title, record.status || 'Pendente'].concat(fields.map(function (field) {
-          return record.data && record.data[field.key] != null ? record.data[field.key] : '';
+          const value = record.data && record.data[field.key];
+          if (field.type === 'businessRecord' && value) {
+            const related = (dashboardState.businessCardRecords || []).find(function (item) {
+              return String(item.id) === String(value) && (field.moduleIds || []).indexOf(item.moduleKey) !== -1;
+            });
+            const sourceModule = related && BUSINESS_CARD_MODULES.find(function (item) { return item.id === related.moduleKey; });
+            return related && sourceModule && canAccessBusinessCard(sourceModule, dashboardState)
+              ? related.title || related.id
+              : 'Registro relacionado (acesso restrito)';
+          }
+          return value != null ? value : '';
         }));
         if (trainingExport) {
           const participants = Array.isArray(record.data && record.data.participants) ? record.data.participants : [];
@@ -2806,6 +3001,7 @@
           const manager = isBusinessCardManager(dashboardState);
           const showAllProjects = module.id === 'management-active-projects' && manager;
           if (!project || project.isDemo || project.archived || (!showAllProjects && !isProjectVisible(project, dashboardState))) return false;
+          if (module.id === 'management-strategic-projects') return project.isStrategic === true;
           if (module.id !== 'management-active-projects') return true;
           const status = projectStatus(project, dashboardState);
           return status === 'Em andamento' || status === 'Planejamento';
@@ -2813,7 +3009,9 @@
           const progress = projectProgress(project, dashboardState);
           return {
             title: project.name || 'Projeto',
-            details: [projectStatus(project, dashboardState), project.startDate, project.endDate, progress.progress + '% concluído']
+            details: [project.isStrategic ? 'Estratégico' : '', project.sponsor ? 'Patrocinador: ' + project.sponsor : '',
+              project.strategicOwner ? 'Responsável: ' + project.strategicOwner : '',
+              projectStatus(project, dashboardState), project.startDate, project.endDate, progress.progress + '% concluído']
               .filter(Boolean).join(' · ')
           };
         });
@@ -2848,7 +3046,13 @@
       const homeCards = getStoredHomeCards();
       renderHomeDashboard(homeDashboardRoot, homeCards, dashboardState);
       if (libraryRoot && libraryRoot.classList.contains('open')) {
-        hydrateLibrary(libraryRoot, current, dashboardState, homeCards, activeLibrarySector, activeLibraryKind);
+        renderLibraryContent(
+          libraryRoot.querySelector('.dashboard-library-content'),
+          current,
+          dashboardState,
+          homeCards,
+          activeLibrarySector
+        );
       }
       if (businessRoot && businessRoot.classList.contains('open') && activeBusinessModule &&
           !businessRoot.querySelector('[data-business-form]')) {
@@ -2861,8 +3065,7 @@
       const config = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
       const params = new URLSearchParams(window.location.search);
       activeLibrarySector = params.get('librarySector') || 'general';
-      activeLibraryKind = params.get('libraryKind') || 'all';
-      hydrateLibrary(libraryRoot, config, dashboardState, getStoredHomeCards(), activeLibrarySector, activeLibraryKind);
+      hydrateLibrary(libraryRoot, config, dashboardState, getStoredHomeCards(), activeLibrarySector);
       libraryRoot.classList.add('open');
     }
 
@@ -2893,7 +3096,6 @@
         const panel = libraryRoot.querySelector('.dashboard-library-panel');
         target.searchParams.set('returnLibrary', '1');
         target.searchParams.set('returnSector', activeLibrarySector);
-        target.searchParams.set('returnKind', activeLibraryKind);
         target.searchParams.set('returnScroll', String(window.scrollY));
         target.searchParams.set('returnLibraryScroll', String(panel ? panel.scrollTop : 0));
       }
@@ -2929,7 +3131,6 @@
       });
       persistDashboard(config);
       render();
-      hydrateLibrary(libraryRoot, config, dashboardState, getStoredHomeCards(), activeLibrarySector, activeLibraryKind);
       if (typeof window.showToast === 'function') window.showToast(catalog.label + ' foi adicionado ao seu espaço.');
     }
 
@@ -2971,6 +3172,15 @@
       const fieldMeta = module.fields.filter(function (field) {
         return field.key !== 'title' && field.key !== 'status' && data[field.key] !== '' && data[field.key] != null;
       }).slice(0, 3).map(function (field) {
+        if (field.type === 'businessRecord') {
+          const related = (dashboardState.businessCardRecords || []).find(function (item) {
+            return String(item.id) === String(data[field.key]) && (field.moduleIds || []).indexOf(item.moduleKey) !== -1;
+          });
+          const relatedModule = related && BUSINESS_CARD_MODULES.find(function (item) { return item.id === related.moduleKey; });
+          return field.label + ': ' + (related && relatedModule && canAccessBusinessCard(relatedModule, dashboardState)
+            ? related.title + (related.archived ? ' (arquivado)' : '')
+            : 'Registro relacionado (acesso restrito)');
+        }
         return field.label + ': ' + String(data[field.key]);
       }).join(' · ');
       if (module.id === 'marketing-internal-demands') {
@@ -3223,6 +3433,19 @@
       const fileUrl = safeExternalUrl(record.data && (record.data.attachmentUrl || record.data.attendanceUrl || record.data.url));
       const monitoringUrl = module.id === 'it-infrastructure' ? safeExternalUrl(record.data && record.data.monitoringUrl) : '';
       const linkedFiles = Array.isArray(record.data && record.data.attachmentIds) ? record.data.attachmentIds : [];
+      const linkedBusinessRecords = module.fields.filter(function (field) {
+        return field.type === 'businessRecord' && record.data && record.data[field.key];
+      }).map(function (field) {
+        const source = (dashboardState.businessCardRecords || []).find(function (item) {
+          return String(item.id) === String(record.data[field.key]) &&
+            (field.moduleIds || []).indexOf(item.moduleKey) !== -1;
+        });
+        const sourceModule = source && BUSINESS_CARD_MODULES.find(function (item) { return item.id === source.moduleKey; });
+        return source && sourceModule && canAccessBusinessCard(sourceModule, dashboardState)
+          ? '<button type="button" data-business-module-open="' + escapeHtml(sourceModule.id) + '" data-business-record="' +
+            escapeHtml(source.id) + '" aria-label="Abrir origem ' + escapeHtml(source.title) + '">Abrir origem</button>'
+          : '';
+      }).filter(Boolean).join('');
       const linkedTask = record.linkedTaskId
         ? '<a class="dashboard-business-task-link" href="tarefas.html">Abrir tarefa vinculada</a>'
         : '<button type="button" class="dashboard-business-link-task" data-business-link-task="' + escapeHtml(record.id) + '">Criar tarefa vinculada</button>';
@@ -3248,6 +3471,7 @@
             escapeHtml(file.name) + '">' + iconMarkup('doc') + '</button>' : '';
         }).join('') +
         (monitoringUrl ? '<a href="' + escapeHtml(monitoringUrl) + '" target="_blank" rel="noopener noreferrer">Abrir monitoramento</a>' : '') +
+        linkedBusinessRecords +
         linkedTask +
         '<button type="button" data-business-edit="' + escapeHtml(record.id) + '" aria-label="Editar ' + escapeHtml(record.title) + '">' + iconMarkup('doc') + '</button>' +
         (canArchive && !record.archived ? '<button type="button" data-business-archive="' + escapeHtml(record.id) + '" aria-label="Arquivar ' + escapeHtml(record.title) + '">' + iconMarkup('box') + '</button>' : '') +
@@ -4792,7 +5016,8 @@
         '<label><span>' + iconMarkup('search') + '</span><input type="search" data-business-search value="' +
         escapeHtml(businessSearch) + '" placeholder="Buscar por nome ou detalhes"></label>' +
         (module.source === 'events' ? filterOptions : '') +
-        '<button type="button" class="btn secondary" data-business-export>Exportar CSV</button></div>';
+        '<button type="button" class="btn secondary module-export-icon" data-business-export aria-label="Exportar CSV" title="Exportar CSV">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button></div>';
       businessRoot.innerHTML = '<div class="dashboard-business-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-business-title">' +
         '<div class="dashboard-business-header"><div class="dashboard-business-heading-icon" data-tone="' + escapeHtml(module.tone) + '">' + iconMarkup(module.icon) + '</div>' +
         '<div><span class="dashboard-library-eyebrow">' + escapeHtml(module.sector) + ' · Módulo compartilhado</span><h2 id="dashboard-business-title">' + escapeHtml(module.title) +
@@ -4813,7 +5038,8 @@
             ? '<div class="dashboard-business-toolbar"><label><span>' + iconMarkup('activity') + '</span><input type="search" data-business-search value="' +
               escapeHtml(businessSearch) + '" placeholder="Buscar capacitações, funcionários ou investimentos"></label>' +
               '<label class="dashboard-business-archived"><input type="checkbox" data-business-archived' + (includeArchived ? ' checked' : '') + '> Mostrar arquivados</label>' +
-              '<button type="button" class="btn secondary" data-business-export>Exportar CSV</button>' +
+              '<button type="button" class="btn secondary module-export-icon" data-business-export aria-label="Exportar CSV" title="Exportar CSV">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button>' +
               '<button type="button" class="btn secondary" data-hr-training-create="investment"' +
               (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') +
               '>+ Investimento</button><button type="button" class="btn" data-hr-training-create="training"' +
@@ -4824,7 +5050,8 @@
           : '<div class="dashboard-business-toolbar"><label><span>' + iconMarkup('activity') + '</span><input type="search" data-business-search value="' + escapeHtml(businessSearch) + '" placeholder="Buscar registros"></label>' +
             filterOptions +
             '<label class="dashboard-business-archived"><input type="checkbox" data-business-archived' + (includeArchived ? ' checked' : '') + '> Mostrar arquivados</label>' +
-            '<button type="button" class="btn secondary" data-business-export>Exportar CSV</button>' +
+            '<button type="button" class="btn secondary module-export-icon" data-business-export aria-label="Exportar CSV" title="Exportar CSV">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button>' +
             '<button type="button" class="btn" data-business-create' + (dashboardState.businessCardRecordsLoadError ? ' disabled title="Aplique a migração Supabase para habilitar gravação compartilhada"' : '') + '>' +
             (module.id === 'marketing-internal-demands' ? '+ Nova demanda' : '+ Novo registro') + '</button></div>' +
             (module.id === 'quality-risks' ? qualityRiskMatrixMarkup() : '') +
@@ -4924,7 +5151,6 @@
       businessReturnTo = params.get('returnTo') || new URL('meu-espaco.html', window.location.href).href;
       businessReturnLibrary = params.get('returnLibrary') === '1';
       businessReturnSector = params.get('returnSector') || 'general';
-      businessReturnKind = params.get('returnKind') || 'all';
       businessReturnScroll = Number(params.get('returnScroll')) || 0;
       businessReturnLibraryScroll = Number(params.get('returnLibraryScroll')) || 0;
       businessRoot.classList.add('is-standalone');
@@ -4937,7 +5163,6 @@
         if (businessReturnLibrary) {
           returnUrl.searchParams.set('restoreLibrary', '1');
           returnUrl.searchParams.set('librarySector', businessReturnSector);
-          returnUrl.searchParams.set('libraryKind', businessReturnKind);
           returnUrl.searchParams.set('libraryScroll', String(businessReturnScroll));
           returnUrl.searchParams.set('libraryPanelScroll', String(businessReturnLibraryScroll));
         }
@@ -5184,6 +5409,20 @@
       });
       const existingId = form.dataset.recordId;
       const existing = existingId && (dashboardState.businessCardRecords || []).find(function (record) { return record.id === existingId; });
+      fields.filter(function (field) { return field.type === 'businessRecord'; }).forEach(function (field) {
+        const relatedId = values[field.key];
+        if (!relatedId && !field.required) return;
+        const related = (dashboardState.businessCardRecords || []).find(function (item) {
+          return String(item.id) === relatedId && (field.moduleIds || []).indexOf(item.moduleKey) !== -1 &&
+            item.isDemo !== true && !(item.data && item.data.isDemo === true);
+        });
+        const relatedModule = related && BUSINESS_CARD_MODULES.find(function (item) { return item.id === related.moduleKey; });
+        const preservingExisting = existing && existing.data && String(existing.data[field.key]) === relatedId;
+        if (!related || !relatedModule || related.isDemo === true || related.data && related.data.isDemo === true ||
+            (related.archived && !preservingExisting) || (!canAccessBusinessCard(relatedModule, dashboardState) && !preservingExisting)) {
+          throw new Error('Selecione um registro de origem existente e acessível.');
+        }
+      });
       const currentProfile = getCurrentProfile(dashboardState);
       const existingIntegrations = existing && existing.data && existing.data.integrations || {};
       if (!(module.id === 'hr-training' && recordType === 'investment')) {
@@ -5294,6 +5533,29 @@
       if (module.id === 'quality-5w2h' && values.estimatedCost &&
           (!Number.isFinite(Number(values.estimatedCost)) || Number(values.estimatedCost) < 0)) {
         throw new Error('O custo estimado deve ser um valor igual ou maior que zero.');
+      }
+      if (module.id === 'hr-onboarding' && values.status === 'Concluído') {
+        const checklist = ['accessChecklist', 'equipmentChecklist', 'policyChecklist', 'handoverChecklist'];
+        if (checklist.some(function (key) { return !values[key] || values[key] === 'Pendente'; })) {
+          throw new Error('Conclua ou marque como não aplicável cada etapa do checklist antes de finalizar o processo.');
+        }
+      }
+      if (module.id === 'sales-crm-interactions' && values.nextActionDate && !values.nextAction) {
+        throw new Error('Descreva a próxima ação antes de informar a data de retorno.');
+      }
+      if (module.id === 'purchase-quotes' && values.quotedAmount &&
+          (!Number.isFinite(Number(values.quotedAmount)) || Number(values.quotedAmount) < 0)) {
+        throw new Error('O valor cotado deve ser um número igual ou maior que zero.');
+      }
+      if (module.id === 'logistics-inventory-movements') {
+        const quantity = Number(values.quantity);
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          throw new Error('A quantidade movimentada deve ser um número maior que zero.');
+        }
+      }
+      if (module.id === 'quality-corrective-actions' && values.status === 'Concluída' &&
+          (values.efficacyVerified !== 'Eficaz' || !values.efficacyNotes)) {
+        throw new Error('Conclua a ação somente após registrar eficácia e evidência da verificação.');
       }
       if (module.id === 'quality-risks') {
         const score = qualityRiskScore(values);
@@ -5670,22 +5932,7 @@
             current,
             dashboardState,
             getStoredHomeCards(),
-            activeLibrarySector,
-            activeLibraryKind
-          );
-          return;
-        }
-        const kindTab = event.target.closest('[data-library-kind]');
-        if (kindTab) {
-          activeLibraryKind = kindTab.dataset.libraryKind;
-          const current = normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD);
-          renderLibraryContent(
-            libraryRoot.querySelector('.dashboard-library-content'),
-            current,
-            dashboardState,
-            getStoredHomeCards(),
-            activeLibrarySector,
-            activeLibraryKind
+            activeLibrarySector
           );
           return;
         }
@@ -5704,8 +5951,7 @@
             current,
             dashboardState,
             getStoredHomeCards(),
-            activeLibrarySector,
-            activeLibraryKind
+            activeLibrarySector
           );
           return;
         }

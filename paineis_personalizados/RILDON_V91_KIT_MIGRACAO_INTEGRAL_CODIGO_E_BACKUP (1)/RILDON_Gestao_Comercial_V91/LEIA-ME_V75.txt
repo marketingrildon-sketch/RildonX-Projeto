@@ -1,0 +1,21 @@
+RILDON GESTÃO COMERCIAL V7.5 — METAS AVANÇADAS
+
+1. Extraia em uma pasta NOVA; não apague a versão anterior.
+2. Feche o servidor anterior para liberar a porta 8789.
+3. Inicie pelo INICIAR_SITE.bat. A versão em /api/build deve indicar 7.5-PG.
+4. Na Gerência, entre em Gestão de metas e confirme valores antigos, ajustando e clicando em SALVAR METAS NO POSTGRESQL.
+5. No Vendedor, entre em Minhas Metas para visualizar seu desempenho.
+6. Se a página antiga aparecer, Ctrl+Shift+R no navegador.
+
+ALTERAÇÕES
+- Corrigido JavaScript inserido dentro do template de impressão PDF que era renderizado cru no HTML da Gerência.
+- Painel de metas da Gerência e do vendedor com indicadores, mês, dia, gráficos SVG e tabela diária.
+- Persistência das metas pelo endpoint /api/targets no PostgreSQL.
+- Respeita autenticação já existente nas rotas do servidor.
+- Preserva demais módulos e banco PostgreSQL; nenhuma limpeza ou importação é realizada.
+
+OBSERVAÇÕES
+- Projeção proporcional aos dias de segunda a sexta; feriados não são identificados automaticamente.
+- Não é possível atribuir automaticamente devoluções de relatórios com período maior que um dia a um dia específico. Tais intervalos são sinalizados.
+- Testes locais: sintaxe Python e JavaScript, estrutura HTML e presença dos arquivos. Teste funcional com PostgreSQL no servidor Windows ainda é necessário.
+- A tela de metas antiga da Gerência continua disponível abaixo do novo painel para definição/edição das metas.

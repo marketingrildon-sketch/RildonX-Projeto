@@ -619,7 +619,8 @@ function openModal(id) {
   document.querySelectorAll('.modal-panel').forEach(function(el){ el.classList.remove('open'); });
   var panel = document.getElementById(id);
   if (panel) panel.classList.add('open');
-  document.getElementById('modal-backdrop').classList.add('open');
+  var backdrop = document.getElementById('modal-backdrop');
+  if (backdrop) backdrop.classList.add('open');
   if (id === 'modal-nova-tarefa') resetNovaTarefaForm();
   if (id === 'modal-reserva-sala') resetReservaSalaForm();
   if (id === 'modal-nova-publicacao') {
@@ -635,7 +636,8 @@ function openModal(id) {
   if (id === 'modal-novo-evento') document.getElementById('quick-event-form').reset();
 }
 function closeModal() {
-  document.getElementById('modal-backdrop').classList.remove('open');
+  var backdrop = document.getElementById('modal-backdrop');
+  if (backdrop) backdrop.classList.remove('open');
   document.querySelectorAll('.modal-panel').forEach(function(el){ el.classList.remove('open'); });
 }
 

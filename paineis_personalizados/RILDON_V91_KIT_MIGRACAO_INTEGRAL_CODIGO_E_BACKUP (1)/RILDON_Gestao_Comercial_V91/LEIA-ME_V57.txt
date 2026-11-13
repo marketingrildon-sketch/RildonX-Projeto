@@ -1,0 +1,24 @@
+RILDON | GESTÃO COMERCIAL V5.7 — LEIA ANTES DE INSTALAR
+
+1. Feche as outras janelas do servidor Rildon na porta 8789.
+2. Extraia este ZIP para uma PASTA NOVA. Faça backup da pasta anterior.
+3. Preserve o arquivo rildon_sync.sqlite3: copie da pasta anterior para a pasta V5.7, com o servidor desligado. NÃO apague nem substitua sem fazer cópia.
+4. Execute INICIAR_SITE.bat e abra http://localhost:8789/api/build: deve retornar version 5.7.
+5. Abra http://localhost:8789/gerencia.html e entre com as credenciais já configuradas.
+6. Em Vendas Perdidas, no topo, há a seção compacta Extensão X2. Clique para configurar ID no Chrome se necessário.
+7. Em Meus Atendimentos, importe um HTML do relatório X2, CONFIRA os valores e confirme.
+
+ALTERAÇÕES
+- ID da extensão compactado no topo de Vendas Perdidas; captura e sincronização anteriores preservadas.
+- Importação considera todos os vendedores e grupos do HTML, inclusive VENDAS INTERNAS (origem própria), e também Matriz, OMRE/DIST e B2B.
+- Soma os valores por grupo e confere com o TOTAL GERAL do X2; a importação não é salva se houver divergência.
+- Ao existir coluna "Data" ou "Data da Venda" na tabela do X2, registra a data individual e permite filtro diário.
+- Quando existe somente o período no cabeçalho, o filtro diário NÃO distribui vendas artificialmente: exige o período integral do relatório.
+- Devoluções são informadas apenas por grupo (vendedor/loja) nos HTMLs de exemplo; em filtros diários parciais o sistema deixa devoluções e líquido como indisponíveis, em vez de inventar valores.
+- Importações anteriores são migradas para a nova tabela com preservação das datas de relatório.
+
+ATENÇÃO
+- Os arquivos HTML fornecidos anteriormente nesta conversa NÃO têm datas individuais de venda: um novo HTML com essa coluna é necessário para conferir o layout atualizado específico do X2.
+- Dados de clientes são confidenciais. Sistema ainda requer fortalecimento da autenticação para produção e não deve ser exposto à Internet.
+- Um registro do HTML pode ser o total de várias compras de um mesmo cliente. Registros não equivalem necessariamente a pedidos.
+- Não copie banco de teste para o computador da Rildon.

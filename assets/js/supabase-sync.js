@@ -107,6 +107,12 @@
       allUsers: Boolean(row.all_users),
       createdAt: row.created_at || null,
       createdBy: row.created_by || row.createdBy || null,
+      isStrategic: Boolean(row.is_strategic),
+      sponsor: row.sponsor || '',
+      strategicOwner: row.strategic_owner || '',
+      milestones: row.milestones || '',
+      riskSummary: row.risk_summary || '',
+      decisionSummary: row.decision_summary || '',
       updatedAt: row.updated_at || row.updatedAt || row.created_at || null
     };
   }
@@ -475,6 +481,12 @@
         activity_log: project.activityLog || [],
         archived: Boolean(project.archived),
         all_users: Boolean(project.allUsers),
+        is_strategic: Boolean(project.isStrategic),
+        sponsor: project.sponsor || '',
+        strategic_owner: project.strategicOwner || '',
+        milestones: project.milestones || '',
+        risk_summary: project.riskSummary || '',
+        decision_summary: project.decisionSummary || '',
         created_at: project.createdAt || undefined,
         updated_at: project.updatedAt || new Date().toISOString(),
         created_by: isUuid(project.createdBy) ? project.createdBy : null

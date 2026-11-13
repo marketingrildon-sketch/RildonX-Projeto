@@ -1,0 +1,273 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RILDON | Solicitação de Itens Novos</title><style>
+:root{font:14px system-ui,Arial;color:#143350;background:#f1f6fc}*{box-sizing:border-box}body{margin:0;padding:24px}h1{font-size:23px;margin:0 0 8px;color:#083d68}h2{font-size:17px;margin:0 0 16px}p{color:#71849a}header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px}.tag{background:#e2f2ff;color:#10628e;border-radius:30px;padding:8px 12px;font-weight:700}.card{background:#fff;border:1px solid #d9e5f3;border-radius:19px;padding:20px;margin-bottom:18px;box-shadow:0 7px 24px #234c7410}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}label{font-weight:700;font-size:12px;color:#52708a}input,select,textarea{border:1px solid #cfdfee;border-radius:10px;background:#f9fcff;padding:12px;width:100%;font:inherit;min-width:0}button{cursor:pointer;border:0;border-radius:11px;background:#078cde;color:#fff;font-weight:700;padding:11px 16px}button.secondary{background:#e7f2fd;color:#075c94}button.danger{background:#fff0f0;color:#aa3838}.toolbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:14px}.overflow{overflow-x:auto;overflow-y:visible;max-height:none}table{border-collapse:collapse;width:100%;white-space:nowrap}th{text-align:left;color:#5b7894;background:#edf5fc;font-size:11px;letter-spacing:.05em;text-transform:uppercase}th,td{padding:12px;border-bottom:1px solid #e9f0f7}td.note{white-space:normal;min-width:150px}.pill{font-size:11px;padding:6px 9px;border-radius:9px;font-weight:700;background:#fff1d6;color:#9e6900}.pill.Atendido{background:#e1f7ec;color:#187b48}.pill.negado{background:#ffe8e8;color:#b43737}.msg{font-size:12px;margin-top:11px}.login{max-width:440px;margin:9vh auto}.hidden{display:none!important}.small{font-size:12px}.count{background:#edf7ff;color:#1364a0;padding:10px 14px;border-radius:12px;font-weight:700}.admin-catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.modal{position:fixed;inset:0;background:#0729439c;display:grid;place-items:center;padding:18px;z-index:9}.modal>div{background:white;width:min(520px,100%);max-height:calc(100vh - 40px);overflow-y:auto;padding:24px;border-radius:20px}body.embedded{padding:8px;background:transparent}body.embedded header .toolbar{display:none}body.embedded header{margin-bottom:14px}body.embedded header h1{font-size:20px}.read-only{padding:12px;border:1px solid #d9e5f3;border-radius:10px;background:#edf6fd;font-weight:700;color:#0a548a}.compact-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.compact-head h2{margin:0}.supplier-top{display:flex;gap:10px;align-items:center}.supplier-top button{white-space:nowrap}.login:not(.hidden){box-shadow:0 24px 65px #00192b40}body:has(#signin:not(.hidden)){background:radial-gradient(ellipse at top left,#0e5388,#071e36 75%)}.login{margin:10vh auto;padding:36px;max-width:420px}.login h2{text-align:center;font-size:23px}.login img{width:150px!important}.overflow{max-height:none}.actions-cell button{font-size:12px;padding:8px 12px}@media(max-width:600px){.grid{grid-template-columns:1fr 1fr}.grid .field{min-width:0}}@media(max-width:600px){body{padding:12px}.card{padding:14px}h1{font-size:19px}}
+
+/* V6.4 — painéis compactos, sem rolagem interna da listagem */
+body.embedded{overflow:visible!important;padding:8px 10px 18px}
+body.embedded .overflow{overflow-x:auto;overflow-y:visible;max-height:none}
+#sellerForm .grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+#requesterDisplay{min-height:43px;display:flex;align-items:center}
+.card{padding:18px}.grid{gap:10px}.toolbar{margin-top:10px}
+#search{max-width:400px}td.note{min-width:130px;max-width:300px}
+@media(min-width:900px){#sellerForm .field:last-child{grid-column:1/-1}}
+.detail-content{margin-top:14px}.detail-row{display:grid;grid-template-columns:145px 1fr;gap:12px;padding:11px 0;border-bottom:1px solid #edf2f7;overflow-wrap:anywhere}.detail-row strong{color:#59728d;font-size:12px}.modal:not(.hidden){z-index:300}.modal>div{max-height:calc(100dvh - 42px)}body.embedded{overflow:visible!important}#sellerForm .grid{grid-template-columns:repeat(auto-fit,minmax(185px,1fr))}@media(max-width:700px){.detail-row{grid-template-columns:1fr;gap:2px}}
+
+/* 6.6 — solicitações enxutas */
+body{background:#f4f7fc!important;color:#143451!important}
+header{background:#fff!important;border-bottom:1px solid #e3ebf3!important;box-shadow:none!important;padding:15px 22px!important}
+header h1{font-size:20px!important}header p{font-size:12px!important;color:#71869c!important}
+.card{border:1px solid #e0e9f3!important;border-radius:13px!important;box-shadow:0 2px 10px #112b4608!important;padding:17px!important;margin-bottom:14px!important}
+.card h2{font-size:16px!important}.grid{gap:10px!important}.field label{font-size:12px!important}
+input,select,textarea{border-radius:8px!important;min-height:39px!important;font-size:13px!important;padding:9px 10px!important}
+button{border-radius:8px!important;box-shadow:none!important;font-size:12px!important}
+button:hover{transform:none!important}table th,table td{padding:10px 9px!important;font-size:12px!important}
+#sellerForm #requesterDisplay{border:none!important;background:transparent!important;padding:0!important;font-size:12px!important;font-weight:700!important}
+#sellerForm .field:has(#requesterDisplay){display:none!important}
+#counter{font-size:11px!important}.modal>div{border-radius:15px!important;max-height:88vh!important}
+@media(max-width:700px){header{padding:12px!important}.card{padding:12px!important}}
+
+/* V6.7 — grade estável e login unificado */
+#signin.login{width:min(430px,95vw);background:white;border-radius:20px;padding:34px;box-shadow:0 25px 80px #0004;margin:8vh auto}
+body:has(#signin:not(.hidden)){background:radial-gradient(circle at 20% 20%,#1b6297,#092d4e 55%,#061a31)!important;min-height:100vh}
+#signin button{width:100%;background:linear-gradient(110deg,#087aca,#06a1eb);min-height:46px;font-size:15px}
+#signin input{background:#fff}#signin label{font-size:13px}
+#system .grid{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+#system .grid>.field{display:flex;min-width:0;flex-direction:column}
+#signin{min-height:0!important}body:has(#signin:not(.hidden)) #system{display:none!important}
+body:has(#signin:not(.hidden)){display:flow-root;overflow-x:hidden}
+#system .card{overflow:visible}#system .overflow{min-width:0}
+#system .grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+#requesterFilterField.hidden{display:none!important}
+@media(max-width:1150px){#system .grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:720px){#system .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+body.embedded header{display:none!important}
+
+/* V7.1: centralizar os pop-ups na area VISIVEL, mesmo dentro de iframe alto. */
+body.embedded .modal{
+  top:var(--rildon-dialog-top, 0px)!important;
+  bottom:auto!important;
+  height:var(--rildon-dialog-height, 100dvh)!important;
+  left:0;right:0;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+body.embedded .modal>div{
+  flex:0 1 auto;
+  max-height:calc(var(--rildon-dialog-height, 100dvh) - 32px)!important;
+  overflow-y:auto;overscroll-behavior:contain;
+}
+
+/* V8.4 Compras: consistent filter row and compact header */
+#system>.card .grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+#system>.card .field{min-width:0}#system>.card .field input,#system>.card .field select{width:100%}
+#system>header{padding:13px 18px!important;border-radius:12px;background:#fff!important}#system>header h1{font-size:20px!important}
+@media(max-width:1100px){#system>.card .grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:600px){#system>.card .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style><style id="v87-design">
+/* V8.7: filtros alinhados para Compras, Gerencia e Vendedor */
+#system>.card .grid{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:12px!important;align-items:end!important}
+#system>.card .grid>.field{min-width:0!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important}
+#system>.card .grid>.field.hidden{display:none!important}
+#system>.card .grid>.field label{display:flex!important;align-items:flex-end!important;min-height:32px!important;line-height:1.25!important;margin-bottom:7px!important;font-size:11px!important}
+#system>.card .grid>.field>input,#system>.card .grid>.field>select{width:100%!important;min-width:0!important;min-height:42px!important;margin:0!important;font-size:12px!important}
+#system>.card .grid #search{max-width:none!important}
+#system>.card .grid #filterRequester,#system>.card .grid #filterSupplier,#system>.card .grid #filterStatus{height:42px!important}
+@media(max-width:1050px){#system>.card .grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:650px){#system>.card .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style></head><body>
+<section id="signin" class="login card"><img src="logo.png" alt="Rildon" style="width:130px;display:block;margin:0 auto 18px"><h2>RILDON · Compras</h2><p style="text-align:center">Acesso individual</p><form id="loginForm"><div class="field"><label>Usuário</label><select id="user" required><option value="COMPRAS" selected>COMPRAS</option></select></div><div class="field" style="margin-top:12px"><label>Senha</label><input id="pass" type="password" required></div><button style="margin-top:16px;width:100%">Entrar</button></form><p class="msg" id="loginMsg" role="alert"></p></section>
+<div id="system" class="hidden"><header><div class="r89-brand"><img src="logo.png" alt="RILDON" class="r89-logo"><div><h1 id="pageTitle">Solicitação de Itens Novos</h1><p id="pageSubtitle" style="margin:0">Pedidos ao setor de Compras · RILDON</p></div></div><div class="toolbar"><span class="tag" id="profile"></span><button type="button" class="secondary hidden" id="changePasswordBtn" onclick="openPassword()">Alterar senha</button><button type="button" class="secondary" onclick="logout()">Sair</button><div id="r89ExportWrap" class="r89-export hidden"><button type="button" id="r89ExportButton" aria-haspopup="true" aria-expanded="false">⇩ Exportar ▾</button><div id="r89ExportMenu" class="r89-export-menu hidden"><button type="button" class="secondary" id="r89PDF">▤ Exportar PDF</button><button type="button" class="secondary" id="r89CSV">▦ Exportar planilha</button></div></div></div></header>
+<section class="card" id="sellerForm"><h2>Nova solicitação de peça</h2><form id="requestForm"><div class="grid"><input id="rdate" type="hidden"><div class="field"><label>Solicitante</label><div class="read-only" id="requesterDisplay">—</div><input id="requester" type="hidden"></div><div class="field"><label>Referência *</label><input id="reference" required></div><div class="field"><label>Peça *</label><input id="part" required></div><div class="field"><label>Quantidade *</label><input id="quantity" type="number" min="1" value="1" required></div><div class="field"><label>Fabricante / Fornecedor *</label><input id="supplier" list="supplierOptions" required placeholder="Fornecedor"><datalist id="supplierOptions"></datalist></div><div class="field" style="grid-column:1/-1"><label>Observação do vendedor</label><textarea id="note" rows="2"></textarea></div></div><button id="sendRequest" style="margin-top:14px" type="submit">Enviar solicitação</button><div class="msg" id="saveMsg"></div></form></section>
+<section class="card"><div class="compact-head"><h2>Produtos solicitados</h2><div class="supplier-top"><button type="button" id="supplierManagerBtn" class="secondary hidden" onclick="openSuppliers()">▤ Fornecedores</button><button class="secondary hidden" type="button" id="buyerManagerBtn" onclick="openBuyers()">♙ Usuários</button><span class="count" id="counter">0 solicitações</span></div></div><div class="grid"><div class="field"><label>Pesquisar peça ou referência</label><input id="search" placeholder="Pesquisar"></div><div class="field hidden" id="requesterFilterField"><label>Solicitante</label><select id="filterRequester"><option value="">Todos</option></select></div><div class="field"><label>Fornecedor</label><select id="filterSupplier"><option value="">Todos</option></select></div><div class="field"><label>Status</label><select id="filterStatus"><option value="">Todos</option><option>Pendente</option><option>Atendido</option><option>Não Atendido</option></select></div><div class="field"><label>Data inicial</label><input id="filterFrom" type="date"></div><div class="field"><label>Data final</label><input id="filterTo" type="date"></div></div><div class="small" id="storageHint" style="margin-top:10px;color:#668097"></div><div class="toolbar"><button class="secondary" id="clear" type="button">Limpar filtros</button><button class="secondary" id="refresh" type="button">Atualizar</button></div><div class="overflow"><table><thead><tr><th>Data</th><th>Solicitante</th><th>Fornecedor</th><th>Peça / Ref.</th><th>Qtd.</th><th>Observação</th><th>Status</th><th>Ação</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<div class="modal hidden" id="passwordModal"><div><div class="compact-head"><h2>Alterar senha · Compras</h2><button type="button" class="secondary" onclick="closePassword()">Fechar ×</button></div><form id="passwordForm"><div class="field"><label>Senha atual</label><input id="currentPassword" type="password" required autocomplete="current-password"></div><div class="field" style="margin-top:12px"><label>Nova senha (mínimo 8 caracteres)</label><input id="newPassword" type="password" required minlength="8" autocomplete="new-password"></div><div class="field" style="margin-top:12px"><label>Confirmar nova senha</label><input id="confirmPassword" type="password" required minlength="8" autocomplete="new-password"></div><div class="toolbar"><button type="submit">Salvar nova senha</button></div><p id="passwordMsg" class="msg" aria-live="polite"></p></form></div></div>
+<div class="modal hidden" id="buyerModal"><div style="width:min(650px,100%)"><div class="compact-head"><h2>Usuários responsáveis pelas respostas</h2><button class="secondary" type="button" onclick="closeBuyers()">Fechar ×</button></div><p class="small">Gerencie os nomes que aparecem em “Respondido por”. O histórico de respostas anteriores será mantido.</p><div class="toolbar"><input id="newBuyer" placeholder="Nome do novo responsável" style="flex:1"><button type="button" onclick="addBuyer()">Adicionar</button></div><div class="overflow" style="margin-top:12px"><table><thead><tr><th>Responsável</th><th>Ações</th></tr></thead><tbody id="buyerRows"></tbody></table></div></div></div>
+<div class="modal hidden" id="supplierModal"><div style="width:min(700px,100%)"><div class="compact-head"><h2>Gerenciar fornecedores</h2><button class="secondary" type="button" onclick="closeSuppliers()">Fechar ×</button></div><div class="toolbar"><input id="newSupplier" placeholder="Nome do fabricante / fornecedor" style="flex:1"><button type="button" onclick="addSupplier()">Adicionar</button></div><div class="overflow" style="max-height:410px;margin-top:12px"><table><thead><tr><th>Fornecedor</th><th>Ações</th></tr></thead><tbody id="supplierRows"></tbody></table></div></div></div>
+<div class="modal hidden" id="detailModal"><div><div class="compact-head"><h2>Detalhes da solicitação</h2><button type="button" class="secondary" onclick="closeDetails()">Fechar ×</button></div><div id="detailContent" class="detail-content"></div></div></div>
+<div class="modal hidden" id="responseModal"><div><h2>Resposta do setor de Compras</h2><p id="responseTitle"></p><form id="responseForm"><div class="field"><label>Status</label><select id="responseStatus"><option>Pendente</option><option>Atendido</option><option>Não Atendido</option></select></div><div class="field" style="margin-top:12px"><label>Respondido por *</label><select id="answeredBy" required><option value="">Selecione</option><option value="Aldimar">Aldimar</option><option value="Djalma">Djalma</option></select></div><div class="field" style="margin-top:12px"><label>Previsão de chegada</label><input type="date" id="arrivalDate"></div><div class="field" style="margin-top:12px"><label>Observação de Compras</label><textarea id="purchaseNote" rows="3"></textarea></div><div class="toolbar"><button type="submit">Salvar resposta</button><button type="button" class="secondary" onclick="closeModal()">Cancelar</button></div><p id="responseMsg"></p></form></div></div>
+</div><!-- /system -->
+<script>
+const $=id=>document.getElementById(id);const displaySeller=x=>({'DUDU':'Carlos Eduardo (Dudu)','CARLOS EDUARDO':'Carlos Eduardo (Dudu)','NETE':'Valdinete','VALDINETE':'Valdinete','ISAIAS':'Isaias','ELIS ANTHONNY':'Elis Anthonny'}[String(x).toUpperCase()]||String(x).toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase()));let token='',role='',username='',rows=[],catalog={},editId=0,submitting=false;const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const today=()=>{let d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};$('rdate').value=today();
+
+// Em telas integradas, a altura do iframe acompanha a lista de pedidos.
+// "fixed" normalmente se centralizaria no iframe inteiro, abaixo da tela.
+// Calculamos a intersecao visivel do iframe com a janela principal.
+function positionEmbeddedDialogs(){
+ if(window.parent===window || !document.body.classList.contains('embedded'))return;
+ try{
+  const frame=window.frameElement;
+  if(!frame)return;
+  const bounds=frame.getBoundingClientRect();
+  const viewHeight=window.parent.innerHeight;
+  const visibleTop=Math.max(0,-bounds.top);
+  const visibleBottom=Math.min(bounds.height,viewHeight-bounds.top);
+  const visibleHeight=Math.max(100,visibleBottom-visibleTop);
+  document.body.style.setProperty('--rildon-dialog-top',visibleTop+'px');
+  document.body.style.setProperty('--rildon-dialog-height',visibleHeight+'px');
+ }catch(error){/* fora de iframe same-origin: usa o centro da janela padrao */}
+}
+if(window.parent!==window){
+ try{
+  window.parent.addEventListener('scroll',positionEmbeddedDialogs,true);
+  window.parent.addEventListener('resize',positionEmbeddedDialogs);
+ }catch(error){}
+ window.addEventListener('load',positionEmbeddedDialogs);
+}
+
+let lastSentHeight=0;
+function notifySize(){
+ if(window.parent===window || !document.body.classList.contains('embedded'))return;
+ requestAnimationFrame(()=>{
+  const content=$('system');
+  if(!content||content.classList.contains('hidden'))return;
+  const bounds=content.getBoundingClientRect();
+  const height=Math.ceil(bounds.bottom-bounds.top+24);
+  if(Math.abs(height-lastSentHeight)>3){lastSentHeight=height;window.parent.postMessage({type:'RILDON_SOL_RESIZE',height},location.origin)}
+ });
+}
+if('ResizeObserver' in window)new ResizeObserver(notifySize).observe($('system'));
+window.addEventListener('load',notifySize);
+async function api(endpoint,body){const opt={method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},cache:'no-store'};if(body)opt.body=JSON.stringify(body);const r=await fetch('/api/requests/'+endpoint,opt);const data=await r.json();if(!r.ok)throw Error(data.error||'Erro do servidor');return data}
+async function signIn(user,password){const x=await api('login',{user,password});token=x.token;role=x.role;username=x.user;$('signin').classList.add('hidden');$('system').classList.remove('hidden');$('profile').textContent=role.toUpperCase()+' · '+username;$('sellerForm').classList.toggle('hidden',role!=='vendedor');$('supplierManagerBtn').classList.toggle('hidden',role!=='compras');$('buyerManagerBtn').classList.toggle('hidden',role!=='compras');$('changePasswordBtn').classList.toggle('hidden',role!=='compras');$('pageTitle').textContent=role==='gerencia'?'Acompanhamento de Solicitações':role==='compras'?'Solicitações para Compras':'Solicitação de Itens Novos';$('pageSubtitle').textContent=role==='gerencia'?'Consulta dos pedidos e respostas de Compras':role==='compras'?'Responda às solicitações dos vendedores':'Cadastre peças e acompanhe as respostas';$('requester').value=displaySeller(username);$('requesterDisplay').textContent=displaySeller(username);$('requesterFilterField').classList.toggle('hidden',role==='vendedor');$('filterStatus').value='';$('filterRequester').value='';$('filterFrom').value='';$('filterTo').value='';$('search').previousElementSibling.textContent=role==='vendedor'?'Pesquisar peça ou referência':'Pesquisar peça, referência ou solicitante';await load();notifySize()}
+$('loginForm').onsubmit=async e=>{e.preventDefault();$('loginMsg').textContent='Conectando...';try{await signIn($('user').value,$('pass').value);$('pass').value='';$('loginMsg').textContent=''}catch(err){$('loginMsg').textContent=err.message}};
+window.addEventListener('message',async e=>{if(e.origin!==location.origin||e.data?.type!=='RILDON_REQUESTS_LOGIN')return;try{await signIn(e.data.user,e.data.password);document.body.classList.add('embedded')}catch(err){$('loginMsg').textContent='Não foi possível entrar automaticamente: '+err.message}});
+function logout(){token='';$('system').classList.add('hidden');$('signin').classList.remove('hidden')}
+async function load(){
+ const [a,b]=await Promise.all([api('initial'),api('rows')]);
+ catalog=a;rows=b.rows||[];$('storageHint').textContent='Banco central · PostgreSQL';
+ $('supplierOptions').innerHTML=(a.suppliers||[]).map(x=>'<option value="'+escapeHTML(x.name)+'"></option>').join('');
+ const current=$('filterSupplier').value;
+ const names=[...new Set([...(a.suppliers||[]).map(x=>x.name),...rows.map(x=>x.supplier)])].filter(Boolean).sort((x,y)=>x.localeCompare(y,'pt-BR'));
+ $('filterSupplier').innerHTML='<option value="">Todos</option>'+names.map(x=>'<option value="'+escapeHTML(x)+'">'+escapeHTML(x)+'</option>').join('');
+ $('filterSupplier').value=names.includes(current)?current:'';
+ const previousRequester=$('filterRequester').value;
+ const requesterNames=[...new Set([...(a.requesters||[]).map(x=>x.name),...rows.map(x=>x.requester)].filter(Boolean))].sort((x,y)=>x.localeCompare(y,'pt-BR'));
+ $('filterRequester').replaceChildren(new Option('Todos',''),...requesterNames.map(x=>new Option(x,x)));
+ $('filterRequester').value=requesterNames.includes(previousRequester)?previousRequester:'';
+ const cb=$('answeredBy').value;$('answeredBy').replaceChildren(new Option('Selecione',''),...(a.buyers||[]).map(x=>new Option(x.name,x.name)));$('answeredBy').value=cb;render();renderSuppliers();renderBuyers();notifySize();
+}
+function render(){
+ const q=$('search').value.toUpperCase().trim(),f=$('filterSupplier').value,status=$('filterStatus').value,from=$('filterFrom').value,to=$('filterTo').value,requester=$('filterRequester').value;
+ const found=rows.filter(r=>(!q||[r.reference,r.part,r.requester,r.supplier,r.seller_note,r.purchase_note].some(v=>String(v||'').toUpperCase().includes(q)))&&(!f||r.supplier===f)&&(!requester||r.requester===requester)&&(!status||r.status===status)&&(!window.rildonComprasMonth||!window.rildonComprasMonth()||String(r.date_request||'').slice(5,7)===window.rildonComprasMonth())&&(!window.rildonComprasYear||!window.rildonComprasYear()||String(r.date_request||'').slice(0,4)===window.rildonComprasYear())).sort((a,b)=>{const ap=a.status==='Pendente'?0:1,bp=b.status==='Pendente'?0:1;return ap-bp||String(b.date_request||'').localeCompare(String(a.date_request||''))||b.id-a.id});
+ $('counter').textContent=found.length+' solicitaç'+(found.length===1?'ão':'ões');
+ $('rows').innerHTML=found.length?found.map(r=>`<tr><td>${escapeHTML(r.date_request.split('-').reverse().join('/'))}</td><td>${escapeHTML(r.requester)}</td><td>${escapeHTML(r.supplier)}</td><td class="note"><b>${escapeHTML(r.part)}</b><div class="small">${escapeHTML(r.reference)}</div></td><td>${r.quantity}</td><td class="note">${escapeHTML(r.seller_note||'—')}</td><td><span class="pill ${r.status==='Atendido'?'Atendido':r.status==='Não Atendido'?'negado':''}">${escapeHTML(r.status)}</span></td><td class="actions-cell"><button class="secondary" onclick="details(${r.id})">${role==='compras' && !r.answered_by?'Responder':'Detalhes'}</button></td></tr>`).join(''):'<tr><td colspan="8">Nenhuma solicitação encontrada.</td></tr>';
+ notifySize();
+}
+['search','filterRequester','filterSupplier','filterStatus','filterFrom','filterTo'].forEach(id=>$(id).addEventListener('input',render));
+$('clear').onclick=()=>{['search','filterRequester','filterSupplier','filterStatus','filterFrom','filterTo'].forEach(id=>$(id).value='');render()};
+$('refresh').onclick=async()=>{try{await load()}catch(e){alert(e.message)}};
+$('requestForm').onsubmit=async e=>{
+ e.preventDefault();if(submitting)return;
+ submitting=true;const button=$('sendRequest');button.disabled=true;button.textContent='Enviando…';
+ $('rdate').value=today();const b={date:$('rdate').value,requester:$('requester').value,reference:$('reference').value,part:$('part').value,quantity:$('quantity').value,supplier:$('supplier').value,note:$('note').value};
+ try{
+  await api('create',b);$('saveMsg').textContent='Solicitação registrada com sucesso.';
+  $('requestForm').reset();$('requester').value=displaySeller(username);$('requesterDisplay').textContent=displaySeller(username);$('rdate').value=today();$('quantity').value=1;
+  $('search').value='';$('filterSupplier').value='';$('filterStatus').value='';
+  try{await load()}catch(loadErr){$('saveMsg').textContent='Solicitação salva, mas falhou a atualização da lista. Clique em Atualizar. '+loadErr.message}
+ }catch(err){$('saveMsg').textContent='Não foi possível enviar: '+err.message}
+ finally{submitting=false;button.disabled=false;button.textContent='Enviar solicitação';notifySize()}
+};
+function details(id){const r=rows.find(x=>x.id===id);if(!r)return;if(role!=='compras' || r.answered_by){
+ const entries=[['Data',r.date_request],['Solicitante',r.requester],['Peça',r.part],['Referência',r.reference],['Quantidade',r.quantity],['Fornecedor',r.supplier],['Observação do vendedor',r.seller_note||'—'],['Status',r.status],['Respondido por',r.answered_by||'—'],['Previsão de chegada',r.arrival_date||'—'],['Observação de Compras',r.purchase_note||'—']];
+ $('detailContent').replaceChildren(...entries.map(([label,value])=>{const line=document.createElement('div');line.className='detail-row';const b=document.createElement('strong');b.textContent=label;const v=document.createElement('span');v.textContent=value;line.append(b,v);return line}));positionEmbeddedDialogs();$('detailModal').classList.remove('hidden');return}editId=id;$('responseTitle').textContent=r.part+' · '+r.reference+' · '+r.requester;$('responseStatus').value=r.status;$('answeredBy').value=(catalog.buyers||[]).some(x=>x.name===r.answered_by)?r.answered_by:'';$('arrivalDate').value=r.arrival_date||'';$('purchaseNote').value=r.purchase_note||'';$('responseMsg').textContent='';positionEmbeddedDialogs();$('responseModal').classList.remove('hidden');notifySize()}
+function closeDetails(){$('detailModal').classList.add('hidden')}
+function closeModal(){$('responseModal').classList.add('hidden');notifySize()};$('responseForm').onsubmit=async e=>{e.preventDefault();try{await api('respond',{id:editId,status:$('responseStatus').value,answered_by:$('answeredBy').value,arrival_date:$('arrivalDate').value,purchase_note:$('purchaseNote').value});closeModal();await load()}catch(err){$('responseMsg').textContent=err.message}};
+function openSuppliers(){if(role!=='compras')return;positionEmbeddedDialogs();$('supplierModal').classList.remove('hidden');renderSuppliers();notifySize()}
+function closeSuppliers(){$('supplierModal').classList.add('hidden');notifySize()}
+function renderSuppliers(){if(role!=='compras')return;$('supplierRows').innerHTML=(catalog.suppliers||[]).map(x=>`<tr><td>${escapeHTML(x.name)}</td><td><button type="button" class="danger" onclick="removeSupplier(${x.id})">Excluir</button></td></tr>`).join('')||'<tr><td colspan="2">Nenhum fornecedor cadastrado</td></tr>'}
+async function addSupplier(){try{await api('catalog',{category:'suppliers',action:'add',name:$('newSupplier').value});$('newSupplier').value='';await load()}catch(err){alert(err.message)}}
+async function removeSupplier(id){if(!confirm('Excluir fornecedor?'))return;try{await api('catalog',{category:'suppliers',action:'delete',id});await load()}catch(err){alert(err.message)}}
+
+function openPassword(){if(role!=='compras')return;$('passwordForm').reset();$('passwordMsg').textContent='';$('passwordModal').classList.remove('hidden')}
+function closePassword(){$('passwordModal').classList.add('hidden')}
+$('passwordForm').onsubmit=async e=>{e.preventDefault();const a=$('newPassword').value,b=$('confirmPassword').value;if(a!==b){$('passwordMsg').textContent='A confirmação não corresponde à nova senha';return}try{await api('password',{current_password:$('currentPassword').value,new_password:a});$('passwordMsg').textContent='Senha alterada com sucesso';$('passwordForm').reset()}catch(err){$('passwordMsg').textContent=err.message}};
+function openBuyers(){if(role!=='compras')return;renderBuyers();$('buyerModal').classList.remove('hidden')}
+function closeBuyers(){$('buyerModal').classList.add('hidden')}
+function renderBuyers(){if(role!=='compras')return;$('buyerRows').replaceChildren(...(catalog.buyers||[]).map(b=>{const tr=document.createElement('tr');const name=document.createElement('td');name.textContent=b.name;const cell=document.createElement('td');const rename=document.createElement('button');rename.className='secondary';rename.textContent='Alterar';rename.onclick=()=>renameBuyer(b.id,b.name);const remove=document.createElement('button');remove.className='danger';remove.textContent='Excluir';remove.style.marginLeft='6px';remove.onclick=()=>removeBuyer(b.id,b.name);cell.append(rename,remove);tr.append(name,cell);return tr}))}
+async function addBuyer(){try{await api('catalog',{category:'buyers',action:'add',name:$('newBuyer').value});$('newBuyer').value='';await load()}catch(err){alert(err.message)}}
+async function renameBuyer(id,old){const name=prompt('Novo nome do responsável',old);if(!name||name.trim()===old)return;try{await api('catalog',{category:'buyers',action:'rename',id,name:name.trim()});await load()}catch(err){alert(err.message)}}
+async function removeBuyer(id,name){if(!confirm('Remover '+name+' da lista de responsáveis? As respostas anteriores serão preservadas.'))return;try{await api('catalog',{category:'buyers',action:'delete',id});await load()}catch(err){alert(err.message)}}
+</script>
+<style id="v85-compras-style">
+#system>header{position:relative;gap:12px;align-items:center}
+#system>header .toolbar{gap:8px;flex-wrap:wrap}
+#system>header .toolbar button{white-space:nowrap}
+#system>.card .grid{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+#system>.card .grid .field{min-width:0}
+@media(max-width:1050px){#system>.card .grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+</style>
+<script id="v85-compras-filter">
+(()=>{
+ const $=id=>document.getElementById(id),header=document.querySelector('#system>header .toolbar');if(!header)return;
+ const profile=$('profile');for(const id of ['supplierManagerBtn','buyerManagerBtn']){const button=$(id);if(button)profile.after(button);}
+ // Repetimos a inserção para manter a ordem Fornecedores > Usuários no cabeçalho.
+ const supplier=$('supplierManagerBtn'),buyer=$('buyerManagerBtn');if(profile&&supplier&&buyer){profile.after(supplier);supplier.after(buyer);}
+ const from=$('filterFrom'),to=$('filterTo');if(!from||!to)return;
+ const fromField=from.closest('.field'),toField=to.closest('.field');
+ const month=document.createElement('select');month.id='v85Month';
+ const months=['Todos os meses','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+ months.forEach((label,i)=>month.add(new Option(label,i?String(i).padStart(2,'0'):'')));
+ const year=document.createElement('select');year.id='v85Year';
+ year.add(new Option('Todos os anos',''));
+ for(let y=new Date().getFullYear()+1;y>=2020;y--)year.add(new Option(String(y),String(y)));
+ fromField.querySelector('label').textContent='Mês';toField.querySelector('label').textContent='Ano';
+ from.style.display='none';to.style.display='none';fromField.append(month);toField.append(year);
+ function apply(){
+   const m=month.value,y=year.value;
+   if(y){from.value=y+'-'+(m||'01')+'-01';to.value=y+'-'+(m||'12')+'-'+String(new Date(Number(y),Number(m||12),0).getDate()).padStart(2,'0');}
+   else if(m){from.value='2000-'+m+'-01';to.value='2099-'+m+'-31';}
+   else{from.value='';to.value=''}
+   // Para mês sem ano, a tabela utiliza mês da data; ver filtro abaixo.
+   window.dispatchEvent(new CustomEvent('rildon-compras-date-filter'));
+   from.dispatchEvent(new Event('input',{bubbles:true}));
+ }
+ month.addEventListener('change',apply);year.addEventListener('change',apply);
+ $('clear')?.addEventListener('click',()=>{month.value='';year.value='';setTimeout(apply,0)});
+ window.rildonComprasMonth=()=>month.value;window.rildonComprasYear=()=>year.value;
+})();
+</script>
+<style id="r89-purchases-style">
+#system>header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important}
+#system>header .r89-brand{display:flex;align-items:center;gap:16px;min-width:220px}
+#system>header .r89-logo{width:108px;height:53px;object-fit:contain;flex:none}
+#system>header .r89-brand>div{border-left:1px solid #cfdfef;padding-left:14px}
+#system>header .toolbar{margin-top:0;gap:7px}
+#r89ExportWrap{position:relative}
+#r89ExportButton{white-space:nowrap;min-height:38px;background:#007ac9}
+.r89-export-menu{position:absolute;right:0;top:calc(100% + 6px);width:220px;background:white;z-index:60;border:1px solid #d8e8f6;box-shadow:0 12px 28px #0a345027;border-radius:10px;padding:8px;display:grid;gap:4px}
+.r89-export-menu button{width:100%;text-align:left;color:#11476b!important}
+body.embedded #r89ExportWrap{display:none!important}
+@media(max-width:850px){#system>header .r89-logo{width:76px}#system>header .r89-brand{min-width:0;gap:8px}#system>header .r89-brand>div{padding-left:8px}#system>header .toolbar{gap:4px}}
+@media print{#signin,#system{display:none!important}#r89PrintArea{display:block!important}body{padding:0!important;background:white!important}}
+#r89PrintArea{display:none}
+</style>
+<script id="r89-export-script">
+(()=>{
+ const $=id=>document.getElementById(id);
+ const wrap=$('r89ExportWrap'),btn=$('r89ExportButton'),menu=$('r89ExportMenu');
+ if(!wrap||!btn||!menu)return;
+ const printable=document.createElement('section');printable.id='r89PrintArea';document.body.append(printable);
+ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function filtered(){
+  const q=$('search').value.toUpperCase().trim(),f=$('filterSupplier').value,status=$('filterStatus').value,requester=$('filterRequester').value;
+  const month=window.rildonComprasMonth?.()||'',year=window.rildonComprasYear?.()||'';
+  return rows.filter(r=>(!q||[r.reference,r.part,r.requester,r.supplier,r.seller_note,r.purchase_note].some(v=>String(v||'').toUpperCase().includes(q)))&&(!f||r.supplier===f)&&(!requester||r.requester===requester)&&(!status||r.status===status)&&(!month||String(r.date_request||'').slice(5,7)===month)&&(!year||String(r.date_request||'').slice(0,4)===year))
+  .sort((a,b)=>(a.status==='Pendente'?0:1)-(b.status==='Pendente'?0:1)||String(b.date_request||'').localeCompare(String(a.date_request||''))||Number(b.id||0)-Number(a.id||0));
+ }
+ const cols=[['Data','date_request'],['Solicitante','requester'],['Fornecedor','supplier'],['Peça','part'],['Referência','reference'],['Quantidade','quantity'],['Observação vendedor','seller_note'],['Status','status'],['Respondido por','answered_by'],['Previsão de chegada','arrival_date'],['Observação de Compras','purchase_note']];
+ const data=()=>{if(role!=='compras')return null;return filtered()};
+ const filterInfo=()=>['Busca: '+($('search').value||'Todas'),'Solicitante: '+($('filterRequester').selectedOptions[0]?.text||'Todos'),'Fornecedor: '+($('filterSupplier').selectedOptions[0]?.text||'Todos'),'Status: '+($('filterStatus').value||'Todos'),'Mês: '+($('v85Month')?.selectedOptions[0]?.text||'Todos'),'Ano: '+($('v85Year').value||'Todos')].join(' | ');
+ function csvExport(){const rr=data();if(!rr)return;const sep=';';const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';const lines=[cols.map(c=>quote(c[0])).join(sep),...rr.map(r=>cols.map(c=>quote(r[c[1]])).join(sep))];const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='RILDON_Compras_Filtradas_'+new Date().toISOString().slice(0,10)+'.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+ function pdfExport(){const rr=data();if(!rr)return;const style='<style>@page{size:A4 landscape;margin:11mm}body{font:10px Arial;color:#153955}h1{font-size:18px;margin:0 0 4px}.sub{font-size:10px;margin:0 0 12px}table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{border:1px solid #cadce9;padding:6px;overflow-wrap:anywhere;vertical-align:top}th{background:#e7f3fb}td{white-space:normal!important}tr{break-inside:avoid}img{width:110px;float:right}@media print{#r89PrintArea{display:block!important}}</style>';
+ printable.innerHTML=style+'<img src="logo.png" alt="Rildon"><h1>RILDON — Solicitações para Compras</h1><p class="sub">'+esc(filterInfo())+' • '+rr.length+' registro(s)</p><table><thead><tr>'+cols.map(c=>'<th>'+esc(c[0])+'</th>').join('')+'</tr></thead><tbody>'+rr.map(r=>'<tr>'+cols.map(c=>'<td>'+esc(r[c[1]])+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+ menu.classList.add('hidden');btn.setAttribute('aria-expanded','false');window.print();
+ }
+ btn.addEventListener('click',()=>{menu.classList.toggle('hidden');btn.setAttribute('aria-expanded',String(!menu.classList.contains('hidden')))});
+ $('r89PDF').addEventListener('click',pdfExport);$('r89CSV').addEventListener('click',csvExport);
+ document.addEventListener('click',e=>{if(!wrap.contains(e.target)){menu.classList.add('hidden');btn.setAttribute('aria-expanded','false')}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')menu.classList.add('hidden')});
+ const ob=new MutationObserver(()=>{wrap.classList.toggle('hidden',role!=='compras'||$('system').classList.contains('hidden'))});ob.observe($('system'),{attributes:true,attributeFilter:['class']});
+ const oldRender=window.render;
+ if(typeof oldRender==='function')window.render=function(...args){oldRender(...args);wrap.classList.toggle('hidden',role!=='compras')};
+})();
+</script>
+</body></html>

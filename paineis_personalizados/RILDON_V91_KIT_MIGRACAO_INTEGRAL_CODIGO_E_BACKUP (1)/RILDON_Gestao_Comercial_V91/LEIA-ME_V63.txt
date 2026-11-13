@@ -1,0 +1,1 @@
+V6.3: solicitante pelo login, gerência somente consulta, Compras resposta e fornecedores, painel reduzido. Manter backup do SQLite; confirmar versão em /api/build.

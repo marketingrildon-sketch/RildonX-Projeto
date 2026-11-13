@@ -1,0 +1,16 @@
+RILDON GESTÃO COMERCIAL V6.0 — Média líquida e devoluções parciais
+
+1. Média por registro = (venda bruta - devoluções) / número de registros.
+2. Relatório inteiro: devoluções, líquido e média são oficiais do X2.
+3. Filtros parciais de data/cliente: como o X2 não informa devoluções individuais, o sistema oferece estimativa PROPORCIONAL por vendedor e origem, marcada como ESTIMADA.
+4. Desmarcar a opção de estimativa mostra “—” no líquido, devoluções e média quando valores exatos não estão disponíveis.
+5. Para números oficiais por dia, importe HTMLs diários do X2. Não confunda registros agregados por cliente com quantidade de pedidos.
+6. Não foi alterada a extensão, a sincronização de Vendas Perdidas ou o esquema do banco SQLite.
+
+INSTALAÇÃO
+- Feche o servidor antigo, extraia esta versão numa pasta nova.
+- Faça backup e copie o arquivo rildon_sync.sqlite3 da versão instalada para a nova pasta.
+- Abra INICIAR_SITE.bat e confira http://localhost:8789/api/build (versão 6.0).
+- No navegador, recarregue o site forçadamente para eliminar cache.
+
+SEGURANÇA: uso somente na rede local; o projeto ainda precisa de revisão de autenticação para produção com dados pessoais.

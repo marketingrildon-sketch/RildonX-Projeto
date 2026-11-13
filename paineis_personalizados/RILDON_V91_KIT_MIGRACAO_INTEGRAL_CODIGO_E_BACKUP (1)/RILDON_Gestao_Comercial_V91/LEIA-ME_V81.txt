@@ -1,0 +1,9 @@
+RILDON V8.1 — Dias úteis e metas conforme planilha.
+
+- Período inicial: primeiro ao último dia do mês, em Gerência e Vendedor.
+- Controles Dias úteis do mês e Dias úteis transcorridos recalculam o painel e são persistidos em rildon_target_days.
+- Em outubro/2026, padrão 21 dias úteis, 12 trabalhados. Exceções por vendedor: Iran 16 e Valdinete 20; os dias individuais podem ser alterados e gravados pela Gestão de Metas.
+- Meta do período e gráfico consideram os dias planejados da planilha, sábados somam vendas e não geram meta.
+- Para alterar dias por vendedor, abra Gestão de Metas, informe os dias na nova coluna e clique Salvar metas no PostgreSQL.
+- O PostgreSQL é preservado. Não limpe dados ou repita importações.
+- Testar com o PostgreSQL real e conferir os totais contra a planilha antes do uso definitivo.

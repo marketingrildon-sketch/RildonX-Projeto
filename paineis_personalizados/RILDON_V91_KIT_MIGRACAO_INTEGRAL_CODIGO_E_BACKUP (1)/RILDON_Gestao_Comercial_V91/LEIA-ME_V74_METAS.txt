@@ -1,0 +1,13 @@
+RILDON V7.4 — METAS NO POSTGRESQL
+
+1) Use esta pasta COMPLETA extraída em diretório novo.
+2) Feche a versão anterior e mantenha uma cópia da pasta antes de substituir.
+3) Inicie INICIAR_SITE.bat; a tabela rildon_target_days será criada automaticamente.
+4) Faça login Gerência, abra Gestão de Metas, defina metas e SALVE. As antigas metas de localStorage não são transferidas automaticamente: elas não existiam no banco.
+5) Entre no vendedor em outro navegador e clique Minhas Metas.
+6) Atualize com Ctrl+Shift+R. Confira /api/build para versão 7.4-PG.
+7) Não foi possível testar a gravação contra o PostgreSQL do computador da loja daqui.
+
+OBSERVAÇÃO: as páginas antigas usam login visual local separado do login seguro dos Atendimentos. A API de metas requer token autenticado de Atendimentos; senhas divergentes produzem mensagem de falha e NÃO salvam os dados.
+
+Os avisos de recortes por data foram removidos quando somente registros datados ficaram fora do filtro; relatórios antigos acumulados podem continuar exigindo alerta.

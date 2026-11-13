@@ -1,0 +1,6 @@
+RILDON V7.7 — Ranking e período personalizado
+
+- Gerência: painel antigo duplicado ocultado; ranking horizontal clicável no painel avançado da Visão Executiva. Gestão de Metas somente cadastro.
+- Vendedor: data inicial/final (até 366 dias) com recálculo das metas proporcionais por dias de segunda a sexta, vendas reais incluindo sábados, devoluções e tabela diária; gráfico com clique.
+- Não altera tabelas ou dados do PostgreSQL.
+- Precisa de validação no navegador e servidor Windows antes de substituir versão em produção.

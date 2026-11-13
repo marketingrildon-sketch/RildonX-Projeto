@@ -1,0 +1,21 @@
+RILDON | GESTÃO COMERCIAL V5.9 — TOTAL LÍQUIDO X2
+
+CORREÇÃO
+- Identifica o rodapé TOTAL GERAL como um único bloco (bruto, devolvido e líquido).
+- Total líquido = TOTAL GERAL VENDIDO - TOTAL DEVOLVIDO.
+- Valida somas de clientes e vendedores. Se apenas a soma dos rodapés individuais de devoluções divergir até 2 centavos do resumo do X2, usa o resumo geral, informa o ajuste e mantém os grupos inalterados. Diferenças maiores bloqueiam a importação.
+- Salva os totais oficiais do relatório em attendance_report_totals e os totais individuais em attendance_group_totals.
+- O cartão principal apresenta TOTAL (Vendidos - Devolvidos); ao filtrar um único vendedor, apresenta o líquido daquele vendedor.
+
+COMO INSTALAR NO WINDOWS 11
+1. Feche o servidor antigo na porta 8789.
+2. Extraia este ZIP numa nova pasta.
+3. Faça backup do rildon_sync.sqlite3 da versão anterior e copie-o para esta pasta.
+4. Execute INICIAR_SITE.bat.
+5. Confira http://localhost:8789/api/build — versão 5.9.
+6. Importe novamente o HTML do X2 e confirme somente após verificar bruto, devolvido e líquido.
+
+SEGURANÇA E LIMITAÇÕES
+- Não compartilhe o sistema pela Internet. Login e APIs ainda precisam de auditoria de segurança antes de uso com dados pessoais reais.
+- A tolerância de 2 centavos NÃO corrige dados de vendedores: o ajuste fica separado no total do relatório, para auditoria.
+- O relatório do usuário que falhou no print não estava anexado nesta etapa; a correção foi verificada com os dois relatórios enviados antes e com uma divergência de 2 centavos simulada.

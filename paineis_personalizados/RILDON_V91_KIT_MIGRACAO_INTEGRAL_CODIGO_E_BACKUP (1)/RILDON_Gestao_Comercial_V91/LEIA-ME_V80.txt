@@ -1,0 +1,8 @@
+RILDON V8.0 — Graficos ampliados e aviso flutuante da Gerencia oculto.
+
+Base: V7.9. Alterados apenas site/metas_dashboard_v75.js, site/gerencia.html e site/vendedor.html (identificacao de versao).
+
+Atualizacao: feche o servidor, substitua apenas esses 3 arquivos na pasta site, reinicie, Ctrl+Shift+R.
+Nao mexer no PostgreSQL nem na extensao.
+
+O aviso flutuante da Gerencia fica invisivel, mas a sincronizacao continua ativa.

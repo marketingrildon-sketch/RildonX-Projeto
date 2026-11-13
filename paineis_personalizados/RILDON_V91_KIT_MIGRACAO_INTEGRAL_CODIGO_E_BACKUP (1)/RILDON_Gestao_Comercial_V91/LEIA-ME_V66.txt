@@ -1,0 +1,13 @@
+RILDON GESTÃO COMERCIAL V6.6 — PROPOSTA VISUAL APLICADA
+
+Mudanças: estilo mais compacto na gerência, vendedor, Compras e Solicitações; menus e cabeçalhos mais limpos; controles existentes preservados; ID da extensão reduzido após mensagem de conexão.
+
+Histórico do Google Sheets: AINDA NÃO MIGRADO. É necessário obter a planilha original do Google Apps Script. Exporte cada aba como CSV e guarde numa pasta: Pedidos.csv, Fornecedores.csv, Compradores.csv, Solicitantes.csv. Com o servidor fechado, faça backup do banco e execute:
+  python IMPORTAR_HISTORICO_GOOGLE_SHEETS.py "C:\\CAMINHO\\DA\\PASTA_COM_CSV"
+O importador faz outro backup, não apaga registros e registra assinaturas para evitar importar duas vezes as mesmas linhas. Verifique o relatório de linhas ignoradas.
+
+Banco online: NÃO configurado nesta versão. A versão utiliza SQLite centralizado no computador que hospeda o servidor. Evite sincronizar esse arquivo ativo via pasta do Google Drive. Drive pode guardar cópias de backup desligado; para banco de produção online use PostgreSQL em servidor apropriado, com autenticação e TLS.
+
+Instalação: feche a versão antiga; extraia para outra pasta; copie rildon_sync.sqlite3 para esta pasta; execute INICIAR_SITE.bat; confira /api/build (versão 6.6). Atualize o Chrome com Ctrl+F5.
+
+Importante: não colocar informações reais sensíveis em serviço acessível pela internet enquanto a autenticação de todas as áreas não estiver reforçada. Não é migração para banco em nuvem.

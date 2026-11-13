@@ -292,8 +292,16 @@
   }
 
   async function syncMany(options, entries) {
-    var results = await Promise.all((entries || []).map(function (entry) {
-      return sync(Object.assign({}, options || {}, entry));
+    var results = await Promise.all((entries || []).map(async function (entry) {
+      try {
+        return await sync(Object.assign({}, options || {}, entry));
+      } catch (error) {
+        var title = String(entry && (entry.title || entry.slot) || 'evento');
+        var message = error && error.message ? error.message : String(error);
+        var wrappedError = new Error('Falha ao sincronizar "' + title + '": ' + message);
+        wrappedError.cause = error;
+        throw wrappedError;
+      }
     }));
     return results;
   }
@@ -376,12 +384,20 @@
         flushTimer = null;
         var operations = Array.from(pending.values());
         pending.clear();
+        var errors = [];
         operations.reduce(function (chain, run) {
-          return chain.then(function () { return run(); });
-        }, Promise.resolve()).catch(function (error) {
-          console.error('Não foi possível sincronizar as datas de tarefas e projetos com o calendário:', error);
+          return chain.then(function () {
+            return Promise.resolve().then(run).catch(function (error) {
+              errors.push(error);
+            });
+          });
+        }, Promise.resolve()).then(function () {
+          if (!errors.length) return;
+          console.error('Não foi possível sincronizar ' + errors.length +
+            ' registro(s) com o calendário; as demais sincronizações foram processadas:', errors);
           if (typeof window.showToast === 'function') {
-            var detail = error && error.message ? ' (' + error.message + ')' : '';
+            var firstError = errors[0];
+            var detail = firstError && firstError.message ? ' (' + firstError.message + ')' : '';
             window.showToast('As datas foram salvas, mas não foi possível sincronizá-las com o calendário.' + detail);
           }
         });

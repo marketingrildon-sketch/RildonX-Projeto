@@ -199,7 +199,8 @@
       ? '<label class="support-filter"><span>Status</span><select data-support-filter="status"><option value="">Todos</option>' + selectOptions(STATUS_OPTIONS, statusFilter) + '</select></label>' +
         '<label class="support-filter"><span>Prioridade</span><select data-support-filter="priority"><option value="">Todas</option>' + selectOptions(PRIORITY_OPTIONS, priorityFilter) + '</select></label>' +
         '<label class="support-filter support-month-filter"><span>Mês</span><input type="month" data-support-filter="month" value="' + escapeHtml(monthFilter) + '"></label>' +
-        '<button type="button" class="btn secondary" data-support-action="export-csv">Exportar CSV</button>' +
+        '<button type="button" class="btn secondary module-export-icon" data-support-action="export-csv" aria-label="Exportar CSV" title="Exportar CSV">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button>' +
         '<button type="button" class="btn secondary" data-support-action="print-report">Imprimir / PDF</button>'
       : '';
     return (canManage ? metricsMarkup() : '') +

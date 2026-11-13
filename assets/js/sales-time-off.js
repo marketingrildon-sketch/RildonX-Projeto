@@ -739,9 +739,9 @@
         renderPreferenceTabs(employees, preferences, managerCanEdit) +
         '<div class="sales-time-off-form-actions"><button type="submit" class="btn" data-schedule-save' +
         (!managerCanEdit || controller.loadError ? ' disabled title="O armazenamento compartilhado não está disponível"' : '') +
-        '>Salvar</button><button type="button" class="btn secondary" data-schedule-export' +
+        '>Salvar</button><button type="button" class="btn secondary module-export-icon" data-schedule-export' +
         (!hasScheduleData ? ' disabled title="Registre dados na escala para habilitar a exportação"' : '') +
-        '>Exportar escala</button></div></form>'
+        ' aria-label="Exportar escala CSV" title="Exportar escala CSV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 17v3h14v-3"/></svg></button></div></form>'
       : '<div class="sales-time-off-empty"><b>Nenhum usuário ativo foi encontrado.</b>' +
         '<span>Verifique se os perfis estão carregados e ativos.</span></div>';
 

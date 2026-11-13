@@ -1,0 +1,8 @@
+RILDON V8.9 - ajustes de interface
+
+Compras: logo RILDON no cabecalho, botao Exportar PDF (impressao do navegador, escolher Salvar como PDF) e planilha CSV UTF-8 para Excel. Respeitam filtros de busca, solicitante, fornecedor, status, mes e ano.
+Gerencia e vendedor: ocultacao dos blocos redundantes de tabela resumo e resumo lateral; a tabela cadastradora na Gestao de Metas permanece.
+
+IMPORTANTE: O identificador /api/build do servidor pode continuar apontando a versao anterior, pois esta atualizacao e de interface. Nenhuma tabela ou dado do PostgreSQL e alterado.
+
+Instale em pasta nova, sem excluir a versao atual. Feche o servidor e execute INICIAR_SITE.bat nesta pasta.

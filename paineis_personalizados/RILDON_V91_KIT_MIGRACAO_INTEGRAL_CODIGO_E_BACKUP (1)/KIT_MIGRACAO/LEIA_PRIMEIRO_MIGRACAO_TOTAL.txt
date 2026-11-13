@@ -1,0 +1,30 @@
+RILDON GESTAO COMERCIAL V9.1 - TRANSFERENCIA INTEGRAL
+
+ENTREGUE AO OUTRO SETOR:
+1) Este ZIP, contendo o codigo completo da V9.1 e os scripts de migracao.
+2) O arquivo .dump REAL, gerado no computador servidor da loja por GERAR_BACKUP_COMPLETO.bat.
+3) A lista de objetos e arquivo de SHA256 gerados no backup.
+4) Manual PDF e arquivos de entrada adicionais que estejam fora da pasta do projeto.
+5) Credenciais de acesso transmitidas por meio seguro e separadamente.
+
+IMPORTANTE: ESTE ZIP NAO CONTEM DADOS ATUAIS DO POSTGRESQL.
+Os dados reais so ficam incluidos na entrega depois que o backup for executado na maquina da loja.
+Nao envie dados e senhas pessoais por canais publicos.
+
+PASSOS NA LOJA:
+- Nao interrompa o sistema em horario de escrita; combine uma janela para backup consistente.
+- Confirme com TI que o PostgreSQL 18 esta funcionando e que rildon_app pode ler o banco todo.
+- Extraia este ZIP na maquina que possui o banco e abra GERAR_BACKUP_COMPLETO.bat.
+- Informe a senha SOMENTE no prompt seguro do PostgreSQL quando solicitada.
+- Verifique que BACKUP_GERADO\rildon_gestao_backup_completo.dump foi criado, nao vazio, e a lista foi emitida.
+- Entregue os arquivos ao outro setor por canal criptografado.
+- O novo setor DEVE restaurar em banco novo de teste, validar contagens de todas as tabelas, entrar com todos os perfis e comparar telas e relatorios antes do corte.
+- Caso o dump falhe por privilegios, solicite ao DBA um backup completo com role autorizada.
+
+CUIDADOS:
+- 'Sem dono/sem ACL' no dump facilita migracao entre ambientes, mas o DBA deve recriar roles e permissoes adequadas.
+- O host 192.168.0.16 e a porta 8789 sao da REDE ANTIGA; nao funcionarao automaticamente em outra rede.
+- Atualize credenciais PostgreSQL, endereco e regras de firewall na instalacao destino.
+- Cuidado com duplicidade de bases e importacoes: NAO carregue CSVs historicos outra vez em banco restaurado.
+- O ZIP inclui codigo legado de extensao X2; revise antes de habilitar em producao.
+- Este kit NAO migrara outros sistemas RILDON que nao estao contidos nesta V9.1.

@@ -1,0 +1,26 @@
+RILDON Gestao Comercial 7.0 PG — versao de testes
+
+O QUE FOI ALTERADO
+- Solicitacoes de Itens Novos: tabelas rildon_requests e rildon_suppliers, com 925 historicos ja importados em sua maquina; criacao e resposta gravam PostgreSQL.
+- Vendas Perdidas: tabela rildon_lost_sales, com payload JSONB.
+- Atendimentos, periodos, totais e usuarios: tabelas de compatibilidade no MESMO PostgreSQL.
+- Tela original da Gerencia, Vendedor, Compras e extensao X2 preservadas.
+- SQLite e Google Sheets nao sao utilizados como banco operacional nesta versao.
+
+INSTALACAO
+1. Nao desinstale a versao anterior. Extraia em UMA PASTA NOVA.
+2. O PostgreSQL Windows 18 precisa estar ligado com banco rildon_gestao e usuario rildon_app.
+3. Execute INSTALAR_DEPENDENCIAS.bat (se ja instalou psycopg, pode pular).
+4. Execute: py VERIFICAR_POSTGRESQL.py e confira 925 e 72.
+5. Feche a V6.9 para liberar a porta 8789.
+6. Abra INICIAR_SITE.bat. Digite a senha local de rildon_app (nao aparece na tela).
+7. Abra http://localhost:8789/api/build — deve indicar 7.0-PG.
+8. Teste logins e consultas; use dados de teste e revise antes de operar em producao.
+
+ATENCAO
+- Nenhuma conexao ao seu Windows foi feita por esta ferramenta. Este pacote foi validado estaticamente, NAO testado com seu PostgreSQL real. Verifique as operacoes na maquina.
+- Senhas iniciais herdadas da V6.9 sao 12345. Altere-as assim que validar o acesso. Nao exponha a porta 8789 na internet.
+- A porta PostgreSQL 5432 deve ficar acessivel apenas localmente (localhost); clientes conectam na porta 8789.
+- As tabelas antigas de atendimentos da V6.9 foram recriadas no PostgreSQL; os demais modulos ficam vazios conforme solicitado.
+- Tabela rildon_sales e rildon_targets sao reservadas para gestao comercial, enquanto o modulo de Atendimentos usa attendance_* no mesmo banco. Visoes derivadas no navegador nao necessitam salvar nessa tabela.
+- Nao use scripts antigos IMPORTAR_HISTORICO_GOOGLE_SHEETS.py e ATIVAR_GOOGLE_SHEETS.py nesta versao.

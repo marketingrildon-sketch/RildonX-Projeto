@@ -1,0 +1,6 @@
+RILDON V8.6 — Ajustes baseados na planilha setembro 2026.
+Gerência: metas individuais com colunas da planilha, incluindo meta diária fixa, meta esperada, dias restantes e faltou/superou.
+KPIs: tipografia reduzida, sem quebrar valores monetários.
+Cabeçalho: título da aba ativo; banners grandes ocultos.
+Meus atendimentos: título interno duplicado removido.
+Instalar numa pasta nova sem sobrescrever o banco PostgreSQL. Testar em navegador real.

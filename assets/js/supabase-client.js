@@ -47,8 +47,20 @@ if (isPlaceholder(supabaseUrl) || isPlaceholder(supabaseAnonKey)) {
 } else {
   window.supabase = { createClient: createClient };
   if (!window.supabaseClient || typeof window.supabaseClient.from !== 'function') {
+    const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
+    try {
+      window.localStorage.removeItem('sb-' + projectRef + '-auth-token');
+    } catch (error) {
+      console.error('Não foi possível remover a sessão persistente antiga do navegador:', error);
+    }
     window.supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { fetch: fetchWithTimeout }
+      global: { fetch: fetchWithTimeout },
+      auth: {
+        storage: window.sessionStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
     });
   }
 }

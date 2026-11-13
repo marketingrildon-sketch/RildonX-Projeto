@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Helpdesk interno de suporte de TI">
+    <title>Helpdesk TI - V17 + RustDesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div id="notificacaoChamado" class="notification-toast hidden" role="alert" aria-live="assertive">
+    <div class="notification-icon">🎫</div>
+    <div class="notification-content">
+        <strong>Novo chamado recebido!</strong>
+        <span id="notificacaoTexto">Um novo chamado foi aberto.</span>
+    </div>
+    <button type="button" id="fecharNotificacao" class="notification-close" aria-label="Fechar">×</button>
+</div>
+
+
+
+<header class="topbar">
+    <div class="brand">
+        <div class="brand-icon">💻</div>
+        <div>
+            <h1>Helpdesk TI</h1>
+            <span>Suporte Técnico Interno</span>
+        </div>
+    </div>
+    <button id="btnAdmin" class="btn btn-dark hidden" type="button">🔐 Área do TI</button>
+</header>
+
+<main>
+
+<section id="usuarioSection" class="page hidden">
+    <div class="operator-bar">
+        <span>👤 <strong id="operadorNome">Usuário</strong> • <span id="operadorLoja">Unidade</span></span>
+        <button id="btnLogoutOperador" class="btn btn-light" type="button">Sair</button>
+    </div>
+
+    <div class="hero">
+        <div>
+            <h2>Como podemos ajudar?</h2>
+            <p>Abra um chamado para a equipe de TI.</p>
+        </div>
+        <div class="hero-icon">🛠️</div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">
+            <h3>📋 Abrir novo chamado</h3>
+            <p>Preencha as informações abaixo.</p>
+        </div>
+
+        <form id="formChamado" autocomplete="off">
+            <div class="grid">
+                <div class="field">
+                    <label for="nome">Nome *</label>
+                    <input type="text" id="nome" required placeholder="Nome do usuário" readonly>
+                </div>
+
+                <div class="field">
+                    <label for="loja">Unidade / Loja *</label>
+                    <select id="loja" required>
+                        <option value="Matriz">Matriz</option>
+                        <option value="Filial">Filial</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="setor">Setor *</label>
+                    <select id="setor" required>
+                        <option value="">Selecione</option>
+                        <option>Administrativo</option>
+                        <option>Atendimento</option>
+                        <option>Caixa</option>
+                        <option>Contabilidade</option>
+                        <option>Compras</option>
+                        <option>Crediário</option>
+                        <option>Designer</option>
+                        <option>Estoque</option>
+                        <option>Gerência</option>
+                        <option>Garantia</option>
+                        <option>Loja</option>
+                        <option>Vendas</option>
+                        <option>TI</option>
+                        <option>Outro</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="rustdeskIdChamado">🖥️ ID RustDesk</label>
+                    <input type="text" id="rustdeskIdChamado" inputmode="numeric" pattern="\d{6,20}" placeholder="ID do computador (automático)" autocomplete="off">
+                    <small class="muted">Será preenchido automaticamente pelo usuário cadastrado e pode ser alterado.</small>
+                    <a class="btn btn-rustdesk-site btn-rustdesk-user" href="https://rustdesk.com/" target="_blank" rel="noopener noreferrer">🌐 Acessar site do RustDesk</a>
+                    <small class="muted">Se o TI precisar acessar seu computador, abra o site para baixar/instalar o RustDesk.</small>
+                </div>
+
+                <div class="field">
+                    <label for="equipamento">Equipamento</label>
+                    <input type="text" id="equipamento" placeholder="Ex.: PC-05, Notebook, Impressora">
+                    <small class="muted">Preenchido automaticamente com o computador cadastrado para o usuário.</small>
+                </div>
+
+                <div class="field">
+                    <label for="categoria">Categoria *</label>
+                    <select id="categoria" required>
+                        <option value="">Selecione</option>
+                        <option>Computador</option>
+                        <option>Impressora</option>
+                        <option>Internet / Rede</option>
+                        <option>Sistema</option>
+                        <option>E-mail</option>
+                        <option>Telefone</option>
+                        <option>Celular</option>
+                        <option>Equipamento</option>
+                        <option>Acesso / Senha</option>
+                        <option>Outro</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="prioridade">Prioridade *</label>
+                    <select id="prioridade" required>
+                        <option value="Baixa">Baixa</option>
+                        <option value="Normal" selected>Normal</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Urgente">Urgente</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="descricao">Descrição do problema *</label>
+                <textarea id="descricao" rows="6" required placeholder="Descreva o problema com o máximo de detalhes possível..."></textarea>
+            </div>
+
+            <button class="btn btn-primary" type="submit">🚀 Abrir Chamado</button>
+        </form>
+    </div>
+
+    <div id="resultadoChamado"></div>
+
+    <div class="card">
+        <div class="section-title">
+            <h3>🔎 Consultar chamado</h3>
+            <p>Digite o número do chamado para consultar o status.</p>
+        </div>
+
+        <div class="lookup-row">
+            <input type="text" id="consultaNumero" maxlength="15" placeholder="Ex.: CH-2026-10-0001">
+            <button type="button" class="btn btn-primary" id="btnConsultar">Consultar</button>
+        </div>
+
+        <div id="resultadoConsulta"></div>
+    </div>
+</section>
+
+<section id="loginSection" class="page hidden">
+    <div class="login-card">
+        <div class="login-icon">🔐</div>
+        <h2>Acesso ao Helpdesk TI</h2>
+        <p>Informe seu usuário e senha para continuar.</p>
+
+        <form id="loginForm" autocomplete="off">
+            <div class="field">
+                <label for="loginUsuario">Usuário</label>
+                <input type="text" id="loginUsuario" required>
+            </div>
+
+            <div class="field">
+                <label for="loginSenha">Senha</label>
+                <input type="password" id="loginSenha" required>
+            </div>
+
+            <button class="btn btn-primary full" type="submit">Entrar</button>
+            <button type="button" class="btn btn-light full" id="btnVoltarLogin">Voltar</button>
+        </form>
+
+        <div id="loginErro" class="error"></div>
+        <div class="login-hint">Acesso controlado por usuário e unidade.</div>
+    </div>
+</section>
+
+<section id="adminSection" class="page hidden">
+    <div class="admin-header">
+        <div>
+            <h2>📊 Painel do TI</h2>
+            <p>Gerenciamento dos chamados de suporte.</p>
+        </div>
+
+        <div class="admin-actions">
+            <button class="btn btn-light" type="button" id="btnExportar">⬇️ Exportar CSV</button>
+            <button class="btn btn-light" type="button" id="btnGerenciarUsuarios">👥 Usuários</button>
+            <button class="btn btn-light" type="button" id="btnAlterarSenha">🔑 Alterar senha</button>
+            <button class="btn btn-danger" type="button" id="btnLogout">Sair</button>
+        </div>
+    </div>
+
+    <div class="kpis">
+        <div class="kpi blue">
+            <span>Total de chamados</span>
+            <strong id="totalChamados">0</strong>
+        </div>
+        <div class="kpi red">
+            <span>Abertos</span>
+            <strong id="totalAbertos">0</strong>
+        </div>
+        <div class="kpi yellow">
+            <span>Em atendimento</span>
+            <strong id="totalAtendimento">0</strong>
+        </div>
+        <div class="kpi green">
+            <span>Resolvidos</span>
+            <strong id="totalResolvidos">0</strong>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="filter-header">
+            <div>
+                <h3>📋 Chamados</h3>
+                <p class="muted">Os dados são compartilhados por todos os computadores da rede.</p>
+            </div>
+
+            <div class="filters">
+                <input type="text" id="busca" placeholder="Pesquisar...">
+                <select id="filtroLoja" title="Filtrar por unidade">
+                    <option value="">Todas as unidades</option>
+                    <option value="Matriz">Matriz</option>
+                    <option value="Filial">Filial</option>
+                </select>
+                <select id="filtroMes" title="Filtrar por mês">
+                    <option value="">Todos os meses</option>
+                </select>
+                <select id="filtroStatus">
+                    <option value="">Todos os status</option>
+                    <option>Aberto</option>
+                    <option>Em atendimento</option>
+                    <option>Aguardando usuário</option>
+                    <option>Resolvido</option>
+                    <option>Encerrado</option>
+                </select>
+                <select id="filtroPrioridade">
+                    <option value="">Todas prioridades</option>
+                    <option>Baixa</option>
+                    <option>Normal</option>
+                    <option>Alta</option>
+                    <option>Urgente</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Chamado</th>
+                        <th>Usuário</th>
+                        <th>Unidade</th>
+                        <th>Setor</th>
+                        <th>Categoria</th>
+                        <th>Prioridade</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaChamados"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card monthly-report">
+        <div class="report-header">
+            <div>
+                <h3>📅 Relatório mensal</h3>
+                <p class="muted">Escolha o mês. O relatório contém somente os chamados registrados naquele período.</p>
+            </div>
+            <div class="report-month">
+                <label for="relatorioLoja">Unidade do relatório</label>
+                <select id="relatorioLoja">
+                    <option value="">Todas as unidades</option>
+                    <option value="Matriz">Matriz</option>
+                    <option value="Filial">Filial</option>
+                </select>
+                <label for="relatorioMes">Mês do relatório</label>
+                <input type="month" id="relatorioMes">
+                <div class="report-export-buttons">
+                    <button class="btn btn-light" type="button" id="btnExportarRelatorioCSV">📄 CSV</button>
+                    <button class="btn btn-primary" type="button" id="btnExportarRelatorioPDF">📑 PDF</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-summary">
+            <div class="report-total">
+                <span>Chamados no mês</span>
+                <strong id="relatorioTotalMes">0</strong>
+            </div>
+            <div class="report-note" id="relatorioPeriodo">Selecione um mês.</div>
+        </div>
+
+        <div class="report-list">
+            <div class="report-list-header">
+                <h4>Chamados do mês selecionado</h4>
+                <span>Os mesmos registros serão usados no CSV e no PDF.</span>
+            </div>
+            <div class="table-container report-table-container">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Chamado</th>
+                            <th>Data</th>
+                            <th>Usuário</th>
+                            <th>Unidade</th>
+                            <th>Setor</th>
+                            <th>Equipamento</th>
+                            <th>Categoria</th>
+                            <th>Prioridade</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="relatorioChamados"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+</main>
+
+
+<div id="usuariosModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content user-management-modal">
+        <div class="modal-header">
+            <div>
+                <h2>👥 Usuários e permissões</h2>
+                <p class="muted">A Matriz pode visualizar todos os chamados. Usuários da Filial visualizam somente os chamados da Filial.</p>
+            </div>
+            <button type="button" id="btnFecharUsuariosModal" aria-label="Fechar">×</button>
+        </div>
+
+        <div class="user-management-grid">
+            <div class="user-form-card">
+                <h3>Novo usuário</h3>
+                <form id="formUsuario" autocomplete="off">
+                    <input type="hidden" id="usuarioEdicaoId" value="">
+                    <div class="field">
+                        <label for="usuarioCadastro">Usuário *</label>
+                        <input type="text" id="usuarioCadastro" required placeholder="ex.: suporte.filial">
+                    </div>
+                    <div class="field">
+                        <label for="nomeCadastro">Nome *</label>
+                        <input type="text" id="nomeCadastro" required placeholder="Nome do usuário">
+                    </div>
+                    <div class="field">
+                        <label for="senhaCadastro">Senha *</label>
+                        <input type="password" id="senhaCadastro" minlength="6" required placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="grid">
+                        <div class="field">
+                            <label for="lojaCadastro">Loja *</label>
+                            <select id="lojaCadastro" required>
+                                <option value="Filial">Filial</option>
+                                <option value="Matriz">Matriz</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="perfilCadastro">Perfil *</label>
+                            <select id="perfilCadastro" required>
+                                <option value="operador">Operador</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="rustdeskCadastro">🖥️ ID RustDesk</label>
+                        <input type="text" id="rustdeskCadastro" inputmode="numeric" pattern="\d{6,20}" placeholder="Opcional — 6 a 20 números" autocomplete="off">
+                        <small class="muted">Depois do primeiro acesso remoto, este ID pode ser gravado automaticamente neste usuário.</small>
+                    </div>
+                    <div class="field">
+                        <label for="computadorCadastro">💻 Nome do computador</label>
+                        <input type="text" id="computadorCadastro" placeholder="Ex.: CAIXA-01, FINANCEIRO-02" autocomplete="off">
+                        <small class="muted">Será preenchido automaticamente no chamado deste usuário.</small>
+                    </div>
+                    <div id="usuarioMensagem" class="error"></div>
+                    <div class="modal-actions user-form-actions">
+                        <button class="btn btn-light hidden" type="button" id="btnCancelarEdicaoUsuario">Cancelar edição</button>
+                        <button class="btn btn-primary" type="submit" id="btnSalvarUsuario">➕ Cadastrar usuário</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="user-list-card">
+                <div class="user-list-header">
+                    <h3>Usuários cadastrados</h3>
+                    <button class="btn btn-light" type="button" id="btnAtualizarUsuarios">↻ Atualizar</button>
+                </div>
+                <div class="table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Nome</th>
+                                <th>Loja</th>
+                                <th>Perfil</th>
+                                <th>Computador</th>
+                                <th>Status</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaUsuarios"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="senhaModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content small-modal">
+        <div class="modal-header">
+            <h2>🔑 Alterar senha do admin</h2>
+            <button type="button" id="btnFecharSenhaModal" aria-label="Fechar">×</button>
+        </div>
+
+        <p class="muted" style="margin-bottom:18px;">
+            Por segurança, informe a senha atual e defina uma nova senha com pelo menos 6 caracteres.
+        </p>
+
+        <form id="formAlterarSenha" autocomplete="off">
+            <div class="field">
+                <label for="senhaAtual">Senha atual</label>
+                <input type="password" id="senhaAtual" required autocomplete="current-password">
+            </div>
+
+            <div class="field">
+                <label for="novaSenha">Nova senha</label>
+                <input type="password" id="novaSenha" minlength="6" required autocomplete="new-password">
+            </div>
+
+            <div class="field">
+                <label for="confirmarNovaSenha">Confirmar nova senha</label>
+                <input type="password" id="confirmarNovaSenha" minlength="6" required autocomplete="new-password">
+            </div>
+
+            <div id="senhaMensagem" class="error"></div>
+
+            <div class="modal-actions">
+                <button class="btn btn-light" type="button" id="btnCancelarSenha">Cancelar</button>
+                <button class="btn btn-primary" type="submit" id="btnSalvarSenha">💾 Alterar senha</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitulo">Chamado</h2>
+            <button type="button" id="btnFecharModal" aria-label="Fechar">×</button>
+        </div>
+
+        <div id="modalInfo"></div>
+
+        <div class="remote-access-box">
+            <div class="remote-access-title">🖥️ Acesso remoto via RustDesk</div>
+            <div class="remote-access-row">
+                <input type="text" id="modalRustdeskId" placeholder="Digite o ID RustDesk do computador" autocomplete="off">
+                <button class="btn btn-remote" type="button" id="btnAcessoRemoto">🖥️ Acessar</button>
+            </div>
+            <div class="rustdesk-links" aria-label="Ferramentas do RustDesk">
+                <span class="rustdesk-links-title">RustDesk:</span>
+                <a class="btn btn-rustdesk-site" href="https://rustdesk.com/" target="_blank" rel="noopener noreferrer">🌐 Acessar site do RustDesk</a>
+            </div>
+            <small>O RustDesk precisa estar instalado nesta máquina e no computador do usuário.</small>
+        </div>
+
+        <div class="remote-history">
+            <div class="remote-history-title">🕘 Histórico do chamado</div>
+            <div id="historicoChamado" class="history-list">Carregando histórico...</div>
+        </div>
+
+        <div class="field">
+            <label for="modalStatus">Status</label>
+            <select id="modalStatus">
+                <option>Aberto</option>
+                <option>Em atendimento</option>
+                <option>Aguardando usuário</option>
+                <option>Resolvido</option>
+                <option>Encerrado</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="modalObservacao">Observação / solução</label>
+            <textarea id="modalObservacao" rows="7" placeholder="Digite o que foi realizado no atendimento..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-danger btn-excluir-chamado" type="button" id="btnExcluirChamado" style="display:none;">🗑️ Excluir chamado</button>
+            <button class="btn btn-light" type="button" id="btnCancelarModal">Cancelar</button>
+            <button class="btn btn-primary" type="button" id="btnSalvarAlteracoes">💾 Salvar alterações</button>
+        </div>
+    </div>
+</div>
+
+<footer>
+    Helpdesk TI • Sistema Interno
+</footer>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

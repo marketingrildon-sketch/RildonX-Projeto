@@ -1,20 +1,19 @@
-# Sistema operacional
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-# Arquivos temporarios de editores
-*.swp
-*.swo
-*~
-
-# Diretorios locais de IDE
-.vscode/
-.idea/
-
-# Dependencias locais
 node_modules/
-
-# Segredos locais (nunca versionar)
+dist/
+.vite/
+coverage/
 .env
 .env.*
+!.env.example
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite
+*.sqlite3
+supabase/.temp/

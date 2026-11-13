@@ -1,0 +1,14 @@
+RILDON GESTÃO COMERCIAL V6.1 — Ajustes de visão executiva e atendimentos
+
+Principais ajustes desta versão:
+- Visão executiva com opção "Todos os vendedores".
+- Vendas acumuladas da visão executiva usando total líquido quando houver dados de atendimentos importados.
+- Gestão de metas sem exibir o bloco superior de filtros da visão executiva.
+- Meus Atendimentos sem estimativas em período parcial: mostra apenas o bruto quando o X2 não informar devoluções por data.
+
+Instalação:
+1. Feche a versão anterior.
+2. Extraia a pasta em um novo local.
+3. Copie seu banco/rildon_sync.sqlite3 da versão atual, se desejar manter o histórico.
+4. Execute INICIAR_SITE.bat.
+5. Confira http://localhost:8789/api/build — deve exibir 6.1.

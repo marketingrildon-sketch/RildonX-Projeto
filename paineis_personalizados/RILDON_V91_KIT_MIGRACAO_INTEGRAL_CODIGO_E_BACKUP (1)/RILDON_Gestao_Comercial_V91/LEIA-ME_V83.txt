@@ -1,0 +1,7 @@
+RILDON V8.3 — metas da planilha de Outubro/2026.
+1. Feche o servidor e extraia esta versao em pasta nova.
+2. Execute APLICAR_METAS_PLANILHA_OUTUBRO.bat UMA VEZ para substituir as metas de OUTUBRO (faz backup dos valores antigos no banco).
+3. Inicie o servidor normal via INICIAR_SITE.bat.
+4. Em Gestao de Metas, edite dias previstos, transcorridos e trabalhados por pessoa; salve.
+5. Visao Executiva tem somente filtro proprio de inicio/fim.
+6. Compras, vendas e solicitacoes nao sao alteradas pela importacao de metas.
