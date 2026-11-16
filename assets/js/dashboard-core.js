@@ -14,6 +14,11 @@
     'management-strategic-projects'
   ]);
   let activeLibraryView = 'grid';
+  let activeLibraryFilter = 'all';
+  let activeLibrarySearch = '';
+  let libraryPreferencesStorageKey = 'rildonx_module_library_preferences:local';
+  let libraryFavorites = [];
+  let recentlyUsedLibraryModules = [];
   let activeStorageKey = STORAGE_KEY + ':local';
   let activeHomeCardsStorageKey = HOME_CARDS_STORAGE_KEY + ':local';
   let authenticatedUserId = null;
@@ -2370,19 +2375,82 @@
       '<button type="button" class="dashboard-remove-btn" data-card-remove>Remover</button></div></article>';
   }
 
+  function normalizeLibrarySearch(value) {
+    return String(value || '').trim().toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function persistLibraryPreferences() {
+    try {
+      localStorage.setItem(libraryPreferencesStorageKey, JSON.stringify({
+        favorites: libraryFavorites,
+        recent: recentlyUsedLibraryModules
+      }));
+      return true;
+    } catch (error) {
+      console.error('Não foi possível salvar as preferências da Biblioteca de Módulos:', error);
+      if (typeof window.showToast === 'function') window.showToast('Não foi possível salvar as preferências da Biblioteca neste navegador.');
+      return false;
+    }
+  }
+
+  function loadLibraryPreferences() {
+    try {
+      const stored = localStorage.getItem(libraryPreferencesStorageKey);
+      const parsed = stored ? JSON.parse(stored) : {};
+      const validIds = new Set(BUSINESS_CARD_MODULES.map(function (module) { return module.id; }));
+      libraryFavorites = Array.isArray(parsed.favorites)
+        ? Array.from(new Set(parsed.favorites.filter(function (id) { return validIds.has(id); })))
+        : [];
+      recentlyUsedLibraryModules = Array.isArray(parsed.recent)
+        ? Array.from(new Set(parsed.recent.filter(function (id) { return validIds.has(id); }))).slice(0, 8)
+        : [];
+    } catch (error) {
+      console.error('Não foi possível carregar as preferências da Biblioteca de Módulos:', error);
+      libraryFavorites = [];
+      recentlyUsedLibraryModules = [];
+    }
+  }
+
+  loadLibraryPreferences();
+
+  function toggleLibraryFavorite(moduleId) {
+    const previousFavorites = libraryFavorites.slice();
+    libraryFavorites = libraryFavorites.indexOf(moduleId) === -1
+      ? libraryFavorites.concat(moduleId)
+      : libraryFavorites.filter(function (id) { return id !== moduleId; });
+    if (!persistLibraryPreferences()) libraryFavorites = previousFavorites;
+  }
+
+  function recordLibraryModuleUse(moduleId) {
+    const previousRecent = recentlyUsedLibraryModules.slice();
+    recentlyUsedLibraryModules = [moduleId].concat(
+      recentlyUsedLibraryModules.filter(function (id) { return id !== moduleId; })
+    ).slice(0, 8);
+    if (!persistLibraryPreferences()) recentlyUsedLibraryModules = previousRecent;
+  }
+
   function libraryCardMarkup(type, description, sector, tone, config, data, module, homeCards) {
     const catalog = CARD_CATALOG[type];
     const added = config.cards.some(function (card) { return card.type === type; });
     const addedToHome = homeCards.indexOf(type) >= 0;
     const homeLimitReached = homeCards.length >= HOME_CARDS_LIMIT;
     const permitted = !module || canAccessBusinessCard(module, data);
+    const favorite = libraryFavorites.indexOf(type) !== -1;
+    const recentlyUsed = recentlyUsedLibraryModules.indexOf(type) !== -1;
     const pageHref = catalog.href || 'meu-espaco.html';
     return '<article class="dashboard-library-card' + (!permitted ? ' is-restricted' : '') + '" data-access="' + (permitted ? 'allowed' : 'restricted') +
       '" data-tone="' + escapeHtml(module ? tone || 'blue' : 'general') + '">' +
       '<div class="dashboard-library-card-header"><span class="dashboard-library-icon">' + iconMarkup(catalog.icon) + '</span>' +
       '<div class="dashboard-library-info"><h4>' + escapeHtml(catalog.label) + '</h4>' +
-      '<small>' + escapeHtml(sector || 'Geral') + '</small></div></div>' +
+      '<small>' + escapeHtml(sector || 'Geral') + '</small></div>' +
+      '<button type="button" class="dashboard-library-favorite' + (favorite ? ' is-favorite' : '') + '" data-library-favorite="' + escapeHtml(type) +
+      '" aria-pressed="' + (favorite ? 'true' : 'false') + '" aria-label="' + (favorite ? 'Remover ' : 'Adicionar ') +
+      escapeHtml(catalog.label) + (favorite ? ' dos favoritos' : ' aos favoritos') + '" title="' + (favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos') + '">' +
+      (favorite ? '★' : '☆') + '</button></div>' +
       '<p class="dashboard-library-description">' + escapeHtml(description || '') + '</p>' +
+      '<div class="dashboard-library-badges"><span class="dashboard-library-access' + (!permitted ? ' is-restricted' : '') + '">' +
+      (permitted ? 'Acesso liberado' : 'Acesso restrito ao setor') + '</span>' +
+      (recentlyUsed ? '<span class="dashboard-library-recent">Usado recentemente</span>' : '') + '</div>' +
       '<div class="dashboard-library-card-actions">' +
       (module
         ? '<button type="button" class="btn secondary dashboard-library-open" data-library-open="' + escapeHtml(type) + '"' +
@@ -2436,11 +2504,38 @@
       root.innerHTML = '<div class="dashboard-data-empty">Nenhum card disponível.</div>';
       return;
     }
+    const query = normalizeLibrarySearch(activeLibrarySearch);
     const visibleSectors = sector ? [sector] : sectors;
-    root.innerHTML = visibleSectors.map(function (currentSector) {
-      const modules = currentSector.modules.slice().sort(function (first, second) {
-        return first.title.localeCompare(second.title, 'pt-BR');
+    const filteredSectors = visibleSectors.map(function (currentSector) {
+      const modules = currentSector.modules.filter(function (module) {
+        const permitted = canAccessBusinessCard(module, data);
+        const isFavorite = libraryFavorites.indexOf(module.id) !== -1;
+        const isRecent = recentlyUsedLibraryModules.indexOf(module.id) !== -1;
+        const matchesFilter = activeLibraryFilter === 'favorites' ? isFavorite :
+          activeLibraryFilter === 'recent' ? isRecent :
+          activeLibraryFilter === 'allowed' ? permitted :
+          activeLibraryFilter === 'restricted' ? !permitted : true;
+        const searchableText = [module.title, module.sector, module.description]
+          .concat(module.features || []).join(' ');
+        return matchesFilter && (!query || normalizeLibrarySearch(searchableText).indexOf(query) !== -1);
       });
+      if (activeLibraryFilter === 'recent') {
+        modules.sort(function (first, second) {
+          return recentlyUsedLibraryModules.indexOf(first.id) - recentlyUsedLibraryModules.indexOf(second.id);
+        });
+      } else {
+        modules.sort(function (first, second) { return first.title.localeCompare(second.title, 'pt-BR'); });
+      }
+      return { sector: currentSector, modules: modules };
+    }).filter(function (item) { return item.modules.length > 0; });
+    if (!filteredSectors.length) {
+      root.innerHTML = '<div class="dashboard-library-empty"><b>Nenhum módulo encontrado</b><span>Ajuste a busca ou o filtro para ver outros módulos.</span>' +
+        '<button type="button" class="btn secondary" data-library-clear-filters>Limpar busca e filtros</button></div>';
+      return;
+    }
+    root.innerHTML = filteredSectors.map(function (item) {
+      const currentSector = item.sector;
+      const modules = item.modules;
       const moduleCards = modules.map(function (module) {
         return libraryCardMarkup(module.id, module.description, module.sector, module.libraryTone, config, data, module, homeCards);
       }).join('');
@@ -2469,12 +2564,19 @@
     }).join('');
     root.innerHTML = '<div class="dashboard-library-panel" role="dialog" aria-modal="true" aria-labelledby="dashboard-library-title">' +
       '<div class="dashboard-library-header"><div><span class="dashboard-library-eyebrow">RildonX · Componentes reutilizáveis</span>' +
-      '<h2 id="dashboard-library-title">Biblioteca de Módulos</h2><p>Todos os módulos ficam organizados por setor. O acesso segue as permissões do seu perfil.</p></div>' +
+      '<h2 id="dashboard-library-title">Biblioteca de Módulos</h2><p>Busque módulos por nome, setor ou descrição. Os selos indicam as permissões do seu perfil; a conexão de dados pode variar por módulo. Favoritos e histórico ficam salvos neste navegador para sua conta.</p></div>' +
       '<div class="dashboard-library-header-actions"><button type="button" class="dashboard-library-close dashboard-business-exit" data-library-close aria-label="Fechar biblioteca de módulos" title="Fechar biblioteca">×</button></div></div>' +
       '<div class="dashboard-library-tabs" role="tablist" aria-label="Setores">' +
       '<button type="button" class="dashboard-library-tab' + (selectedSector === 'general' ? ' active' : '') +
       '" data-library-sector="general" data-tone="general" role="tab" aria-controls="dashboard-library-results" aria-selected="' + (selectedSector === 'general') + '"><span class="dashboard-library-general-icon">✦</span><span>Geral</span></button>' +
-      sectorTabs + '</div><div class="dashboard-library-view-toggle" role="group" aria-label="Visualização dos módulos">' +
+      sectorTabs + '</div><div class="dashboard-library-toolbar"><label class="dashboard-library-search"><span aria-hidden="true">⌕</span>' +
+      '<input type="search" data-library-search placeholder="Buscar módulo, setor ou funcionalidade..." aria-label="Buscar módulos" value="' + escapeHtml(activeLibrarySearch) + '">' +
+      '</label><div class="dashboard-library-filters" role="group" aria-label="Filtrar módulos">' +
+      [['all', 'Todos'], ['favorites', 'Favoritos'], ['recent', 'Recentes'], ['allowed', 'Acesso liberado'], ['restricted', 'Acesso restrito']].map(function (filter) {
+        const selected = activeLibraryFilter === filter[0];
+        return '<button type="button" class="dashboard-library-filter' + (selected ? ' active' : '') + '" data-library-filter="' + filter[0] +
+          '" aria-pressed="' + (selected ? 'true' : 'false') + '">' + filter[1] + '</button>';
+      }).join('') + '</div></div><div class="dashboard-library-view-toggle" role="group" aria-label="Visualização dos módulos">' +
       '<button type="button" data-library-view="grid" aria-pressed="' + (activeLibraryView === 'grid') + '"' +
       (activeLibraryView === 'grid' ? ' class="active"' : '') + '>Grade</button>' +
       '<button type="button" data-library-view="list" aria-pressed="' + (activeLibraryView === 'list') + '"' +
@@ -2719,8 +2821,10 @@
       activeStorageKey = nextDashboardKey;
       activeHomeCardsStorageKey = nextHomeKey;
       businessFavoritesStorageKey = 'rildonx_business_favorites:' + userId;
+      libraryPreferencesStorageKey = 'rildonx_module_library_preferences:' + userId;
       try {
         loadBusinessFavorites();
+        loadLibraryPreferences();
         const savedHomeCards = localStorage.getItem(nextHomeKey);
         const localHomeKey = HOME_CARDS_STORAGE_KEY + ':local';
         if (savedHomeCards === null) {
@@ -5955,8 +6059,57 @@
           );
           return;
         }
+        const filterButton = event.target.closest('[data-library-filter]');
+        if (filterButton) {
+          activeLibraryFilter = filterButton.dataset.libraryFilter;
+          Array.prototype.forEach.call(libraryRoot.querySelectorAll('[data-library-filter]'), function (button) {
+            const selected = button === filterButton;
+            button.classList.toggle('active', selected);
+            button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+          });
+          renderLibraryContent(
+            libraryRoot.querySelector('.dashboard-library-content'),
+            normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD),
+            dashboardState,
+            getStoredHomeCards(),
+            activeLibrarySector
+          );
+          return;
+        }
+        if (event.target.closest('[data-library-clear-filters]')) {
+          activeLibraryFilter = 'all';
+          activeLibrarySearch = '';
+          const searchInput = libraryRoot.querySelector('[data-library-search]');
+          if (searchInput) searchInput.value = '';
+          Array.prototype.forEach.call(libraryRoot.querySelectorAll('[data-library-filter]'), function (button) {
+            const selected = button.dataset.libraryFilter === 'all';
+            button.classList.toggle('active', selected);
+            button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+          });
+          renderLibraryContent(
+            libraryRoot.querySelector('.dashboard-library-content'),
+            normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD),
+            dashboardState,
+            getStoredHomeCards(),
+            activeLibrarySector
+          );
+          return;
+        }
+        const favoriteButton = event.target.closest('[data-library-favorite]');
+        if (favoriteButton) {
+          toggleLibraryFavorite(favoriteButton.dataset.libraryFavorite);
+          renderLibraryContent(
+            libraryRoot.querySelector('.dashboard-library-content'),
+            normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD),
+            dashboardState,
+            getStoredHomeCards(),
+            activeLibrarySector
+          );
+          return;
+        }
         const moduleOpenButton = event.target.closest('[data-library-open]');
         if (moduleOpenButton && !moduleOpenButton.disabled) {
+          recordLibraryModuleUse(moduleOpenButton.dataset.libraryOpen);
           openBusinessModule(moduleOpenButton.dataset.libraryOpen, '', true);
           return;
         }
@@ -5967,6 +6120,17 @@
       });
       libraryRoot.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && libraryRoot.classList.contains('open')) closeLibrary();
+      });
+      libraryRoot.addEventListener('input', function (event) {
+        if (!event.target.matches('[data-library-search]')) return;
+        activeLibrarySearch = event.target.value;
+        renderLibraryContent(
+          libraryRoot.querySelector('.dashboard-library-content'),
+          normalizeDashboard(getStoredDashboard() || DEFAULT_DASHBOARD),
+          dashboardState,
+          getStoredHomeCards(),
+          activeLibrarySector
+        );
       });
     }
 
