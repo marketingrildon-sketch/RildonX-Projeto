@@ -123,6 +123,8 @@ values (
   false,
   26214400,
   array[
+    'image/jpeg',
+    'image/png',
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

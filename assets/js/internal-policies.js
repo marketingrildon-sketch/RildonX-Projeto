@@ -5,6 +5,8 @@
   var TABLE = 'internal_policy_documents';
   var MAX_FILE_SIZE = 25 * 1024 * 1024;
   var ALLOWED_TYPES = [
+    'image/jpeg',
+    'image/png',
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -115,7 +117,7 @@
         '<label>Título<input name="title" maxlength="160" required></label>' +
         '<div class="internal-policy-upload-row"><label>Versão<input name="version" maxlength="40" required placeholder="Ex.: 1.0"></label>' +
         '<label>Vigência<input name="effectiveDate" type="date"></label></div>' +
-        '<label>Documento (PDF, Word, Excel ou OpenDocument)<input name="file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods" required></label>' +
+        '<label>Documento ou imagem (JPEG, PNG, PDF, Word, Excel ou OpenDocument)<input name="file" type="file" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.odt,.ods" required></label>' +
         '<label>Ao enviar<select name="status"><option value="draft">Salvar como rascunho</option><option value="published">Publicar para todos</option></select></label>' +
         '<button class="btn" type="submit">Enviar documento</button><p class="internal-policy-upload-note">Até 25 MB. Publicar uma nova versão arquiva a versão anterior.</p></form>' : '') +
       '<div class="internal-policy-list-heading"><h3>Documentos e versões</h3><button type="button" class="btn secondary" data-policy-refresh>Atualizar</button></div>' +
@@ -148,7 +150,7 @@
     if (!userId) throw new Error('Não foi possível identificar o usuário conectado.');
     if (!title || !version || !file || !file.size) throw new Error('Preencha o título, a versão e selecione um documento.');
     if (file.size > MAX_FILE_SIZE) throw new Error('O documento ultrapassa o limite de 25 MB.');
-    if (ALLOWED_TYPES.indexOf(file.type) === -1) throw new Error('Formato não permitido. Envie PDF, Word, Excel ou OpenDocument.');
+    if (ALLOWED_TYPES.indexOf(file.type) === -1) throw new Error('Formato não permitido. Envie JPEG, PNG, PDF, Word, Excel ou OpenDocument.');
 
     submit.disabled = true;
     submit.textContent = 'Enviando…';
