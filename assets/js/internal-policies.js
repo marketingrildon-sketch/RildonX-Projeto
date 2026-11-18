@@ -130,17 +130,37 @@
     var target = root.querySelector('[data-policy-records]');
     if (!target) return;
     target.innerHTML = '<p class="internal-policy-loading">Carregando documentos…</p>';
+    var refreshButton = root.querySelector('[data-policy-refresh]');
+    if (refreshButton) {
+      refreshButton.disabled = true;
+      refreshButton.textContent = 'Carregando…';
+    }
+    var timeoutId;
     try {
-      var records = await loadRecords();
+      var records = await Promise.race([
+        loadRecords(),
+        new Promise(function (_, reject) {
+          timeoutId = window.setTimeout(function () {
+            reject(new Error('A consulta ao Supabase excedeu 15 segundos.'));
+          }, 15000);
+        })
+      ]);
       if (!target.isConnected) return;
       target.innerHTML = policyRows(records, canManage);
     } catch (error) {
       console.error('Não foi possível carregar as políticas internas:', error);
-      target.innerHTML = '<p class="dashboard-business-warning">Não foi possível carregar os documentos. Verifique a migração de políticas internas e tente novamente.</p>';
+      target.innerHTML = '<div class="internal-policy-load-error"><span>Não foi possível carregar os documentos: ' +
+        escapeHtml(error && error.message || 'erro desconhecido') + '</span></div>';
+    } finally {
+      window.clearTimeout(timeoutId);
+      if (refreshButton && refreshButton.isConnected) {
+        refreshButton.disabled = false;
+        refreshButton.textContent = 'Atualizar';
+      }
     }
   }
 
-  async function uploadPolicy(form, root, data, canManage) {
+  async function uploadPolicy(form, data, canManage) {
     var submit = form.querySelector('[type="submit"]');
     var formData = new FormData(form);
     var title = String(formData.get('title') || '').trim();
@@ -185,9 +205,9 @@
         throw insertResult.error;
       }
       form.reset();
-      await renderModule(root, canManage);
       if (typeof window.showToast === 'function') {
-        window.showToast(status === 'published' ? 'Política publicada para todos os usuários.' : 'Documento salvo como rascunho.');
+        window.showToast((status === 'published' ? 'Política publicada para todos os usuários.' : 'Documento salvo como rascunho.') +
+          ' Clique em Atualizar para recarregar a listagem.');
       }
     } finally {
       submit.disabled = false;
@@ -195,49 +215,53 @@
     }
   }
 
-  async function updateStatus(recordId, status, root, canManage) {
+  async function updateStatus(recordId, status) {
     if (['draft', 'published', 'archived'].indexOf(status) === -1) return;
     var result = await client().from(TABLE).update({ status: status }).eq('id', recordId);
     if (result.error) throw result.error;
-    await renderModule(root, canManage);
+    if (typeof window.showToast === 'function') window.showToast('Status atualizado. Clique em Atualizar para recarregar a listagem.');
   }
 
   function mount(root, data, options) {
     var canManage = Boolean(options && options.canManage);
     root.innerHTML = panelMarkup(Boolean(options && options.fromLibrary), canManage);
-    root.addEventListener('submit', function (event) {
+    var panel = root.querySelector('.dashboard-business-panel--internal-policies');
+    var moduleList = panel && panel.querySelector('[data-policy-records]');
+    if (moduleList) {
+      moduleList.innerHTML = '<div class="internal-policy-load-error"><span>Clique em Atualizar para carregar os documentos.</span>' +
+        '<button type="button" class="btn secondary" data-policy-refresh>Atualizar</button></div>';
+    }
+    if (!panel) return;
+    panel.addEventListener('submit', function (event) {
       if (!event.target.matches('[data-policy-upload]')) return;
       event.preventDefault();
-      uploadPolicy(event.target, root, data, canManage).catch(function (error) {
+      uploadPolicy(event.target, data, canManage).catch(function (error) {
         console.error('Não foi possível enviar a política interna:', error);
         if (typeof window.showToast === 'function') window.showToast(error.message || 'Não foi possível enviar o documento.');
       });
     });
-    root.addEventListener('click', function (event) {
-      if (event.target.closest('[data-policy-refresh]')) renderModule(root, canManage);
+    panel.addEventListener('click', function (event) {
+      if (event.target.closest('[data-policy-refresh]')) renderModule(panel, canManage);
     });
-    root.addEventListener('change', function (event) {
+    panel.addEventListener('change', function (event) {
       var statusSelect = event.target.closest('[data-policy-status]');
       if (!statusSelect) return;
       statusSelect.disabled = true;
-      updateStatus(statusSelect.dataset.policyStatus, statusSelect.value, root, canManage).then(function () {
-        if (typeof window.showToast === 'function') window.showToast('Status do documento atualizado.');
-      }).catch(function (error) {
+      updateStatus(statusSelect.dataset.policyStatus, statusSelect.value).catch(function (error) {
         console.error('Não foi possível atualizar o status da política:', error);
         if (typeof window.showToast === 'function') window.showToast(error.message || 'Não foi possível atualizar o status.');
         statusSelect.disabled = false;
       });
     });
-    renderModule(root, canManage);
   }
 
   async function renderQuickLinks() {
     var root = document.querySelector('#modal-politicas .policy-list');
     if (!root) return;
     if (quickLinksRequest) return quickLinksRequest;
-    var hasPreviousResults = root.dataset.loaded === 'true';
     var requestId = ++quickLinksRequestId;
-    if (!hasPreviousResults) root.innerHTML = '<p class="internal-policy-loading">Carregando políticas publicadas…</p>';
+    root.innerHTML = '<div class="internal-policy-load-error"><span>Carregando políticas publicadas…</span>' +
+      '<button type="button" class="btn secondary" data-policy-quick-refresh disabled>Atualizar</button></div>';
     var timeoutId;
     quickLinksRequest = Promise.race([
       Promise.resolve().then(function () {
@@ -253,19 +277,21 @@
       if (requestId !== quickLinksRequestId || !root.isConnected) return;
       var records = result.data || [];
       records.forEach(function (record) { recordsById.set(String(record.id), record); });
-      root.innerHTML = records.length ? records.map(function (record) {
+      root.innerHTML = '<div class="internal-policy-load-error"><span>Políticas publicadas</span>' +
+        '<button type="button" class="btn secondary" data-policy-quick-refresh>Atualizar</button></div>' +
+        (records.length ? records.map(function (record) {
         return '<div class="policy-row internal-policy-published-row"><div class="doc-icon ' + escapeHtml(fileTypeLabel(record.file_name).toLowerCase()) + '">' +
           escapeHtml(fileTypeLabel(record.file_name)) + '</div><div><b>' + escapeHtml(record.title) + '</b><span>Versão ' +
           escapeHtml(record.version) + ' · Vigência: ' + escapeHtml(formatDate(record.effective_date)) +
           ' · ' + escapeHtml(formatSize(record.file_size)) + '</span></div><button type="button" class="dl-btn" data-policy-file-id="' +
           escapeHtml(record.id) + '" aria-label="Abrir ' + escapeHtml(record.title) + '">↗</button></div>';
-      }).join('') : '<p class="internal-policy-loading">Nenhuma política foi publicada.</p>';
+      }).join('') : '<p class="internal-policy-loading">Nenhuma política foi publicada.</p>');
       root.dataset.loaded = 'true';
     }).catch(function (error) {
       console.error('Não foi possível carregar as políticas publicadas:', error);
       if (requestId === quickLinksRequestId && root.isConnected) {
         root.innerHTML = '<div class="internal-policy-load-error"><span>Não foi possível carregar as políticas: ' +
-          escapeHtml(error && error.message || 'erro desconhecido') + '</span><button type="button" class="btn secondary" data-policy-quick-refresh>Tentar novamente</button></div>';
+          escapeHtml(error && error.message || 'erro desconhecido') + '</span><button type="button" class="btn secondary" data-policy-quick-refresh>Atualizar</button></div>';
       }
     }).finally(function () {
       window.clearTimeout(timeoutId);
@@ -287,7 +313,8 @@
   });
 
   document.querySelectorAll('#modal-politicas .policy-list').forEach(function (root) {
-    root.innerHTML = '<p class="internal-policy-loading">As políticas publicadas aparecerão aqui.</p>';
+    root.innerHTML = '<div class="internal-policy-load-error"><span>Clique em Atualizar para buscar as políticas publicadas.</span>' +
+      '<button type="button" class="btn secondary" data-policy-quick-refresh>Atualizar</button></div>';
   });
 
   window.RildonXInternalPolicies = {
