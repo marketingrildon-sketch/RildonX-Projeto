@@ -16,6 +16,8 @@
     'application/vnd.oasis.opendocument.spreadsheet'
   ];
   var recordsById = new Map();
+  var quickLinksRequest = null;
+  var quickLinksRequestId = 0;
 
   function escapeHtml(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
@@ -232,10 +234,23 @@
   async function renderQuickLinks() {
     var root = document.querySelector('#modal-politicas .policy-list');
     if (!root) return;
-    root.innerHTML = '<p class="internal-policy-loading">Carregando políticas publicadas…</p>';
-    try {
-      var result = await client().from(TABLE).select('*').eq('status', 'published').order('updated_at', { ascending: false });
+    if (quickLinksRequest) return quickLinksRequest;
+    var hasPreviousResults = root.dataset.loaded === 'true';
+    var requestId = ++quickLinksRequestId;
+    if (!hasPreviousResults) root.innerHTML = '<p class="internal-policy-loading">Carregando políticas publicadas…</p>';
+    var timeoutId;
+    quickLinksRequest = Promise.race([
+      Promise.resolve().then(function () {
+        return client().from(TABLE).select('*').eq('status', 'published').order('updated_at', { ascending: false });
+      }),
+      new Promise(function (_, reject) {
+        timeoutId = window.setTimeout(function () {
+          reject(new Error('A consulta ao Supabase excedeu 15 segundos.'));
+        }, 15000);
+      })
+    ]).then(function (result) {
       if (result.error) throw result.error;
+      if (requestId !== quickLinksRequestId || !root.isConnected) return;
       var records = result.data || [];
       records.forEach(function (record) { recordsById.set(String(record.id), record); });
       root.innerHTML = records.length ? records.map(function (record) {
@@ -245,13 +260,26 @@
           ' · ' + escapeHtml(formatSize(record.file_size)) + '</span></div><button type="button" class="dl-btn" data-policy-file-id="' +
           escapeHtml(record.id) + '" aria-label="Abrir ' + escapeHtml(record.title) + '">↗</button></div>';
       }).join('') : '<p class="internal-policy-loading">Nenhuma política foi publicada.</p>';
-    } catch (error) {
+      root.dataset.loaded = 'true';
+    }).catch(function (error) {
       console.error('Não foi possível carregar as políticas publicadas:', error);
-      root.innerHTML = '<p class="internal-policy-loading">As políticas não puderam ser carregadas. Tente novamente.</p>';
-    }
+      if (requestId === quickLinksRequestId && root.isConnected) {
+        root.innerHTML = '<div class="internal-policy-load-error"><span>Não foi possível carregar as políticas: ' +
+          escapeHtml(error && error.message || 'erro desconhecido') + '</span><button type="button" class="btn secondary" data-policy-quick-refresh>Tentar novamente</button></div>';
+      }
+    }).finally(function () {
+      window.clearTimeout(timeoutId);
+      if (requestId === quickLinksRequestId) quickLinksRequest = null;
+    });
+    return quickLinksRequest;
   }
 
   document.addEventListener('click', function (event) {
+    var refreshButton = event.target.closest('[data-policy-quick-refresh]');
+    if (refreshButton) {
+      renderQuickLinks();
+      return;
+    }
     var fileButton = event.target.closest('[data-policy-file-id]');
     if (!fileButton) return;
     var record = recordsById.get(String(fileButton.dataset.policyFileId));
