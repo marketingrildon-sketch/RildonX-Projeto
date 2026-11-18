@@ -16,6 +16,25 @@
 .hr-monthly-vacations-warning p{margin:5px 0 0}
 .hr-monthly-vacations-empty{padding:16px;color:var(--text-muted);font-size:12px}
 .hr-leave-records-title{margin:24px 0 10px;color:var(--text);font-size:15px}
+.internal-policy-upload{display:grid;gap:12px;margin:18px 0 24px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+.internal-policy-upload h3,.internal-policy-list-heading h3{margin:0;color:var(--text);font-size:15px}
+.internal-policy-upload label{display:grid;gap:6px;color:var(--text-muted);font-size:12px;font-weight:700}
+.internal-policy-upload input,.internal-policy-upload select,.internal-policy-status select{min-height:38px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font:inherit;font-weight:400}
+.internal-policy-upload input[type=file]{font-size:12px}
+.internal-policy-upload-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.internal-policy-upload-note,.internal-policy-loading{margin:0;color:var(--text-muted);font-size:12px;line-height:1.5}
+.internal-policy-list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 10px}
+.internal-policy-records{display:grid;gap:8px}
+.internal-policy-record{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border-soft);border-radius:10px;background:var(--card)}
+.internal-policy-record-info{display:grid;min-width:0;flex:1;gap:4px}
+.internal-policy-record-info b{overflow-wrap:anywhere;color:var(--text);font-size:13px}
+.internal-policy-record-info span,.internal-policy-record-info small,.internal-policy-status-label{color:var(--text-muted);font-size:11px}
+.internal-policy-record-info small{overflow-wrap:anywhere}
+.internal-policy-status{display:grid;gap:4px;color:var(--text-muted);font-size:10px}
+.internal-policy-status select{min-height:34px;padding:5px 8px;font-size:11px}
+.internal-policy-record .doc-icon{flex:0 0 40px}
+.dashboard-business-panel--internal-policies{max-width:980px}
+@media(max-width:640px){.internal-policy-upload-row{grid-template-columns:1fr}.internal-policy-record{align-items:flex-start;flex-wrap:wrap}.internal-policy-record-info{min-width:calc(100% - 60px)}.internal-policy-status{margin-left:52px}}
 .dashboard-page-actions{display:flex;align-items:center;gap:9px}
 .dashboard-page-actions>.btn svg,.dashboard-page-actions>.btn img.system-icon{width:16px;height:16px;margin-right:6px;vertical-align:middle}
 .dashboard-page-actions>.dashboard-personalize-button{min-width:142px;box-shadow:0 4px 12px rgba(37, 99, 235, 0.216)}

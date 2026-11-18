@@ -665,6 +665,12 @@
       description: 'Consulte projetos marcados explicitamente como estratégicos na origem, respeitando a visibilidade do projeto.',
       features: ['Classificação estratégica na origem', 'Patrocinador e responsável', 'Marcos, riscos e decisões informados', 'Acesso ao projeto de origem'],
       source: 'projects', fields: []
+    },
+    {
+      id: 'management-policies-library', sector: 'Gerência / Gestão', sectorKey: 'gerencia', title: 'Políticas Internas', icon: 'doc', tone: 'red',
+      description: 'Publique documentos internos oficiais e mantenha o histórico de versões disponíveis no link rápido.',
+      features: ['Upload privado de documentos', 'Rascunho, publicação e arquivamento', 'Histórico de versões', 'Acesso dos colaboradores às políticas publicadas'],
+      fields: []
     }
   ];
 
@@ -4908,6 +4914,20 @@
       }
       if (moduleId === 'marketing-insights' || moduleId === 'marketing-materials') {
         renderMarketingSpecialModule(module);
+        return;
+      }
+      if (moduleId === 'management-policies-library') {
+        businessRoot.replaceChildren();
+        if (window.RildonXInternalPolicies &&
+            typeof window.RildonXInternalPolicies.mount === 'function') {
+          window.RildonXInternalPolicies.mount(businessRoot, dashboardState, {
+            fromLibrary: businessOpenedFromLibrary,
+            canManage: canAccessBusinessCard(module, dashboardState)
+          });
+        } else {
+          businessRoot.innerHTML = '<div class="dashboard-business-panel"><div class="dashboard-business-warning">' +
+            'O módulo Políticas Internas não foi carregado. Atualize a página e tente novamente.</div></div>';
+        }
         return;
       }
       if (moduleId === 'sales-commercial-management') {

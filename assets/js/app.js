@@ -618,6 +618,10 @@ function openModal(id) {
   }
   document.querySelectorAll('.modal-panel').forEach(function(el){ el.classList.remove('open'); });
   var panel = document.getElementById(id);
+  if (id === 'modal-politicas' && window.RildonXInternalPolicies &&
+      typeof window.RildonXInternalPolicies.renderQuickLinks === 'function') {
+    window.RildonXInternalPolicies.renderQuickLinks();
+  }
   if (panel) panel.classList.add('open');
   var backdrop = document.getElementById('modal-backdrop');
   if (backdrop) backdrop.classList.add('open');
