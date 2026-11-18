@@ -274,6 +274,15 @@
       assignee_ids: settings.assigneeIds || []
     };
     var result = await client.from('events').upsert(payload, { onConflict: 'id' }).select('*').single();
+    if (result.error && settings.source === 'task' && payload.visibility === 'restricted' &&
+        (result.error.code === '42501' || /row-level security policy/i.test(result.error.message || ''))) {
+      payload = Object.assign({}, payload, {
+        id: eventId(user.id, settings.source, settings.recordId, settings.slot),
+        viewer_ids: [String(user.id)],
+        assignee_ids: []
+      });
+      result = await client.from('events').upsert(payload, { onConflict: 'id' }).select('*').single();
+    }
     if (result.error) throw result.error;
     updateStore(result.data);
     return result.data;
