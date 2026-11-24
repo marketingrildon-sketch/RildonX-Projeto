@@ -4,9 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ajuda · RildonX</title>
-<meta name="description" content="Acesse as áreas do RildonX e encontre orientações de uso.">
+<meta name="description" content="Aprenda a navegar e usar as páginas e funcionalidades do RildonX.">
 <link rel="stylesheet" href="assets/css/styles.css?v=20261110d">
 <link rel="stylesheet" href="assets/css/system-card-spacing.css?v=20261106c">
+<link rel="stylesheet" href="assets/css/help-school.css?v=20261124a">
 <link rel="icon" href="assets/img/rildonx-favicon.svg?v=20261017b" type="image/svg+xml">
   <script src="assets/js/auth-guard.js?v=20261110e"></script>
   <script type="module" src="assets/js/supabase-client.js?v=20261110e"></script>
@@ -33,25 +34,362 @@
       <div class="user-chip"><div class="avatar">U</div><div class="user-meta"><div class="user-name">Usuário</div><div class="user-role">Conta</div></div></div>
     </div>
   </header>
-  <main class="content"><section class="page-view help-layout">
-    <div class="page-head"><div><h1>Ajuda</h1><p>Guia inicial para navegar pelo RildonX.</p></div></div>
-    <section class="help-card">
-      <h2>Manual da plataforma</h2>
-      <p>Este é o índice inicial do manual. Escolha uma área para abrir a página correspondente; instruções detalhadas serão incluídas nesta seção posteriormente.</p>
-      <nav class="help-grid" aria-label="Áreas da plataforma">
-        <a class="help-link" href="index.html"><b>Início</b><span>Resumo de atualizações, tarefas, conversas, documentos e eventos.</span></a>
-        <a class="help-link" href="mural.html"><b>Mural</b><span>Publicações, avisos, comunicados e interações da equipe.</span></a>
-        <a class="help-link" href="mensagens.html"><b>Mensagens</b><span>Conversas individuais e em grupo, com arquivos compartilhados.</span></a>
-        <a class="help-link" href="calendario.html"><b>Calendário</b><span>Eventos, reuniões, projetos e datas comemorativas.</span></a>
-        <a class="help-link" href="tarefas.html"><b>Tarefas</b><span>Organize atividades, responsáveis, prazos e prioridades.</span></a>
-        <a class="help-link" href="projetos.html"><b>Projetos</b><span>Acompanhe projetos, etapas e progresso da equipe.</span></a>
-        <a class="help-link" href="documentos.html"><b>Documentos</b><span>Consulte arquivos recentes e documentos compartilhados.</span></a>
-        <a class="help-link" href="meu-espaco.html"><b>Meu espaço</b><span>Acesse recursos e informações pessoais de trabalho.</span></a>
-        <a class="help-link" href="perfil.html"><b>Perfil</b><span>Atualize suas informações profissionais e de contato.</span></a>
-        <a class="help-link" href="configuracoes.html"><b>Configurações</b><span>Personalize o tema e gerencie segurança e privacidade.</span></a>
-      </nav>
+  <main class="content">
+    <section class="page-view help-layout">
+      <header class="help-hero">
+        <div class="help-hero-copy">
+          <span class="help-eyebrow">ESCOLA RILDONX</span>
+          <h1>Aprenda a usar a plataforma.</h1>
+          <p>Um manual prático para entender cada área, executar as tarefas do dia a dia e aproveitar os recursos disponíveis para o seu perfil.</p>
+        </div>
+        <div class="help-hero-mark" aria-hidden="true">
+          <img src="assets/img/rildonx-login-logo.svg" alt="">
+          <span>Manual da plataforma</span>
+        </div>
+      </header>
+
+      <section class="help-card help-manual" aria-labelledby="manual-title">
+        <div class="help-section-heading">
+          <div>
+            <span class="help-eyebrow">GUIA DE USO</span>
+            <h2 id="manual-title">Manual da plataforma</h2>
+            <p>Escolha um capítulo para ir até as instruções. Todos os capítulos permanecem nesta página: o objetivo é ensinar a navegar e usar cada recurso, não apenas abrir outra tela.</p>
+          </div>
+          <a class="help-back-top" href="#manual-indice">Voltar ao índice ↑</a>
+        </div>
+
+        <nav class="help-toc" id="manual-indice" aria-label="Índice do Manual da plataforma">
+          <a href="#manual-inicio"><span>01</span>Início</a>
+          <a href="#manual-mural"><span>02</span>Mural</a>
+          <a href="#manual-mensagens"><span>03</span>Mensagens</a>
+          <a href="#manual-calendario"><span>04</span>Calendário</a>
+          <a href="#manual-tarefas"><span>05</span>Tarefas</a>
+          <a href="#manual-projetos"><span>06</span>Projetos</a>
+          <a href="#manual-documentos"><span>07</span>Documentos</a>
+          <a href="#manual-meu-espaco"><span>08</span>Meu Espaço</a>
+          <a href="#manual-pessoas"><span>09</span>Pessoas</a>
+          <a href="#manual-perfil"><span>10</span>Perfil</a>
+          <a href="#manual-configuracoes"><span>11</span>Configurações</a>
+          <a href="#manual-ajuda"><span>12</span>Ajuda</a>
+          <a href="#manual-entrar"><span>13</span>Entrar</a>
+        </nav>
+
+        <aside class="help-getting-started">
+          <img src="icones_personalizados/idea.png" alt="" aria-hidden="true">
+          <div>
+            <b>Como aproveitar este manual</b>
+            <p>Comece pelo Início para conhecer a navegação. Em cada capítulo, leia primeiro o fluxo de uso, depois os recursos e as orientações. Os nomes de botões e áreas correspondem aos rótulos da interface; recursos podem variar conforme as permissões da sua conta.</p>
+          </div>
+        </aside>
+
+        <div class="help-chapters">
+          <article class="help-chapter" id="manual-inicio">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/página-inicio.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 01</span><h3>Início</h3><p>Use esta página como ponto de partida para acompanhar o dia e iniciar ações comuns.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como navegar</h4><ol>
+                <li>Na barra lateral, selecione <b>Início</b>. A área principal reúne cartões de resumo.</li>
+                <li>Leia o <b>Resumo de Tarefas</b> e percorra atualizações, tarefas recentes e próximos eventos. Use os comandos “Ver todas” para abrir a lista completa daquele recurso.</li>
+                <li>Em <b>Links rápidos</b>, abra os serviços disponíveis, como Setor pessoal, Reserva de sala, Suporte de TI e Políticas internas.</li>
+                <li>Use o botão de criação rápida no cabeçalho para iniciar uma tarefa, publicação ou evento.</li>
+                <li>Na seção <b>Seus painéis</b>, selecione “Gerenciar painéis” para abrir Meu Espaço e personalizar os cartões.</li>
+              </ol></div>
+              <div><h4>O que você encontra</h4><ul>
+                <li>Últimas atualizações do Mural e atalhos para conversas, pessoas e documentos.</li>
+                <li>Cartões que resumem dados recentes das áreas de trabalho.</li>
+                <li>Links rápidos que podem depender do acesso habilitado para sua conta.</li>
+              </ul><p class="help-tip"><b>Dica:</b> os cartões da página inicial são uma visão resumida. Para editar um item ou ver todos os registros, abra a área correspondente pelo menu lateral ou pelo link “Ver todas”.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-mural">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/página-mural.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 02</span><h3>Mural</h3><p>Publique e consulte comunicados, atualizações e interações da equipe.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como publicar e acompanhar</h4><ol>
+                <li>Abra <b>Mural</b> no menu lateral e selecione criar publicação. Escolha entre atualização, reconhecimento, aviso, comunicado, enquete ou evento.</li>
+                <li>Preencha o texto e os campos específicos do tipo. Em avisos e comunicados, revise público, setor, prioridade e confirmação de leitura quando essas opções forem apresentadas.</li>
+                <li>Use o seletor de menções para incluir colegas. Os botões de anexo permitem selecionar várias imagens ou documentos.</li>
+                <li>Use <b>Pré-visualizar</b> para revisar. Escolha <b>Salvar rascunho</b> para continuar depois ou <b>Publicar</b> para enviar; alguns tipos podem passar por aprovação antes de aparecer para o público.</li>
+                <li>Nas abas Atualizações, Comunicados e Meus envios, consulte os conteúdos disponíveis. Se sua conta puder aprovar publicações, também pode aparecer a aba Para aprovar.</li>
+                <li>Para localizar um conteúdo, use a busca e combine filtros de tipo, autor e intervalo de datas. Acione <b>Limpar filtros</b> para reiniciar a pesquisa.</li>
+                <li>Nas publicações que permitem interação, use <b>Curtir</b> ou escreva um comentário no campo da própria publicação.</li>
+              </ol></div>
+              <div><h4>Recursos e orientações</h4><ul>
+                <li>As visualizações separam atualizações e comunicados conforme o tipo e a audiência definidos para cada publicação.</li>
+                <li>Enquetes registram votos nas opções publicadas; consulte o resultado na própria enquete.</li>
+                <li>Comunicados que solicitam confirmação exibem a ação correspondente no cartão. Leia o conteúdo antes de confirmar.</li>
+                <li>As preferências de notificação do Mural podem ser ajustadas para os tipos de aviso disponíveis.</li>
+              </ul><p class="help-tip"><b>Boa prática:</b> use um título claro, informe o público e o contexto, e prefira uma publicação por assunto para facilitar a busca posterior.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-mensagens">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/página-mensagens.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 03</span><h3>Mensagens</h3><p>Converse com colegas, grupos e equipes mantendo arquivos e contexto junto à conversa.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como usar uma conversa</h4><ol>
+                <li>Abra <b>Mensagens</b> e use a busca da lista para localizar uma pessoa, grupo ou conversa.</li>
+                <li>Selecione a conversa para abrir o histórico. Digite no campo inferior e acione <b>Enviar</b>.</li>
+                <li>Para anexar um arquivo, use o botão de anexo, escolha o arquivo e aguarde a conclusão do envio antes de sair da conversa.</li>
+                <li>Use a busca dentro da conversa para localizar trechos e resultados relacionados.</li>
+                <li>Quando disponíveis, responda a uma mensagem específica, encaminhe-a ou use reações no menu de ações da mensagem.</li>
+              </ol></div>
+              <div><h4>Pessoas, grupos e anexos</h4><ul>
+                <li>O painel lateral apresenta os detalhes da conversa e seus participantes. Em telas menores, o painel pode ser aberto ou recolhido.</li>
+                <li>O diretório de pessoas ajuda a iniciar uma conversa; grupos mantêm a colaboração relacionada ao mesmo assunto.</li>
+                <li>Imagens podem ser abertas no visualizador e, quando disponíveis, abertas em outra janela ou baixadas.</li>
+                <li>Use emojis e reações para responder de forma breve sem perder a conversa principal.</li>
+              </ul><p class="help-tip"><b>Boa prática:</b> mantenha assuntos relacionados na mesma conversa e use o Mural para comunicados que precisam ficar visíveis para um público mais amplo.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-calendario">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/página-calendário.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 04</span><h3>Calendário</h3><p>Visualize compromissos por período, organize calendários e acompanhe eventos relacionados ao trabalho.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como encontrar ou criar um evento</h4><ol>
+                <li>Abra <b>Calendário</b> e use os controles de período para navegar entre datas.</li>
+                <li>Alterne entre as visualizações de mês, semana e dia disponíveis na barra da agenda.</li>
+                <li>Selecione uma data ou acione <b>Novo evento</b>. Preencha nome, início e fim; local e descrição ajudam os participantes a se preparar.</li>
+                <li>Para localizar um compromisso, abra <b>Buscar e filtrar</b>. Pesquise por texto e refine por projeto, origem, responsável ou intervalo de datas.</li>
+                <li>Selecione um evento para consultar seus detalhes. Eventos editáveis podem ser alterados pelas ações exibidas no painel.</li>
+              </ol></div>
+              <div><h4>Calendários e conexões</h4><ul>
+                <li>Use <b>Meus calendários</b> para identificar as categorias disponíveis e controlar sua visualização.</li>
+                <li>Eventos podem vir de diferentes origens, como registros criados no RildonX ou calendários conectados. A origem aparece nos detalhes quando aplicável.</li>
+                <li>O cartão Google Calendar informa o estado da conexão disponível para a conta. Siga as instruções exibidas na tela para conectar ou resolver uma falha.</li>
+                <li>Eventos relacionados a projetos e outras áreas podem ser apresentados sem que você precise recriá-los manualmente.</li>
+              </ul><p class="help-tip"><b>Boa prática:</b> confira fuso, horário, local e participantes antes de salvar. Ao pesquisar, limpe filtros antigos se o evento esperado não aparecer.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-tarefas">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/página-tarefas.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 05</span><h3>Tarefas</h3><p>Registre o trabalho, defina responsáveis e acompanhe cada atividade até a conclusão.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como criar e atualizar uma tarefa</h4><ol>
+                <li>Na página <b>Tarefas</b>, acione <b>Nova tarefa</b>. Informe um título que descreva uma ação concreta.</li>
+                <li>Complete a descrição, o prazo, a prioridade e as pessoas responsáveis. Relacione a tarefa a um projeto quando fizer parte de uma iniciativa.</li>
+                <li>Adicione itens de checklist para dividir uma entrega em passos verificáveis. Marque cada item quando terminar.</li>
+                <li>Abra a tarefa para consultar detalhes, atualizar a etapa, anexar materiais ou registrar comentários.</li>
+                <li>Use os filtros para localizar tarefas por status, prioridade, responsável, prazo, autoria, etiquetas ou arquivamento. Remova os filtros ativos para voltar à lista completa.</li>
+              </ol></div>
+              <div><h4>Estados, dependências e acompanhamento</h4><ul>
+                <li>As etapas distinguem tarefas pendentes, em andamento e concluídas. Atrasos são sinalizados quando o prazo passou e a tarefa não foi concluída.</li>
+                <li>Uma dependência indica que outra tarefa precisa ser concluída primeiro; verifique essa relação antes de tentar concluir o item bloqueado.</li>
+                <li>Comentários podem ser registrados na tarefa ou em um arquivo. Quando possível, um comentário pode ser atribuído para indicar quem deve responder.</li>
+                <li>Arquivar remove o item da visão ativa sem apagar seu histórico; use o filtro de arquivadas para encontrá-lo.</li>
+              </ul><p class="help-tip"><b>Boa prática:</b> atribua um responsável claro, prazo realista e um resultado esperado. Atualize o status quando o trabalho mudar de etapa.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-projetos">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/Pagina-projetos.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 06</span><h3>Projetos</h3><p>Organize iniciativas e entenda o progresso a partir de tarefas, prazos e atividade registrada.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como navegar pela lista</h4><ol>
+                <li>Abra <b>Projetos</b> e escolha a visualização em lista ou grade, conforme preferir comparar informações.</li>
+                <li>Digite na busca ou use os filtros por setor, responsável e nível de saúde.</li>
+                <li>Selecione um critério de ordenação para priorizar atualização recente, prazo, progresso ou nome.</li>
+                <li>Abra um projeto para consultar participantes, tarefas relacionadas, prazos e registros de atividade.</li>
+                <li>Use os indicadores e filtros rápidos para investigar projetos que precisam de atenção.</li>
+              </ol></div>
+              <div><h4>Como interpretar os dados</h4><ul>
+                <li>O progresso é calculado com base nas tarefas vinculadas e em seu estado de conclusão.</li>
+                <li>Os indicadores de saúde ajudam a destacar atrasos ou dependências pendentes; consulte os detalhes para entender a causa.</li>
+                <li>O painel de carga de trabalho resume tarefas próximas e pessoas associadas, quando há dados disponíveis.</li>
+                <li>As atividades recentes mostram alterações registradas no projeto e ajudam a recuperar o contexto.</li>
+              </ul><p class="help-tip"><b>Boa prática:</b> mantenha tarefas, prazos e participantes atualizados. O resumo do projeto depende da qualidade das informações relacionadas.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-documentos">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/Página-documentos.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 07</span><h3>Documentos</h3><p>Envie, organize, localize e compartilhe arquivos de trabalho.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como organizar arquivos</h4><ol>
+                <li>Abra <b>Documentos</b> e escolha uma pasta para navegar pelo conteúdo relacionado.</li>
+                <li>Para criar uma pasta, use <b>Nova pasta</b>, informe um nome identificável e confirme.</li>
+                <li>Use <b>Enviar arquivos</b> para selecionar um ou mais arquivos. Acompanhe o indicador de envio até o término.</li>
+                <li>Digite na busca para localizar arquivos pelo nome, origem ou projeto. Limpe a busca para retornar à lista.</li>
+                <li>Selecione um arquivo para abrir as ações disponíveis, como visualizar, baixar, compartilhar ou remover, conforme suas permissões.</li>
+              </ol></div>
+              <div><h4>Pastas, compartilhamento e privacidade</h4><ul>
+                <li>O painel de armazenamento resume o uso disponível. A listagem de pastas pode ter paginação; avance as páginas para encontrar outras pastas.</li>
+                <li>Os ícones de arquivo ajudam a reconhecer tipos como PDF, imagem e planilha antes de abrir o item.</li>
+                <li>Ao compartilhar, escolha os usuários disponíveis na janela e confirme a operação. O acesso exibido depende das regras do arquivo e do perfil.</li>
+                <li>Algumas áreas, como mensagens, Mural e módulos, têm seus próprios arquivos e não aparecem como documentos gerais.</li>
+              </ul><h4 class="help-subheading">Políticas Internas</h4><ol>
+                <li>Quem tem permissão de gestão pode abrir Meu Espaço, acessar a Biblioteca de Módulos e selecionar <b>Gerência / Gestão → Políticas Internas</b>.</li>
+                <li>Use o formulário para enviar arquivos ou uma pasta e confira a listagem de documentos e versões antes de publicar.</li>
+                <li>Salve como rascunho para continuar preparando o material; publique quando estiver pronto para disponibilizá-lo aos usuários autorizados.</li>
+                <li>Uma nova versão arquiva a anterior. Na página Início, os leitores abrem <b>Links rápidos → Políticas internas</b>, acionam <b>Atualizar</b> quando quiserem buscar a lista mais recente e selecionam o documento.</li>
+              </ol><p class="help-tip"><b>Boa prática:</b> escolha nomes e pastas que descrevam o assunto. Antes de compartilhar, confirme que os destinatários e o arquivo estão corretos.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-meu-espaco">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/Meu espaço.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 08</span><h3>Meu Espaço e biblioteca de módulos</h3><p>Personalize seu painel e encontre as ferramentas que atendem ao seu trabalho.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como montar seu painel</h4><ol>
+                <li>Abra <b>Meu Espaço</b> pelo menu lateral ou pelo comando “Gerenciar painéis” da página Início.</li>
+                <li>Use o comando para personalizar o painel e abra a biblioteca de módulos.</li>
+                <li>Pesquise pelo nome, descrição ou setor. Alterne entre as visualizações e filtros disponíveis.</li>
+                <li>Abra a ficha de um módulo para entender sua finalidade e use a ação de adicionar para incluí-lo no painel.</li>
+                <li>Remova do painel os cartões que não precisa, reorganize-os quando a interface oferecer essa ação e use favoritos para reencontrar módulos.</li>
+              </ol></div>
+              <div><h4>Biblioteca e acesso</h4><ul>
+                <li>Os cartões podem mostrar dados de tarefas, projetos, comunicação, documentos e módulos setoriais.</li>
+                <li>Favoritos e histórico ajudam a encontrar módulos usados com frequência ou recentemente.</li>
+                <li>Um módulo indisponível pode exigir habilitação administrativa, permissão específica ou configuração de dados. A personalização do painel não concede acesso por si só.</li>
+                <li>A Biblioteca de Módulos agrupa ferramentas por setores como Marketing, TI, RH/DP, Comercial, Compras, Financeiro, Logística, Qualidade e Gerência.</li>
+              </ul><p class="help-tip"><b>Boa prática:</b> comece com os módulos usados na sua rotina. Um painel focado facilita encontrar ações importantes sem substituir as páginas completas.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-pessoas">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/funcionarios.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 09</span><h3>Pessoas</h3><p>Encontre colegas e consulte as informações profissionais disponíveis para sua conta.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como encontrar alguém</h4><ol>
+                <li>Abra <b>Pessoas</b> pelo atalho “Ver todos” no cartão Pessoas da página Início ou pelo acesso disponível no ambiente.</li>
+                <li>Digite nome, área ou cargo no campo de busca. Ajuste o texto para restringir ou ampliar a lista.</li>
+                <li>Selecione uma pessoa para abrir o perfil resumido e conferir os contatos profissionais disponibilizados.</li>
+                <li>Use <b>Enviar mensagem</b> para iniciar uma conversa com a pessoa.</li>
+              </ol></div>
+              <div><h4>Visibilidade dos dados</h4><ul>
+                <li>O diretório apresenta informações conforme o perfil e as permissões configuradas.</li>
+                <li>Informações pessoais e profissionais podem ter regras de visibilidade diferentes.</li>
+                <li>Se um dado esperado não aparecer, confirme com a administração se ele está cadastrado e se sua conta pode visualizá-lo.</li>
+              </ul><p class="help-tip"><b>Boa prática:</b> use o diretório para encontrar a pessoa responsável pelo assunto antes de iniciar uma nova conversa ou demanda.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-perfil">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/usuario.svg" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 10</span><h3>Perfil</h3><p>Atualize sua identificação pessoal e consulte os dados profissionais vinculados à sua conta.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como atualizar seu perfil</h4><ol>
+                <li>Abra o menu do usuário no canto superior e escolha <b>Perfil</b>.</li>
+                <li>Na área de informações pessoais, atualize os campos editáveis, como nome, foto, aniversário, e-mail ou telefone pessoal.</li>
+                <li>Para trocar a foto, escolha uma imagem nos formatos aceitos pela tela; confira a prévia antes de salvar. Use remover foto se quiser excluir a imagem atual.</li>
+                <li>Revise os dados e acione <b>Salvar alterações</b>. Aguarde a confirmação antes de fechar a página.</li>
+              </ol></div>
+              <div><h4>Dados administrados</h4><ul>
+                <li>Área, cargo, ramal e contatos corporativos são definidos pela administração e aparecem como informações somente de consulta.</li>
+                <li>Os dados pessoais têm visibilidade restrita ao usuário e aos administradores, conforme a informação exibida no próprio perfil.</li>
+                <li>Nome e foto ajudam outras pessoas a reconhecer quem participa de conversas, tarefas e registros.</li>
+              </ul><p class="help-tip"><b>Boa prática:</b> mantenha seus dados de contato atualizados e evite incluir informações pessoais que não sejam necessárias para o trabalho.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-configuracoes">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/ajustes.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 11</span><h3>Configurações</h3><p>Personalize a aparência e mantenha os controles básicos da conta em dia.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Aparência e senha</h4><ol>
+                <li>Abra <b>Configurações</b> pelo menu do usuário.</li>
+                <li>Em Aparência, selecione tema claro, escuro ou a opção de seguir a configuração do sistema. A preferência se aplica neste dispositivo.</li>
+                <li>Na seção Segurança e privacidade, informe a nova senha e confirme-a no campo indicado.</li>
+                <li>Confira os requisitos mostrados no formulário e salve a alteração. Se houver erro, revise os campos antes de tentar novamente.</li>
+              </ol></div>
+              <div><h4>Sessão e conta</h4><ul>
+                <li>Use <b>Trocar de conta</b> para sair da conta atual e iniciar outra sessão neste navegador.</li>
+                <li>Saia ao usar um dispositivo compartilhado e não compartilhe sua senha.</li>
+                <li>O encerramento da sessão também depende das configurações de autenticação da organização.</li>
+              </ul><p class="help-tip"><b>Boa prática:</b> escolha uma senha exclusiva e confirme que está na conta certa antes de alterar preferências ou credenciais.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-ajuda">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/ajuda.png" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 12</span><h3>Ajuda e navegação global</h3><p>Use este espaço como escola de referência e retome o capítulo necessário sempre que surgir uma dúvida.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como consultar o manual</h4><ol>
+                <li>Use o índice no início desta página para ir diretamente ao capítulo desejado.</li>
+                <li>Leia “Como navegar” para seguir as etapas e “Recursos e orientações” para entender opções, estados e limites.</li>
+                <li>Use “↑ Índice” ao final de cada capítulo para voltar ao sumário.</li>
+                <li>Se precisar de suporte operacional, use o atalho Suporte de TI na página Início, quando disponível para seu perfil.</li>
+              </ol></div>
+              <div><h4>Elementos comuns da aplicação</h4><ul>
+                <li>A barra lateral leva às áreas principais. Em telas menores, abra o menu pelo botão no cabeçalho.</li>
+                <li>A busca do topo ajuda a localizar itens compatíveis com a página ou a pesquisa global.</li>
+                <li>O sino apresenta notificações disponíveis. O menu do usuário reúne acesso ao perfil e configurações.</li>
+                <li>Botões, mensagens de validação e estados de carregamento indicam o resultado de cada ação.</li>
+              </ul><p class="help-tip"><b>Se algo não aparecer:</b> verifique se os filtros estão limpos, se o item pertence à área correta e se seu perfil tem acesso ao recurso.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+
+          <article class="help-chapter" id="manual-entrar">
+            <header class="help-chapter-heading">
+              <img src="icones_personalizados/sair.svg" alt="" aria-hidden="true">
+              <div><span>CAPÍTULO 13</span><h3>Entrar e recuperar acesso</h3><p>Entenda o fluxo de autenticação antes de começar a trabalhar.</p></div>
+            </header>
+            <div class="help-chapter-grid">
+              <div><h4>Como entrar</h4><ol>
+                <li>Na tela de entrada, informe as credenciais fornecidas para sua conta.</li>
+                <li>Acione <b>Entrar</b> e aguarde a autenticação e o carregamento do ambiente.</li>
+                <li>Se os dados forem recusados, confira o login e a senha e tente novamente.</li>
+                <li>Use a opção de recuperação de senha, quando exibida, para solicitar as instruções de redefinição no e-mail da conta.</li>
+              </ol></div>
+              <div><h4>Depois da autenticação</h4><ul>
+                <li>A plataforma apresenta as páginas e os módulos autorizados para seu perfil.</li>
+                <li>Se uma área estiver ausente, peça à administração para confirmar seu perfil e a disponibilidade do módulo.</li>
+                <li>Não compartilhe links de redefinição ou credenciais; a recuperação é pessoal.</li>
+              </ul><p class="help-tip"><b>Problemas persistentes:</b> confirme que está usando o endereço oficial da aplicação e contate a administração para verificar o cadastro da conta.</p></div>
+            </div>
+            <a class="help-chapter-top" href="#manual-indice">↑ Índice</a>
+          </article>
+        </div>
+
+        <aside class="help-final-note">
+          <img src="icones_personalizados/políticas internas.png" alt="" aria-hidden="true">
+          <div>
+            <b>Recursos disponíveis conforme seu perfil</b>
+            <p>A biblioteca de módulos, documentos, ações administrativas e dados pessoais podem ter permissões diferentes. Se um recurso descrito não aparecer ou uma ação estiver indisponível, não tente contornar o bloqueio: confirme o acesso com a administração da plataforma.</p>
+          </div>
+        </aside>
+      </section>
     </section>
-  </section></main>
+  </main>
 </div>
 </div>
 <div class="toast-wrap" id="toast-wrap"></div>

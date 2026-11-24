@@ -87,7 +87,7 @@ export default defineConfig({
         var html = readFileSync(outputPage, 'utf8').replace(
           /\b(src|href)=(["'])((?:\.\/)?assets\/[^"'?#]+)(?:\?[^"'#]*)?(#[^"']*)?\2/gi,
           function(match, attribute, quote, assetPath, fragment) {
-            var normalizedPath = assetPath.replace(/^\.\//, '');
+            var normalizedPath = decodeURIComponent(assetPath.replace(/^\.\//, ''));
             var assetVersion = assetVersions[normalizedPath];
             if (!assetVersion) {
               throw new Error('Não foi possível gerar a versão do recurso local: ' + assetPath);
